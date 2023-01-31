@@ -1,0 +1,140 @@
+using System;
+using System.Timers;
+using System.Threading;
+
+namespace Station
+{
+    public static class StationScripts
+    {
+        /// <summary>
+        /// Track if a restart is in progress as to not que up multiple.
+        /// </summary>
+        public static bool processing = false;
+
+
+        private static CancellationTokenSource? tokenSource = null;
+
+        /// <summary>
+        /// Track if an experience is being launched.
+        /// </summary>
+        public static bool launchingExperience = false;
+
+        /// <summary>
+        /// Determine what command is suppose to be run and execute the appropriate script.
+        /// </summary>
+        /// <param name="command">A string containing the necessary information to run a specific command</param>
+        /// <returns>A string representing the outcome of the action.</returns>
+        public static void execute(string source, string additionalData)
+        {
+            if (additionalData.StartsWith("URL"))
+            {
+                string[] urlCommand = additionalData.Split(':', 2);
+                if (urlCommand.Length == 2)
+                {
+                    string url = urlCommand[1];
+                    if (!url.StartsWith("https://") && !url.StartsWith("http://"))
+                    {
+                        url = "https://" + url;
+                    }
+                    bool isValidUrl = Uri.IsWellFormedUriString(url, UriKind.Absolute);
+                    if (isValidUrl)
+                    {
+                        CommandLine.executeBrowserCommand(url);
+                        Manager.sendResponse(source, "Station", "SetValue:gameName:" + url);
+                        Manager.sendResponse("Android", "Station", "SetValue:gameId:");
+                    }
+                }
+            }
+            else if (additionalData == "StartVR")
+            {
+                //startVRSession();
+            }
+            else if (additionalData == "RestartVR")
+            {
+                restartVRSession();
+            }
+            else if (additionalData == "EndVR")
+            {
+                endVRSession();
+            }
+            else if (additionalData.Equals("Shutdown"))
+            {
+                int cancelTime = 10000; // give the user 10 seconds to cancel the shutdown
+                int actualCancelTime = 15; // time before the computer actually shuts down
+                if (Helper.GetStationMode().Equals(Helper.STATION_MODE_APPLIANCE))
+                {
+                    cancelTime = 0;
+                    actualCancelTime = 0;
+                }
+                CommandLine.shutdownStation(actualCancelTime);
+                tokenSource = new CancellationTokenSource();
+                var timer = new System.Timers.Timer(cancelTime);
+
+                void timerElapsed(object? obj, ElapsedEventArgs args)
+                {
+                    if (tokenSource is not null)
+                    {
+                        if (!tokenSource.IsCancellationRequested)
+                        {
+                            endVRSession();
+                            Manager.sendResponse(source, "Station", "SetValue:status:Off");
+                            Manager.sendResponse(source, "Station", "SetValue:gameName:");
+                            Manager.sendResponse(source, "Station", "SetValue:gameId:");
+                        }
+                    }
+                }
+
+                timer.Elapsed += timerElapsed;
+                timer.Enabled = true;
+                timer.AutoReset = false;
+            }
+            else if (additionalData.Equals("CancelShutdown"))
+            {
+                CommandLine.cancelShutdown();
+                tokenSource?.Cancel();
+            }
+            else if (additionalData.Equals("StopGame"))
+            {
+                Manager.wrapperManager?.ActionHandler("Stop");
+            }
+            else if (additionalData.StartsWith("IdentifyStation"))
+            {
+                OverlayManager.overlayThread();
+            }
+            else
+            {
+                Logger.WriteLog("Unidentified command", MockConsole.LogLevel.Error);
+            }
+        }
+
+        /// <summary>
+        /// Stop all processes that are associated with a VR session, wait until the processes are cleared and then restart
+        /// the necessary programs for a new VR session.
+        /// </summary>
+        /// <returns></returns>
+        public static void restartVRSession()
+        {
+            Manager.sendResponse("Android", "Station", "SetValue:status:On");
+            if (!processing)
+            {
+                processing = true;
+                Manager.sendResponse("Android", "Station", "SetValue:status:On");
+                Manager.wrapperManager?.ActionHandler("Session", "Restart");
+            }
+            else
+            {
+                Logger.WriteLog("Processing...", MockConsole.LogLevel.Verbose);
+            }
+        }
+
+        /// <summary>
+        /// Stop all processes that are associated with a VR session.
+        /// </summary>
+        public static void endVRSession()
+        {
+            Manager.sendResponse("Android", "Station", "SetValue:status:On");
+            Manager.wrapperManager?.ActionHandler("Session", "Stop");
+            Manager.sendResponse("Android", "Station", "SetValue:session:Ended");
+        }
+    }
+}

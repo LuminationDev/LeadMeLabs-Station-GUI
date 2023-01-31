@@ -1,0 +1,87 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net6.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+	<UseWindowsForms>true</UseWindowsForms>
+	<Nullable>enable</Nullable>
+	<ApplicationIcon>./assets/icon.ico</ApplicationIcon>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Remove="assets\icon.ico" />
+    <None Remove="assets\LuminationLogo.png" />
+    <None Remove="_batch\LeadMeLabs-SoftwareChecker.deps.json" />
+    <None Remove="_batch\LeadMeLabs-SoftwareChecker.dll" />
+    <None Remove="_batch\LeadMeLabs-SoftwareChecker.exe" />
+    <None Remove="_batch\LeadMeLabs-SoftwareChecker.pdb" />
+    <None Remove="_batch\LeadMeLabs-SoftwareChecker.runtimeconfig.json" />
+    <None Remove="_config\base_config.env" />
+    <None Remove="_config\config.env" />
+    <None Remove="_config\config.txt" />
+    <None Remove="_logs\placeholder.txt" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="assets\LuminationLogo.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="_batch\LeadMeLabs-SoftwareChecker.deps.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="_batch\LeadMeLabs-SoftwareChecker.dll">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="_batch\LeadMeLabs-SoftwareChecker.exe">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="_batch\LeadMeLabs-SoftwareChecker.pdb">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="_batch\LeadMeLabs-SoftwareChecker.runtimeconfig.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="_config\base_config.env">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="_config\config.env">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="_config\config.txt">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="_logs\placeholder.txt">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
+	<PackageReference Include="Microsoft.Toolkit.Mvvm" Version="7.0.0" />
+	<PackageReference Include="Microsoft.Xaml.Behaviors.Wpf" Version="1.1.31" />
+	<PackageReference Include="Newtonsoft.Json" Version="13.0.2" />
+	<PackageReference Include="Sentry" Version="3.25.0" />
+	<PackageReference Include="LibreHardwareMonitorLib" Version="0.9.1" />
+	<PackageReference Include="System.Management" Version="7.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="leadme_api">
+      <HintPath>..\..\..\.Net Standard 2.0\leadme_api\leadme_api\bin\Release\netstandard2.0\leadme_api.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Include="assets\icon.ico">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Resource>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Page Update="_overlay\Overlay.xaml">
+      <XamlRuntime>$(DefaultXamlRuntime)</XamlRuntime>
+      <SubType>Designer</SubType>
+    </Page>
+  </ItemGroup>
+
+</Project>

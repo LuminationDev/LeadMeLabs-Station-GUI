@@ -1,0 +1,49 @@
+﻿using System;
+using System.Collections.Generic;
+
+namespace Station
+{
+    internal class ViveWrapper : Wrapper
+    {
+        public static string wrapperType = "Vive";
+        public List<string>? CollectApplications()
+        {
+            return null;
+        }
+
+        public void PassMessageToProcess(string message)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void WrapProcess(string processName)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void ListenForClose()
+        {
+            throw new NotImplementedException();
+        }
+
+        public bool? CheckCurrentProcess()
+        {
+            throw new NotImplementedException();
+        }
+
+        public void StopCurrentProcess()
+        {
+            throw new NotImplementedException();
+        }
+
+        public void RestartCurrentProcess()
+        {
+            throw new NotImplementedException();
+        }
+
+        public async void RestartCurrentSession()
+        {
+            throw new NotImplementedException();
+        }
+    }
+}
