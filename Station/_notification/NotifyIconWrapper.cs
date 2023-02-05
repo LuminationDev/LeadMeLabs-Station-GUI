@@ -1,16 +1,18 @@
 ﻿using System;
 using System.ComponentModel;
 using System.Drawing;
+using System.IO;
 using System.Reflection;
 using System.Windows;
 using System.Windows.Forms;
 using Application = System.Windows.Application;
 
-
 namespace Station
 {
     public class NotifyIconWrapper : FrameworkElement, IDisposable
     {
+        public static NotifyIconWrapper? Instance { get; set; }
+
         public static readonly DependencyProperty TextProperty =
             DependencyProperty.Register("Text", typeof(string), typeof(NotifyIconWrapper), new PropertyMetadata(
                 (d, e) =>
@@ -37,6 +39,7 @@ namespace Station
             RoutingStrategy.Direct, typeof(RoutedEventHandler), typeof(NotifyIconWrapper));
 
         private readonly NotifyIcon? _notifyIcon;
+        private string iconPath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) + @"\assets\icon.ico";
 
         public NotifyIconWrapper()
         {
@@ -44,12 +47,15 @@ namespace Station
                 return;
             _notifyIcon = new NotifyIcon
             {
-                Icon = Icon.ExtractAssociatedIcon(Assembly.GetExecutingAssembly().Location),
+                Icon = Icon.ExtractAssociatedIcon(iconPath),
                 Visible = true,
+                Text = "Station",
                 ContextMenuStrip = CreateContextMenu()
             };
             _notifyIcon.DoubleClick += OpenItemOnClick;
             Application.Current.Exit += (obj, args) => { _notifyIcon.Dispose(); };
+
+            Instance = this;
         }
 
         public string Text
@@ -85,6 +91,10 @@ namespace Station
         {
             var openItem = new ToolStripMenuItem("Open");
             openItem.Click += OpenItemOnClick;
+
+            //var healthItem = new ToolStripMenuItem("Health Status");
+            //healthItem.Click += OpenItemOnClick;
+
             var exitItem = new ToolStripMenuItem("Exit");
             exitItem.Click += ExitItemOnClick;
             var contextMenu = new ContextMenuStrip { Items = { openItem, exitItem } };
@@ -109,6 +119,40 @@ namespace Station
             public string Text { get; set; } = "";
             public int Duration { get; set; } = 1000;
             public ToolTipIcon Icon { get; set; } = ToolTipIcon.Info;
+        }
+
+        /// <summary>
+        /// Update the tray icon and tooltip to represent the current status of the software.
+        /// </summary>
+        /// <param name="status">A string of the current software operating status</param>
+        public void ChangeIcon(string status)
+        {
+            if (_notifyIcon == null)
+            {
+                return;
+            }
+
+            //Don't continously set the icon if it is the same
+            if (iconPath.Contains(status))
+            {
+                return;
+            }
+
+            switch (status)
+            {
+                case "offline":
+                    iconPath = @"\assets\offline.ico";
+                    break;
+                case "online":
+                    iconPath = @"\assets\online.ico";
+                    break;
+                default:
+                    iconPath = @"\assets\icon.ico";
+                    break;
+            }
+
+            _notifyIcon.Icon = Icon.ExtractAssociatedIcon(CommandLine.stationLocation + iconPath);
+            _notifyIcon.Text = $"Station - {status}";
         }
     }
 }

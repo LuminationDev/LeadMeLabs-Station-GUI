@@ -71,8 +71,12 @@ namespace Station
                 {
                     tokenSource.Cancel();
                     Console.WriteLine("Socket timeout: " + Manager.remoteEndPoint.Address);
+                    if (NotifyIconWrapper.Instance != null) NotifyIconWrapper.Instance.ChangeIcon("offline");
                     throw new SocketException();
-                };
+                } else
+                {
+                    if (NotifyIconWrapper.Instance != null) NotifyIconWrapper.Instance.ChangeIcon("online");
+                }
 
                 // Connect the socket to the remote endpoint. Catch any errors.
                 try
@@ -88,7 +92,7 @@ namespace Station
                     Logger.WriteLog($"Socket connected to {client.Client.RemoteEndPoint.ToString()}", MockConsole.LogLevel.Debug, writeToLog);
 
                     // Translate the passed message into ASCII and store it as a Byte array.
-                    Byte[] data = System.Text.Encoding.ASCII.GetBytes(this.message);
+                    byte[] data = System.Text.Encoding.ASCII.GetBytes(this.message);
 
 
                     // Send the message to the connected TcpServer.

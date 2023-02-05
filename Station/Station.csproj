@@ -6,12 +6,14 @@
     <UseWPF>true</UseWPF>
 	<UseWindowsForms>true</UseWindowsForms>
 	<Nullable>enable</Nullable>
-	<ApplicationIcon>./assets/icon.ico</ApplicationIcon>
   </PropertyGroup>
 
   <ItemGroup>
     <None Remove="assets\icon.ico" />
     <None Remove="assets\LuminationLogo.png" />
+    <None Remove="assets\offline.ico" />
+    <None Remove="assets\online.ico" />
+    <None Remove="assets\refresh.ico" />
     <None Remove="_batch\LeadMeLabs-SoftwareChecker.deps.json" />
     <None Remove="_batch\LeadMeLabs-SoftwareChecker.dll" />
     <None Remove="_batch\LeadMeLabs-SoftwareChecker.exe" />
@@ -25,6 +27,15 @@
 
   <ItemGroup>
     <Content Include="assets\LuminationLogo.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="assets\offline.ico">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="assets\online.ico">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="assets\refresh.ico">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
     <Content Include="_batch\LeadMeLabs-SoftwareChecker.deps.json">
@@ -72,9 +83,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Resource Include="assets\icon.ico">
+    <Content Include="assets\icon.ico">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Resource>
+    </Content>
   </ItemGroup>
 
   <ItemGroup>

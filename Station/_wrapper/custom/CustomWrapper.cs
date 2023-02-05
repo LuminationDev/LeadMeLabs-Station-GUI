@@ -26,6 +26,7 @@ namespace Station
                 pipeClient.Send(message);
             });
         }
+
         public void WrapProcess(string processName)
         {
             if(CommandLine.stationLocation == null)
