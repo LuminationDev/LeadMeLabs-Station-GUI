@@ -37,53 +37,53 @@ namespace Station
             bool sent = false;
             int count = 0;
 
-            //Logger.WriteLog("About to launch a steam app, vive status is: " + MonitoringThread.viveStatus);
-            //while (!MonitoringThread.viveStatus.Contains("CONNECTED"))
-            //{
-            //    App.LogHandler("Vive check looping");
+            MockConsole.WriteLine("About to launch a steam app, vive status is: " + WrapperMonitoringThread.viveStatus, MockConsole.LogLevel.Normal);
+            while (!WrapperMonitoringThread.viveStatus.Contains("CONNECTED"))
+            {
+                MockConsole.WriteLine("Vive check looping", MockConsole.LogLevel.Debug);
 
-            //    activelyMonitoring = true;
+                activelyMonitoring = true;
 
-            //    if (MonitoringThread.viveStatus.Contains("Terminated"))
-            //    {
-            //        SessionController.startVRSession(type);
-            //        SessionController.SendStationMessage($"ApplicationUpdate,Starting VR Session...");
+                if (WrapperMonitoringThread.viveStatus.Contains("Terminated"))
+                {
+                    SessionController.startVRSession(type);
+                    SessionController.PassStationMessage($"ApplicationUpdate,Starting VR Session...");
 
-            //        await Task.Delay(5000);
-            //    }
-            //    else if (!sent)
-            //    {
-            //        sent = true;
+                    await Task.Delay(5000);
+                }
+                else if (!sent)
+                {
+                    sent = true;
 
-            //        SessionController.SendStationMessage($"ApplicationUpdate,Awaiting headset connection...");
-            //        await Task.Delay(2000);
-            //    }
-            //    else //Message has already been sent to the NUC, block so it does not take up too much processing power
-            //    {
-            //        if (count == 30) // (30 * 2000ms) this loop + 2000ms initial loop 
-            //        {
-            //            terminateMonitoring = true;
-            //            SessionController.SendStationMessage("MessageToAndroid,HeadsetTimeout");
-            //        }
-            //        else
-            //        {
-            //            count++;
-            //        }
-            //        await Task.Delay(2000);
-            //    }
+                    SessionController.PassStationMessage($"ApplicationUpdate,Awaiting headset connection...");
+                    await Task.Delay(2000);
+                }
+                else //Message has already been sent to the NUC, block so it does not take up too much processing power
+                {
+                    if (count == 30) // (30 * 2000ms) this loop + 2000ms initial loop 
+                    {
+                        terminateMonitoring = true;
+                        SessionController.PassStationMessage("MessageToAndroid,HeadsetTimeout");
+                    }
+                    else
+                    {
+                        count++;
+                    }
+                    await Task.Delay(2000);
+                }
 
-            //    //Externally stop the loop incase of ending VR session
-            //    if (terminateMonitoring)
-            //    {
-            //        SessionController.SendStationMessage("MessageToAndroid,SetValue:gameName:");
-            //        await Task.Delay(1000);
-            //        SessionController.SendStationMessage("MessageToAndroid,SetValue:status:On");
+                //Externally stop the loop incase of ending VR session
+                if (terminateMonitoring)
+                {
+                    SessionController.PassStationMessage("MessageToAndroid,SetValue:gameName:");
+                    await Task.Delay(1000);
+                    SessionController.PassStationMessage("MessageToAndroid,SetValue:status:On");
 
-            //        activelyMonitoring = false;
-            //        terminateMonitoring = false;
-            //        return false;
-            //    }
-            //}
+                    activelyMonitoring = false;
+                    terminateMonitoring = false;
+                    return false;
+                }
+            }
 
             activelyMonitoring = false;
             return true;
