@@ -39,7 +39,7 @@ namespace Station
             RoutingStrategy.Direct, typeof(RoutedEventHandler), typeof(NotifyIconWrapper));
 
         private readonly NotifyIcon? _notifyIcon;
-        private string iconPath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) + @"\assets\icon.ico";
+        private string? iconPath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
 
         public NotifyIconWrapper()
         {
@@ -47,7 +47,7 @@ namespace Station
                 return;
             _notifyIcon = new NotifyIcon
             {
-                Icon = Icon.ExtractAssociatedIcon(iconPath),
+                Icon = Icon.ExtractAssociatedIcon(iconPath + @"\assets\icon.ico"),
                 Visible = true,
                 Text = "Station",
                 ContextMenuStrip = CreateContextMenu()
@@ -127,7 +127,7 @@ namespace Station
         /// <param name="status">A string of the current software operating status</param>
         public void ChangeIcon(string status)
         {
-            if (_notifyIcon == null)
+            if (_notifyIcon == null || iconPath == null)
             {
                 return;
             }

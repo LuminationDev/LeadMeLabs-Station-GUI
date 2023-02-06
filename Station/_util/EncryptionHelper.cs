@@ -1,5 +1,4 @@
 using System;
-using System.Buffers.Text;
 using System.Text;
 using System.Security.Cryptography;
 using System.IO;
@@ -36,7 +35,7 @@ public static class EncryptionHelper
         return encrypted;
     }
 
-    private static string Encrypt32(string plainText, string passPhrase)
+    private static string? Encrypt32(string plainText, string passPhrase)
     {
         // Salt and IV is randomly generated each time, but is preprended to encrypted cipher text
         // so that the same Salt and IV values can be used when decrypting.  
@@ -46,8 +45,10 @@ public static class EncryptionHelper
         using (var password = new Rfc2898DeriveBytes(passPhrase, saltStringBytes, DerivationIterations))
         {
             var keyBytes = password.GetBytes(Keysize / 8);
-            using (var symmetricKey = new RijndaelManaged())
+            using (var symmetricKey = Aes.Create("AesManaged"))
             {
+                if (symmetricKey == null) return null;
+
                 symmetricKey.BlockSize = 128;
                 symmetricKey.Mode = CipherMode.CBC;
                 symmetricKey.Padding = PaddingMode.PKCS7;
@@ -90,7 +91,7 @@ public static class EncryptionHelper
         return decrypted.Trim('_');
     }
 
-    private static string Decrypt108(string cipherText, string passPhrase)
+    private static string? Decrypt108(string cipherText, string passPhrase)
     {
         // Get the complete stream of bytes that represent:
         // [32 bytes of Salt] + [32 bytes of IV] + [n bytes of CipherText]
@@ -105,8 +106,10 @@ public static class EncryptionHelper
         using (var password = new Rfc2898DeriveBytes(passPhrase, saltStringBytes, DerivationIterations))
         {
             var keyBytes = password.GetBytes(Keysize / 8);
-            using (var symmetricKey = new RijndaelManaged())
+            using (var symmetricKey = Aes.Create("AesManaged"))
             {
+                if (symmetricKey == null) return null;
+
                 symmetricKey.BlockSize = 128;
                 symmetricKey.Mode = CipherMode.CBC;
                 symmetricKey.Padding = PaddingMode.PKCS7;
@@ -131,7 +134,7 @@ public static class EncryptionHelper
     private static byte[] Generate128BitsOfRandomEntropy()
     {
         var randomBytes = new byte[16]; // 16 Bytes will give us 128 bits.
-        using (var rngCsp = new RNGCryptoServiceProvider())
+        using (var rngCsp = RandomNumberGenerator.Create())
         {
             // Fill the array with cryptographically secure random bytes.
             rngCsp.GetBytes(randomBytes);
