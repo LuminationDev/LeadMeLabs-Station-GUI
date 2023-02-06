@@ -134,5 +134,6 @@ $RECYCLE.BIN/
 _NCrunch*
 
 # Do not upload log files or filled out config.env
-_logs/
+!_logs/placeholder.txt
+_logs/*
 _/config/config.env
