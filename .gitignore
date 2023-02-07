@@ -135,4 +135,4 @@ _NCrunch*
 # Do not upload log files or filled out config.env
 !_logs/placeholder.txt
 _logs/*
-_/config/config.env
+Station/_config/config.env

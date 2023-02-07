@@ -55,43 +55,41 @@ namespace Station
             MockConsole.clearConsole();
             
             //Load the environment files, do not continue if file is incomplete
-            if(!DotEnv.Load())
+            if(DotEnv.Load())
             {
-                return;
-            };
-
 #if DEBUG
-            //If in development override the program paths with the absolute paths dictated by Directory value in the config.env file.
-            CommandLine.steamCmd = $@"C:\Users\{Environment.GetEnvironmentVariable("Directory")}\steamcmd\steamcmd.exe";
-            CommandLine.SetVol = $@"C:\Users\{Environment.GetEnvironmentVariable("Directory")}\SetVol\SetVol.exe";
+                //If in development override the program paths with the absolute paths dictated by Directory value in the config.env file.
+                CommandLine.steamCmd = $@"C:\Users\{Environment.GetEnvironmentVariable("Directory")}\steamcmd\steamcmd.exe";
+                CommandLine.SetVol = $@"C:\Users\{Environment.GetEnvironmentVariable("Directory")}\SetVol\SetVol.exe";
 #endif
 
-            new Thread(() =>
-            {
-                if (!Helper.GetStationMode().Equals(Helper.STATION_MODE_APPLIANCE))
+                new Thread(() =>
                 {
-                    wrapperManager = new WrapperManager();
-
-                //Launch the custom wrapper application here
-                wrapperManager.Startup();
-
-                //Use to monitor SetVol and restart application
-                StationMonitoringThread.initializeMonitoring();
-                }
-
-                setServerIPAddress();
-                startServer();
-
-                if (Environment.GetEnvironmentVariable("NucAddress") != null)
-                {
-                    Logger.WriteLog(Environment.GetEnvironmentVariable("NucAddress"), MockConsole.LogLevel.Debug);
-                    setRemoteEndPoint();
                     if (!Helper.GetStationMode().Equals(Helper.STATION_MODE_APPLIANCE))
                     {
-                        initialStartUp();
+                        wrapperManager = new WrapperManager();
+
+                    //Launch the custom wrapper application here
+                    wrapperManager.Startup();
+
+                    //Use to monitor SetVol and restart application
+                    StationMonitoringThread.initializeMonitoring();
                     }
-                }
-            }).Start();
+
+                    setServerIPAddress();
+                    startServer();
+
+                    if (Environment.GetEnvironmentVariable("NucAddress") != null)
+                    {
+                        Logger.WriteLog(Environment.GetEnvironmentVariable("NucAddress"), MockConsole.LogLevel.Debug);
+                        setRemoteEndPoint();
+                        if (!Helper.GetStationMode().Equals(Helper.STATION_MODE_APPLIANCE))
+                        {
+                            initialStartUp();
+                        }
+                    }
+                }).Start();
+            };
         }
 
         /// <summary>
