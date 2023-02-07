@@ -25,7 +25,7 @@ namespace Station
         /// An array representing the process names needed to stop a VR session.
         /// </summary>
         public static List<string> steamProcesses = new List<string> { "vrmonitor", "steam", "steamerrorreporter64" };
-        public static List<string> viveProcesses = new List<string> { "HtcConnectionUtility", "LhStatusMonitor", "WaveConsole", "ViveVRServer" };
+        public static List<string> viveProcesses = new List<string> { "HtcConnectionUtility", "LhStatusMonitor", "WaveConsole", "ViveVRServer", "ViveSettings" };
 
         /// <summary>
         /// Start a new thread with the supplied monitor check type.
