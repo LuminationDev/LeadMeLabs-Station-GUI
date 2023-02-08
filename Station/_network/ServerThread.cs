@@ -27,7 +27,6 @@ namespace Station
         /// </summery>
         public void run()
         {
-            //Station.App.initSentry();
             CommandLine.getVolume();
 
             try
