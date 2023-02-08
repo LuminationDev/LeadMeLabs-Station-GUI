@@ -26,7 +26,7 @@ namespace Station
         /// </summary>
         public async void run()
         {
-            Station.App.initSentry();
+            //Station.App.initSentry();
 
             //Based on the data, build/run a script and then send the output back to the client
             //Everything below is just for testing - definitely going to need something better to determine in the future

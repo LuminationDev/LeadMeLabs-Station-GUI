@@ -6,6 +6,7 @@
     <UseWPF>true</UseWPF>
 	<UseWindowsForms>true</UseWindowsForms>
 	<Nullable>enable</Nullable>
+	<ApplicationIcon>./assets/icon.ico</ApplicationIcon>
   </PropertyGroup>
 
   <ItemGroup>

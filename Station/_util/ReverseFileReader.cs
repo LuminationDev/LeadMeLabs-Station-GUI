@@ -155,7 +155,7 @@ namespace Station
                 byte[] buffer = new byte[bufferSize + 2];
                 char[] charBuffer = new char[encoding.GetMaxCharCount(buffer.Length)];
                 int leftOverData = 0;
-                String previousEnd = null;
+                string? previousEnd = null;
                 // TextReader doesn't return an empty string if there's line break at the end
                 // of the data. Therefore we don't return an empty string if it's our *first*
                 // return.

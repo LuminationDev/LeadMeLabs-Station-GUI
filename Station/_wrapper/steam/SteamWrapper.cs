@@ -43,7 +43,7 @@ namespace Station
             SteamScripts.lastAppId = appID;
             GetGameProcessName();
 
-            Trace.WriteLine(gameName);
+            MockConsole.WriteLine($"Wrapping: {gameName}", MockConsole.LogLevel.Debug);
 
             //Start the external processes to handle SteamVR
             SessionController.startVRSession(wrapperType);
@@ -131,7 +131,7 @@ namespace Station
             while(child == null && attempts < 10)
             {
                 attempts++;
-                Trace.WriteLine("Checking for child process...");
+                MockConsole.WriteLine($"Checking for child process...", MockConsole.LogLevel.Debug);
                 Task.Delay(3000).Wait();
                 child = GetExperienceProcess();
             }
@@ -164,8 +164,7 @@ namespace Station
                 //Get the steam process name from the CommandLine function and compare here instead of removing any external child processes
                 if (proc.MainWindowTitle == gameName)
                 {
-                    Trace.WriteLine(proc.MainWindowTitle);
-                    Trace.WriteLine(proc.Id);
+                    MockConsole.WriteLine($"Application found: {proc.MainWindowTitle}/{proc.Id}", MockConsole.LogLevel.Debug);
 
                     UIUpdater.UpdateProcess(proc.MainWindowTitle);
                     UIUpdater.UpdateStatus("Running...");
