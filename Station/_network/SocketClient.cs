@@ -143,23 +143,3 @@ namespace Station
         }
     }
 }
-
-
-//// Get a client stream for reading and writing.
-//NetworkStream stream = client.GetStream();
-
-//Logger.WriteLog($"Socket connected to {client.Client.RemoteEndPoint}", MockConsole.LogLevel.Debug, writeToLog);
-
-//// Translate the passed message into ASCII and store it as a Byte array.
-//byte[] data = System.Text.Encoding.ASCII.GetBytes(this.message);
-
-//// Construct and send the header first
-//string headerMessageType = "text";
-//byte[] headerMessageTypeBytes = System.Text.Encoding.UTF8.GetBytes(headerMessageType);
-//stream.Write(BitConverter.GetBytes(headerMessageTypeBytes.Length), 0, 4);
-//stream.Write(headerMessageTypeBytes, 0, headerMessageTypeBytes.Length);
-
-//// Send the message to the connected TcpServer.
-//stream.Write(data, 0, data.Length);
-
-//Logger.WriteLog($"Sent: {message}", MockConsole.LogLevel.Normal, writeToLog);
