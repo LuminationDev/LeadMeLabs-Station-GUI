@@ -22,7 +22,6 @@
     <None Remove="_batch\LeadMeLabs-SoftwareChecker.pdb" />
     <None Remove="_batch\LeadMeLabs-SoftwareChecker.runtimeconfig.json" />
     <None Remove="_config\base_config.env" />
-    <None Remove="_config\config.env" />
     <None Remove="_config\config.txt" />
     <None Remove="_logs\placeholder.txt" />
   </ItemGroup>
@@ -56,9 +55,6 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
     <Content Include="_config\base_config.env">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="_config\config.env">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
     <Content Include="_config\config.txt">
