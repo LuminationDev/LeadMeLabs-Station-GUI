@@ -96,6 +96,8 @@ namespace Station
         private static void callSteamCheck(Object? source, System.Timers.ElapsedEventArgs e)
         {
             AppCheck();
+            SteamCheck();
+            ViveCheck();
 
             Logger.WorkQueue();
         }
@@ -109,7 +111,8 @@ namespace Station
         }
 
         /// <summary>
-        /// Check that the currently running main process is responding.
+        /// Check that the currently running main process is responding. Only send once to avoid clogging up the 
+        /// TCP server.
         /// </summary>
         private static void AppCheck()
         {

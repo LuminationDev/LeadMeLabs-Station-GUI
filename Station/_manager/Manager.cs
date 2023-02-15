@@ -57,7 +57,7 @@ namespace Station
             //Load the environment files, do not continue if file is incomplete
             if(DotEnv.Load())
             {
-#if DEBUG
+#if DEVDEBUG
                 //If in development override the program paths with the absolute paths dictated by Directory value in the config.env file.
                 CommandLine.steamCmd = $@"C:\Users\{Environment.GetEnvironmentVariable("Directory")}\steamcmd\steamcmd.exe";
                 CommandLine.SetVol = $@"C:\Users\{Environment.GetEnvironmentVariable("Directory")}\SetVol\SetVol.exe";

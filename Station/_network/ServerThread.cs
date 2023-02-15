@@ -14,7 +14,7 @@ namespace Station
         /// <summary>
         /// A TcpListener to await connections from the android tablet.
         /// </summery>
-        public static TcpListener? server;
+        private static TcpListener? server;
 
         public ServerThread()
         {
@@ -27,7 +27,6 @@ namespace Station
         /// </summery>
         public void run()
         {
-            Station.App.initSentry();
             CommandLine.getVolume();
 
             try
@@ -43,11 +42,11 @@ namespace Station
                 //Enter listening loop
                 while (true)
                 {
-                    Logger.WriteLog("Waiting for a connection on: " + Manager.localEndPoint.Address + ":" + Manager.localEndPoint.Port, MockConsole.LogLevel.Normal, false);
+                    Logger.WriteLog("Waiting for a connection on: " + Manager.localEndPoint.Address + ":" + Manager.localEndPoint.Port, MockConsole.LogLevel.Debug, false);
                     TcpClient clientConnection = server.AcceptTcpClient();
 
                     var endpoint = clientConnection.Client.RemoteEndPoint;
-                    Logger.WriteLog("Got connection from: " + endpoint, MockConsole.LogLevel.Normal, false);
+                    Logger.WriteLog("Got connection from: " + endpoint, MockConsole.LogLevel.Debug, false);
 
                     // Incoming data from the client.
                     string? data = null;
@@ -73,7 +72,7 @@ namespace Station
                             if (key is null) throw new Exception("Encryption key not set");
                             data = EncryptionHelper.Decrypt(data, key);
 
-                            Logger.WriteLog($"From {endpoint}, Decrypted Text received : {data}", MockConsole.LogLevel.Normal, !data.Contains(":Ping:"));
+                            Logger.WriteLog($"From {endpoint}, Decrypted Text received : {data}", MockConsole.LogLevel.Debug, !data.Contains(":Ping:"));
 
                             //Run the appropriate script
                             Manager.runScript(data);
@@ -85,17 +84,17 @@ namespace Station
                     }
                     catch (Exception e)
                     {
-                        Logger.WriteLog($"Unknown connection event: {e.ToString()}", MockConsole.LogLevel.Error);
+                        Logger.WriteLog($"Unknown connection event: {e}", MockConsole.LogLevel.Error);
                     }
                 }
             }
             catch (SocketException e)
             {
-                Logger.WriteLog($"SocketException: {e.ToString()}", MockConsole.LogLevel.Error);
+                Logger.WriteLog($"SocketException: {e}", MockConsole.LogLevel.Error);
             }
             catch (Exception e)
             {
-                Logger.WriteLog($"Unexpected exception : {e.ToString()}", MockConsole.LogLevel.Error);
+                Logger.WriteLog($"Unexpected exception : {e}", MockConsole.LogLevel.Error);
             }
             finally
             {
