@@ -173,6 +173,8 @@ namespace Station
                         break;
 
                     case "ApplicationList":
+                        //Backwards compatability, send both old (steamApplications) and new (installedApplications) commands for now.
+                        Manager.sendResponse("Android", "Station", "SetValue:steamApplications:" + tokens[1]);
                         Manager.sendResponse("Android", "Station", "SetValue:installedApplications:" + tokens[1]);
                         break;
 
