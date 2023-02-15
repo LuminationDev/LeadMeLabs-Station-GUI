@@ -62,11 +62,30 @@ namespace Station
 #endif
             if (sentryDsn != null && sentryDsn.Length > 0)
             {
-                SentrySdk.Init(o =>
+                SentrySdk.Init(options =>
                 {
-                    o.Dsn = sentryDsn;
-                    o.Debug = false;
-                    o.TracesSampleRate = 0.1;
+                    options.Dsn = sentryDsn;
+                    options.Debug = false;
+                    options.TracesSampleRate = 0.1;
+
+                    options.BeforeSend = sentryEvent =>
+                    {
+                        if (sentryEvent.Exception != null
+                          && sentryEvent.Exception.Message.Contains("Aggregate Exception")
+                          && sentryEvent.Exception.Message.Contains("WSACancelBlockingCall"))
+                        {
+
+                            return null; // Don't send this event to Sentry
+                        }
+
+                        Console.WriteLine(sentryEvent.Exception);
+                        Console.WriteLine(sentryEvent.Message);
+                        Logger.WriteLog("Sentry Exception", MockConsole.LogLevel.Error);
+                        Logger.WriteLog(sentryEvent.Exception, MockConsole.LogLevel.Error);
+
+                        sentryEvent.ServerName = null; // Never send Server Name to Sentry
+                        return sentryEvent;
+                    };
                 });
                 SentrySdk.ConfigureScope(scope =>
                 {

@@ -11,42 +11,37 @@ namespace Station
         public static string wrapperType = "Steam";
         private static Process? currentProcess;
         private static string launch_params = "-noreactlogin -login " + Environment.GetEnvironmentVariable("SteamUserName") + " " + Environment.GetEnvironmentVariable("SteamPassword") + " steam://rungameid/";
-        public static string? gameName = null;
+        public static string? experienceName = null;
 
         /// <summary>
         /// Track if an experience is being launched.
         /// </summary>
         public static bool launchingExperience = false;
 
-        /// <summary>
-        /// Collect all the applications associated with the type of wrapper.
-        /// </summary>
-        /// <returns>A list of all applications associated with Steam</returns>
         public List<string>? CollectApplications()
         {
             return SteamScripts.loadAvailableGames();
         }
 
-        /// <summary>
-        /// Pass a message into the running process through the use of a custom pipe.
-        /// </summary>
+        public void CollectHeaderImage(string experienceName)
+        {
+            throw new NotImplementedException();
+        }
+
         public void PassMessageToProcess(string message)
         {
             throw new NotImplementedException();
         }
 
-        /// <summary>
-        /// Start the supplied process and maintain a connection through the current process variable.
-        /// </summary>
         public void WrapProcess(string appID)
         {
             SteamScripts.lastAppId = appID;
             GetGameProcessName();
 
-            MockConsole.WriteLine($"Wrapping: {gameName}", MockConsole.LogLevel.Debug);
+            MockConsole.WriteLine($"Wrapping: {experienceName}", MockConsole.LogLevel.Debug);
 
             //Start the external processes to handle SteamVR
-            SessionController.startVRSession(wrapperType);
+            SessionController.StartVRSession(wrapperType);
 
             //Wait for Vive to start
             if (!WaitForVive().Result) return;
@@ -86,10 +81,10 @@ namespace Station
             {
                 if (line.StartsWith("\t\"name\""))
                 {
-                    gameName = line.Split("\t")[3].Trim('\"');
+                    experienceName = line.Split("\t")[3].Trim('\"');
                 }
 
-                if (gameName != null)
+                if (experienceName != null)
                 {
                     break;
                 }
@@ -123,7 +118,7 @@ namespace Station
         /// <summary>
         /// Find the active process that has been launched.
         /// </summary>
-        public void FindCurrentProcess()
+        private void FindCurrentProcess()
         {
             int attempts = 0; //Track the loop for finding child processes
 
@@ -142,11 +137,11 @@ namespace Station
             {
                 SteamScripts.popupDetect = false;
                 ListenForClose();
-                SessionController.PassStationMessage($"ApplicationUpdate,{gameName}/{currentProcess?.Id}");
+                SessionController.PassStationMessage($"ApplicationUpdate,{experienceName}/{currentProcess?.Id}");
             } else
             {
                 UIUpdater.ResetUIDisplay();
-                SessionController.PassStationMessage($"MessageToAndroid,GameLaunchFailed:{gameName}");
+                SessionController.PassStationMessage($"MessageToAndroid,GameLaunchFailed:{experienceName}");
             }
         }
 
@@ -162,7 +157,7 @@ namespace Station
             foreach (var proc in processes)
             {
                 //Get the steam process name from the CommandLine function and compare here instead of removing any external child processes
-                if (proc.MainWindowTitle == gameName)
+                if (proc.MainWindowTitle == experienceName)
                 {
                     MockConsole.WriteLine($"Application found: {proc.MainWindowTitle}/{proc.Id}", MockConsole.LogLevel.Debug);
 
@@ -176,9 +171,6 @@ namespace Station
             return null;
         }
 
-        /// <summary>
-        /// Being a new thread with the purpose of detecting if the current process has been exited.
-        /// </summary>
         public void ListenForClose()
         {
             Task.Factory.StartNew(() =>
@@ -191,17 +183,11 @@ namespace Station
             });
         }
 
-        /// <summary>
-        /// Check if a process is currently running.
-        /// </summary>
         public bool? CheckCurrentProcess()
         {
             return currentProcess?.Responding;
         }
 
-        /// <summary>
-        /// Kill the currently running process, releasing all resources associated with it.
-        /// </summary>
         public void StopCurrentProcess()
         {
             if (currentProcess != null)
@@ -212,9 +198,6 @@ namespace Station
             SteamScripts.popupDetect = false;
         }
 
-        /// <summary>
-        /// Restart the current experience without restarting any external software.
-        /// </summary>
         public void RestartCurrentProcess()
         {
             if(currentProcess != null)
@@ -226,9 +209,6 @@ namespace Station
             SteamScripts.popupDetect = false;
         }
 
-        /// <summary>
-        /// Restart the current session, this includes the current experience and any external applications that are required.
-        /// </summary>
         public async void RestartCurrentSession()
         {
             StopCurrentProcess();
@@ -268,7 +248,7 @@ namespace Station
 
             await SessionController.PutTaskDelay(5000); //blocks progress but does not stop the program
 
-            SessionController.startVRSession(wrapperType);
+            SessionController.StartVRSession(wrapperType);
 
             launchingExperience = false;
 

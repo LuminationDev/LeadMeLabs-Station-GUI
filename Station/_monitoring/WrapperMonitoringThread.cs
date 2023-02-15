@@ -188,21 +188,21 @@ namespace Station
 
 
             //Detect if a process contains the experience trying to be launched and the '- Steam' header which indicates a pop has occurred
-            if (SteamWrapper.gameName is not null)
+            if (SteamWrapper.experienceName is not null)
             {
                 Process[] searchProcesses = Process.GetProcesses();
                 for (int i = 0; i < searchProcesses.Length; i++)
                 {
                     Process process = searchProcesses[i];
 
-                    if (process.MainWindowTitle.Contains(SteamWrapper.gameName)
+                    if (process.MainWindowTitle.Contains(SteamWrapper.experienceName)
                         && process.MainWindowTitle.Contains("- Steam")
                         && !SteamScripts.popupDetect)
                     {
                         //Only trigger once per experience
                         SteamScripts.popupDetect = true;
                         Console.WriteLine(process.MainWindowTitle);
-                        Manager.sendResponse("Android", "Station", "PopupDetected:" + SteamWrapper.gameName);
+                        Manager.sendResponse("Android", "Station", "PopupDetected:" + SteamWrapper.experienceName);
                     }
                 }
             }

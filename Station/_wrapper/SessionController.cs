@@ -52,7 +52,7 @@ namespace Station
         /// applications that will be started/required depend on the suppiled type.
         /// </summary>
         /// <param name="type">A string of what type of experience is being loaded [Custom, Steam, Vive, etc]</param>
-        public static void startVRSession(string type)
+        public static void StartVRSession(string type)
         {
             experienceType = type;
             switch (experienceType)
@@ -74,7 +74,7 @@ namespace Station
         /// <summary>
         /// Stop all processes that are associated with a VR session.
         /// </summary>
-        public static void restartVRSession()
+        public static void RestartVRSession()
         {
             if (experienceType == null)
             {
@@ -104,7 +104,7 @@ namespace Station
         /// <summary>
         /// Stop all processes that are associated with a VR session.
         /// </summary>
-        public static void endVRSession()
+        public static void EndVRSession()
         {
             switch (experienceType)
             {
@@ -173,7 +173,7 @@ namespace Station
                         break;
 
                     case "ApplicationList":
-                        Manager.sendResponse("Android", "Station", "SetValue:steamApplications:" + tokens[1]);
+                        Manager.sendResponse("Android", "Station", "SetValue:installedApplications:" + tokens[1]);
                         break;
 
                     case "ApplicationClosed":

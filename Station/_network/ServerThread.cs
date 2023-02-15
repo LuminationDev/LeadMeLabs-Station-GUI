@@ -1,6 +1,8 @@
 using System;
+using System.Net;
 using System.Net.Sockets;
 using System.Text;
+using System.Threading;
 
 namespace Station
 {
@@ -45,47 +47,11 @@ namespace Station
                     Logger.WriteLog("Waiting for a connection on: " + Manager.localEndPoint.Address + ":" + Manager.localEndPoint.Port, MockConsole.LogLevel.Debug, false);
                     TcpClient clientConnection = server.AcceptTcpClient();
 
-                    var endpoint = clientConnection.Client.RemoteEndPoint;
-                    Logger.WriteLog("Got connection from: " + endpoint, MockConsole.LogLevel.Debug, false);
-
-                    // Incoming data from the client.
-                    string? data = null;
-                    byte[]? bytes = new byte[1024];
-
-                    try
+                    //Start new thread so the server can continue straight away
+                    ThreadPool.QueueUserWorkItem(delegate
                     {
-                        NetworkStream stream = clientConnection.GetStream();
-
-                        int i;
-                        while ((i = stream.Read(bytes, 0, bytes.Length)) != 0)
-                        {
-                            data += Encoding.ASCII.GetString(bytes, 0, i);
-                        }
-
-                        //Close the client connection
-                        clientConnection.Close();
-
-                        //Data should never be null at this point
-                        if (data is not null)
-                        {
-                            string? key = Environment.GetEnvironmentVariable("AppKey");
-                            if (key is null) throw new Exception("Encryption key not set");
-                            data = EncryptionHelper.Decrypt(data, key);
-
-                            Logger.WriteLog($"From {endpoint}, Decrypted Text received : {data}", MockConsole.LogLevel.Debug, !data.Contains(":Ping:"));
-
-                            //Run the appropriate script
-                            Manager.runScript(data);
-                        }
-                        else
-                        {
-                            Logger.WriteLog($"ServerThread: Data from android server is null", MockConsole.LogLevel.Error);
-                        }
-                    }
-                    catch (Exception e)
-                    {
-                        Logger.WriteLog($"Unknown connection event: {e}", MockConsole.LogLevel.Error);
-                    }
+                        handleConnection(clientConnection);
+                    });
                 }
             }
             catch (SocketException e)
@@ -100,6 +66,94 @@ namespace Station
             {
                 // Stop listening for new clients.
                 server?.Stop();
+            }
+        }
+
+        /// <summary>
+        /// Handle a newly created connection on the Server Thread, determine if the message is from the Cbus or a LeadMe Labs device.
+        /// Decode the message being sent and pass it off to the RelayThread through the Manager.sendAction function. This is kept 
+        /// separate form the server loop as it can be run on a new thread allowing the server to quickly process incoming messages.
+        /// </summary>
+        /// <param name="clientConnection">A TcpClient representing the latest connection information.</param>
+        private void handleConnection(TcpClient clientConnection)
+        {
+            EndPoint? endPoint = clientConnection.Client.RemoteEndPoint;
+
+            if (endPoint == null)
+            {
+                MockConsole.WriteLine("Unknown server connection discarded.");
+                return;
+            }
+
+            try
+            {
+                NetworkStream stream = clientConnection.GetStream();
+
+                //Read the header to determine the incoming data
+                byte[] headerLengthBytes = new byte[4];
+                stream.Read(headerLengthBytes, 0, headerLengthBytes.Length);
+                int headerLength = BitConverter.ToInt32(headerLengthBytes, 0);
+
+                // Read the header message type
+                byte[] headerMessageTypeBytes = new byte[headerLength];
+                stream.Read(headerMessageTypeBytes, 0, headerLength);
+                string headerMessageType = Encoding.UTF8.GetString(headerMessageTypeBytes);
+
+                if (headerMessageType.Equals("text"))
+                {
+                    StringMessageReceived(clientConnection, endPoint, stream);
+                }
+                else
+                {
+                    Logger.WriteLog($"Unknown header connection attempt: {headerMessageType}", MockConsole.LogLevel.Error);
+                }
+            }
+            catch (Exception e)
+            {
+                Logger.WriteLog($"Unknown connection event: {e}", MockConsole.LogLevel.Error);
+            }
+        }
+
+        /// <summary>
+        /// The server has determined that the incoming message is a string based message.
+        /// </summary>
+        private void StringMessageReceived(TcpClient clientConnection, EndPoint? endPoint, NetworkStream stream)
+        {
+            // Incoming data from the client.
+            string? data = null;
+            byte[]? bytes = new byte[1024];
+
+            try
+            {
+                int i;
+                while ((i = stream.Read(bytes, 0, bytes.Length)) != 0)
+                {
+                    data += Encoding.ASCII.GetString(bytes, 0, i);
+                }
+
+                //Close the client connection
+                clientConnection.Close();
+
+                //Data should never be null at this point
+                if (data is not null)
+                {
+                    string? key = Environment.GetEnvironmentVariable("AppKey");
+                    if (key is null) throw new Exception("Encryption key not set");
+                    data = EncryptionHelper.Decrypt(data, key);
+
+                    Logger.WriteLog($"From {endPoint}, Decrypted Text received : {data}", MockConsole.LogLevel.Debug, !data.Contains(":Ping:"));
+
+                    //Run the appropriate script
+                    Manager.runScript(data);
+                }
+                else
+                {
+                    Logger.WriteLog($"ServerThread: Data from android server is null", MockConsole.LogLevel.Error);
+                }
+            }
+            catch (Exception e)
+            {
+                Logger.WriteLog($"Unknown connection event: {e}", MockConsole.LogLevel.Error);
             }
         }
 

@@ -129,7 +129,7 @@ namespace Station
                 }
             }
 
-            availableGames = String.Join('/', apps);
+            availableGames = string.Join('/', apps);
 
             return apps;
         }
@@ -147,7 +147,7 @@ namespace Station
                 Logger.WriteLog("Re-loading AvailableGames", MockConsole.LogLevel.Debug);
                 loadAvailableGames();
 
-                SessionController.restartVRSession(); //Restart the VR session as to log steam back in
+                SessionController.RestartVRSession(); //Restart the VR session as to log steam back in
             }
         }
 

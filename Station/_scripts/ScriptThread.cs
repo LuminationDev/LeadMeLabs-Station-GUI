@@ -38,6 +38,7 @@ namespace Station
                     Manager.sendResponse(source, "Station", "SetValue:volume:" + CommandLine.getVolume());
                 }
             }
+
             if (additionalData == null) return;
             if (actionNamespace == "CommandLine")
             {
@@ -49,9 +50,9 @@ namespace Station
                 if (additionalData.StartsWith("GetValue"))
                 {
                     string key = additionalData.Split(":", 2)[1];
-                    if (key == "steamApplications")
+                    if (key == "installedApplications")
                     {
-                        Logger.WriteLog("Collecting station exeperiences", MockConsole.LogLevel.Normal);
+                        Logger.WriteLog("Collecting station experiences", MockConsole.LogLevel.Normal);
                         Manager.wrapperManager?.ActionHandler("CollectApplications");
                     }
                     if (key == "volume")
@@ -71,11 +72,33 @@ namespace Station
                 }
             }
 
+            if (actionNamespace == "HandleExecutable")
+            {
+                string[] split = additionalData.Split(":", 2);
+                string action = split[0];
+                string path = split[1];
+                if (action.Equals("start"))
+                {
+                    Manager.wrapperManager?.ActionHandler("Internal", $"Start:{path}");
+                }
+
+                if (action.Equals("stop"))
+                {
+                    Manager.wrapperManager?.ActionHandler("Internal", $"Stop:{path}");
+                }
+            }
+
             if (actionNamespace == "Experience")
             {
                 if (additionalData.StartsWith("Refresh"))
                 {
                     Manager.wrapperManager?.ActionHandler("CollectApplications");
+                }
+
+                if (additionalData.StartsWith("Thumbnails"))
+                {
+                    string[] split = additionalData.Split(":", 2);
+                    Manager.wrapperManager?.ActionHandler("CollectHeaderImages", split[1]);
                 }
 
                 if (additionalData.StartsWith("Launch"))

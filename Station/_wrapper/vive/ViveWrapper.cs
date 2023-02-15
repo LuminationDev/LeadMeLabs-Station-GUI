@@ -11,6 +11,11 @@ namespace Station
             return null;
         }
 
+        public void CollectHeaderImage(string experienceName)
+        {
+            throw new NotImplementedException();
+        }
+
         public void PassMessageToProcess(string message)
         {
             throw new NotImplementedException();

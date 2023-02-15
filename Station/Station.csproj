@@ -7,6 +7,7 @@
 	<UseWindowsForms>true</UseWindowsForms>
 	<Nullable>enable</Nullable>
 	<ApplicationIcon>./assets/icon.ico</ApplicationIcon>
+	<Configurations>Debug;Release;DevDebug;DevRelease</Configurations>
   </PropertyGroup>
 
   <ItemGroup>
