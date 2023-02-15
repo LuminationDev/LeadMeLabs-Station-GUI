@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using leadme_api;
 
@@ -12,6 +13,10 @@ namespace Station
         private readonly Wrapper steamWrapper = new SteamWrapper();
         private readonly Wrapper viveWrapper = new ViveWrapper();
 
+        //Used for multiple 'internal' applications, operations are separate from the other wrapper classes
+        private readonly InternalWrapper internalWrapper = new();
+
+        //Track the currently wrapper experience
         public static Wrapper? CurrentWrapper;
         private static bool alreadyCollecting = false;
 
@@ -36,7 +41,7 @@ namespace Station
         {
             ParentPipeServer.Close();
             CurrentWrapper?.StopCurrentProcess();
-            SessionController.endVRSession();
+            SessionController.EndVRSession();
         }
 
         /// <summary>
@@ -74,7 +79,6 @@ namespace Station
         /// Cycle through the different wrappers and collect all the applications installed. Do
         /// not attempt to collect if already part way through.
         /// </summary>
-        /// <returns></returns>
         private void CollectAllApplications()
         {
             if (alreadyCollecting)
@@ -114,6 +118,35 @@ namespace Station
         }
 
         /// <summary>
+        /// Cycle through the different wrappers and collect all the header images that are requested. Each 
+        /// experience requested will be queued up and sent one at a time.
+        /// </summary>
+        private void CollectHeaderImages(List<string> list)
+        {
+            foreach (string application in list)
+            {
+                //[0]-type, [1]-ID, [2]-name
+                string[] appTokens = application.Split('|');
+
+                switch(appTokens[0])
+                {
+                    case "Custom":
+                        customWrapper.CollectHeaderImage(appTokens[2]);
+                        break;
+                    case "Steam":
+                        LogHandler("CollectHeaderImages not implemented for type: Steam.");
+                        break;
+                    case "Vive":
+                        LogHandler("CollectHeaderImages not implemented for type: Vive.");
+                        break;
+                    default:
+                        LogHandler($"Unknown actionspace (CollectHeaderImages): {appTokens[0]}");
+                        break;
+                }
+            }
+        }
+
+        /// <summary>
         /// Load the collected applications into the local storage list to determine start processes based
         /// on the ID's saved.
         /// </summary>
@@ -138,10 +171,10 @@ namespace Station
             switch (action)
             {
                 case "Restart":
-                    SessionController.restartVRSession();
+                    SessionController.RestartVRSession();
                     break;
                 case "End":
-                    SessionController.endVRSession();
+                    SessionController.EndVRSession();
                     break;
                 default:
                     break;
@@ -285,6 +318,30 @@ namespace Station
         }
 
         /// <summary>
+        /// Manage the internal wrapper, coordinate the running, stopping or other functions that
+        /// relate to executables that are not experiences.
+        /// </summary>
+        /// <param name="message">A string of actions separated by ':'</param>
+        private void HandleInternalExecutable(string message)
+        {
+            //[0] - action to take, [1] - executable path
+            string[] messageTokens = message.Split(":");
+
+            switch(messageTokens[0])
+            {
+                case "Start":
+                    internalWrapper.WrapProcess(messageTokens[1]);
+                    break;
+                case "Stop":
+                    internalWrapper.StopAProcess(messageTokens[1]);
+                    break;
+                default:
+                    LogHandler($"Unknown actionspace (HandleInternalExecutable): {messageTokens[0]}");
+                    break;
+            }
+        }
+
+        /// <summary>
         /// Handle an incoming action, this may be from the LeadMe Station application
         /// </summary>
         /// <param name="type">A string representing the type of action to take</param>
@@ -299,6 +356,9 @@ namespace Station
             {
                 case "CollectApplications":
                     Task.Factory.StartNew(() => CollectAllApplications());
+                    break;
+                case "CollectHeaderImages":
+                    Task.Factory.StartNew(() => CollectHeaderImages(message.Split('/').ToList()));
                     break;
                 case "Session":
                     SessionControl(message);
@@ -318,8 +378,11 @@ namespace Station
                 case "Stop":
                     StopAProcess();
                     break;
+                case "Internal":
+                    HandleInternalExecutable(message);
+                    break;
                 default:
-                    LogHandler($"Unknown actionspace: {type}");
+                    LogHandler($"Unknown actionspace (ActionHandler): {type}");
                     break;
             }
         }

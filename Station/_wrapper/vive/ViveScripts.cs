@@ -46,7 +46,7 @@ namespace Station
 
                 if (WrapperMonitoringThread.viveStatus.Contains("Terminated"))
                 {
-                    SessionController.startVRSession(type);
+                    SessionController.StartVRSession(type);
                     SessionController.PassStationMessage($"ApplicationUpdate,Starting VR Session...");
 
                     await Task.Delay(5000);

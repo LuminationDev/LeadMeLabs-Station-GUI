@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
@@ -10,21 +11,27 @@ using System.Threading.Tasks;
 // communication is established.
 namespace Station
 {
-    public class SocketClient
+    public class SocketImage
     {
         /// <summary>
-        /// A message that is to be sent to the android tablet's server.
+        /// The name of the file as to be saved on the NUC.
+        /// </summary>
+        private string name = "";
+
+        /// <summary>
+        /// A file path of an image to be sent to the NUC.
         /// </summery>
-        private string message = "";
+        private string filePath = "";
 
         private TcpClient? client;
 
         //Timeout for the socket connection in seconds
         private int timeOut = 1;
 
-        public SocketClient(string message)
+        public SocketImage(string name, string filePath)
         {
-            this.message = message;
+            this.name = $"{name}_header.jpg";
+            this.filePath = filePath;
         }
 
         /// <summary>
@@ -73,11 +80,7 @@ namespace Station
                 {
                     tokenSource.Cancel();
                     Console.WriteLine("Socket timeout: " + Manager.remoteEndPoint.Address);
-                    if (NotifyIconWrapper.Instance != null) NotifyIconWrapper.Instance.ChangeIcon("offline");
                     throw new SocketException();
-                } else
-                {
-                    if (NotifyIconWrapper.Instance != null) NotifyIconWrapper.Instance.ChangeIcon("online");
                 }
 
                 // Connect the socket to the remote endpoint. Catch any errors.
@@ -91,13 +94,8 @@ namespace Station
                     // Get a client stream for reading and writing.
                     NetworkStream stream = client.GetStream();
 
-                    Logger.WriteLog($"Socket connected to {client.Client.RemoteEndPoint}", MockConsole.LogLevel.Debug, writeToLog);
-
-                    // Translate the passed message into ASCII and store it as a Byte array.
-                    byte[] data = System.Text.Encoding.ASCII.GetBytes(this.message);
-
-                    // Construct and send the header first
-                    string headerMessageType = "text";
+                    // Construct and send the header
+                    string headerMessageType = "image";
                     byte[] headerMessageTypeBytes = System.Text.Encoding.UTF8.GetBytes(headerMessageType);
 
                     // Convert the header to network byte order
@@ -106,17 +104,26 @@ namespace Station
                     byte[] headerToSendBytes = headerLengthBytes.Concat(headerMessageTypeBytes).ToArray();
                     stream.Write(headerToSendBytes, 0, headerToSendBytes.Length);
 
-                    // Convert the data to network byte order
-                    int dataLength = IPAddress.HostToNetworkOrder(data.Length);
-                    byte[] lengthBytes = BitConverter.GetBytes(dataLength);
-                    byte[] dataToSendBytes = lengthBytes.Concat(data).ToArray();
+                    // Send the file name second
+                    string fileName = name;
+                    byte[] fileNameBytes = System.Text.Encoding.UTF8.GetBytes(fileName);
+                    stream.Write(BitConverter.GetBytes(fileNameBytes.Length), 0, 4);
+                    stream.Write(fileNameBytes, 0, fileNameBytes.Length);
+
+                    Logger.WriteLog($"Socket connected to {client.Client.RemoteEndPoint}", MockConsole.LogLevel.Debug, writeToLog);
+
+                    // Turn the image into a data byte stream and send the image data
+                    FileStream fs = new FileStream(filePath, FileMode.Open, FileAccess.Read);
+                    byte[] buffer = new byte[fs.Length];
+                    fs.Read(buffer, 0, (int)fs.Length);
 
                     // Send the message to the connected TcpServer.
-                    stream.Write(data, 0, data.Length);
+                    stream.Write(buffer, 0, (int)fs.Length);
 
-                    Logger.WriteLog($"Sent: {message}", MockConsole.LogLevel.Normal, writeToLog);
+                    Logger.WriteLog($"Sent image: {filePath}", MockConsole.LogLevel.Normal, writeToLog);
 
                     // Close everything.
+                    fs.Close();
                     stream.Close();
                     client.Close();
                 }

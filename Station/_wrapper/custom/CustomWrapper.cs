@@ -11,11 +11,46 @@ namespace Station
     {
         public static string wrapperType = "Custom";
         private static Process? currentProcess;
-        private static string? gameName = null;
+        private static string? experienceName = null;
 
         public List<string>? CollectApplications()
         {
             return CustomScripts.loadAvailableGames();
+        }
+
+        public void CollectHeaderImage(string experienceName)
+        {
+            Task.Factory.StartNew(() =>
+            {
+                if (CommandLine.stationLocation == null)
+                {
+                    MockConsole.WriteLine($"Station working directory not found while searching for header file", MockConsole.LogLevel.Error);
+                    SessionController.PassStationMessage($"StationError,Station working directory not found while searching for header file.");
+
+                    Manager.sendResponse("Android", "Station", $"ThumbnailError:{experienceName}");
+                    return;
+                }
+
+                //Find the header file
+                string filePath = Path.GetFullPath(Path.Combine(CommandLine.stationLocation, @"..\..", $"leadme_apps\\{experienceName}\\header.jpg"));
+
+                if (!File.Exists(filePath))
+                {
+                    MockConsole.WriteLine($"File not found:{filePath}", MockConsole.LogLevel.Error);
+                    SessionController.PassStationMessage($"StationError,File not found:{filePath}");
+                    Manager.sendResponse("Android", "Station", $"ThumbnailError:{experienceName}");
+                    return;
+                }
+
+                //Add the header image to the sending image queue through action transformation
+                SocketImage socketImage = new(experienceName, filePath);
+                Action sendImage = new(() => socketImage.send());
+
+                //Queue the send function for invoking
+                TaskQueue.Queue(false, sendImage);
+
+                MockConsole.WriteLine($"Thumbnail for experience: {experienceName} now queued for transfer.", MockConsole.LogLevel.Error);
+            });
         }
 
         public void PassMessageToProcess(string message)
@@ -47,7 +82,7 @@ namespace Station
                     return;
                 }
 
-                gameName = processName;
+                experienceName = processName;
 
                 currentProcess = new Process();
                 currentProcess.StartInfo.FileName = filePath;
@@ -60,7 +95,7 @@ namespace Station
         /// <summary>
         /// Find the active process that has been launched.
         /// </summary>
-        public void FindCurrentProcess()
+        private void FindCurrentProcess()
         {
             int attempts = 0; //Track the loop for finding child processes
 
@@ -74,9 +109,9 @@ namespace Station
             }
             currentProcess = child;
 
-            if (child != null && currentProcess != null && gameName != null)
+            if (child != null && currentProcess != null && experienceName != null)
             {
-                UIUpdater.UpdateProcess(gameName);
+                UIUpdater.UpdateProcess(experienceName);
                 UIUpdater.UpdateStatus("Running...");
 
                 SessionController.PassStationMessage($"ApplicationUpdate,{currentProcess?.MainWindowTitle}/{currentProcess?.Id}");
@@ -88,7 +123,7 @@ namespace Station
             {
                 StopCurrentProcess();
                 UIUpdater.ResetUIDisplay();
-                SessionController.PassStationMessage($"MessageToAndroid,GameLaunchFailed:{gameName}");
+                SessionController.PassStationMessage($"MessageToAndroid,GameLaunchFailed:{experienceName}");
             }
         }
 
@@ -104,7 +139,7 @@ namespace Station
             foreach (var proc in processes)
             {
                 //Get the steam process name from the CommandLine function and compare here instead of removing any external child processes
-                if (proc.MainWindowTitle == gameName)
+                if (proc.MainWindowTitle == experienceName)
                 {
                     MockConsole.WriteLine($"Application found: {proc.MainWindowTitle}/{proc.Id}", MockConsole.LogLevel.Debug);
 
@@ -155,7 +190,12 @@ namespace Station
 
         public void RestartCurrentProcess()
         {
-            throw new NotImplementedException();
+            if (currentProcess != null && experienceName != null)
+            {
+                currentProcess.Kill(true);
+                Task.Delay(3000).Wait();
+                WrapProcess(experienceName);
+            }
         }
 
         public async void RestartCurrentSession()

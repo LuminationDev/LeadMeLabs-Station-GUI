@@ -7,6 +7,7 @@
 	<UseWindowsForms>true</UseWindowsForms>
 	<Nullable>enable</Nullable>
 	<ApplicationIcon>./assets/icon.ico</ApplicationIcon>
+	<Configurations>Debug;Release;DevDebug;DevRelease</Configurations>
   </PropertyGroup>
 
   <ItemGroup>
@@ -21,7 +22,6 @@
     <None Remove="_batch\LeadMeLabs-SoftwareChecker.pdb" />
     <None Remove="_batch\LeadMeLabs-SoftwareChecker.runtimeconfig.json" />
     <None Remove="_config\base_config.env" />
-    <None Remove="_config\config.env" />
     <None Remove="_config\config.txt" />
     <None Remove="_logs\placeholder.txt" />
   </ItemGroup>
@@ -55,9 +55,6 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
     <Content Include="_config\base_config.env">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="_config\config.env">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
     <Content Include="_config\config.txt">

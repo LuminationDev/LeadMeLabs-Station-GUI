@@ -16,6 +16,7 @@ namespace Station
         /// </summary>
         public enum LogLevel
         {
+            Off,
             Error,
             Normal,
             Debug,
@@ -25,7 +26,7 @@ namespace Station
         private static string _textstr = "";
         private static int _lineCount = 0;
         private static int _lineLimit = 250;
-        public static LogLevel _logLevel = LogLevel.Normal;
+        public static LogLevel _logLevel = LogLevel.Off;
 
         /// <summary>
         /// Cycle through the Loglevels, if it has reach the max (Verbose) then reset
@@ -35,7 +36,7 @@ namespace Station
         {
             if (_logLevel == LogLevel.Verbose)
             {
-                _logLevel = LogLevel.Error;
+                _logLevel = LogLevel.Off;
             }
             else
             {
@@ -77,14 +78,17 @@ namespace Station
         [MethodImpl(MethodImplOptions.Synchronized)]
         public static void WriteLine(string message)
         {
-            Application.Current.Dispatcher.Invoke(delegate
+            if (_logLevel != LogLevel.Off)
             {
-                if (MainWindow.console == null) return;
+                Application.Current.Dispatcher.Invoke(delegate
+                {
+                    if (MainWindow.console == null) return;
 
-                Textstr = Textstr + DateStamp() + message + "\n";
-                MainWindow.console.Text = TrimConsole();
-                _lineCount++;
-            });
+                    Textstr = Textstr + DateStamp() + message + "\n";
+                    MainWindow.console.Text = TrimConsole();
+                    _lineCount++;
+                });
+            }
         }
 
         /// <summary>
@@ -95,10 +99,10 @@ namespace Station
         [MethodImpl(MethodImplOptions.Synchronized)]
         public static void WriteLine(string message, LogLevel level)
         {
-            try
+            if (level <= _logLevel && _logLevel != LogLevel.Off)
             {
-                if (level <= _logLevel)
-                {
+                try
+                {               
                     Application.Current?.Dispatcher.Invoke(delegate
                     {
                         if (MainWindow.console == null) return;
@@ -108,10 +112,10 @@ namespace Station
                         _lineCount++;
                     });
                 }
-            }
-            catch (Exception ex)
-            {
-                Trace.WriteLine(ex);
+                catch (Exception ex)
+                {
+                    Trace.WriteLine(ex);
+                }
             }
         }
 
