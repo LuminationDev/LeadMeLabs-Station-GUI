@@ -33,9 +33,15 @@ namespace Station
             throw new NotImplementedException();
         }
 
-        public void WrapProcess(string appID, string? launchParameters = null)
+        public void WrapProcess(Experience experience)
         {
-            SteamScripts.lastAppId = appID;
+            if (experience.ID == null)
+            {
+                SessionController.PassStationMessage($"MessageToAndroid,GameLaunchFailed:Unknown Experience");
+                return;
+            };
+
+            SteamScripts.lastApp = experience;
             GetGameProcessName();
 
             MockConsole.WriteLine($"Wrapping: {experienceName}", MockConsole.LogLevel.Debug);
@@ -53,13 +59,13 @@ namespace Station
             {
                 currentProcess = new Process();
                 currentProcess.StartInfo.FileName = SessionController.steam;
-                currentProcess.StartInfo.Arguments = launch_params + appID;
+                currentProcess.StartInfo.Arguments = launch_params + experience.ID;
 
                 //Add any extra launch parameters
-                if (launchParameters != null)
+                if (experience.Parameters != null)
                 {
                     //Include a space before added more
-                    currentProcess.StartInfo.Arguments += $" {launchParameters}";
+                    currentProcess.StartInfo.Arguments += $" {experience.Parameters}";
                 }
 
                 currentProcess.Start();
@@ -74,10 +80,10 @@ namespace Station
         /// </summary>
         private void GetGameProcessName()
         {
-            string fileLocation = "S:\\SteamLibrary\\steamapps\\appmanifest_" + SteamScripts.lastAppId + ".acf";
+            string fileLocation = "S:\\SteamLibrary\\steamapps\\appmanifest_" + SteamScripts.lastApp.ID + ".acf";
             if (!File.Exists(fileLocation))
             {
-                fileLocation = "C:\\Program Files (x86)\\Steam\\steamapps\\appmanifest_" + SteamScripts.lastAppId + ".acf";
+                fileLocation = "C:\\Program Files (x86)\\Steam\\steamapps\\appmanifest_" + SteamScripts.lastApp.ID + ".acf";
                 if (!File.Exists(fileLocation))
                 {
                     launchingExperience = false;
@@ -212,7 +218,7 @@ namespace Station
             {
                 currentProcess.Kill(true);
                 Task.Delay(3000).Wait();
-                WrapProcess(SteamScripts.lastAppId);
+                WrapProcess(SteamScripts.lastApp);
             }
             SteamScripts.popupDetect = false;
         }

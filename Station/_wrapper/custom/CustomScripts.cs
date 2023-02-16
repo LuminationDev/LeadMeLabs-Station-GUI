@@ -41,7 +41,10 @@ namespace Station
             }
 
             List<string> apps = new List<string>();
-            string manifestPath = Path.GetFullPath(Path.Combine(CommandLine.stationLocation, @"..", "manifest.json"));
+            //string manifestPath = Path.GetFullPath(Path.Combine(CommandLine.stationLocation, @"..", "manifest.json"));
+
+            //TODO USED FOR TESTING PURPOSES ONLY
+            string manifestPath = Path.GetFullPath(Path.Combine(@"C:\Users\ecoad\Projects\leadme_apps", "manifest.json"));
 
             if(!File.Exists(manifestPath))
             {
@@ -82,7 +85,14 @@ namespace Station
                         }
                     }
 
-                    WrapperManager.StoreApplication(item.type.ToString(), item.id.ToString(), item.name.ToString(), parameters);
+                    //Check if there is an alternate path (this is for imported experiences in the launcher)
+                    string? altPath = null;
+                    if(item.AltPath != null)
+                    {
+                        altPath = item.AltPath.ToString();
+                    }
+
+                    WrapperManager.StoreApplication(item.type.ToString(), item.id.ToString(), item.name.ToString(), parameters, altPath);
                     apps.Add(application);
                 }
             }

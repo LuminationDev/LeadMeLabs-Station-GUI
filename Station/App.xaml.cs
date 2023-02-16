@@ -26,7 +26,7 @@ namespace Station
             currentDomain.ProcessExit += ProcessExitHandler;
 
 #if !DEVDEBUG && !DEVRELEASE
-            initSentry();
+            //initSentry();
 #endif
             Manager.startProgram();
         }

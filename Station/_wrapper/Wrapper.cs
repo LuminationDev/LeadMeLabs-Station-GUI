@@ -2,6 +2,34 @@
 
 namespace Station
 {
+    public struct Experience
+    {
+        public string? Type { get; set; }
+        public string? ID { get; set; }
+        public string? Name { get; set; }
+        public string? Parameters { get; set; }
+        public string? AltPath { get; set; }
+
+        public Experience(string? Type, string? ID, string? Name, string? Parameters, string? AltPath)
+        {
+            this.Type = Type;
+            this.ID = ID;
+            this.Name = Name;
+            this.Parameters = Parameters;
+            this.AltPath = AltPath;
+        }
+
+        /// <summary>
+        /// Determine if the experience instance is just a default constructor that contains all
+        /// null values.
+        /// </summary>
+        /// <returns>A bool if any of the key variables are null.</returns>
+        public bool IsNull()
+        {
+            return (Type == null || ID == null || Name == null);
+        }
+    }
+
     public interface Wrapper
     {
         /// <summary>
@@ -26,9 +54,8 @@ namespace Station
         /// <summary>
         /// Start the supplied process and maintain a connection through the current process variable.
         /// </summary>
-        /// <param name="processName">A string representing either an experience name or id.</param>
-        /// <param name="launchParameters">A string of parameters that will be added to the process arguments on startup.</param>
-        void WrapProcess(string processName, string? launchParameters);
+        /// <param name="experience">A custom struct that contains all the information of an experience.</param>
+        void WrapProcess(Experience experience);
 
         /// <summary>
         /// Begin a new task with the purpose of detecting if the current process has been exited.

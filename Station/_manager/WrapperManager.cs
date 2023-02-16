@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using leadme_api;
@@ -21,7 +22,7 @@ namespace Station
         private static bool alreadyCollecting = false;
 
         //Store the list of applications (key = ID: [[0] = wrapper type, [1] = application name, [2] = launch params (nullable)])
-        private readonly static Dictionary<int, List<string>> applicationList = new();
+        private readonly static Dictionary<int, Experience> applicationList = new();
 
         /// <summary>
         /// Open the pipe server for message to and from external applications (Steam, Custom, etc..) and setup
@@ -125,16 +126,9 @@ namespace Station
         /// <param name="id">A string of the unique ID of an applicaiton</param>
         /// <param name="name">A string representing the Name of the application, this is what will appear on the LeadMe Tablet</param>
         /// <param name="launchParameters">A stringified list of any parameters required at launch.</param>
-        public static void StoreApplication(string wrapperType, string id, string name, string? launchParameters = null)
+        public static void StoreApplication(string wrapperType, string id, string name, string? launchParameters = null, string? altPath = null)
         {
-            if(launchParameters != null)
-            {
-                applicationList.TryAdd(int.Parse(id), new List<string> { wrapperType, name, launchParameters });
-            } 
-            else
-            {
-                applicationList.TryAdd(int.Parse(id), new List<string> { wrapperType, name });
-            }
+            applicationList.TryAdd(int.Parse(id), new Experience(wrapperType, id, name, launchParameters, altPath));
         }
 
         /// <summary>
@@ -193,15 +187,21 @@ namespace Station
         {
             //Get the type from the application dictionary
             //entry [application type, application name, application launch parameters]
-            List<string>? entry = applicationList.GetValueOrDefault(int.Parse(appID));
-            if (entry == null)
+            Experience experience = applicationList.GetValueOrDefault(int.Parse(appID));
+            if (experience.IsNull())
             {
                 SessionController.PassStationMessage($"No application found: {appID}");
                 return;
             }
 
+            if(experience.Type == null)
+            {
+                SessionController.PassStationMessage($"No wrapper associated with experience {appID}.");
+                return;
+            }
+
             //Determine the wrapper to use
-            LoadWrapper(entry[0]);
+            LoadWrapper(experience.Type);
             if (CurrentWrapper == null)
             {
                 SessionController.PassStationMessage("No process wrapper created.");
@@ -216,13 +216,13 @@ namespace Station
             //Pass in the launcher parameters if there are any
             Task.Factory.StartNew(() =>
             {
-                switch (entry[0])
+                switch (experience.Type)
                 {
                     case "Custom":
-                        CurrentWrapper.WrapProcess(entry[1], entry[2] ?? null);
+                        CurrentWrapper.WrapProcess(experience);
                         break;
                     case "Steam":
-                        CurrentWrapper.WrapProcess(appID, entry[2] ?? null);
+                        CurrentWrapper.WrapProcess(experience);
                         break;
                     case "Vive":
                         throw new NotImplementedException();
@@ -332,13 +332,16 @@ namespace Station
             //[0] - action to take, [1] - executable path
             string[] messageTokens = message.Split(":");
 
+            //Create a temporary Experience struct to hold the information
+            Experience experience = new("Internal", "NA", Path.GetFileNameWithoutExtension(messageTokens[1]), null, messageTokens[1]);
+
             switch(messageTokens[0])
             {
                 case "Start":
-                    internalWrapper.WrapProcess(messageTokens[1]);
+                    internalWrapper.WrapProcess(experience);
                     break;
                 case "Stop":
-                    internalWrapper.StopAProcess(messageTokens[1]);
+                    internalWrapper.StopAProcess(experience);
                     break;
                 default:
                     LogHandler($"Unknown actionspace (HandleInternalExecutable): {messageTokens[0]}");
