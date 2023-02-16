@@ -63,7 +63,7 @@ namespace Station
             });
         }
 
-        public void WrapProcess(string processName)
+        public void WrapProcess(string processName, string? launchParameters = null)
         {
             if(CommandLine.stationLocation == null)
             {
@@ -86,6 +86,12 @@ namespace Station
 
                 currentProcess = new Process();
                 currentProcess.StartInfo.FileName = filePath;
+
+                if (launchParameters != null)
+                {
+                    currentProcess.StartInfo.Arguments = launchParameters;
+                }
+
                 currentProcess.Start();
 
                 FindCurrentProcess();
@@ -93,7 +99,8 @@ namespace Station
         }
 
         /// <summary>
-        /// Find the active process that has been launched.
+        /// Find the active process that has been launched. This may have to loop if the main experience is
+        /// openning accompanying software such as SteamVR. 
         /// </summary>
         private void FindCurrentProcess()
         {

@@ -21,7 +21,7 @@ namespace Station
             throw new NotImplementedException();
         }
 
-        public void WrapProcess(string processName)
+        public void WrapProcess(string processName, string? launchParameters = null)
         {
             throw new NotImplementedException();
         }

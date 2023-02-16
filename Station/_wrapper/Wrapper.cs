@@ -26,7 +26,9 @@ namespace Station
         /// <summary>
         /// Start the supplied process and maintain a connection through the current process variable.
         /// </summary>
-        void WrapProcess(string processName);
+        /// <param name="processName">A string representing either an experience name or id.</param>
+        /// <param name="launchParameters">A string of parameters that will be added to the process arguments on startup.</param>
+        void WrapProcess(string processName, string? launchParameters);
 
         /// <summary>
         /// Begin a new task with the purpose of detecting if the current process has been exited.

@@ -26,7 +26,7 @@ namespace Station
         private static string _textstr = "";
         private static int _lineCount = 0;
         private static int _lineLimit = 250;
-        public static LogLevel _logLevel = LogLevel.Off;
+        public static LogLevel _logLevel = LogLevel.Normal;
 
         /// <summary>
         /// Cycle through the Loglevels, if it has reach the max (Verbose) then reset

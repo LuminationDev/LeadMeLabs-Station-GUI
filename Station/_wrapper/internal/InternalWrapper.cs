@@ -27,7 +27,7 @@ namespace Station
             throw new NotImplementedException();
         }
 
-        public void WrapProcess(string processPath)
+        public void WrapProcess(string processPath, string? launchParameters = null)
         {
             Task.Factory.StartNew(() =>
             {
@@ -41,6 +41,12 @@ namespace Station
 
                 Process currentProcess = new Process();
                 currentProcess.StartInfo.FileName = processPath;
+
+                if (launchParameters != null)
+                {
+                    currentProcess.StartInfo.Arguments = launchParameters;
+                }
+
                 currentProcess.Start();
 
                 InternalProcesses.Add(key, currentProcess);

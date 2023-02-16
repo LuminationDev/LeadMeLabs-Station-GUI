@@ -33,7 +33,7 @@ namespace Station
             throw new NotImplementedException();
         }
 
-        public void WrapProcess(string appID)
+        public void WrapProcess(string appID, string? launchParameters = null)
         {
             SteamScripts.lastAppId = appID;
             GetGameProcessName();
@@ -54,6 +54,14 @@ namespace Station
                 currentProcess = new Process();
                 currentProcess.StartInfo.FileName = SessionController.steam;
                 currentProcess.StartInfo.Arguments = launch_params + appID;
+
+                //Add any extra launch parameters
+                if (launchParameters != null)
+                {
+                    //Include a space before added more
+                    currentProcess.StartInfo.Arguments += $" {launchParameters}";
+                }
+
                 currentProcess.Start();
 
                 FindCurrentProcess();

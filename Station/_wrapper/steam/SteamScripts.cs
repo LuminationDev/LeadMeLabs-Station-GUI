@@ -123,6 +123,9 @@ namespace Station
                                 }
                             }
                             string application = $"{SteamWrapper.wrapperType}|{ID}|{name}";
+
+                            //item.parameters may be null here
+                            WrapperManager.StoreApplication(SteamWrapper.wrapperType, ID, name);
                             apps.Add(application);
                         }
                     }

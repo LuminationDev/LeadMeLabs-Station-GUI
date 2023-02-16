@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -26,6 +27,11 @@ namespace Station
             return availableGames;
         }
 
+        /// <summary>
+        /// Read the manifest.json that has been created by the launcher program. Here each application has
+        /// a specific entry contain it's ID, name and any launch parameters.
+        /// </summary>
+        /// <returns>A list of strings that represent all installed Custom experiences on a Station.</returns>
         public static List<string>? loadAvailableGames()
         {
             if (CommandLine.stationLocation == null)
@@ -56,18 +62,32 @@ namespace Station
 
                 foreach (var item in array)
                 {
-                    Console.WriteLine("{0} {1} {2}", item.type, item.id, item.name);
-
                     //Do not collect the Station or NUC application from the manifest file.
-                    if (item.type != "LeadMe")
+                    if (item.type == "LeadMe") continue;
+
+                    //Basic application requirements
+                    string application = $"{item.type}|{item.id}|{item.name}";
+
+                    //Determine if there are launch parameters, if so create a passable string for a new process function
+                    string? parameters = null;
+                    if (item.parameters != null)
                     {
-                        string application = $"{item.type}|{item.id}|{item.name}";
-                        apps.Add(application);
+                        if (item.parameters is JObject input)
+                        {
+                            //Only require the Value, key is simply used for human reference within the manifest.json
+                            foreach (var x in input)
+                            {
+                                parameters += $"{x.Value} ";
+                            }
+                        }
                     }
+
+                    WrapperManager.StoreApplication(item.type.ToString(), item.id.ToString(), item.name.ToString(), parameters);
+                    apps.Add(application);
                 }
             }
 
-            availableGames = String.Join('/', apps);
+            availableGames = string.Join('/', apps);
             return apps;
         }
     }
