@@ -2,6 +2,10 @@
 
 namespace Station
 {
+    /// <summary>
+    /// Encapsulate an experience regardless of wrapper type to hold all relative information in
+    /// a singular object.
+    /// </summary>
     public struct Experience
     {
         public string? Type { get; set; }

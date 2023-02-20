@@ -58,13 +58,13 @@ namespace Station
             switch (experienceType)
             {
                 case "Custom":
-                    MockConsole.WriteLine("startVRSession not implemented for type: Custom.");
+                    MockConsole.WriteLine("startVRSession not implemented for type: Custom.", MockConsole.LogLevel.Error);
                     break;
                 case "Steam":
                     vrHeadset?.StartVrSession();
                     break;
                 case "Vive":
-                    MockConsole.WriteLine("startVRSession not implemented for type: Vive.");
+                    MockConsole.WriteLine("startVRSession not implemented for type: Vive.", MockConsole.LogLevel.Error);
                     break;
                 default:
                     break;
@@ -85,16 +85,16 @@ namespace Station
             switch (experienceType)
             {
                 case "Custom":
-                    MockConsole.WriteLine("restartVRSession not implemented for type: Custom.");
+                    MockConsole.WriteLine("restartVRSession not implemented for type: Custom.", MockConsole.LogLevel.Error);
                     break;
                 case "Steam":
                     ViveScripts.stopMonitoring();
                     break;
                 case "Vive":
-                    MockConsole.WriteLine("restartVRSession not implemented for type: Vive.");
+                    MockConsole.WriteLine("restartVRSession not implemented for type: Vive.", MockConsole.LogLevel.Error);
                     break;
                 default:
-                    MockConsole.WriteLine("Wrapper: No experience type set.");
+                    MockConsole.WriteLine("Wrapper: No experience type set.", MockConsole.LogLevel.Error);
                     break;
             }
 
@@ -109,17 +109,17 @@ namespace Station
             switch (experienceType)
             {
                 case "Custom":
-                    MockConsole.WriteLine("endVRSession not implemented for type: Custom.");
+                    MockConsole.WriteLine("endVRSession not implemented for type: Custom.", MockConsole.LogLevel.Error);
                     break;
                 case "Steam":
                     ViveScripts.stopMonitoring();
                     CommandLine.queryVRProcesses(WrapperMonitoringThread.steamProcesses, true);
                     break;
                 case "Vive":
-                    MockConsole.WriteLine("endVRSession not implemented for type: Vive.");
+                    MockConsole.WriteLine("endVRSession not implemented for type: Vive.", MockConsole.LogLevel.Error);
                     break;
                 default:
-                    MockConsole.WriteLine("Wrapper: No experience type set.");
+                    MockConsole.WriteLine("Wrapper: No experience type set.", MockConsole.LogLevel.Error);
                     break;
             }
 
