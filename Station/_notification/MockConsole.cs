@@ -1,8 +1,8 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
 using System.Runtime.CompilerServices;
-using System.Text.RegularExpressions;
+using System.Text;
 using System.Windows;
 
 namespace Station
@@ -23,10 +23,9 @@ namespace Station
             Verbose
         }
 
-        private static string _textstr = "";
         private static int _lineCount = 0;
         private static int _lineLimit = 250;
-        public static LogLevel _logLevel = LogLevel.Off;
+        public static LogLevel _logLevel = LogLevel.Normal;
 
         /// <summary>
         /// Cycle through the Loglevels, if it has reach the max (Verbose) then reset
@@ -49,17 +48,7 @@ namespace Station
 
         //The functions below handle updating the mock console that is present within the MainWindow. This
         //proccess allows other parts of the project to display information to a user.
-        public static string Textstr
-        {
-            get
-            {
-                return _textstr;
-            }
-            set
-            {
-                _textstr = value;
-            }
-        }
+        public static LinkedList<string> Textstr = new();
 
         /// <summary>
         /// Clear the MockConsole of all previous messages. The cleared message will be printed regardless
@@ -67,11 +56,12 @@ namespace Station
         /// </summary>
         public static void clearConsole()
         {
-            Textstr = "";
+            Textstr.Clear();
             WriteLine("Cleared", LogLevel.Error);
         }
 
         /// <summary>
+        /// This is only to be used for the DLL library callback.
         /// Log a message to the mock console within the Station form, this does not take into account the current log level.
         /// </summary>
         /// <param name="message">A string to be printed to the console.</param>
@@ -84,7 +74,7 @@ namespace Station
                 {
                     if (MainWindow.console == null) return;
 
-                    Textstr = Textstr + DateStamp() + message + "\n";
+                    Textstr.AddLast(DateStamp() + message + "\n");
                     MainWindow.console.Text = TrimConsole();
                     _lineCount++;
                 });
@@ -107,7 +97,7 @@ namespace Station
                     {
                         if (MainWindow.console == null) return;
 
-                        Textstr = Textstr + DateStamp() + message + "\n";
+                        Textstr.AddLast(DateStamp() + message + "\n");
                         MainWindow.console.Text = TrimConsole();
                         _lineCount++;
                     });
@@ -133,11 +123,16 @@ namespace Station
             if (_lineCount >= _lineLimit)
             {
                 _lineCount--;
-                var lines = Regex.Split(Textstr, "\r\n|\r|\n").Skip(1);
-                return string.Join(Environment.NewLine, lines.ToArray());
+                Textstr.RemoveFirst();
             }
 
-            return Textstr;
+            StringBuilder sb = new StringBuilder();
+            foreach (string s in Textstr)
+            {
+                sb.Append(s);
+            }
+
+            return sb.ToString();
         }
     }
 }

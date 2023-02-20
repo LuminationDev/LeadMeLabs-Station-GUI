@@ -11,7 +11,7 @@ namespace Station
     {
         public static string wrapperType = "Custom";
         private static Process? currentProcess;
-        private static string? experienceName = null;
+        private static Experience lastExperience;
 
         public List<string>? CollectApplications()
         {
@@ -63,7 +63,7 @@ namespace Station
             });
         }
 
-        public void WrapProcess(string processName)
+        public void WrapProcess(Experience experience)
         {
             if(CommandLine.stationLocation == null)
             {
@@ -71,21 +71,37 @@ namespace Station
                 return;
             }
 
-            MockConsole.WriteLine($"Launching process: {processName}", MockConsole.LogLevel.Normal);
+            MockConsole.WriteLine($"Launching process: {experience.Name}", MockConsole.LogLevel.Normal);
             Task.Factory.StartNew(() =>
             {
-                //TODO Current the exe and folder need to be the same name
-                string filePath = Path.GetFullPath(Path.Combine(CommandLine.stationLocation, @"..\..", $"leadme_apps\\{processName}\\{processName}.exe"));
+                string filePath;
+
+                //The existance of an Alternate path means the experience has been imported through the launcher application
+                if (experience.AltPath != null)
+                {
+                    filePath = experience.AltPath;
+                }
+                else
+                {
+                    //TODO Currently the exe and folder need to be the same name
+                    filePath = Path.GetFullPath(Path.Combine(CommandLine.stationLocation, @"..\..", $"leadme_apps\\{experience.Name}\\{experience.Name}.exe"));
+                }
 
                 if(!File.Exists(filePath)) {
                     SessionController.PassStationMessage($"StationError,File not found:{filePath}");
                     return;
                 }
 
-                experienceName = processName;
+                lastExperience = experience;
 
                 currentProcess = new Process();
                 currentProcess.StartInfo.FileName = filePath;
+
+                if (experience.Parameters != null)
+                {
+                    currentProcess.StartInfo.Arguments = experience.Parameters;
+                }
+
                 currentProcess.Start();
 
                 FindCurrentProcess();
@@ -93,7 +109,8 @@ namespace Station
         }
 
         /// <summary>
-        /// Find the active process that has been launched.
+        /// Find the active process that has been launched. This may have to loop if the main experience is
+        /// openning accompanying software such as SteamVR. 
         /// </summary>
         private void FindCurrentProcess()
         {
@@ -109,9 +126,9 @@ namespace Station
             }
             currentProcess = child;
 
-            if (child != null && currentProcess != null && experienceName != null)
+            if (child != null && currentProcess != null && lastExperience.Name != null)
             {
-                UIUpdater.UpdateProcess(experienceName);
+                UIUpdater.UpdateProcess(lastExperience.Name);
                 UIUpdater.UpdateStatus("Running...");
 
                 SessionController.PassStationMessage($"ApplicationUpdate,{currentProcess?.MainWindowTitle}/{currentProcess?.Id}");
@@ -123,7 +140,7 @@ namespace Station
             {
                 StopCurrentProcess();
                 UIUpdater.ResetUIDisplay();
-                SessionController.PassStationMessage($"MessageToAndroid,GameLaunchFailed:{experienceName}");
+                SessionController.PassStationMessage($"MessageToAndroid,GameLaunchFailed:{lastExperience.Name}");
             }
         }
 
@@ -139,7 +156,7 @@ namespace Station
             foreach (var proc in processes)
             {
                 //Get the steam process name from the CommandLine function and compare here instead of removing any external child processes
-                if (proc.MainWindowTitle == experienceName)
+                if (proc.MainWindowTitle == lastExperience.Name)
                 {
                     MockConsole.WriteLine($"Application found: {proc.MainWindowTitle}/{proc.Id}", MockConsole.LogLevel.Debug);
 
@@ -190,11 +207,11 @@ namespace Station
 
         public void RestartCurrentProcess()
         {
-            if (currentProcess != null && experienceName != null)
+            if (currentProcess != null && !lastExperience.IsNull())
             {
                 currentProcess.Kill(true);
                 Task.Delay(3000).Wait();
-                WrapProcess(experienceName);
+                WrapProcess(lastExperience);
             }
         }
 

@@ -49,7 +49,7 @@ namespace Station
         {
             if (!File.Exists(filePath))
             {
-                MockConsole.WriteLine($"NUCError,Config file not found:{filePath}");
+                MockConsole.WriteLine($"Station Error,Config file not found:{filePath}", MockConsole.LogLevel.Error);
                 return;
             }
 

@@ -7,7 +7,6 @@
 	<UseWindowsForms>true</UseWindowsForms>
 	<Nullable>enable</Nullable>
 	<ApplicationIcon>./assets/icon.ico</ApplicationIcon>
-	<Configurations>Debug;Release;DevDebug;DevRelease</Configurations>
   </PropertyGroup>
 
   <ItemGroup>
@@ -22,6 +21,7 @@
     <None Remove="_batch\LeadMeLabs-SoftwareChecker.pdb" />
     <None Remove="_batch\LeadMeLabs-SoftwareChecker.runtimeconfig.json" />
     <None Remove="_config\base_config.env" />
+    <None Remove="_config\config.env" />
     <None Remove="_config\config.txt" />
     <None Remove="_logs\placeholder.txt" />
   </ItemGroup>
@@ -57,10 +57,10 @@
     <Content Include="_config\base_config.env">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Content Include="_config\config.txt">
+    <Content Include="_config\config.env">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Content Include="_logs\placeholder.txt">
+    <Content Include="_config\config.txt">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
@@ -69,7 +69,7 @@
 	<PackageReference Include="CommunityToolkit.Mvvm" Version="8.1.0" />
 	<PackageReference Include="Microsoft.Xaml.Behaviors.Wpf" Version="1.1.39" />
 	<PackageReference Include="Newtonsoft.Json" Version="13.0.2" />
-	<PackageReference Include="Sentry" Version="3.27.1" />
+	<PackageReference Include="Sentry" Version="3.28.1" />
 	<PackageReference Include="LibreHardwareMonitorLib" Version="0.9.1" />
 	<PackageReference Include="System.Management" Version="7.0.0" />
   </ItemGroup>

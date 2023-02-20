@@ -27,23 +27,31 @@ namespace Station
             throw new NotImplementedException();
         }
 
-        public void WrapProcess(string processPath)
+        public void WrapProcess(Experience experience)
         {
             Task.Factory.StartNew(() =>
             {
+                if (experience.Name == null || experience.AltPath == null) return;
+
+                string processPath = experience.AltPath;
+
                 if (!File.Exists(processPath))
                 {
                     SessionController.PassStationMessage($"StationError,File not found:{processPath}");
                     return;
                 }
 
-                string key = Path.GetFileNameWithoutExtension(processPath);
-
                 Process currentProcess = new Process();
                 currentProcess.StartInfo.FileName = processPath;
+
+                if (experience.Parameters != null)
+                {
+                    currentProcess.StartInfo.Arguments = experience.Parameters;
+                }
+
                 currentProcess.Start();
 
-                InternalProcesses.Add(key, currentProcess);
+                InternalProcesses.Add(experience.Name, currentProcess);
             });
         }
 
@@ -57,10 +65,12 @@ namespace Station
             throw new NotImplementedException();
         }
 
-        public void StopAProcess(string processPath)
+        public void StopAProcess(Experience experience)
         {
+            if (experience.Name == null) return;
+
             Process? runningProcess;
-            InternalProcesses.TryGetValue(processPath, out runningProcess);
+            InternalProcesses.TryGetValue(experience.Name, out runningProcess);
 
             if (runningProcess == null) return;
 

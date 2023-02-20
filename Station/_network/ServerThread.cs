@@ -81,7 +81,7 @@ namespace Station
 
             if (endPoint == null)
             {
-                MockConsole.WriteLine("Unknown server connection discarded.");
+                MockConsole.WriteLine("Unknown server connection discarded.", MockConsole.LogLevel.Debug);
                 return;
             }
 
