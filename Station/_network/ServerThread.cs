@@ -3,6 +3,7 @@ using System.Net;
 using System.Net.Sockets;
 using System.Text;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace Station
 {
@@ -27,7 +28,7 @@ namespace Station
         /// Start the TCP Listener to act as a server for the station. On initial conneciton, initialise the NUC enpoint.
         /// Any data receieved is passed back to the runScript function held in the Manager class.
         /// </summery>
-        public void run()
+        public async Task RunAsync()
         {
             CommandLine.getVolume();
 
@@ -45,13 +46,10 @@ namespace Station
                 while (true)
                 {
                     Logger.WriteLog("Waiting for a connection on: " + Manager.localEndPoint.Address + ":" + Manager.localEndPoint.Port, MockConsole.LogLevel.Debug, false);
-                    TcpClient clientConnection = server.AcceptTcpClient();
+                    TcpClient clientConnection = await server.AcceptTcpClientAsync();
 
                     //Start new thread so the server can continue straight away
-                    ThreadPool.QueueUserWorkItem(delegate
-                    {
-                        handleConnection(clientConnection);
-                    });
+                    _ = Task.Run(() => HandleConnectionAsync(clientConnection));
                 }
             }
             catch (SocketException e)
@@ -75,7 +73,7 @@ namespace Station
         /// separate form the server loop as it can be run on a new thread allowing the server to quickly process incoming messages.
         /// </summary>
         /// <param name="clientConnection">A TcpClient representing the latest connection information.</param>
-        private void handleConnection(TcpClient clientConnection)
+        private async Task HandleConnectionAsync(TcpClient clientConnection)
         {
             EndPoint? endPoint = clientConnection.Client.RemoteEndPoint;
 
@@ -90,14 +88,14 @@ namespace Station
                 NetworkStream stream = clientConnection.GetStream();
 
                 //Read the header to determine the incoming data
-                byte[] headerLengthBytes = new byte[4];
-                stream.Read(headerLengthBytes, 0, headerLengthBytes.Length);
-                int headerLength = BitConverter.ToInt32(headerLengthBytes, 0);
+                Memory<byte> headerLengthBytes = new byte[4];
+                await stream.ReadAsync(headerLengthBytes);
+                int headerLength = BitConverter.ToInt32(headerLengthBytes.Span);
 
                 // Read the header message type
-                byte[] headerMessageTypeBytes = new byte[headerLength];
-                stream.Read(headerMessageTypeBytes, 0, headerLength);
-                string headerMessageType = Encoding.UTF8.GetString(headerMessageTypeBytes);
+                Memory<byte> headerMessageTypeBytes = new byte[headerLength];
+                await stream.ReadAsync(headerMessageTypeBytes);
+                string headerMessageType = Encoding.UTF8.GetString(headerMessageTypeBytes.Span);
 
                 if (headerMessageType.Equals("text"))
                 {

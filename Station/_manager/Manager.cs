@@ -52,8 +52,8 @@ namespace Station
         /// </summary>
         public static void startProgram()
         {
-            MockConsole.clearConsole();
-            
+            MockConsole.ClearConsole();
+
             //Load the environment files, do not continue if file is incomplete
             if(DotEnv.Load())
             {
@@ -119,7 +119,7 @@ namespace Station
         public static void startServer()
         {
             server = new ServerThread();
-            serverThread = new Thread(server.run);
+            serverThread = new Thread(async () => await server.RunAsync());
             serverThread.Start();
         }
 

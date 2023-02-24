@@ -354,7 +354,6 @@ namespace Station
 
         ///Wrapper Specific Methods
 
-
         /// <summary>
         /// Used to interact with Steamcmd. Uses the Arguments parameter for issuing commands instead
         /// of the writeline funciton like in executeStationCommand. This way it can run multiple commands
@@ -374,7 +373,15 @@ namespace Station
             cmd.StartInfo.Arguments = "\"+force_install_dir \\\"C:/Program Files (x86)/Steam\\\"\" " + command;
             cmd.Start();
 
-            return outcome(cmd);
+            string? output = outcome(cmd);
+
+            if (output.Contains("Steam Guard code:"))
+            {
+                MockConsole.WriteLine("Steam Guard is not enabled for this account.");
+                return null;
+            }
+
+            return output;
         }
 
         /// <summary>

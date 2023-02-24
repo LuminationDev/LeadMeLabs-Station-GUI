@@ -1,9 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Runtime.CompilerServices;
-using System.Text;
-using System.Windows;
+using System.Collections.Concurrent;
+using System.Threading.Tasks;
 
 namespace Station
 {
@@ -48,15 +45,15 @@ namespace Station
 
         //The functions below handle updating the mock console that is present within the MainWindow. This
         //proccess allows other parts of the project to display information to a user.
-        public static LinkedList<string> Textstr = new();
+        public static ConcurrentQueue<string> _textQueue = new ConcurrentQueue<string>();
 
         /// <summary>
         /// Clear the MockConsole of all previous messages. The cleared message will be printed regardless
         /// of log level as to alert the user this is deliberate.
         /// </summary>
-        public static void clearConsole()
+        public static void ClearConsole()
         {
-            Textstr.Clear();
+            _textQueue = new ConcurrentQueue<string>();
             WriteLine("Cleared", LogLevel.Error);
         }
 
@@ -65,20 +62,15 @@ namespace Station
         /// Log a message to the mock console within the Station form, this does not take into account the current log level.
         /// </summary>
         /// <param name="message">A string to be printed to the console.</param>
-        [MethodImpl(MethodImplOptions.Synchronized)]
         public static void WriteLine(string message)
         {
-            if (_logLevel != LogLevel.Off)
+            if (_logLevel == LogLevel.Off) return;
+            Task.Run(() =>
             {
-                Application.Current.Dispatcher.Invoke(delegate
-                {
-                    if (MainWindow.console == null) return;
-
-                    Textstr.AddLast(DateStamp() + message + "\n");
-                    MainWindow.console.Text = TrimConsole();
-                    _lineCount++;
-                });
-            }
+                _textQueue.Enqueue(DateStamp() + message + "\n");
+                _lineCount++;
+                UpdateConsole();
+            });
         }
 
         /// <summary>
@@ -86,33 +78,42 @@ namespace Station
         /// </summary>
         /// <param name="message">A string to be printed to the console.</param>
         /// <param name="level">A Loglevel enum representing if it should be displayed at the current logging level.</param>
-        [MethodImpl(MethodImplOptions.Synchronized)]
         public static void WriteLine(string message, LogLevel level)
         {
-            if (level <= _logLevel && _logLevel != LogLevel.Off)
+            if (level > _logLevel || _logLevel == LogLevel.Off) return;
+            Task.Run(() =>
             {
-                try
-                {               
-                    Application.Current?.Dispatcher.Invoke(delegate
-                    {
-                        if (MainWindow.console == null) return;
-
-                        Textstr.AddLast(DateStamp() + message + "\n");
-                        MainWindow.console.Text = TrimConsole();
-                        _lineCount++;
-                    });
-                }
-                catch (Exception ex)
-                {
-                    Trace.WriteLine(ex);
-                }
-            }
+                _textQueue.Enqueue(DateStamp() + message + "\n");
+                _lineCount++;
+                UpdateConsole();
+            });
         }
 
         private static string DateStamp()
         {
             DateTime now = DateTime.Now;
-            return "[" + now.ToString("dd/MM") + " | " + now.ToString("hh:mm:ss") + "] ";
+            return $"[{now:dd/MM | hh:mm:ss}] ";
+        }
+
+        /// <summary>
+        /// Update the main console window, checking if the function has UI access or invoking 
+        /// the update asynchronously.
+        /// </summary>
+        private static async void UpdateConsole()
+        {
+            if (MainWindow.console == null) return;
+            if (MainWindow.console.Dispatcher.CheckAccess())
+            {
+                while (_textQueue.TryDequeue(out var line))
+                {
+                    MainWindow.console.Text += line;
+                }
+                MainWindow.console.Text = TrimConsole();
+            }
+            else
+            {
+                await MainWindow.console.Dispatcher.InvokeAsync(UpdateConsole);
+            }
         }
 
         /// <summary>
@@ -120,19 +121,16 @@ namespace Station
         /// </summary>
         private static string TrimConsole()
         {
+            if (MainWindow.console == null) return "";
             if (_lineCount >= _lineLimit)
             {
                 _lineCount--;
-                Textstr.RemoveFirst();
+                var lines = MainWindow.console.Text.Split('\n');
+                Array.Copy(lines, 1, lines, 0, lines.Length - 1);
+                MainWindow.console.Text = string.Join("\n", lines);
             }
 
-            StringBuilder sb = new StringBuilder();
-            foreach (string s in Textstr)
-            {
-                sb.Append(s);
-            }
-
-            return sb.ToString();
+            return MainWindow.console.Text;
         }
     }
 }

@@ -24,7 +24,7 @@ namespace Station
         /// <summary>
         /// Store the current experience type that is running.
         /// </summary>
-        private static string? experienceType = null;
+        public static string? experienceType = null;
 
         /// <summary>
         /// Read the store headset type from the config.env file and create an instance that 
