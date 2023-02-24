@@ -56,6 +56,19 @@ namespace Station
             //Close Steam if it is open
             CommandLine.queryVRProcesses(WrapperMonitoringThread.steamProcesses, true);
 
+            //Check if SteamCMD has been initialised
+#if DEBUG
+            string filePath = $@"C:\Users\{Environment.GetEnvironmentVariable("Directory")}\steamcmd\steamerrorreporter.exe";
+#else
+            string filePath = CommandLine.stationLocation + @"\external\steamcmd\steamerrorreporter.exe";
+#endif
+
+            if(!File.Exists(filePath))
+            {
+                MockConsole.WriteLine($"SteamCMD not initialised yet.", MockConsole.LogLevel.Error);
+                return null;
+            }
+
             string? steamResponse = CommandLine.executeSteamCommand(loginAnonymous + installed + quit);
             if(steamResponse == null)
             {

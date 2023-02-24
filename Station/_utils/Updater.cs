@@ -4,7 +4,7 @@ using System.IO;
 
 namespace Station
 {
-    static class Updater
+    public static class Updater
     {
         /// <summary>
         /// Print out the current production version of the application to a text file.

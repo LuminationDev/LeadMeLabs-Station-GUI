@@ -7,6 +7,7 @@
 	<UseWindowsForms>true</UseWindowsForms>
 	<Nullable>enable</Nullable>
 	<ApplicationIcon>./assets/icon.ico</ApplicationIcon>
+	<Configurations>Debug;Release;DevDebug;DevRelease</Configurations>
   </PropertyGroup>
 
   <ItemGroup>
@@ -23,6 +24,7 @@
     <None Remove="_config\base_config.env" />
     <None Remove="_config\config.env" />
     <None Remove="_config\config.txt" />
+    <None Remove="_logs\.gitkeep" />
     <None Remove="_logs\placeholder.txt" />
   </ItemGroup>
 
@@ -61,6 +63,9 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
     <Content Include="_config\config.txt">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="_logs\.gitkeep">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
   </ItemGroup>

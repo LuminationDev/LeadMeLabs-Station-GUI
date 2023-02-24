@@ -67,8 +67,13 @@ namespace Station
                 }
             }
 
-            float? temperature = Temperature.GetTemperature();
-            if (temperature > 90 && DateTime.Now > latestHighTemperatureWarning.AddMinutes(5))
+            float? temperature = 0;
+            if (DateTime.Now > latestHighTemperatureWarning.AddMinutes(5))
+            {
+                temperature = Temperature.GetTemperature();
+            }
+
+            if (temperature > 90)
             {
                 Manager.sendResponse("Android", "Station", "HighTemperature");
                 SentrySdk.CaptureMessage("High temperature detected (" + temperature + ") at: " + (Environment.GetEnvironmentVariable("LabLocation") ?? "Unknown"));

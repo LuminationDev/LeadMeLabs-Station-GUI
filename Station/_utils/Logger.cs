@@ -5,9 +5,9 @@ using System.Runtime.CompilerServices;
 
 namespace Station
 {
-    class Logger
+    public class Logger
     {
-        private static Queue<string> logQueue = new Queue<string>();
+        public static Queue<string> logQueue = new Queue<string>();
 
         [MethodImpl(MethodImplOptions.Synchronized)]
         public static void WriteLog<T>(T logMessage, MockConsole.LogLevel logLevel, bool writeToLogFile = true)
@@ -29,12 +29,22 @@ namespace Station
         [MethodImpl(MethodImplOptions.Synchronized)]
         public static void WorkQueue()
         {
-            using (StreamWriter w = File.AppendText("_logs/" + DateTime.Now.ToString("yyyy_MM_dd") + "_log.txt"))
+            string logFilePath = "_logs/" + DateTime.Now.ToString("yyyy_MM_dd") + "_log.txt";
+            if (Directory.Exists(Path.GetDirectoryName(logFilePath)))
             {
-                while (logQueue.Count > 0)
+                using (StreamWriter w = File.AppendText(logFilePath))
                 {
-                    w.WriteLine(logQueue.Dequeue());
+                    while (logQueue.Count > 0)
+                    {
+                        w.WriteLine(logQueue.Dequeue());
+                    }
                 }
+            }
+            else
+            {
+                //Clear the Queue as it will never Dequeue otherwise.
+                MockConsole.WriteLine("_logs/ cannot be found, please run from Launcher", MockConsole.LogLevel.Error);
+                logQueue.Clear();
             }
         }
     }
