@@ -181,7 +181,8 @@
                 BorderThickness="0"
                 HorizontalAlignment="Stretch"
                 VerticalAlignment="Stretch"
-                TextWrapping="Wrap">
+                TextWrapping="Wrap"
+                Text="{Binding ConsoleText}">
                 <bh:Interaction.Triggers>
                     <bh:EventTrigger EventName="TextChanged">
                         <bh:CallMethodAction MethodName="ScrollToEnd" TargetObject="{Binding ElementName=ConsoleScroll}"/>

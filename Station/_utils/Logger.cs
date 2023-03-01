@@ -7,6 +7,7 @@ namespace Station
 {
     public class Logger
     {
+        private static readonly string filePath = CommandLine.stationLocation + @"\_logs\";
         public static Queue<string> logQueue = new Queue<string>();
 
         [MethodImpl(MethodImplOptions.Synchronized)]
@@ -29,7 +30,7 @@ namespace Station
         [MethodImpl(MethodImplOptions.Synchronized)]
         public static void WorkQueue()
         {
-            string logFilePath = "_logs/" + DateTime.Now.ToString("yyyy_MM_dd") + "_log.txt";
+            string logFilePath = filePath + DateTime.Now.ToString("yyyy_MM_dd") + "_log.txt";
             if (Directory.Exists(Path.GetDirectoryName(logFilePath)))
             {
                 using (StreamWriter w = File.AppendText(logFilePath))

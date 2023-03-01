@@ -18,10 +18,14 @@ namespace Station
             return CustomScripts.loadAvailableGames();
         }
 
-        public void CollectHeaderImage(string experienceName)
+        public void CollectHeaderImage(string experienceID)
         {
             Task.Factory.StartNew(() =>
             {
+                WrapperManager.applicationList.TryGetValue(int.Parse(experienceID), out var experience);
+                string? experienceName = experience.Name;
+                string? altPath = experience.AltPath;
+
                 if (CommandLine.stationLocation == null)
                 {
                     MockConsole.WriteLine($"Station working directory not found while searching for header file", MockConsole.LogLevel.Error);
@@ -31,8 +35,16 @@ namespace Station
                     return;
                 }
 
-                //Find the header file
-                string filePath = Path.GetFullPath(Path.Combine(CommandLine.stationLocation, @"..\..", $"leadme_apps\\{experienceName}\\header.jpg"));
+                //Determine if it was imported or downloaded and find the header file
+                string filePath;
+                if (altPath != null)
+                {
+                    string parentFolder = CustomScripts.GetParentDirPath(altPath);
+                    filePath = parentFolder + @"\header.jpg";
+                } else
+                {
+                    filePath = Path.GetFullPath(Path.Combine(CommandLine.stationLocation, @"..\..", $"leadme_apps\\{experienceName}\\header.jpg"));
+                }
 
                 if (!File.Exists(filePath))
                 {

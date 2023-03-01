@@ -22,7 +22,7 @@ namespace Station
         private static bool alreadyCollecting = false;
 
         //Store the list of applications (key = ID: [[0] = wrapper type, [1] = application name, [2] = launch params (nullable)])
-        private readonly static Dictionary<int, Experience> applicationList = new();
+        public readonly static Dictionary<int, Experience> applicationList = new();
 
         /// <summary>
         /// Open the pipe server for message to and from external applications (Steam, Custom, etc..) and setup
@@ -128,6 +128,7 @@ namespace Station
         /// <param name="launchParameters">A stringified list of any parameters required at launch.</param>
         public static void StoreApplication(string wrapperType, string id, string name, string? launchParameters = null, string? altPath = null)
         {
+            MockConsole.WriteLine($"{wrapperType} {id} {name} {launchParameters} {altPath}");
             applicationList.TryAdd(int.Parse(id), new Experience(wrapperType, id, name, launchParameters, altPath));
         }
 
@@ -145,7 +146,7 @@ namespace Station
                 switch(appTokens[0])
                 {
                     case "Custom":
-                        customWrapper.CollectHeaderImage(appTokens[2]);
+                        customWrapper.CollectHeaderImage(appTokens[1]);
                         break;
                     case "Steam":
                         LogHandler("CollectHeaderImages not implemented for type: Steam.");
