@@ -143,7 +143,7 @@ namespace Station
                 UIUpdater.UpdateProcess(lastExperience.Name);
                 UIUpdater.UpdateStatus("Running...");
 
-                SessionController.PassStationMessage($"ApplicationUpdate,{currentProcess?.MainWindowTitle}/{currentProcess?.Id}");
+                SessionController.PassStationMessage($"ApplicationUpdate,{lastExperience.Name}/{currentProcess?.Id}");
                 MockConsole.WriteLine($"Application launching: {currentProcess?.MainWindowTitle}/{currentProcess?.Id}", MockConsole.LogLevel.Normal);
 
                 ListenForClose();
@@ -168,7 +168,7 @@ namespace Station
             foreach (var proc in processes)
             {
                 //Get the steam process name from the CommandLine function and compare here instead of removing any external child processes
-                if (proc.MainWindowTitle == lastExperience.ExeName)
+                if (proc.MainWindowTitle.Contains(lastExperience.ExeName))
                 {
                     MockConsole.WriteLine($"Application found: {proc.MainWindowTitle}/{proc.Id}", MockConsole.LogLevel.Debug);
 

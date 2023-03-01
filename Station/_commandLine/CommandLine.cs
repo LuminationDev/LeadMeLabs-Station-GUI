@@ -20,6 +20,11 @@ namespace Station
         private static readonly string launcherProcessName = "LeadMe";
 
         /// <summary>
+        /// Process name of the current application.
+        /// </summary>
+        private static readonly string stationProcessName = "Station";
+
+        /// <summary>
         /// The location of the executing assembly. This is used to find the relative path for externally used applications.
         /// </summary>
         public static readonly string? stationLocation = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
@@ -270,15 +275,11 @@ namespace Station
         {
             Logger.WriteLog("Daily restart", MockConsole.LogLevel.Verbose);
 
-            List<Process> matches = getProcessesByName(new List<string> { launcherProcessName });
+            List<Process> processes = getProcessesByName(new List<string> { launcherProcessName, stationProcessName });
 
-            if (matches.Count == 1)
+            foreach (Process process in processes)
             {
-                matches[0].Kill(true);
-            }
-            else if (matches.Count > 1)
-            {
-                Logger.WriteLog("ERROR: Multiple LeadMe Launcher instances detected", MockConsole.LogLevel.Error);
+                process.Kill(true);
             }
         }
 
