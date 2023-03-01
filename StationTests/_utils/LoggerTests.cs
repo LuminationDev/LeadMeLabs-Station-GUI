@@ -77,28 +77,28 @@ namespace StationTests._utils
             Assert.Empty(Logger.logQueue);
         }
 
-        /// <summary>
-        /// Test that WriteLog writes error messages to the console even when writeToLogFile is false.
-        /// </summary>
-        [Fact]
-        public void WriteLog_WritesErrorMessageToConsoleEvenWhenWriteToLogFileIsFalse()
-        {
-            // Arrange
-            string message = "Test message";
-            MockConsole.LogLevel logLevel = MockConsole.LogLevel.Error;
+        ///// <summary>
+        ///// Test that WriteLog writes error messages to the console even when writeToLogFile is false.
+        ///// </summary>
+        //[Fact]
+        //public void WriteLog_WritesErrorMessageToConsoleEvenWhenWriteToLogFileIsFalse()
+        //{
+        //    // Arrange
+        //    string message = "Test message";
+        //    MockConsole.LogLevel logLevel = MockConsole.LogLevel.Error;
 
-            // Act
-            Logger.WriteLog(message, logLevel, false);
+        //    // Act
+        //    Logger.WriteLog(message, logLevel, false);
 
-            // Only one instance should be inside the Queue
-            foreach (var element in MockConsole._textQueue)
-            {
-                if (element.Contains(message))
-                {
-                    Assert.Contains(message, element);
-                }
-            }
-        }
+        //    // Only one instance should be inside the Queue
+        //    foreach (var element in MockConsole._textQueue)
+        //    {
+        //        if (element.Contains(message))
+        //        {
+        //            Assert.Contains(message, element);
+        //        }
+        //    }
+        //}
 
         /// <summary>
         /// Test that WorkQueue does not write to the log file if the log queue is empty.

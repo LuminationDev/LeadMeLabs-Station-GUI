@@ -125,11 +125,20 @@ namespace Station
         /// <param name="wrapperType">A string of the type of application (i.e. Custom, Steam, etc..)</param>
         /// <param name="id">A string of the unique ID of an applicaiton</param>
         /// <param name="name">A string representing the Name of the application, this is what will appear on the LeadMe Tablet</param>
+        /// <param name="exeName">A string representing the executbale name, this is use to launch the process.</param>
         /// <param name="launchParameters">A stringified list of any parameters required at launch.</param>
         public static void StoreApplication(string wrapperType, string id, string name, string? launchParameters = null, string? altPath = null)
         {
-            MockConsole.WriteLine($"{wrapperType} {id} {name} {launchParameters} {altPath}");
-            applicationList.TryAdd(int.Parse(id), new Experience(wrapperType, id, name, launchParameters, altPath));
+            string? exeName;
+            if(altPath != null)
+            {
+                exeName = Path.GetFileName(altPath);
+            } else
+            {
+                exeName = name;
+            }
+
+            applicationList.TryAdd(int.Parse(id), new Experience(wrapperType, id, name, exeName, launchParameters, altPath));
         }
 
         /// <summary>
@@ -333,8 +342,10 @@ namespace Station
             //[0] - action to take, [1] - executable path
             string[] messageTokens = message.Split(":");
 
+            string name = Path.GetFileNameWithoutExtension(messageTokens[1]);
+
             //Create a temporary Experience struct to hold the information
-            Experience experience = new("Internal", "NA", Path.GetFileNameWithoutExtension(messageTokens[1]), null, messageTokens[1]);
+            Experience experience = new("Internal", "NA", name, name, null, messageTokens[1]);
 
             switch(messageTokens[0])
             {

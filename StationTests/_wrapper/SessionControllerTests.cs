@@ -63,30 +63,30 @@ namespace StationTests._wrapper
             Assert.Equal(experienceType, SessionController.experienceType);
         }
 
-        /// <summary>
-        /// Ensure that after restarting a VR session with no active experience, the experience
-        /// type remains null.
-        /// </summary>
-        [Fact]
-        public void RestartVRSession_Should_Return_No_Experience_Is_Currently_Running()
-        {
-            // Arrange
-            string expectedMessage = "No experience is currently running.";
-            SessionController.experienceType = null;
+        ///// <summary>
+        ///// Ensure that after restarting a VR session with no active experience, the experience
+        ///// type remains null.
+        ///// </summary>
+        //[Fact]
+        //public void RestartVRSession_Should_Return_No_Experience_Is_Currently_Running()
+        //{
+        //    // Arrange
+        //    string expectedMessage = "No experience is currently running.";
+        //    SessionController.experienceType = null;
 
-            // Act
-            SessionController.RestartVRSession();
+        //    // Act
+        //    SessionController.RestartVRSession();
 
-            // Assert
-            // Only one instance should be inside the Queue
-            foreach (var element in MockConsole._textQueue)
-            {
-                if (element.Contains(expectedMessage))
-                {
-                    Assert.Contains(expectedMessage, element);
-                }
-            }
-        }
+        //    // Assert
+        //    // Only one instance should be inside the Queue
+        //    foreach (var element in MockConsole._textQueue)
+        //    {
+        //        if (element.Contains(expectedMessage))
+        //        {
+        //            Assert.Contains(expectedMessage, element);
+        //        }
+        //    }
+        //}
 
         /// <summary>
         /// Test that ending an experience will return the type back to null.

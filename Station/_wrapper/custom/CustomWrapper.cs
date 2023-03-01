@@ -138,7 +138,7 @@ namespace Station
             }
             currentProcess = child;
 
-            if (child != null && currentProcess != null && lastExperience.Name != null)
+            if (child != null && currentProcess != null && lastExperience.ExeName != null)
             {
                 UIUpdater.UpdateProcess(lastExperience.Name);
                 UIUpdater.UpdateStatus("Running...");
@@ -168,7 +168,7 @@ namespace Station
             foreach (var proc in processes)
             {
                 //Get the steam process name from the CommandLine function and compare here instead of removing any external child processes
-                if (proc.MainWindowTitle == lastExperience.Name)
+                if (proc.MainWindowTitle == lastExperience.ExeName)
                 {
                     MockConsole.WriteLine($"Application found: {proc.MainWindowTitle}/{proc.Id}", MockConsole.LogLevel.Debug);
 
