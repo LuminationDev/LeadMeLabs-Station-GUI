@@ -85,5 +85,16 @@ namespace Station
             e.Cancel = true;
             WindowState = WindowState.Minimized;
         }
+
+        /// <summary>
+        /// Used for binding the MainWindow Mockconsole
+        /// </summary>
+        private string _consoleText;
+
+        public string ConsoleText
+        {
+            get => _consoleText;
+            set => SetProperty(ref _consoleText, value);
+        }
     }
 }

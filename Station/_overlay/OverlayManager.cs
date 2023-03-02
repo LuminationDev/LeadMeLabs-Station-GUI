@@ -28,7 +28,7 @@ namespace Station
             }
             else
             {
-                Console.WriteLine("Already pinging");
+                MockConsole.WriteLine("Already pinging");
             }
         }
 

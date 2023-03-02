@@ -21,6 +21,11 @@ namespace Station
         public MainWindow()
         {
             InitializeComponent();
+
+            var viewModel = new MainWindowViewModel();
+            this.DataContext = viewModel;
+            MockConsole.SetViewModel(viewModel);
+
             console = this.ConsoleWindow;
             logLevel = this.LoggingLevel;
             processConsole = this.ProcessConsole;

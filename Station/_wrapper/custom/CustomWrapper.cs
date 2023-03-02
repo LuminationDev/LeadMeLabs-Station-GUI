@@ -18,10 +18,14 @@ namespace Station
             return CustomScripts.loadAvailableGames();
         }
 
-        public void CollectHeaderImage(string experienceName)
+        public void CollectHeaderImage(string experienceID)
         {
             Task.Factory.StartNew(() =>
             {
+                WrapperManager.applicationList.TryGetValue(int.Parse(experienceID), out var experience);
+                string? experienceName = experience.Name;
+                string? altPath = experience.AltPath;
+
                 if (CommandLine.stationLocation == null)
                 {
                     MockConsole.WriteLine($"Station working directory not found while searching for header file", MockConsole.LogLevel.Error);
@@ -31,8 +35,16 @@ namespace Station
                     return;
                 }
 
-                //Find the header file
-                string filePath = Path.GetFullPath(Path.Combine(CommandLine.stationLocation, @"..\..", $"leadme_apps\\{experienceName}\\header.jpg"));
+                //Determine if it was imported or downloaded and find the header file
+                string filePath;
+                if (altPath != null)
+                {
+                    string parentFolder = CustomScripts.GetParentDirPath(altPath);
+                    filePath = parentFolder + @"\header.jpg";
+                } else
+                {
+                    filePath = Path.GetFullPath(Path.Combine(CommandLine.stationLocation, @"..\..", $"leadme_apps\\{experienceName}\\header.jpg"));
+                }
 
                 if (!File.Exists(filePath))
                 {
@@ -126,12 +138,12 @@ namespace Station
             }
             currentProcess = child;
 
-            if (child != null && currentProcess != null && lastExperience.Name != null)
+            if (child != null && currentProcess != null && lastExperience.ExeName != null)
             {
                 UIUpdater.UpdateProcess(lastExperience.Name);
                 UIUpdater.UpdateStatus("Running...");
 
-                SessionController.PassStationMessage($"ApplicationUpdate,{currentProcess?.MainWindowTitle}/{currentProcess?.Id}");
+                SessionController.PassStationMessage($"ApplicationUpdate,{lastExperience.Name}/{currentProcess?.Id}");
                 MockConsole.WriteLine($"Application launching: {currentProcess?.MainWindowTitle}/{currentProcess?.Id}", MockConsole.LogLevel.Normal);
 
                 ListenForClose();
@@ -156,7 +168,7 @@ namespace Station
             foreach (var proc in processes)
             {
                 //Get the steam process name from the CommandLine function and compare here instead of removing any external child processes
-                if (proc.MainWindowTitle == lastExperience.Name)
+                if (proc.MainWindowTitle.Contains(lastExperience.ExeName))
                 {
                     MockConsole.WriteLine($"Application found: {proc.MainWindowTitle}/{proc.Id}", MockConsole.LogLevel.Debug);
 

@@ -11,14 +11,16 @@ namespace Station
         public string? Type { get; set; }
         public string? ID { get; set; }
         public string? Name { get; set; }
+        public string? ExeName { get; set; }
         public string? Parameters { get; set; }
         public string? AltPath { get; set; }
 
-        public Experience(string? Type, string? ID, string? Name, string? Parameters, string? AltPath)
+        public Experience(string? Type, string? ID, string? Name, string? ExeName, string? Parameters, string? AltPath)
         {
             this.Type = Type;
             this.ID = ID;
             this.Name = Name;
+            this.ExeName = ExeName;
             this.Parameters = Parameters;
             this.AltPath = AltPath;
         }

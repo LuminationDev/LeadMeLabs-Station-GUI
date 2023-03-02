@@ -1,12 +1,18 @@
 ﻿using System;
-using System.Collections.Concurrent;
-using System.Threading.Tasks;
 
 namespace Station
 {
     //TODO improve efficiency for logging
     public static class MockConsole
     {
+        private static MainWindowViewModel? _viewModel;
+        private static int __lineCount = 30;
+
+        public static void SetViewModel(MainWindowViewModel viewModel)
+        {
+            _viewModel = viewModel;
+        }
+
         /// <summary>
         /// Describe the different levels of logging, only the most essential messages are printed at None.
         /// The levels are [None - essential only, Normal - basic messages and commands, Debug - anything that can be used for information, Verbose - everything].
@@ -21,7 +27,7 @@ namespace Station
         }
 
         private static int _lineCount = 0;
-        private static int _lineLimit = 250;
+        private static int _lineLimit = 100;
         public static LogLevel _logLevel = LogLevel.Normal;
 
         /// <summary>
@@ -45,7 +51,6 @@ namespace Station
 
         //The functions below handle updating the mock console that is present within the MainWindow. This
         //proccess allows other parts of the project to display information to a user.
-        public static ConcurrentQueue<string> _textQueue = new ConcurrentQueue<string>();
 
         /// <summary>
         /// Clear the MockConsole of all previous messages. The cleared message will be printed regardless
@@ -53,7 +58,8 @@ namespace Station
         /// </summary>
         public static void ClearConsole()
         {
-            _textQueue = new ConcurrentQueue<string>();
+            if (_viewModel == null) return;
+            _viewModel.ConsoleText = "";
             WriteLine("Cleared", LogLevel.Error);
         }
 
@@ -64,13 +70,23 @@ namespace Station
         /// <param name="message">A string to be printed to the console.</param>
         public static void WriteLine(string message)
         {
+            if (message.Trim() == "" || _viewModel == null) return;
             if (_logLevel == LogLevel.Off) return;
-            Task.Run(() =>
+
+            if (_viewModel.ConsoleText != null)
             {
-                _textQueue.Enqueue(DateStamp() + message + "\n");
-                _lineCount++;
-                UpdateConsole();
-            });
+                var lines = _viewModel.ConsoleText.Split(new[] { '\n' }, StringSplitOptions.RemoveEmptyEntries);
+
+                if (lines.Length >= __lineCount)
+                {
+                    var newLines = new string[__lineCount];
+                    Array.Copy(lines, 1, newLines, 0, newLines.Length - 1);
+                    newLines[newLines.Length - 1] = string.Empty;
+                    _viewModel.ConsoleText = string.Join("\n", newLines);
+                }
+            }
+
+            _viewModel.ConsoleText = _viewModel.ConsoleText + DateStamp() + message + "\n";
         }
 
         /// <summary>
@@ -80,57 +96,30 @@ namespace Station
         /// <param name="level">A Loglevel enum representing if it should be displayed at the current logging level.</param>
         public static void WriteLine(string message, LogLevel level)
         {
+            if (message.Trim() == "" || _viewModel == null) return;
             if (level > _logLevel || _logLevel == LogLevel.Off) return;
-            Task.Run(() =>
+
+
+            if (_viewModel.ConsoleText != null)
             {
-                _textQueue.Enqueue(DateStamp() + message + "\n");
-                _lineCount++;
-                UpdateConsole();
-            });
+                var lines = _viewModel.ConsoleText.Split(new[] { '\n' }, StringSplitOptions.RemoveEmptyEntries);
+
+                if (lines.Length >= 10)
+                {
+                    var newLines = new string[10];
+                    Array.Copy(lines, 1, newLines, 0, newLines.Length - 1);
+                    newLines[newLines.Length - 1] = string.Empty;
+                    _viewModel.ConsoleText = string.Join("\n", newLines);
+                }
+            }
+
+            _viewModel.ConsoleText = _viewModel.ConsoleText + DateStamp() + message + "\n";
         }
 
         private static string DateStamp()
         {
             DateTime now = DateTime.Now;
             return $"[{now:dd/MM | hh:mm:ss}] ";
-        }
-
-        /// <summary>
-        /// Update the main console window, checking if the function has UI access or invoking 
-        /// the update asynchronously.
-        /// </summary>
-        private static async void UpdateConsole()
-        {
-            if (MainWindow.console == null) return;
-            if (MainWindow.console.Dispatcher.CheckAccess())
-            {
-                while (_textQueue.TryDequeue(out var line))
-                {
-                    MainWindow.console.Text += line;
-                }
-                MainWindow.console.Text = TrimConsole();
-            }
-            else
-            {
-                await MainWindow.console.Dispatcher.InvokeAsync(UpdateConsole);
-            }
-        }
-
-        /// <summary>
-        /// Trim the earliest message from the console to stop an infinite scroll occuring.
-        /// </summary>
-        private static string TrimConsole()
-        {
-            if (MainWindow.console == null) return "";
-            if (_lineCount >= _lineLimit)
-            {
-                _lineCount--;
-                var lines = MainWindow.console.Text.Split('\n');
-                Array.Copy(lines, 1, lines, 0, lines.Length - 1);
-                MainWindow.console.Text = string.Join("\n", lines);
-            }
-
-            return MainWindow.console.Text;
         }
     }
 }

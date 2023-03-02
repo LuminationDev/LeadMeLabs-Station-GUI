@@ -89,9 +89,9 @@ namespace Station
 
                     //Check if there is an alternate path (this is for imported experiences in the launcher)
                     string? altPath = null;
-                    if(item.AltPath != null)
+                    if(item.altPath != null)
                     {
-                        altPath = item.AltPath.ToString();
+                        altPath = item.altPath.ToString();
                     }
 
                     WrapperManager.StoreApplication(item.type.ToString(), item.id.ToString(), item.name.ToString(), parameters, altPath);
@@ -101,6 +101,24 @@ namespace Station
 
             availableGames = string.Join('/', apps);
             return apps;
+        }
+
+        /// <summary>
+        /// Get the direct parent directory, useful for find out which folder an experience belongs to.
+        /// </summary>
+        /// <param name="path"></param>
+        /// <returns></returns>
+        public static string GetParentDirPath(string path)
+        {
+            // Used two separators windows style "\\" and linux "/" (for bad formed paths)
+            // We make sure to remove extra unneeded characters.
+            int index = path.Trim('/', '\\').LastIndexOfAny(new char[] { '\\', '/' });
+
+            // now if index is >= 0 that means we have at least one parent directory, otherwise the given path is the root most.
+            if (index >= 0)
+                return path.Remove(index);
+            else
+                return "";
         }
     }
 }
