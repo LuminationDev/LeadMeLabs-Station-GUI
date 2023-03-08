@@ -11,9 +11,6 @@ namespace Station
     {
         private void Application_Startup(object sender, StartupEventArgs e)
         {
-            MainWindow wnd = new MainWindow();
-            wnd.Show();
-
             if (e.Args.Length > 0 && e.Args[0].Trim().ToLower() == "writeversion")
             {
                 Updater.generateVersion();
@@ -21,12 +18,15 @@ namespace Station
                 return;
             }
 
+            MainWindow wnd = new MainWindow();
+            wnd.Show();
+
             AppDomain currentDomain = AppDomain.CurrentDomain;
             currentDomain.UnhandledException += UnhandledExceptionHandler;
             currentDomain.ProcessExit += ProcessExitHandler;
 
 #if !DEVDEBUG && !DEVRELEASE
-            //initSentry();
+            initSentry();
 #endif
             Manager.startProgram();
         }

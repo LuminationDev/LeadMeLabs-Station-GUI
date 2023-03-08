@@ -56,7 +56,9 @@ namespace Station
             //Read the manifest
             using (StreamReader r = new StreamReader(manifestPath))
             {
-                string? json = r.ReadToEnd();
+                //Read and decipher the encrypted manifest
+                string? encrytedJson = r.ReadToEnd();
+                string? json = EncryptionHelper.DecryptNode(encrytedJson);
 
                 dynamic? array = JsonConvert.DeserializeObject(json);
 

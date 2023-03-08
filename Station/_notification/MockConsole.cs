@@ -104,9 +104,9 @@ namespace Station
             {
                 var lines = _viewModel.ConsoleText.Split(new[] { '\n' }, StringSplitOptions.RemoveEmptyEntries);
 
-                if (lines.Length >= 10)
+                if (lines.Length >= 100)
                 {
-                    var newLines = new string[10];
+                    var newLines = new string[100];
                     Array.Copy(lines, 1, newLines, 0, newLines.Length - 1);
                     newLines[newLines.Length - 1] = string.Empty;
                     _viewModel.ConsoleText = string.Join("\n", newLines);

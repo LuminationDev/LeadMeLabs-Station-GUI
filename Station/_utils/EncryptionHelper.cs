@@ -8,6 +8,9 @@ namespace Station
 {
     public static class EncryptionHelper
     {
+        // This key is used for decrypting the nodejs encryption only
+        private static readonly string secretKey = "VMALkZE0qYMuPZN4N6QbJOZxQL22Rvzf";
+
         // This constant is used to determine the keysize of the encryption algorithm in bits.
         // We divide this by 8 within the code below to get the equivalent number of bytes.
         private const int Keysize = 128;
@@ -141,6 +144,10 @@ namespace Station
             }
         }
 
+        /// <summary>
+        /// Generate a random byte array of characters of length 16.
+        /// </summary>
+        /// <returns>A randomised byte array of length 16</returns>
         public static byte[] Generate128BitsOfRandomEntropy()
         {
             var randomBytes = new byte[16]; // 16 Bytes will give us 128 bits.
@@ -150,6 +157,95 @@ namespace Station
                 rngCsp.GetBytes(randomBytes);
             }
             return randomBytes;
+        }
+
+        /// <summary>
+        /// Encrypt data that can be read by the nodejs launcher program.
+        /// </summary>
+        /// <param name="data">A string of data that is to be encrypted.</param>
+        /// <returns>An encrypted string that can be written to a file.</returns>
+        public static string EncryptNode(string data)
+        {
+            byte[] key = Encoding.UTF8.GetBytes(secretKey);
+            byte[] iv = Generate128BitsOfRandomEntropy(); // generate a random initialization vector
+
+            byte[] dataBytes = Encoding.UTF8.GetBytes(data);
+            byte[] encryptedBytes;
+
+            using (Aes aes = Aes.Create())
+            {
+                aes.Key = key;
+                aes.IV = iv;
+
+                ICryptoTransform encryptor = aes.CreateEncryptor(aes.Key, aes.IV);
+
+                using (MemoryStream ms = new MemoryStream())
+                {
+                    using (CryptoStream cs = new CryptoStream(ms, encryptor, CryptoStreamMode.Write))
+                    {
+                        cs.Write(dataBytes, 0, dataBytes.Length);
+                        cs.FlushFinalBlock();
+                        encryptedBytes = ms.ToArray();
+                    }
+                }
+            }
+
+            string encryptedData = BitConverter.ToString(iv).Replace("-", "") + BitConverter.ToString(encryptedBytes).Replace("-", "");
+            return encryptedData;
+        }
+
+        /// <summary>
+        /// Decrypt the data when encrypted through the nodejs launcher program.
+        /// </summary>
+        /// <param name="encryptedData">A string of encrypted data to decipher.</param>
+        /// <returns>A decrypted string.</returns>
+        public static string DecryptNode(string encryptedData)
+        {
+            byte[] key = Encoding.UTF8.GetBytes(secretKey);
+            byte[] iv = HexStringToByteArray(encryptedData.Substring(0, 32));
+
+            string encrypted = encryptedData.Substring(32);
+
+            byte[] encryptedBytes = HexStringToByteArray(encrypted);
+            byte[] decryptedBytes;
+
+            using (Aes aes = Aes.Create())
+            {
+                aes.Key = key;
+                aes.IV = iv;
+
+                ICryptoTransform decryptor = aes.CreateDecryptor(aes.Key, aes.IV);
+
+                using (MemoryStream ms = new MemoryStream(encryptedBytes))
+                {
+                    using (CryptoStream cs = new CryptoStream(ms, decryptor, CryptoStreamMode.Read))
+                    {
+                        using (StreamReader reader = new StreamReader(cs))
+                        {
+                            decryptedBytes = Encoding.UTF8.GetBytes(reader.ReadToEnd());
+                        }
+                    }
+                }
+            }
+
+            string decrypted = Encoding.UTF8.GetString(decryptedBytes);
+            return decrypted;
+        }
+
+        /// <summary>
+        /// Convert a string of hex characters into a byte array.
+        /// </summary>
+        /// <param name="hexString">A hexadecimal string</param>
+        /// <returns>A byte array of characters</returns>
+        private static byte[] HexStringToByteArray(string hexString)
+        {
+            int numBytes = hexString.Length / 2;
+            byte[] bytes = new byte[numBytes];
+            for (int i = 0; i < numBytes; i++)
+            {
+                bytes[i] = Convert.ToByte(hexString.Substring(i * 2, 2), 16);
+            }
+            return bytes;
         }
     }
 }

@@ -1,11 +1,12 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 
 namespace Station
 {
     public static class DotEnv
     {
-        private static string filePath = $"{CommandLine.stationLocation}\\_config\\config.env";
+        private static readonly string filePath = $"{CommandLine.stationLocation}\\_config\\config.env";
 
         /// <summary>
         /// Load the variables within the config.env into the local environment for the running
@@ -16,12 +17,23 @@ namespace Station
             if (!File.Exists(filePath))
             {
                 SessionController.PassStationMessage($"StationError,Config file not found:{filePath}");
-                MockConsole.WriteLine($"Station Error: Config file not found at: {filePath}", MockConsole.LogLevel.Error);
                 return false;
             }
 
-            foreach (var line in File.ReadAllLines(filePath))
+            //Decrypt the data in the file
+            string text = File.ReadAllText(filePath);
+            if(text.Length == 0)
             {
+                SessionController.PassStationMessage($"StationError,Config file empty:{filePath}");
+                return false;
+            }
+
+            string decryptedText = EncryptionHelper.DecryptNode(text);
+
+            foreach (var line in decryptedText.Split('\n'))
+            {
+                MockConsole.WriteLine(line, MockConsole.LogLevel.Normal);
+
                 var parts = line.Split(
                     '=',
                     StringSplitOptions.RemoveEmptyEntries);
@@ -29,7 +41,6 @@ namespace Station
                 if (parts.Length != 2 && parts[0] != "Directory")
                 {
                     SessionController.PassStationMessage($"StationError,Config incomplete:{parts[0]} has no value");
-                    MockConsole.WriteLine($"Station Error: Config file missing value: {parts[0]}", MockConsole.LogLevel.Error);
                     return false;
                 }
 
@@ -43,9 +54,8 @@ namespace Station
         /// Update part of the config.env, automatically detect if a variable already exists or if
         /// it should be added.
         /// </summary>
-        /// <param name="key">The key of the environment variable to set.</param>
-        /// <param name="value">The value of the provided key.</param>
-        public static void Update(string key, string value)
+        /// <param name="values">A string list that contains keys and values for environment variables in the format key:value</param>
+        public static void Update(List<string> values)
         {
             if (!File.Exists(filePath))
             {
@@ -53,28 +63,41 @@ namespace Station
                 return;
             }
 
-            Environment.SetEnvironmentVariable(key, value);
-
-            bool exists = false;
-
+            // Read the current config file
             string[] arrLine = File.ReadAllLines(filePath);
-            for (int i = 0; i < arrLine.Length; i++)
-            {
-                if (arrLine[i].StartsWith(key))
+
+            // Loop over the supplied values
+            foreach (string entry in values) {
+
+                string[] split = entry.Split(':');
+                string key = split[0];
+                string value = split[1];
+
+                Environment.SetEnvironmentVariable(key, value);
+
+                bool exists = false;
+
+
+                for (int i = 0; i < arrLine.Length; i++)
                 {
-                    arrLine[i] = $"{key}={value}";
-                    exists = true;
+                    if (arrLine[i].StartsWith(key))
+                    {
+                        arrLine[i] = $"{key}={value}";
+                        exists = true;
+                    }
+                }
+
+                //If the file does not contain the env variable yet create if here
+                if (!exists)
+                {
+                    arrLine[arrLine.Length] = $"{key}={value}";
                 }
             }
-
-            //If the file does not contain the env variable yet create if here
-            if (!exists)
-            {
-                arrLine[arrLine.Length] = $"{key}={value}";
-            }
+            
+            string encryptedText = EncryptionHelper.EncryptNode(string.Join("\n", arrLine));
 
             //Rewrite the file with the new variables
-            File.WriteAllLines(filePath, arrLine);
+            File.WriteAllText(filePath, encryptedText);
         }
 
         /// <summary>
@@ -83,13 +106,19 @@ namespace Station
         public static void Migrate()
         {
             string[] EnvVariables = { "AppKey", "HeadsetType", "LabLocation", "NucAddress", "room", "StationId", "StationMode", "SteamUserName", "SteamPassword", "Directory" };
+            List<string> values = new();
 
             foreach (string key in EnvVariables)
             {
                 string? value = Environment.GetEnvironmentVariable(key, EnvironmentVariableTarget.User);
-
-                Update(key, value ?? "");
+                if (value != null)
+                {
+                    values.Add($"{key}:{value}");
+                }
             }
+
+            //update all values in the config.txt
+            Update(values);
         }
     }
 }
