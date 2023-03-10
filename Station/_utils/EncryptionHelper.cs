@@ -3,13 +3,13 @@ using System.Text;
 using System.Security.Cryptography;
 using System.IO;
 using System.Linq;
+using Microsoft.Win32;
 
 namespace Station
 {
     public static class EncryptionHelper
     {
-        // This key is used for decrypting the nodejs encryption only
-        private static readonly string secretKey = "VMALkZE0qYMuPZN4N6QbJOZxQL22Rvzf";
+        private static readonly string _encryptionKey = CollectSecret();
 
         // This constant is used to determine the keysize of the encryption algorithm in bits.
         // We divide this by 8 within the code below to get the equivalent number of bytes.
@@ -166,7 +166,7 @@ namespace Station
         /// <returns>An encrypted string that can be written to a file.</returns>
         public static string EncryptNode(string data)
         {
-            byte[] key = Encoding.UTF8.GetBytes(secretKey);
+            byte[] key = Encoding.UTF8.GetBytes(_encryptionKey);
             byte[] iv = Generate128BitsOfRandomEntropy(); // generate a random initialization vector
 
             byte[] dataBytes = Encoding.UTF8.GetBytes(data);
@@ -201,7 +201,7 @@ namespace Station
         /// <returns>A decrypted string.</returns>
         public static string DecryptNode(string encryptedData)
         {
-            byte[] key = Encoding.UTF8.GetBytes(secretKey);
+            byte[] key = Encoding.UTF8.GetBytes(_encryptionKey);
             byte[] iv = HexStringToByteArray(encryptedData.Substring(0, 32));
 
             string encrypted = encryptedData.Substring(32);
@@ -246,6 +246,35 @@ namespace Station
                 bytes[i] = Convert.ToByte(hexString.Substring(i * 2, 2), 16);
             }
             return bytes;
+        }
+
+        /// <summary>
+        /// This key is used for decrypting the nodejs encryption only. The key is based off the unique product ID of the individual
+        /// computer the software is running on. It cannot be accessed remotely and only visible with file and admin access.
+        /// </summary>
+        /// <returns>A string representing the secret for encryption, it has been modified to be 32 characters long.</returns>
+        private static string CollectSecret()
+        {
+            using (RegistryKey rk = Registry.LocalMachine)
+            {
+                string key = rk.OpenSubKey(@"SOFTWARE\Microsoft\Windows NT\CurrentVersion\").GetValue("ProductId").ToString();
+                if (key == null)
+                {
+                    MockConsole.WriteLine("Product Id could not be found or reached, check Admin privileges.", MockConsole.LogLevel.Error);
+                    return "";
+                }
+
+                key = key.Replace("-", "");
+
+                string paddedKey = key;
+
+                while (paddedKey.Length < 32)
+                {
+                    paddedKey += "0";
+                }
+
+                return paddedKey;
+            };
         }
     }
 }

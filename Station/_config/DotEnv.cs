@@ -14,6 +14,9 @@ namespace Station
         /// </summary>
         public static bool Load()
         {
+            //TODO make a call to a secure database in the future
+
+
             if (!File.Exists(filePath))
             {
                 SessionController.PassStationMessage($"StationError,Config file not found:{filePath}");
@@ -64,7 +67,8 @@ namespace Station
             }
 
             // Read the current config file
-            string[] arrLine = File.ReadAllLines(filePath);
+            string text = File.ReadAllText(filePath);
+            string[] arrLine = text.Split("\n");
 
             // Loop over the supplied values
             foreach (string entry in values) {
