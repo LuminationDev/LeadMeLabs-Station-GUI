@@ -60,7 +60,7 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
     <Content Include="_config\config.env">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </Content>
     <Content Include="_config\config.txt">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
