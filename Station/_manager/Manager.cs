@@ -159,6 +159,8 @@ namespace Station
                 {
                     localEndPoint = new IPEndPoint(endPoint.Address, localPort);
 
+                    App.SetWindowTitle($"Station {Environment.GetEnvironmentVariable("StationId")} -- {endPoint.Address}"); 
+
                     Logger.WriteLog("Server IP Address is: " + endPoint.Address.ToString(), MockConsole.LogLevel.Normal);
                 }
                 else

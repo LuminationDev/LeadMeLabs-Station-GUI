@@ -36,9 +36,11 @@ namespace Station
             switch (Environment.GetEnvironmentVariable("HeadsetType"))
             {
                 case "VivePro1":
+                case "vive pro 1":
                     vrHeadset = new VivePro1();
                     break;
                 case "VivePro2":
+                case "vive pro 2":
                     vrHeadset = new VivePro2();
                     break;
                 default:
@@ -165,10 +167,12 @@ namespace Station
                         if (values.Length > 1)
                         {
                             Manager.sendResponse("Android", "Station", $"SetValue:gameId:{values[1]}");
+                            Manager.sendResponse("Android", "Station", $"SetValue:gameType:{values[2]}");
                         }
                         else
                         {
-                            Manager.sendResponse("Android", "Station", "SetValue:gameId");
+                            Manager.sendResponse("Android", "Station", "SetValue:gameId:");
+                            Manager.sendResponse("Android", "Station", "SetValue:gameType:");
                         }
                         break;
 
@@ -181,6 +185,7 @@ namespace Station
                     case "ApplicationClosed":
                         Manager.sendResponse("Android", "Station", "SetValue:gameName:");
                         Manager.sendResponse("Android", "Station", "SetValue:gameId:");
+                        Manager.sendResponse("Android", "Station", "SetValue:gameType:");
                         break;
 
                     case "StationError":

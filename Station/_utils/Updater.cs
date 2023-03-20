@@ -14,8 +14,9 @@ namespace Station
             Assembly assembly = Assembly.GetExecutingAssembly();
             FileVersionInfo fileVersionInfo = FileVersionInfo.GetVersionInfo(assembly.Location);
             string? version = fileVersionInfo.ProductVersion;
+            string? stationLocation = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
 
-            File.WriteAllText($"{CommandLine.stationLocation}\\_logs\\version.txt", version);
+            File.WriteAllText($"{stationLocation}\\_logs\\version.txt", version);
 
             return version != null;
         }

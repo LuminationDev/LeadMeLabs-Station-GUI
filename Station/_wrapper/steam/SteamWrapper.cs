@@ -151,7 +151,7 @@ namespace Station
             {
                 SteamScripts.popupDetect = false;
                 ListenForClose();
-                SessionController.PassStationMessage($"ApplicationUpdate,{experienceName}/{currentProcess?.Id}");
+                SessionController.PassStationMessage($"ApplicationUpdate,{experienceName}/{currentProcess?.Id}/Steam");
             } else
             {
                 UIUpdater.ResetUIDisplay();

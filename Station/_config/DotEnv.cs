@@ -35,8 +35,6 @@ namespace Station
 
             foreach (var line in decryptedText.Split('\n'))
             {
-                MockConsole.WriteLine(line, MockConsole.LogLevel.Normal);
-
                 var parts = line.Split(
                     '=',
                     StringSplitOptions.RemoveEmptyEntries);
@@ -49,6 +47,10 @@ namespace Station
 
                 Environment.SetEnvironmentVariable(parts[0], parts[1]);
             }
+
+#if DEBUG
+            Environment.SetEnvironmentVariable("Directory", new DirectoryInfo(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile)).Name);
+#endif
 
             return true;
         }
