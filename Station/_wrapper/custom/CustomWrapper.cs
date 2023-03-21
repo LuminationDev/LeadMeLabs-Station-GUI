@@ -143,7 +143,7 @@ namespace Station
                 UIUpdater.UpdateProcess(lastExperience.Name);
                 UIUpdater.UpdateStatus("Running...");
 
-                SessionController.PassStationMessage($"ApplicationUpdate,{lastExperience.Name}/{currentProcess?.Id}");
+                SessionController.PassStationMessage($"ApplicationUpdate,{lastExperience.Name}/{currentProcess?.Id}/Custom");
                 MockConsole.WriteLine($"Application launching: {currentProcess?.MainWindowTitle}/{currentProcess?.Id}", MockConsole.LogLevel.Normal);
 
                 ListenForClose();
@@ -213,6 +213,7 @@ namespace Station
             if (currentProcess != null)
             {
                 currentProcess.Kill();
+                //WrapperManager.ClosePipeServer();
             }
             CommandLine.queryVRProcesses(WrapperMonitoringThread.steamProcesses, true);
         }

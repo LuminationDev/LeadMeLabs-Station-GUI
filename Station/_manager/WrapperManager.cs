@@ -30,7 +30,7 @@ namespace Station
         /// </summary>
         public void Startup()
         {
-            ParentPipeServer.Run(LogHandler, ExternalActionHandler);
+            StartPipeServer();
             SessionController.SetupHeadsetType();
             Task.Factory.StartNew(() => CollectAllApplications());
         }
@@ -43,6 +43,25 @@ namespace Station
             ParentPipeServer.Close();
             CurrentWrapper?.StopCurrentProcess();
             SessionController.EndVRSession();
+        }
+
+        /// <summary>
+        /// Start a Pipe Server instance to handle any messages from the current application.
+        /// </summary>
+        public static void StartPipeServer()
+        {
+            MockConsole.WriteLine("Starting Pipe Server");
+            ParentPipeServer.Run(LogHandler, ExternalActionHandler);
+        }
+
+        //TODO currently this is not closing anywhere
+        /// <summary>
+        /// Close a currently open pipe server.
+        /// </summary>
+        public static void ClosePipeServer()
+        {
+            MockConsole.WriteLine("Closing Pipe Server");
+            ParentPipeServer.Close();
         }
 
         /// <summary>
@@ -59,21 +78,26 @@ namespace Station
         /// </summary>
         /// <param name="message">A multiple parameter message seperated by ',' detailing what action is to be taken</param>
         /// <returns>An async task asscoiated with the action</returns>
-        private void ExternalActionHandler(string message)
+        private static void ExternalActionHandler(string message)
         {
-            MockConsole.WriteLine($"Pipe message: {message}", MockConsole.LogLevel.Debug);
+            MockConsole.WriteLine($"Pipe message: {message}", MockConsole.LogLevel.Normal);
 
-            //Token break down
-            //['ACTIONSPACE','TYPE','MESSAGE']
-            string[] tokens = message.Split(',');
 
-            //Determine the action to take
-            switch (tokens[0])
-            {
-                default:
-                    LogHandler($"Unknown actionspace: {tokens[0]}");
-                    break;
-            }
+            //Only receiving details for now
+            Manager.sendResponse("Android", "Station", $"SetValue:details:{message}");
+
+
+            ////Token break down
+            ////['ACTIONSPACE','TYPE','MESSAGE']
+            //string[] tokens = message.Split(',');
+
+            ////Determine the action to take
+            //switch (tokens[0])
+            //{
+            //    default:
+            //        LogHandler($"Unknown actionspace: {tokens[0]}");
+            //        break;
+            //}
         }
 
         /// <summary>
@@ -317,6 +341,7 @@ namespace Station
                 return;
             }
 
+            //TODO this is being called from somewhere else?
             UIUpdater.ResetUIDisplay();
             CurrentWrapper.StopCurrentProcess();
             WrapperMonitoringThread.stopMonitoring();

@@ -113,7 +113,8 @@ namespace Station
 
                 if (additionalData.StartsWith("PassToExperience"))
                 {
-                    Manager.wrapperManager?.ActionHandler("Message", "MESSAGE DETAILS");
+                    string[] split = additionalData.Split(":", 2);
+                    Manager.wrapperManager?.ActionHandler("Message", split[1]);
                 }
             }
         }

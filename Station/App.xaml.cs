@@ -18,8 +18,8 @@ namespace Station
                 return;
             }
 
-            MainWindow wnd = new MainWindow();
-            wnd.Show();
+            MainWindow mainWindow = new MainWindow();
+            mainWindow.Show();
 
             AppDomain currentDomain = AppDomain.CurrentDomain;
             currentDomain.UnhandledException += UnhandledExceptionHandler;
@@ -29,6 +29,17 @@ namespace Station
             initSentry();
 #endif
             Manager.startProgram();
+        }
+
+        /// <summary>
+        /// Update the title of the MainWindow, this is designed to show the User the Station ID as well as the Current IP address.
+        /// </summary>
+        /// <param name="title"></param>
+        public static void SetWindowTitle(string title)
+        {
+            Application.Current.Dispatcher.BeginInvoke(new Action(() => {
+                Application.Current.MainWindow.Title = title;
+            }));
         }
 
         static void UnhandledExceptionHandler(object sender, UnhandledExceptionEventArgs args)
