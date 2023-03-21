@@ -5,9 +5,9 @@ namespace Station
 {
     public class Helper
     {
-        public const string STATION_MODE_VR = "vr";
-        public const string STATION_MODE_APPLIANCE = "appliance";
-        public const string STATION_MODE_CONTENT = "content";
+        public const string STATION_MODE_VR = "VR";
+        public const string STATION_MODE_APPLIANCE = "Appliance";
+        public const string STATION_MODE_CONTENT = "Content";
         private static readonly string[] STATION_MODES = { STATION_MODE_VR, STATION_MODE_APPLIANCE, STATION_MODE_CONTENT };
 
         public static string GetStationMode()

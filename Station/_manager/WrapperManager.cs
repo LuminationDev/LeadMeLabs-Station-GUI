@@ -264,11 +264,6 @@ namespace Station
                         break;
                 }
             });
-
-            Task.Delay(3000).Wait();
-
-            //Ask for the experience details - this assumes the pipe server is started immediately
-            PassAMessageToProcess("levels");
         }
 
         /// <summary>

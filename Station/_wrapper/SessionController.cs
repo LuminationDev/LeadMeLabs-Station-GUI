@@ -36,11 +36,9 @@ namespace Station
             switch (Environment.GetEnvironmentVariable("HeadsetType"))
             {
                 case "VivePro1":
-                case "vive pro 1":
                     vrHeadset = new VivePro1();
                     break;
                 case "VivePro2":
-                case "vive pro 2":
                     vrHeadset = new VivePro2();
                     break;
                 default:
