@@ -154,7 +154,7 @@
 
             <Button 
                 Style="{StaticResource MainButton}"
-                Command="{Binding NotifyCommand}"
+                Command="{Binding StopCurrentProcess}"
                 Content="Stop" 
                 Margin="10,10,10,10" 
                 Width="50" 

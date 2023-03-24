@@ -9,29 +9,32 @@ namespace Station
     /// </summary>
     public partial class Overlay : Window
     {
-        readonly Overlay current;
+        private readonly Overlay current;
 
         public Overlay()
         {
             InitializeComponent();
 
+            this.WindowState = WindowState.Maximized;
+
             current = this;
 
             StationName.Text = "Station " + Environment.GetEnvironmentVariable("StationId");
-            _ = runTask();
+            _ = TunTask();
         }
 
-        public async Task runTask()
+        public async Task TunTask()
         {
-            await identify();
+            current.Opacity = 0.1;
+            await Identify();
             Close();
         }
 
-        public async Task identify()
+        public async Task Identify()
         {
             for (int i = 0; i < 80; i++)
             {
-                double level = i / 100;
+                double level = (double)i / 100;
                 current.Opacity = level;
                 await Task.Delay(10);
             }
@@ -40,7 +43,7 @@ namespace Station
 
             for (int i = 80; i > 0; i--)
             {
-                double level = i / 100;
+                double level = (double)i / 100;
                 current.Opacity = level;
                 await Task.Delay(10);
             }

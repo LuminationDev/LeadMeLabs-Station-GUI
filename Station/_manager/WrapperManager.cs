@@ -4,6 +4,8 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using leadme_api;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace Station
 {
@@ -82,22 +84,45 @@ namespace Station
         {
             MockConsole.WriteLine($"Pipe message: {message}", MockConsole.LogLevel.Normal);
 
+            if (message.Contains("Command recieved")) return;
 
-            //Only receiving details for now
-            Manager.sendResponse("Android", "Station", $"SetValue:details:{message}");
+            //Token break down
+            //['TYPE','MESSAGE']
+            string[] tokens = message.Split(',', 2);
 
+            //Determine the action to take
+            switch (tokens[0])
+            {
+                case "details":
+                    Manager.sendResponse("Android", "Station", $"SetValue:details:{CheckExperienceName(tokens[1])}");
+                    break;
+                default:
+                    LogHandler($"Unknown actionspace: {tokens[0]}");
+                    break;
+            }
+        }
 
-            ////Token break down
-            ////['ACTIONSPACE','TYPE','MESSAGE']
-            //string[] tokens = message.Split(',');
+        /// <summary>
+        /// Guarantee that the name of the details being recieved is the same as the experience that is currently
+        /// launched.
+        /// </summary>
+        /// <param name="JSONMessage">A modified, stringified JSON string with an updated name if it is available</param>
+        private static string CheckExperienceName(string JSONMessage)
+        {
+            // Parse JSON string to JObject
+            JObject details = JObject.Parse(JSONMessage);
 
-            ////Determine the action to take
-            //switch (tokens[0])
-            //{
-            //    default:
-            //        LogHandler($"Unknown actionspace: {tokens[0]}");
-            //        break;
-            //}
+            if (CurrentWrapper == null) return JSONMessage;
+            string? experienceName = CurrentWrapper.GetCurrentExperienceName();
+            if (experienceName == null) return JSONMessage;
+
+            // Check the value of the name against what is currently running
+            details["name"] = experienceName;
+
+            // Convert JObject back to JSON string
+            string newJsonString = JsonConvert.SerializeObject(details);
+
+            return newJsonString;
         }
 
         /// <summary>

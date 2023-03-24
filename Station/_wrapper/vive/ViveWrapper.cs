@@ -6,6 +6,12 @@ namespace Station
     internal class ViveWrapper : Wrapper
     {
         public static string wrapperType = "Vive";
+
+        public string? GetCurrentExperienceName()
+        {
+            return null;
+        }
+
         public List<string>? CollectApplications()
         {
             return null;

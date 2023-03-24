@@ -119,7 +119,20 @@ namespace Station
                 string? value = Environment.GetEnvironmentVariable(key, EnvironmentVariableTarget.User);
                 if (value != null)
                 {
-                    values.Add($"{key}:{value}");
+                    //Handle the different StationMode values
+                    if (key == "StationMode")
+                    {
+                        if(value == "vr")
+                        {
+                            values.Add($"{key}:VR");
+                        } else
+                        {
+                            //Capitalise the first letter of the content or application mode
+                            values.Add($"{key}:{value[0].ToString().ToUpper()}{value[1..]}");
+                        }
+                    } else {
+                        values.Add($"{key}:{value}");
+                    }
                 }
             }
 

@@ -13,6 +13,11 @@ namespace Station
         private static Process? currentProcess;
         private static Experience lastExperience;
 
+        public string? GetCurrentExperienceName()
+        {
+            return lastExperience.Name;
+        }
+
         public List<string>? CollectApplications()
         {
             return CustomScripts.loadAvailableGames();
@@ -56,7 +61,7 @@ namespace Station
 
                 //Add the header image to the sending image queue through action transformation
                 SocketImage socketImage = new(experienceName, filePath);
-                Action sendImage = new(() => socketImage.send());
+                System.Action sendImage = new(() => socketImage.send());
 
                 //Queue the send function for invoking
                 TaskQueue.Queue(false, sendImage);

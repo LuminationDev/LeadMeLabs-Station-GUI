@@ -18,6 +18,11 @@ namespace Station
         /// </summary>
         public static bool launchingExperience = false;
 
+        public string? GetCurrentExperienceName()
+        {
+            return experienceName;
+        }
+
         public List<string>? CollectApplications()
         {
             return SteamScripts.loadAvailableGames();

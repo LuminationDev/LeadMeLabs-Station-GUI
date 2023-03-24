@@ -99,7 +99,7 @@ namespace Station
             }
             else if (additionalData.StartsWith("IdentifyStation"))
             {
-                OverlayManager.overlayThread();
+                OverlayManager.OverlayThread();
             }
             else
             {
