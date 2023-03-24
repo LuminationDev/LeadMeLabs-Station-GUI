@@ -39,6 +39,12 @@ namespace Station
     public interface Wrapper
     {
         /// <summary>
+        /// Query the current experience for it's name.
+        /// </summary>
+        /// <returns>A string or null representing the current experiences name</returns>
+        string? GetCurrentExperienceName();
+
+        /// <summary>
         /// Collect all the applications associated with the type of wrapper.
         /// </summary>
         /// <returns>A list of all applications associated with the wrapper type.</returns>

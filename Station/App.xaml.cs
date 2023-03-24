@@ -18,7 +18,7 @@ namespace Station
                 return;
             }
 
-            MainWindow mainWindow = new MainWindow();
+            MainWindow mainWindow = new();
             mainWindow.Show();
 
             AppDomain currentDomain = AppDomain.CurrentDomain;

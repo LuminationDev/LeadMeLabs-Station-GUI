@@ -73,6 +73,9 @@ namespace Station
             };
         }
 
+        /// <summary>
+        /// Determine how the window is first presented when initially loaded.
+        /// </summary>
         private void Loaded()
         {
             WindowState = WindowState.Minimized;
