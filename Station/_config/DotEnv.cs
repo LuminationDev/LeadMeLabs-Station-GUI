@@ -1,12 +1,14 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
+using System.Collections.Generic;
 
 namespace Station
 {
     public static class DotEnv
     {
         private static readonly string filePath = $"{CommandLine.stationLocation}\\_config\\config.env";
+        private static readonly string externalPath = $"{CommandLine.stationLocation}\\external";
+
 
         /// <summary>
         /// Load the variables within the config.env into the local environment for the running
@@ -15,6 +17,16 @@ namespace Station
         public static bool Load()
         {
             //TODO make a call to a secure database in the future
+
+
+#if RELEASE
+            //Check if local system variables exists, if so perform a migration
+            if(Environment.GetEnvironmentVariable("Directory", EnvironmentVariableTarget.User) != null)
+            {
+                Migrate();
+                ExternalApplications();
+            }
+#endif
 
 
             if (!File.Exists(filePath))
@@ -138,6 +150,38 @@ namespace Station
 
             //update all values in the config.txt
             Update(values);
+        }
+
+        /// <summary>
+        /// Check for the necessary external applications, moving them if necessary
+        /// </summary>
+        private static void ExternalApplications()
+        {
+            //Check for SteamCMD and SetVol, moving them into the external folder if present
+            if (File.Exists($@"C:\Users\{Environment.GetEnvironmentVariable("Directory")}\steamcmd\steamcmd.exe"))
+            {
+                Move($@"C:\Users\{Environment.GetEnvironmentVariable("Directory")}\steamcmd", externalPath);
+            }
+
+            if (File.Exists($@"C:\Users\{Environment.GetEnvironmentVariable("Directory")}\SetVol\SetVol.exe"))
+            {
+                Move($@"C:\Users\{Environment.GetEnvironmentVariable("Directory")}\SetVol", externalPath);
+            }
+        }
+
+        /// <summary>
+        /// Move a directory to another.
+        /// </summary>
+        private static void Move(string source, string destination)
+        {
+            try
+            {
+                Directory.Move(source, destination);
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.Message);
+            }
         }
     }
 }
