@@ -25,9 +25,8 @@ namespace Station
             currentDomain.UnhandledException += UnhandledExceptionHandler;
             currentDomain.ProcessExit += ProcessExitHandler;
 
-#if !DEVDEBUG && !DEVRELEASE
             initSentry();
-#endif
+
             Manager.startProgram();
         }
 
