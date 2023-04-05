@@ -50,12 +50,18 @@ namespace Station
         /// <summary>
         /// Starts the server running on the local machine
         /// </summary>
-        public static void startProgram()
+        public async static void startProgram()
         {
             MockConsole.ClearConsole();
 
+            MockConsole.WriteLine("Loading ENV variables", MockConsole.LogLevel.Error);
+
+            bool result = await DotEnv.Load();
+
+            MockConsole.WriteLine("ENV variables loaded", MockConsole.LogLevel.Error);
+
             //Load the environment files, do not continue if file is incomplete
-            if(DotEnv.Load())
+            if (result)
             {
 #if DEBUG
                 //If in development override the program paths with the absolute paths dictated by Directory value in the config.env file.
@@ -89,7 +95,10 @@ namespace Station
                         }
                     }
                 }).Start();
-            };
+            } else
+            {
+                MockConsole.WriteLine("Failed loading ENV variables", MockConsole.LogLevel.Error);
+            }
         }
 
         /// <summary>
