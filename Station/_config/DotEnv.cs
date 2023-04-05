@@ -1,6 +1,8 @@
 ﻿using System;
 using System.IO;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.Linq;
 
 namespace Station
 {
@@ -21,10 +23,27 @@ namespace Station
 
 #if RELEASE
             //Check if local system variables exists, if so perform a migration
-            if(Environment.GetEnvironmentVariable("Directory", EnvironmentVariableTarget.User) != null)
+            if(Environment.GetEnvironmentVariable("UserDirectory", EnvironmentVariableTarget.User) != null)
             {
                 Migrate();
                 ExternalApplications();
+
+                //Update the launcher first
+                Updater.UpdateLauncher();
+
+                //Needs to exit the current application and start the 'new' launcher with a command line argument
+                //Open launcher with command line
+                string launcher = $@"C:\Users\{Environment.GetEnvironmentVariable("UserDirectory", EnvironmentVariableTarget.User)}\Launcher\LeadMe.exe";
+                string arguments = $"--software=Station --directory=={Environment.GetEnvironmentVariable("UserDirectory", EnvironmentVariableTarget.User)}";
+
+                Process temp = new();
+                temp.StartInfo.FileName = launcher;
+                temp.StartInfo.Arguments = arguments;
+                temp.Start();
+                temp.Close();
+
+                //Immediately close the current application
+                Environment.Exit(1);
             }
 #endif
 
@@ -61,61 +80,10 @@ namespace Station
             }
 
 #if DEBUG
-            Environment.SetEnvironmentVariable("Directory", new DirectoryInfo(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile)).Name);
+            Environment.SetEnvironmentVariable("UserDirectory", new DirectoryInfo(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile)).Name);
 #endif
 
             return true;
-        }
-
-        /// <summary>
-        /// Update part of the config.env, automatically detect if a variable already exists or if
-        /// it should be added.
-        /// </summary>
-        /// <param name="values">A string list that contains keys and values for environment variables in the format key:value</param>
-        public static void Update(List<string> values)
-        {
-            if (!File.Exists(filePath))
-            {
-                MockConsole.WriteLine($"Station Error,Config file not found:{filePath}", MockConsole.LogLevel.Error);
-                return;
-            }
-
-            // Read the current config file
-            string text = File.ReadAllText(filePath);
-            string[] arrLine = text.Split("\n");
-
-            // Loop over the supplied values
-            foreach (string entry in values) {
-
-                string[] split = entry.Split(':');
-                string key = split[0];
-                string value = split[1];
-
-                Environment.SetEnvironmentVariable(key, value);
-
-                bool exists = false;
-
-
-                for (int i = 0; i < arrLine.Length; i++)
-                {
-                    if (arrLine[i].StartsWith(key))
-                    {
-                        arrLine[i] = $"{key}={value}";
-                        exists = true;
-                    }
-                }
-
-                //If the file does not contain the env variable yet create if here
-                if (!exists)
-                {
-                    arrLine[arrLine.Length] = $"{key}={value}";
-                }
-            }
-            
-            string encryptedText = EncryptionHelper.EncryptNode(string.Join("\n", arrLine));
-
-            //Rewrite the file with the new variables
-            File.WriteAllText(filePath, encryptedText);
         }
 
         /// <summary>
@@ -123,7 +91,7 @@ namespace Station
         /// </summary>
         public static void Migrate()
         {
-            string[] EnvVariables = { "AppKey", "HeadsetType", "LabLocation", "NucAddress", "room", "StationId", "StationMode", "SteamUserName", "SteamPassword", "Directory" };
+            string[] EnvVariables = { "AppKey", "HeadsetType", "LabLocation", "NucAddress", "room", "StationId", "StationMode", "SteamUserName", "SteamPassword", "UserDirectory" };
             List<string> values = new();
 
             foreach (string key in EnvVariables)
@@ -142,14 +110,78 @@ namespace Station
                             //Capitalise the first letter of the content or application mode
                             values.Add($"{key}:{value[0].ToString().ToUpper()}{value[1..]}");
                         }
-                    } else {
+                    } 
+                    else if (key == "UserDirectory")
+                    {
+                        values.Add($"Directory:{value}");
+                    }
+                    else {
                         values.Add($"{key}:{value}");
                     }
                 }
             }
 
+            //Create the config.env file if it doesnt exist
+            if(!File.Exists(filePath))
+            {
+                using (File.Create(filePath)) { };
+            }
+            
             //update all values in the config.txt
             Update(values);
+        }
+
+        /// <summary>
+        /// Update part of the config.env, automatically detect if a variable already exists or if
+        /// it should be added.
+        /// </summary>
+        /// <param name="values">A string list that contains keys and values for environment variables in the format key:value</param>
+        public static void Update(List<string> values)
+        {
+            if (!File.Exists(filePath))
+            {
+                MockConsole.WriteLine($"Station Error,Config file not found:{filePath}", MockConsole.LogLevel.Error);
+                return;
+            }
+
+            // Read the current config file
+            string text = File.ReadAllText(filePath);
+            string[] arrLine = text.Split("\n");
+            List<string> listLine = arrLine.ToList();
+
+            // Loop over the supplied values
+            foreach (string entry in values)
+            {
+
+                string[] split = entry.Split(':');
+                string key = split[0];
+                string value = split[1];
+
+                Environment.SetEnvironmentVariable(key, value);
+
+                bool exists = false;
+
+
+                for (int i = 0; i < listLine.Count; i++)
+                {
+                    if (listLine[i].StartsWith(key))
+                    {
+                        listLine[i] = $"{key}={value}";
+                        exists = true;
+                    }
+                }
+
+                //If the file does not contain the env variable yet create if here
+                if (!exists)
+                {
+                    listLine.Add($"{key}={value}");
+                }
+            }
+
+            string encryptedText = EncryptionHelper.EncryptNode(string.Join("\n", listLine));
+
+            //Rewrite the file with the new variables
+            File.WriteAllText(filePath, encryptedText);
         }
 
         /// <summary>
@@ -160,12 +192,12 @@ namespace Station
             //Check for SteamCMD and SetVol, moving them into the external folder if present
             if (File.Exists($@"C:\Users\{Environment.GetEnvironmentVariable("Directory")}\steamcmd\steamcmd.exe"))
             {
-                Move($@"C:\Users\{Environment.GetEnvironmentVariable("Directory")}\steamcmd", externalPath);
+                Move($@"C:\Users\{Environment.GetEnvironmentVariable("Directory")}\steamcmd", $@"{externalPath}\steamcmd");
             }
 
             if (File.Exists($@"C:\Users\{Environment.GetEnvironmentVariable("Directory")}\SetVol\SetVol.exe"))
             {
-                Move($@"C:\Users\{Environment.GetEnvironmentVariable("Directory")}\SetVol", externalPath);
+                Move($@"C:\Users\{Environment.GetEnvironmentVariable("Directory")}\SetVol", $@"{externalPath}\SetVol");
             }
         }
 
@@ -180,7 +212,7 @@ namespace Station
             }
             catch (Exception e)
             {
-                Console.WriteLine(e.Message);
+                MockConsole.WriteLine(e.Message, MockConsole.LogLevel.Normal);
             }
         }
     }

@@ -78,7 +78,8 @@ namespace Station
         /// </summary>
         private void Loaded()
         {
-            WindowState = WindowState.Minimized;
+            //WindowState = WindowState.Minimized;
+            WindowState = WindowState.Normal;
         }
 
         private void Closing(CancelEventArgs? e)
