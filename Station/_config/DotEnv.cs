@@ -1,8 +1,8 @@
 ﻿using System;
 using System.IO;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace Station
 {
@@ -16,67 +16,73 @@ namespace Station
         /// Load the variables within the config.env into the local environment for the running
         /// process.
         /// </summary>
-        public static bool Load()
+        public async static Task<bool> Load()
         {
             //TODO make a call to a secure database in the future
 
 
 #if RELEASE
             //Check if local system variables exists, if so perform a migration
-            if(Environment.GetEnvironmentVariable("UserDirectory", EnvironmentVariableTarget.User) != null)
+            if(Environment.GetEnvironmentVariable("UserDirectory", EnvironmentVariableTarget.User) != null && !File.Exists(filePath))
             {
-                Migrate();
-                ExternalApplications();
+                MockConsole.WriteLine("Old version detected, performing migration", MockConsole.LogLevel.Normal);
 
-                //Update the launcher first
-                Updater.UpdateLauncher();
+                try
+                {
+                    Migrate();
+                    ExternalApplications();
 
-                //Needs to exit the current application and start the 'new' launcher with a command line argument
-                //Open launcher with command line
-                string launcher = $@"C:\Users\{Environment.GetEnvironmentVariable("UserDirectory", EnvironmentVariableTarget.User)}\Launcher\LeadMe.exe";
-                string arguments = $"--software=Station --directory=={Environment.GetEnvironmentVariable("UserDirectory", EnvironmentVariableTarget.User)}";
-
-                Process temp = new();
-                temp.StartInfo.FileName = launcher;
-                temp.StartInfo.Arguments = arguments;
-                temp.Start();
-                temp.Close();
-
-                //Immediately close the current application
-                Environment.Exit(1);
+                    //Update the launcher first
+                    await Updater.UpdateLauncher();
+                }
+                catch (Exception ex)
+                {
+                    MockConsole.WriteLine(ex.ToString(), MockConsole.LogLevel.Error);
+                }
             }
 #endif
 
-
-            if (!File.Exists(filePath))
+            try
             {
-                SessionController.PassStationMessage($"StationError,Config file not found:{filePath}");
-                return false;
-            }
-
-            //Decrypt the data in the file
-            string text = File.ReadAllText(filePath);
-            if(text.Length == 0)
-            {
-                SessionController.PassStationMessage($"StationError,Config file empty:{filePath}");
-                return false;
-            }
-
-            string decryptedText = EncryptionHelper.DecryptNode(text);
-
-            foreach (var line in decryptedText.Split('\n'))
-            {
-                var parts = line.Split(
-                    '=',
-                    StringSplitOptions.RemoveEmptyEntries);
-
-                if (parts.Length != 2 && parts[0] != "Directory")
+                if (!File.Exists(filePath))
                 {
-                    SessionController.PassStationMessage($"StationError,Config incomplete:{parts[0]} has no value");
+                    MockConsole.WriteLine($"StationError, Config file not found:{filePath}");
                     return false;
                 }
 
-                Environment.SetEnvironmentVariable(parts[0], parts[1]);
+                //Decrypt the data in the file
+                string text = File.ReadAllText(filePath);
+                if (text.Length == 0)
+                {
+                    MockConsole.WriteLine($"StationError, Config file empty:{filePath}");
+                    return false;
+                }
+
+                string decryptedText = EncryptionHelper.DecryptNode(text);
+
+                foreach (var line in decryptedText.Split('\n'))
+                {
+                    var parts = line.Split(
+                        '=',
+                        StringSplitOptions.RemoveEmptyEntries);
+
+                    if (parts.Length > 0)
+                    {
+                        if (parts.Length == 1 && parts[0] != "Directory")
+                        {
+                            MockConsole.WriteLine($"StationError,Config incomplete:{parts[0]} has no value", MockConsole.LogLevel.Error);
+                            return false;
+                        }
+
+                        if (parts.Length > 1)
+                        {
+                            Environment.SetEnvironmentVariable(parts[0], parts[1]);
+                        }
+                    }
+                }
+            } catch (Exception ex)
+            {
+                MockConsole.WriteLine(ex.ToString(), MockConsole.LogLevel.Error);
             }
 
 #if DEBUG
@@ -146,8 +152,20 @@ namespace Station
 
             // Read the current config file
             string text = File.ReadAllText(filePath);
+            if(text.Length != 0)
+            {
+                text = EncryptionHelper.DecryptNode(text);
+            }
             string[] arrLine = text.Split("\n");
-            List<string> listLine = arrLine.ToList();
+            List<string> listLine;
+
+            if(arrLine.Length == 0)
+            {
+                listLine = new();
+            } else
+            {
+                listLine = arrLine.ToList();
+            }
 
             // Loop over the supplied values
             foreach (string entry in values)
@@ -161,13 +179,15 @@ namespace Station
 
                 bool exists = false;
 
-
-                for (int i = 0; i < listLine.Count; i++)
+                if (listLine.Count > 0)
                 {
-                    if (listLine[i].StartsWith(key))
+                    for (int i = 0; i < listLine.Count; i++)
                     {
-                        listLine[i] = $"{key}={value}";
-                        exists = true;
+                        if (listLine[i].StartsWith(key))
+                        {
+                            listLine[i] = $"{key}={value}";
+                            exists = true;
+                        }
                     }
                 }
 
@@ -177,6 +197,8 @@ namespace Station
                     listLine.Add($"{key}={value}");
                 }
             }
+
+            MockConsole.WriteLine($"Environment variables added", MockConsole.LogLevel.Normal);
 
             string encryptedText = EncryptionHelper.EncryptNode(string.Join("\n", listLine));
 
@@ -189,30 +211,32 @@ namespace Station
         /// </summary>
         private static void ExternalApplications()
         {
+            MockConsole.WriteLine("Moving steamcmd and SetVol to external folder.");
+
+            string directory = Environment.GetEnvironmentVariable("UserDirectory");
+
+            if (directory == null) return;
+
+            //Create the sub-directories
+            if (!Directory.Exists(externalPath))
+            {
+                MockConsole.WriteLine("External folder not found. Creating now");
+                MockConsole.WriteLine($"External: {externalPath}");
+
+                Directory.CreateDirectory(externalPath);
+            }
+
             //Check for SteamCMD and SetVol, moving them into the external folder if present
-            if (File.Exists($@"C:\Users\{Environment.GetEnvironmentVariable("Directory")}\steamcmd\steamcmd.exe"))
+            if (File.Exists($@"C:\Users\{directory}\steamcmd\steamcmd.exe"))
             {
-                Move($@"C:\Users\{Environment.GetEnvironmentVariable("Directory")}\steamcmd", $@"{externalPath}\steamcmd");
+                MockConsole.WriteLine("Found steamcmd. Attempting to move.");
+                Updater.Move($@"C:\Users\{directory}\steamcmd", $@"{externalPath}\steamcmd");
             }
 
-            if (File.Exists($@"C:\Users\{Environment.GetEnvironmentVariable("Directory")}\SetVol\SetVol.exe"))
+            if (File.Exists($@"C:\Users\{directory}\SetVol\SetVol.exe"))
             {
-                Move($@"C:\Users\{Environment.GetEnvironmentVariable("Directory")}\SetVol", $@"{externalPath}\SetVol");
-            }
-        }
-
-        /// <summary>
-        /// Move a directory to another.
-        /// </summary>
-        private static void Move(string source, string destination)
-        {
-            try
-            {
-                Directory.Move(source, destination);
-            }
-            catch (Exception e)
-            {
-                MockConsole.WriteLine(e.Message, MockConsole.LogLevel.Normal);
+                MockConsole.WriteLine("Found SetVol. Attempting to move.");
+                Updater.Move($@"C:\Users\{directory}\SetVol", $@"{externalPath}\SetVol");
             }
         }
     }
