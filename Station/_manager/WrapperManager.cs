@@ -360,6 +360,9 @@ namespace Station
         /// </summary>
         public static void StopAProcess()
         {
+            //Stop looking for Vive headset reguardless
+            ViveScripts.stopMonitoring();
+
             if (CurrentWrapper == null)
             {
                 SessionController.PassStationMessage("No process wrapper present.");
@@ -370,7 +373,6 @@ namespace Station
             UIUpdater.ResetUIDisplay();
             CurrentWrapper.StopCurrentProcess();
             WrapperMonitoringThread.stopMonitoring();
-            ViveScripts.stopMonitoring();
             RecycleWrapper();
         }
 

@@ -86,7 +86,7 @@ namespace Station
             }
 
 #if DEBUG
-            Environment.SetEnvironmentVariable("UserDirectory", new DirectoryInfo(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile)).Name);
+            Environment.SetEnvironmentVariable("Directory", Environment.GetEnvironmentVariable("UserDirectory", EnvironmentVariableTarget.User));
 #endif
 
             return true;

@@ -118,11 +118,12 @@ namespace Station
 			Process temp = new();
 			temp.StartInfo.FileName = launcher;
 			temp.StartInfo.Arguments = arguments;
+			temp.StartInfo.UseShellExecute = true;
 			temp.Start();
 			temp.Close();
 
 			//Immediately close the current application
-			Environment.Exit(1);
+			Environment.Exit(0);
 		}
 
 		/// <summary>

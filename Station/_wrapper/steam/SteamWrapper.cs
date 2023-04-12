@@ -125,6 +125,8 @@ namespace Station
             }
             launchingExperience = true;
 
+
+            //TODO this is hanging, needs to be tested?
             if (!await ViveScripts.viveCheck(wrapperType))
             {
                 launchingExperience = false;

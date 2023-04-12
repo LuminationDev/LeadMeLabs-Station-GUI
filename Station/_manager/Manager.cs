@@ -87,7 +87,7 @@ namespace Station
 
                     if (Environment.GetEnvironmentVariable("NucAddress") != null)
                     {
-                        Logger.WriteLog(Environment.GetEnvironmentVariable("NucAddress"), MockConsole.LogLevel.Debug);
+                        Logger.WriteLog($"Expected NUC address: {Environment.GetEnvironmentVariable("NucAddress")}", MockConsole.LogLevel.Normal);
                         setRemoteEndPoint();
                         if (!Helper.GetStationMode().Equals(Helper.STATION_MODE_APPLIANCE))
                         {
