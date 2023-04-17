@@ -21,6 +21,12 @@ namespace Station
 
         public void StartVrSession()
         {
+            //Bail out if Steam and SteamVR are already running
+            if(QueryMonitorProcesses())
+            {
+                return;
+            }
+
             CommandLine.KillSteamSigninWindow();
             CommandLine.startProgram(SessionController.steam, "-noreactlogin -login " + Environment.GetEnvironmentVariable("SteamUserName") + " " + Environment.GetEnvironmentVariable("SteamPassword") + " steam://rungameid/1635730"); //Open up steam and run vive console
 
@@ -47,6 +53,28 @@ namespace Station
         public void StopTimer()
         {
             timer?.Stop();
+        }
+
+        /// <summary>
+        /// Query the running processes to see if Steam or SteamVR is currently running.
+        /// </summary>
+        /// <returns></returns>
+        public bool QueryMonitorProcesses()
+        {
+            List<string> software = new() { "Steam", "SteamVR" };
+
+            HashSet<string> list = new();
+            Process[] processes = Process.GetProcesses();
+
+            foreach (Process process in processes)
+            {
+                if (software.Contains(process.ProcessName))
+                {
+                    list.Add(process.ProcessName);
+                }
+            }
+
+            return list.Count == software.Count;
         }
 
         public void MinimizeVrProcesses()

@@ -147,7 +147,7 @@ namespace Station
             {
                 UIUpdater.UpdateProcess(lastExperience.Name);
                 UIUpdater.UpdateStatus("Running...");
-
+                WindowManager.MaximizeProcess(child); //Maximise the process experience
                 SessionController.PassStationMessage($"ApplicationUpdate,{lastExperience.Name}/{currentProcess?.Id}/Custom");
                 MockConsole.WriteLine($"Application launching: {currentProcess?.MainWindowTitle}/{currentProcess?.Id}", MockConsole.LogLevel.Normal);
 
@@ -235,7 +235,8 @@ namespace Station
 
         public async void RestartCurrentSession()
         {
-            throw new NotImplementedException();
+            SessionController.PassStationMessage("Processing,false");
+            SessionController.PassStationMessage("MessageToAndroid,SetValue:session:Restarted");
         }
     }
 }

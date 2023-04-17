@@ -18,9 +18,9 @@ namespace Station
             ClosingCommand = new RelayCommand<CancelEventArgs>(Closing);
             //NotifyCommand = new RelayCommand(() => Notify("Hello world!")); //How to use the notify function
 
-            StartStationCommand = new RelayCommand(() => Manager.startProgram());
-            RestartStationCommand = new RelayCommand(() => Manager.restartProgram());
-            StopStationCommand = new RelayCommand(() => Manager.stopProgram());
+            StartStationCommand = new RelayCommand(() => Manager.StartProgram());
+            RestartStationCommand = new RelayCommand(() => Manager.RestartProgram());
+            StopStationCommand = new RelayCommand(() => Manager.StopProgram());
             ChangeLogLevelCommand = new RelayCommand(() => MockConsole.changeLogLevel());
             StopCurrentProcess = new RelayCommand(() => WrapperManager.StopAProcess());
 

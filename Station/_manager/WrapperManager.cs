@@ -361,7 +361,7 @@ namespace Station
         public static void StopAProcess()
         {
             //Stop looking for Vive headset reguardless
-            ViveScripts.stopMonitoring();
+            ViveScripts.StopMonitoring();
 
             if (CurrentWrapper == null)
             {

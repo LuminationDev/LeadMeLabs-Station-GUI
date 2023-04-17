@@ -48,7 +48,7 @@ namespace Station
         }
 
         /// <summary>
-        /// Start up a VR session on the local machine, this includes starting up Steam, steamVR and ViveWireless. The
+        /// Start up a VR session on the local machine, this may include starting up Steam, steamVR and/or ViveWireless. The
         /// applications that will be started/required depend on the suppiled type.
         /// </summary>
         /// <param name="type">A string of what type of experience is being loaded [Custom, Steam, Vive, etc]</param>
@@ -88,7 +88,7 @@ namespace Station
                     MockConsole.WriteLine("restartVRSession not implemented for type: Custom.", MockConsole.LogLevel.Error);
                     break;
                 case "Steam":
-                    ViveScripts.stopMonitoring();
+                    ViveScripts.StopMonitoring();
                     break;
                 case "Vive":
                     MockConsole.WriteLine("restartVRSession not implemented for type: Vive.", MockConsole.LogLevel.Error);
@@ -112,7 +112,7 @@ namespace Station
                     MockConsole.WriteLine("endVRSession not implemented for type: Custom.", MockConsole.LogLevel.Error);
                     break;
                 case "Steam":
-                    ViveScripts.stopMonitoring();
+                    ViveScripts.StopMonitoring();
                     CommandLine.queryVRProcesses(WrapperMonitoringThread.steamProcesses, true);
                     break;
                 case "Vive":
@@ -192,6 +192,8 @@ namespace Station
 
                     default:
                         MockConsole.WriteLine("Non-primary command", MockConsole.LogLevel.Debug);
+                        PassStationMessage("Processing,false");
+                        PassStationMessage("MessageToAndroid,SetValue:session:Restarted");
                         break;
                 }
             }).Start();

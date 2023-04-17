@@ -35,6 +35,11 @@ namespace Station
         private static readonly string stationCmd = "cmd.exe";
 
         /// <summary>
+        /// A string representing the powershell executable.
+        /// </summary>
+        private static readonly string stationPowershell = "powershell.exe";
+
+        /// <summary>
         /// The relative path of the steamCMD executable on the local machine.
         /// </summary>
         public static string steamCmd = stationLocation + @"\external\steamcmd\steamcmd.exe";
@@ -490,6 +495,73 @@ namespace Station
             }
 
             return list.Any();
+        }
+
+        /// <summary>
+        /// Start a powershell window to check the free space of the local computer.
+        /// </summary>
+        /// <returns>An integer representing the free space of the computer in GB</returns>
+        public static int? GetFreeStorage()
+        {
+            try
+            {
+                Process cmd = setupCommand(stationPowershell);
+                cmd.Start();
+                cmd.StandardInput.WriteLine(
+                    "Get-WmiObject -Class win32_logicaldisk | Format-Table @{n=\"FreeSpace\";e={[math]::Round($_.FreeSpace/1GB,2)}}");
+                string? output = outcome(cmd);
+
+                if(output == null)
+                {
+                    return 9999;
+                }
+
+                string[] outputP = output.Split("\n");
+                // if there is less than 14 items, the app probably hasn't launched yet
+                if (output.Length < 10)
+                {
+                    return 9999;
+                }
+
+                if (outputP[7].Equals("FreeSpace"))
+                {
+                    int result = Convert.ToInt32(Math.Floor(Convert.ToDouble(outputP[9].Trim())));
+                    return result;
+                }
+            }
+            catch (Exception e)
+            {
+                SentrySdk.CaptureException(e);
+            }
+
+            return 9999;
+        }
+
+        /// <summary>
+        /// Pass in a steam application directory to get the process id if running
+        /// </summary>
+        /// <param name="dir">Fully qualified directory where a steam application executable is stored</param>
+        /// <returns>Process id if the application is running</returns>
+        public static string? GetProcessIdFromDir(string dir)
+        {
+            Process cmd = setupCommand(stationPowershell);
+            cmd.Start();
+            cmd.StandardInput.WriteLine("gps | where {$_.Path -Like \"" + dir + "*\"} | where {$_.MainWindowHandle -ne 0} | select ID");
+            string? output = outcome(cmd);
+
+            if(output == null)
+            {
+                return null;
+            }
+
+            string[] outputP = output.Split("\n");
+            // if there is less than 14 items, the app probably hasn't launched yet
+            if (outputP.Length < 15)
+            {
+                return null;
+            }
+            string id = outputP[9].Trim();
+            return id;
         }
     }
 }

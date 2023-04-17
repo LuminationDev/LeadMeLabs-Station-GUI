@@ -12,6 +12,7 @@ namespace Station
         private static Process? currentProcess;
         private static string launch_params = "-noreactlogin -login " + Environment.GetEnvironmentVariable("SteamUserName") + " " + Environment.GetEnvironmentVariable("SteamPassword") + " steam://rungameid/";
         public static string? experienceName = null;
+        public static string? installDir = null;
 
         /// <summary>
         /// Track if an experience is being launched.
@@ -54,11 +55,11 @@ namespace Station
             //Start the external processes to handle SteamVR
             SessionController.StartVRSession(wrapperType);
 
-            //Wait for Vive to start
-            if (!WaitForVive().Result) return;
-
             //Begin monitoring the different processes
             WrapperMonitoringThread.initializeMonitoring(wrapperType);
+
+            //Wait for Vive to start
+            if (!WaitForVive().Result) return;
 
             Task.Factory.StartNew(() =>
             {
@@ -102,6 +103,10 @@ namespace Station
                 {
                     experienceName = line.Split("\t")[3].Trim('\"');
                 }
+                if (line.StartsWith("\t\"installdir\""))
+                {
+                    installDir = line.Split("\t")[3].Trim('\"');
+                }
 
                 if (experienceName != null)
                 {
@@ -125,9 +130,7 @@ namespace Station
             }
             launchingExperience = true;
 
-
-            //TODO this is hanging, needs to be tested?
-            if (!await ViveScripts.viveCheck(wrapperType))
+            if (!await ViveScripts.ViveCheck(wrapperType))
             {
                 launchingExperience = false;
                 return false;
@@ -158,9 +161,11 @@ namespace Station
             {
                 SteamScripts.popupDetect = false;
                 ListenForClose();
+                WindowManager.MaximizeProcess(child); //Maximise the process experience
                 SessionController.PassStationMessage($"ApplicationUpdate,{experienceName}/{currentProcess?.Id}/Steam");
             } else
             {
+                Logger.WriteLog("Game launch failure: " + experienceName, MockConsole.LogLevel.Normal);
                 UIUpdater.ResetUIDisplay();
                 SessionController.PassStationMessage($"MessageToAndroid,GameLaunchFailed:{experienceName}");
             }
@@ -173,22 +178,32 @@ namespace Station
         /// <returns>The launched application process</returns>
         private Process? GetExperienceProcess()
         {
-            Process[] processes = Process.GetProcesses();
-
-            foreach (var proc in processes)
+            if (installDir != null)
             {
-                //Get the steam process name from the CommandLine function and compare here instead of removing any external child processes
-                if (proc.MainWindowTitle == experienceName)
+                string? activeProcessId = null;
+                string steamPath = "C:\\Program Files (x86)\\Steam\\steamapps\\common\\" + installDir;
+                string? processId = CommandLine.GetProcessIdFromDir(steamPath);
+                if (processId != null)
                 {
+                    activeProcessId = processId;
+                }
+
+                steamPath = "S:\\SteamLibrary\\steamapps\\common\\" + installDir;
+                processId = CommandLine.GetProcessIdFromDir(steamPath);
+                if (processId != null)
+                {
+                    activeProcessId = processId;
+                }
+                if (activeProcessId != null)
+                {
+                    Process proc = Process.GetProcessById(Int32.Parse(activeProcessId));
                     MockConsole.WriteLine($"Application found: {proc.MainWindowTitle}/{proc.Id}", MockConsole.LogLevel.Debug);
 
                     UIUpdater.UpdateProcess(proc.MainWindowTitle);
                     UIUpdater.UpdateStatus("Running...");
-
                     return proc;
                 }
             }
-
             return null;
         }
 
@@ -215,7 +230,7 @@ namespace Station
             {
                 currentProcess.Kill();
             }
-            ViveScripts.stopMonitoring();
+            ViveScripts.StopMonitoring();
             SteamScripts.popupDetect = false;
         }
 
@@ -232,6 +247,7 @@ namespace Station
 
         public async void RestartCurrentSession()
         {
+            SessionController.PassStationMessage("Processing,false");
             StopCurrentProcess();
 
             List<string> combinedProcesses = new List<string>();

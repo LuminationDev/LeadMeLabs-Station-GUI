@@ -25,9 +25,24 @@ namespace Station
             currentDomain.UnhandledException += UnhandledExceptionHandler;
             currentDomain.ProcessExit += ProcessExitHandler;
 
-            initSentry();
+            InitSentry();
+            CheckStorage();
 
-            Manager.startProgram();
+            Manager.StartProgram();
+        }
+
+        /// <summary>
+        /// Check the local storage, sending a sentry error message if there is less than 10GB of free space.
+        /// </summary>
+        private static void CheckStorage()
+        {
+            int? freeStorage = CommandLine.GetFreeStorage();
+            if (freeStorage != null && freeStorage < 10)
+            {
+                SentrySdk.CaptureMessage("Low memory detected (" + freeStorage + ") at: " +
+                                         (Environment.GetEnvironmentVariable("LabLocation",
+                                             EnvironmentVariableTarget.User) ?? "Unknown"));
+            }
         }
 
         /// <summary>
@@ -61,7 +76,7 @@ namespace Station
             Manager.sendResponse("Android", "Station", "SetValue:gameId:");
         }
 
-        public static void initSentry()
+        public static void InitSentry()
         {
             string? sentryDsn = "";
 
