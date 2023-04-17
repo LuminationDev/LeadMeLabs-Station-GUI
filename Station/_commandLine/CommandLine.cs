@@ -14,6 +14,8 @@ namespace Station
     /// </summary>
     public static class CommandLine
     {
+        
+        private static string stationPowershell = "powershell.exe";
         /// <summary>
         /// Process name of the Launcher that coordinates the LeadMe software suite.
         /// </summary>
@@ -490,6 +492,27 @@ namespace Station
             }
 
             return list.Any();
+        }
+        
+        /// <summary>
+        /// Pass in a steam application directory to get the process id if running
+        /// </summary>
+        /// <param name="dir">Fully qualified directory where a steam application executable is stored</param>
+        /// <returns>Process id if the application is running</returns>
+        public static string? GetProcessIdFromDir(string dir)
+        {
+            Process cmd = setupCommand(stationPowershell);
+            cmd.Start();
+            cmd.StandardInput.WriteLine("gps | where {$_.Path -Like \"" + dir + "*\"} | where {$_.MainWindowHandle -ne 0} | select ID");
+            string output = outcome(cmd);
+            string[] outputP = output.Split("\n");
+            // if there is less than 14 items, the app probably hasn't launched yet
+            if (outputP.Length < 15)
+            {
+                return null;
+            }
+            string id = outputP[9].Trim();
+            return id;
         }
     }
 }
