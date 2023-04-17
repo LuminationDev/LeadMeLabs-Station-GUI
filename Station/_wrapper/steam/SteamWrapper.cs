@@ -12,6 +12,7 @@ namespace Station
         private static Process? currentProcess;
         private static string launch_params = "-noreactlogin -login " + Environment.GetEnvironmentVariable("SteamUserName") + " " + Environment.GetEnvironmentVariable("SteamPassword") + " steam://rungameid/";
         public static string? experienceName = null;
+        public static string? installdir = null;
 
         /// <summary>
         /// Track if an experience is being launched.
@@ -102,6 +103,11 @@ namespace Station
                 {
                     experienceName = line.Split("\t")[3].Trim('\"');
                 }
+                
+                if (line.StartsWith("\t\"installdir\""))
+                {
+                    installdir = line.Split("\t")[3].Trim('\"');
+                }
 
                 if (experienceName != null)
                 {
@@ -171,13 +177,25 @@ namespace Station
         /// <returns>The launched application process</returns>
         private Process? GetExperienceProcess()
         {
-            Process[] processes = Process.GetProcesses();
-
-            foreach (var proc in processes)
+            if (installdir != null)
             {
-                //Get the steam process name from the CommandLine function and compare here instead of removing any external child processes
-                if (proc.MainWindowTitle == experienceName)
+                string? activeProcessId = null;
+                string steamPath = "C:\\Program Files (x86)\\Steam\\steamapps\\common\\" + installdir;
+                string? processId = CommandLine.GetProcessIdFromDir(steamPath);
+                if (processId != null)
                 {
+                    activeProcessId = processId;
+                }
+        
+                steamPath = "S:\\SteamLibrary\\steamapps\\common\\" + installdir;
+                processId = CommandLine.GetProcessIdFromDir(steamPath);
+                if (processId != null)
+                {
+                    activeProcessId = processId;
+                }
+                if (activeProcessId != null)
+                {
+                    Process proc = Process.GetProcessById(Int32.Parse(activeProcessId));
                     MockConsole.WriteLine($"Application found: {proc.MainWindowTitle}/{proc.Id}", MockConsole.LogLevel.Debug);
 
                     UIUpdater.UpdateProcess(proc.MainWindowTitle);

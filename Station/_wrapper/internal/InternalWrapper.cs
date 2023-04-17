@@ -94,7 +94,9 @@ namespace Station
 
         public void RestartCurrentSession()
         {
-            throw new NotImplementedException();
+            SessionController.PassStationMessage("Processing,false");
+
+            SessionController.PassStationMessage("MessageToAndroid,SetValue:session:Restarted");
         }
     }
 }
