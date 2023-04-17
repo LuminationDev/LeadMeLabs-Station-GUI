@@ -269,7 +269,7 @@ namespace Station
             combinedProcesses.AddRange(WrapperMonitoringThread.steamProcesses);
             combinedProcesses.AddRange(WrapperMonitoringThread.viveProcesses);
 
-            CommandLine.queryVRProcesses(combinedProcesses, true);
+            CommandLine.QueryVRProcesses(combinedProcesses, true);
             await SessionController.PutTaskDelay(2000);
 
             //have to add a waiting time to make sure it has exited
@@ -283,7 +283,7 @@ namespace Station
             }
 
             List<string> processesToQuery = SessionController.vrHeadset.GetProcessesToQuery();
-            while (CommandLine.queryVRProcesses(processesToQuery))
+            while (CommandLine.QueryVRProcesses(processesToQuery))
             {
                 await SessionController.PutTaskDelay(1000); //blocks progress but does not stop the program
                 if (attempts > 20)

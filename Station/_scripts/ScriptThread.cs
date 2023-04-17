@@ -32,10 +32,10 @@ namespace Station
             {
                 if (additionalData == "Connect")
                 {
-                    Manager.sendResponse(source, "Station", "SetValue:status:On");
-                    Manager.sendResponse(source, "Station", "SetValue:gameName:");
-                    Manager.sendResponse("Android", "Station", "SetValue:gameId:");
-                    Manager.sendResponse(source, "Station", "SetValue:volume:" + CommandLine.getVolume());
+                    Manager.SendResponse(source, "Station", "SetValue:status:On");
+                    Manager.SendResponse(source, "Station", "SetValue:gameName:");
+                    Manager.SendResponse("Android", "Station", "SetValue:gameId:");
+                    Manager.SendResponse(source, "Station", "SetValue:volume:" + CommandLine.GetVolume());
                 }
             }
 
@@ -57,7 +57,7 @@ namespace Station
                     }
                     if (key == "volume")
                     {
-                        Manager.sendResponse(source, "Station", "SetValue:" + key + ":" + CommandLine.getVolume());
+                        Manager.SendResponse(source, "Station", "SetValue:" + key + ":" + CommandLine.GetVolume());
                     }
                 }
                 if (additionalData.StartsWith("SetValue"))
@@ -67,7 +67,7 @@ namespace Station
                     string value = keyValue[2];
                     if (key == "volume")
                     {
-                        CommandLine.setVolume(value);
+                        CommandLine.SetVolume(value);
                     }
                 }
             }

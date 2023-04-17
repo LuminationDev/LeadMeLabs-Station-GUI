@@ -115,7 +115,7 @@ namespace Station
                     break;
                 case "Steam":
                     ViveScripts.StopMonitoring();
-                    CommandLine.queryVRProcesses(WrapperMonitoringThread.steamProcesses, true);
+                    CommandLine.QueryVRProcesses(WrapperMonitoringThread.steamProcesses, true);
                     break;
                 case "Vive":
                     MockConsole.WriteLine("endVRSession not implemented for type: Vive.", MockConsole.LogLevel.Error);
@@ -153,7 +153,7 @@ namespace Station
                 switch (tokens[0])
                 {
                     case "MessageToAndroid":
-                        Manager.sendResponse("Android", "Station", tokens[1]);
+                        Manager.SendResponse("Android", "Station", tokens[1]);
                         break;
 
                     case "Processing":
@@ -162,30 +162,30 @@ namespace Station
 
                     case "ApplicationUpdate":
                         string[] values = tokens[1].Split('/');
-                        Manager.sendResponse("Android", "Station", $"SetValue:gameName:{values[0]}");
+                        Manager.SendResponse("Android", "Station", $"SetValue:gameName:{values[0]}");
 
                         if (values.Length > 1)
                         {
-                            Manager.sendResponse("Android", "Station", $"SetValue:gameId:{values[1]}");
-                            Manager.sendResponse("Android", "Station", $"SetValue:gameType:{values[2]}");
+                            Manager.SendResponse("Android", "Station", $"SetValue:gameId:{values[1]}");
+                            Manager.SendResponse("Android", "Station", $"SetValue:gameType:{values[2]}");
                         }
                         else
                         {
-                            Manager.sendResponse("Android", "Station", "SetValue:gameId:");
-                            Manager.sendResponse("Android", "Station", "SetValue:gameType:");
+                            Manager.SendResponse("Android", "Station", "SetValue:gameId:");
+                            Manager.SendResponse("Android", "Station", "SetValue:gameType:");
                         }
                         break;
 
                     case "ApplicationList":
                         //Backwards compatability, send both old (steamApplications) and new (installedApplications) commands for now.
-                        Manager.sendResponse("Android", "Station", "SetValue:steamApplications:" + tokens[1]);
-                        Manager.sendResponse("Android", "Station", "SetValue:installedApplications:" + tokens[1]);
+                        Manager.SendResponse("Android", "Station", "SetValue:steamApplications:" + tokens[1]);
+                        Manager.SendResponse("Android", "Station", "SetValue:installedApplications:" + tokens[1]);
                         break;
 
                     case "ApplicationClosed":
-                        Manager.sendResponse("Android", "Station", "SetValue:gameName:");
-                        Manager.sendResponse("Android", "Station", "SetValue:gameId:");
-                        Manager.sendResponse("Android", "Station", "SetValue:gameType:");
+                        Manager.SendResponse("Android", "Station", "SetValue:gameName:");
+                        Manager.SendResponse("Android", "Station", "SetValue:gameId:");
+                        Manager.SendResponse("Android", "Station", "SetValue:gameType:");
                         break;
 
                     case "StationError":

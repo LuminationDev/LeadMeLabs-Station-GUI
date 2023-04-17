@@ -30,7 +30,7 @@ namespace Station
         /// </summery>
         public async Task RunAsync()
         {
-            CommandLine.getVolume();
+            CommandLine.GetVolume();
 
             try
             {
@@ -168,7 +168,7 @@ namespace Station
                     Logger.WriteLog($"From {endPoint}, Decrypted Text received : {data}", MockConsole.LogLevel.Debug, !data.Contains(":Ping:"));
 
                     //Run the appropriate script
-                    Manager.runScript(data);
+                    Manager.RunScript(data);
                 }
                 else
                 {

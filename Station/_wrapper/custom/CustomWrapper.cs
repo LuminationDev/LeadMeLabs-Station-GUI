@@ -36,7 +36,7 @@ namespace Station
                     MockConsole.WriteLine($"Station working directory not found while searching for header file", MockConsole.LogLevel.Error);
                     SessionController.PassStationMessage($"StationError,Station working directory not found while searching for header file.");
 
-                    Manager.sendResponse("Android", "Station", $"ThumbnailError:{experienceName}");
+                    Manager.SendResponse("Android", "Station", $"ThumbnailError:{experienceName}");
                     return;
                 }
 
@@ -55,7 +55,7 @@ namespace Station
                 {
                     MockConsole.WriteLine($"File not found:{filePath}", MockConsole.LogLevel.Error);
                     SessionController.PassStationMessage($"StationError,File not found:{filePath}");
-                    Manager.sendResponse("Android", "Station", $"ThumbnailError:{experienceName}");
+                    Manager.SendResponse("Android", "Station", $"ThumbnailError:{experienceName}");
                     return;
                 }
 
@@ -220,7 +220,7 @@ namespace Station
                 currentProcess.Kill();
                 //WrapperManager.ClosePipeServer();
             }
-            CommandLine.queryVRProcesses(WrapperMonitoringThread.steamProcesses, true);
+            CommandLine.QueryVRProcesses(WrapperMonitoringThread.steamProcesses, true);
         }
 
         public void RestartCurrentProcess()

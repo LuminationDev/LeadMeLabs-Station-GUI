@@ -62,18 +62,18 @@ namespace Station
             Logger.WriteLog("UnhandledExceptionHandler caught : " + e.Message, MockConsole.LogLevel.Error);
             Logger.WriteLog($"Runtime terminating: {args.IsTerminating}", MockConsole.LogLevel.Error);
             Logger.WorkQueue();
-            Manager.sendResponse("Android", "Station", "SetValue:status:Off");
-            Manager.sendResponse("Android", "Station", "SetValue:gameName:Unexpected error occured, please restart station");
-            Manager.sendResponse("Android", "Station", "SetValue:gameId:");
+            Manager.SendResponse("Android", "Station", "SetValue:status:Off");
+            Manager.SendResponse("Android", "Station", "SetValue:gameName:Unexpected error occured, please restart station");
+            Manager.SendResponse("Android", "Station", "SetValue:gameId:");
         }
 
         static void ProcessExitHandler(object? sender, EventArgs args)
         {
             Logger.WriteLog("Process Exiting", MockConsole.LogLevel.Verbose);
             Logger.WorkQueue();
-            Manager.sendResponse("Android", "Station", "SetValue:status:Off");
-            Manager.sendResponse("Android", "Station", "SetValue:gameName:");
-            Manager.sendResponse("Android", "Station", "SetValue:gameId:");
+            Manager.SendResponse("Android", "Station", "SetValue:status:Off");
+            Manager.SendResponse("Android", "Station", "SetValue:gameName:");
+            Manager.SendResponse("Android", "Station", "SetValue:gameId:");
         }
 
         public static void InitSentry()

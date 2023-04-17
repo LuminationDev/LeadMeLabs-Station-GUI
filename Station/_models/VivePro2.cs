@@ -28,7 +28,7 @@ namespace Station
             }
 
             CommandLine.KillSteamSigninWindow();
-            CommandLine.startProgram(SessionController.steam, "-noreactlogin -login " + Environment.GetEnvironmentVariable("SteamUserName") + " " + Environment.GetEnvironmentVariable("SteamPassword") + " steam://rungameid/1635730"); //Open up steam and run vive console
+            CommandLine.StartProgram(SessionController.steam, "-noreactlogin -login " + Environment.GetEnvironmentVariable("SteamUserName") + " " + Environment.GetEnvironmentVariable("SteamPassword") + " steam://rungameid/1635730"); //Open up steam and run vive console
 
             timer = new Timer(5000); // every 5 seconds try to minimize the processes
             int attempts = 0;

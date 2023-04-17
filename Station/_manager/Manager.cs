@@ -91,7 +91,7 @@ namespace Station
                     if (Environment.GetEnvironmentVariable("NucAddress") != null)
                     {
                         Logger.WriteLog($"Expected NUC address: {Environment.GetEnvironmentVariable("NucAddress")}", MockConsole.LogLevel.Normal);
-                        setRemoteEndPoint();
+                        SetRemoteEndPoint();
                         if (!Helper.GetStationMode().Equals(Helper.STATION_MODE_APPLIANCE))
                         {
                             InitialStartUp();
@@ -147,10 +147,10 @@ namespace Station
         /// </summary>
         public static void InitialStartUp()
         {
-            Manager.sendResponse("NUC", "Station", "SetValue:status:On");
-            Manager.sendResponse("NUC", "Station", "SetValue:gameName:");
-            Manager.sendResponse("Android", "Station", "SetValue:gameId:");
-            Manager.sendResponse("NUC", "Station", "SetValue:volume:" + CommandLine.getVolume());
+            Manager.SendResponse("NUC", "Station", "SetValue:status:On");
+            Manager.SendResponse("NUC", "Station", "SetValue:gameName:");
+            Manager.SendResponse("Android", "Station", "SetValue:gameId:");
+            Manager.SendResponse("NUC", "Station", "SetValue:volume:" + CommandLine.GetVolume());
         }
 
         /// <summary>
@@ -200,7 +200,7 @@ namespace Station
             return mac;
         }
 
-        public static void setRemoteEndPoint()
+        public static void SetRemoteEndPoint()
         {
             remoteEndPoint = new IPEndPoint(IPAddress.Parse((ReadOnlySpan<char>)Environment.GetEnvironmentVariable("NucAddress")), NUCPort);
         }
@@ -209,7 +209,7 @@ namespace Station
         /// Create a new script thread and start it, passing in the data collected from 
         /// the recently connected client.
         /// </summery>
-        public static void runScript(string data)
+        public static void RunScript(string data)
         {
             ScriptThread script = new(data);
             Thread scriptThread = new(script.run);
@@ -219,7 +219,7 @@ namespace Station
         /// <summary>
         /// Send a response back to the android server detailing what has happened.
         /// </summary>
-        public static void sendResponse(string destination, string actionNamespace, string? additionalData, bool writeToLog = true)
+        public static void SendResponse(string destination, string actionNamespace, string? additionalData, bool writeToLog = true)
         {
             string source = "Station," + Environment.GetEnvironmentVariable("StationId");
             string response = source + ":" + destination + ":" + actionNamespace;

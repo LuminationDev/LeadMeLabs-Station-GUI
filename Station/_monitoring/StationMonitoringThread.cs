@@ -51,7 +51,7 @@ namespace Station
             if (timeCheck(DateTime.Now.ToString("HH:mm:ss").Split(':')))
             {
                 restarting = true; //do not double up on the command
-                CommandLine.restartProgram();
+                CommandLine.RestartProgram();
                 return;
             }
 
@@ -75,7 +75,7 @@ namespace Station
 
             if (temperature > 90)
             {
-                Manager.sendResponse("Android", "Station", "HighTemperature");
+                Manager.SendResponse("Android", "Station", "HighTemperature");
                 SentrySdk.CaptureMessage("High temperature detected (" + temperature + ") at: " + (Environment.GetEnvironmentVariable("LabLocation") ?? "Unknown"));
                 Logger.WriteLog("High temperature detected (" + temperature + ") at: " + (Environment.GetEnvironmentVariable("LabLocation") ?? "Unknown"), MockConsole.LogLevel.Error);
                 latestHighTemperatureWarning = DateTime.Now;

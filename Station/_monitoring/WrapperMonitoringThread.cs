@@ -136,8 +136,8 @@ namespace Station
             combinedProcesses.AddRange(steamProcesses);
             combinedProcesses.AddRange(viveProcesses);
 
-            processes = CommandLine.getProcessesByName(combinedProcesses);
-            bool processesAreAllResponding = CommandLine.checkThatAllProcessesAreResponding(processes);
+            processes = CommandLine.GetProcessesByName(combinedProcesses);
+            bool processesAreAllResponding = CommandLine.CheckThatAllProcessesAreResponding(processes);
             bool allProcessesAreRunning = processes.Count >= steamProcesses.Count;
 
             Console.WriteLine("Just checked that all processes are responding. Result: {0}", processesAreAllResponding);
@@ -205,7 +205,7 @@ namespace Station
                         //Only trigger once per experience
                         SteamScripts.popupDetect = true;
                         Console.WriteLine(process.MainWindowTitle);
-                        Manager.sendResponse("Android", "Station", "PopupDetected:" + SteamWrapper.experienceName);
+                        Manager.SendResponse("Android", "Station", "PopupDetected:" + SteamWrapper.experienceName);
                     }
                 }
             }
