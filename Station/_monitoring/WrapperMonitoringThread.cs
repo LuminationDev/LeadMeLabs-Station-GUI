@@ -86,26 +86,29 @@ namespace Station
         /// </summary>
         private static void callCustomCheck(Object? source, System.Timers.ElapsedEventArgs e)
         {
+            ViveCheck();
             AppCheck();
             SteamCheck();
-            ViveCheck();
 
             Logger.WorkQueue();
         }
 
         private static void callSteamCheck(Object? source, System.Timers.ElapsedEventArgs e)
         {
+            MockConsole.WriteLine("About to check Vive status", MockConsole.LogLevel.Verbose);
+            ViveCheck();
+            MockConsole.WriteLine("Checked Vive status", MockConsole.LogLevel.Verbose);
+
             AppCheck();
             SteamCheck();
-            ViveCheck();
 
             Logger.WorkQueue();
         }
 
         private static void callViveCheck(Object? source, System.Timers.ElapsedEventArgs e)
         {
-            AppCheck();
             ViveCheck();
+            AppCheck();
 
             Logger.WorkQueue();
         }
@@ -133,8 +136,8 @@ namespace Station
             combinedProcesses.AddRange(steamProcesses);
             combinedProcesses.AddRange(viveProcesses);
 
-            processes = CommandLine.getProcessesByName(combinedProcesses);
-            bool processesAreAllResponding = CommandLine.checkThatAllProcessesAreResponding(processes);
+            processes = CommandLine.GetProcessesByName(combinedProcesses);
+            bool processesAreAllResponding = CommandLine.CheckThatAllProcessesAreResponding(processes);
             bool allProcessesAreRunning = processes.Count >= steamProcesses.Count;
 
             Console.WriteLine("Just checked that all processes are responding. Result: {0}", processesAreAllResponding);
@@ -202,7 +205,7 @@ namespace Station
                         //Only trigger once per experience
                         SteamScripts.popupDetect = true;
                         Console.WriteLine(process.MainWindowTitle);
-                        Manager.sendResponse("Android", "Station", "PopupDetected:" + SteamWrapper.experienceName);
+                        Manager.SendResponse("Android", "Station", "PopupDetected:" + SteamWrapper.experienceName);
                     }
                 }
             }
@@ -210,11 +213,10 @@ namespace Station
 
         private static void ViveCheck()
         {
-            string oldViveStatus = viveStatus;
             if (SessionController.vrHeadset == null) return;
 
             viveStatus = SessionController.vrHeadset.MonitorVrConnection(currentViveStatus: viveStatus);
-            Logger.WriteLog("ViveStatus: " + viveStatus, MockConsole.LogLevel.Debug, !viveStatus.Equals(oldViveStatus));
+            Logger.WriteLog("ViveStatus: " + viveStatus, MockConsole.LogLevel.Debug);
         }
     }
 }

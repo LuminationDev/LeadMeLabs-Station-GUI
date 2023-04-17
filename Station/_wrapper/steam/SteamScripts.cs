@@ -54,7 +54,7 @@ namespace Station
         public static List<string>? loadAvailableGames()
         {
             //Close Steam if it is open
-            CommandLine.queryVRProcesses(WrapperMonitoringThread.steamProcesses, true);
+            CommandLine.QueryVRProcesses(WrapperMonitoringThread.steamProcesses, true);
 
             //Check if SteamCMD has been initialised
 #if DEBUG
@@ -69,7 +69,7 @@ namespace Station
                 return null;
             }
 
-            string? steamResponse = CommandLine.executeSteamCommand(loginAnonymous + installed + quit);
+            string? steamResponse = CommandLine.ExecuteSteamCommand(loginAnonymous + installed + quit);
             if(steamResponse == null)
             {
                 return null;
@@ -79,7 +79,7 @@ namespace Station
 
             if (Directory.Exists("S:\\SteamLibrary\\steamapps"))
             {
-                string? additionalSteamResponse = CommandLine.executeSteamCommandSDrive(loginAnonymous + installed + quit);
+                string? additionalSteamResponse = CommandLine.ExecuteSteamCommandSDrive(loginAnonymous + installed + quit);
                 if (additionalSteamResponse == null)
                 {
                     return null;
@@ -88,7 +88,7 @@ namespace Station
                 installedGames.AddRange(additionalInstalledGames);
             }
 
-            List<string>? licenseList = CommandLine.executeSteamCommand(loginUser + licenses + quit)?.Split('\n').ToList();
+            List<string>? licenseList = CommandLine.ExecuteSteamCommand(loginUser + licenses + quit)?.Split('\n').ToList();
             if (licenseList == null)
             {
                 return null;

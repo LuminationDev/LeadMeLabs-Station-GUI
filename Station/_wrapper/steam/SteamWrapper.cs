@@ -12,7 +12,7 @@ namespace Station
         private static Process? currentProcess;
         private static string launch_params = "-noreactlogin -login " + Environment.GetEnvironmentVariable("SteamUserName") + " " + Environment.GetEnvironmentVariable("SteamPassword") + " steam://rungameid/";
         public static string? experienceName = null;
-        public static string? installdir = null;
+        public static string? installDir = null;
 
         /// <summary>
         /// Track if an experience is being launched.
@@ -43,23 +43,30 @@ namespace Station
         {
             if (experience.ID == null)
             {
-                SessionController.PassStationMessage($"MessageToAndroid,GameLaunchFailed:Unknown Experience");
+                SessionController.PassStationMessage($"MessageToAndroid,GameLaunchFailed:Unknown experience");
                 return;
             };
 
             SteamScripts.lastApp = experience;
-            GetGameProcessName();
+            GetGameProcessDetails();
+
+            if(experienceName == null || installDir == null)
+            {
+                SessionController.PassStationMessage($"MessageToAndroid,GameLaunchFailed:Fail to find experience");
+                Logger.WriteLog($"Unable to find Steam experience details (name & install directory) for: {experience.Name}", MockConsole.LogLevel.Normal);
+                return;
+            }
 
             MockConsole.WriteLine($"Wrapping: {experienceName}", MockConsole.LogLevel.Debug);
 
             //Start the external processes to handle SteamVR
             SessionController.StartVRSession(wrapperType);
 
-            //Wait for Vive to start
-            if (!WaitForVive().Result) return;
-
             //Begin monitoring the different processes
             WrapperMonitoringThread.initializeMonitoring(wrapperType);
+
+            //Wait for Vive to start
+            if (!WaitForVive().Result) return;
 
             Task.Factory.StartNew(() =>
             {
@@ -84,7 +91,7 @@ namespace Station
         /// Collect the name of the application from the Steam install directory, the executable name is what windows uses
         /// as the 'Image Name' and will not change unless the executable is changed which does not matter for this function.
         /// </summary>
-        private void GetGameProcessName()
+        private void GetGameProcessDetails()
         {
             string fileLocation = "S:\\SteamLibrary\\steamapps\\appmanifest_" + SteamScripts.lastApp.ID + ".acf";
             if (!File.Exists(fileLocation))
@@ -97,23 +104,27 @@ namespace Station
                 }
             }
 
+            Logger.WriteLog($"Steam experience file location: {fileLocation}", MockConsole.LogLevel.Normal);
+
             foreach (string line in File.ReadLines(fileLocation))
             {
                 if (line.StartsWith("\t\"name\""))
                 {
                     experienceName = line.Split("\t")[3].Trim('\"');
                 }
-                
+
                 if (line.StartsWith("\t\"installdir\""))
                 {
-                    installdir = line.Split("\t")[3].Trim('\"');
+                    installDir = line.Split("\t")[3].Trim('\"');
                 }
 
-                if (experienceName != null)
+                if (experienceName != null && installDir != null)
                 {
                     break;
                 }
             }
+
+            Logger.WriteLog($"Steam experience install directory: {installDir}", MockConsole.LogLevel.Normal);
         }
 
         /// <summary>
@@ -131,7 +142,7 @@ namespace Station
             }
             launchingExperience = true;
 
-            if (!await ViveScripts.viveCheck(wrapperType))
+            if (!await ViveScripts.ViveCheck(wrapperType))
             {
                 launchingExperience = false;
                 return false;
@@ -160,11 +171,15 @@ namespace Station
 
             if(child != null)
             {
+                Logger.WriteLog($"Child process found: {child.Id}, {child.MainWindowTitle}, {child.ProcessName}", MockConsole.LogLevel.Normal);
+
                 SteamScripts.popupDetect = false;
                 ListenForClose();
+                WindowManager.MaximizeProcess(child); //Maximise the process experience
                 SessionController.PassStationMessage($"ApplicationUpdate,{experienceName}/{currentProcess?.Id}/Steam");
             } else
             {
+                Logger.WriteLog("Game launch failure: " + experienceName, MockConsole.LogLevel.Normal);
                 UIUpdater.ResetUIDisplay();
                 SessionController.PassStationMessage($"MessageToAndroid,GameLaunchFailed:{experienceName}");
             }
@@ -177,34 +192,33 @@ namespace Station
         /// <returns>The launched application process</returns>
         private Process? GetExperienceProcess()
         {
-            if (installdir != null)
+            if (installDir != null)
             {
                 string? activeProcessId = null;
-                string steamPath = "C:\\Program Files (x86)\\Steam\\steamapps\\common\\" + installdir;
+                string steamPath = "C:\\Program Files (x86)\\Steam\\steamapps\\common\\" + installDir;
                 string? processId = CommandLine.GetProcessIdFromDir(steamPath);
                 if (processId != null)
                 {
                     activeProcessId = processId;
                 }
-        
-                steamPath = "S:\\SteamLibrary\\steamapps\\common\\" + installdir;
+
+                steamPath = "S:\\SteamLibrary\\steamapps\\common\\" + installDir;
                 processId = CommandLine.GetProcessIdFromDir(steamPath);
                 if (processId != null)
                 {
+                    Logger.WriteLog("A proccess ID was found: " + processId, MockConsole.LogLevel.Normal);
                     activeProcessId = processId;
                 }
                 if (activeProcessId != null)
                 {
                     Process proc = Process.GetProcessById(Int32.Parse(activeProcessId));
-                    MockConsole.WriteLine($"Application found: {proc.MainWindowTitle}/{proc.Id}", MockConsole.LogLevel.Debug);
+                    Logger.WriteLog($"Application found: {proc.MainWindowTitle}/{proc.Id}", MockConsole.LogLevel.Debug);
 
                     UIUpdater.UpdateProcess(proc.MainWindowTitle);
                     UIUpdater.UpdateStatus("Running...");
-
                     return proc;
                 }
             }
-
             return null;
         }
 
@@ -231,7 +245,7 @@ namespace Station
             {
                 currentProcess.Kill();
             }
-            ViveScripts.stopMonitoring();
+            ViveScripts.StopMonitoring();
             SteamScripts.popupDetect = false;
         }
 
@@ -248,13 +262,14 @@ namespace Station
 
         public async void RestartCurrentSession()
         {
+            SessionController.PassStationMessage("Processing,false");
             StopCurrentProcess();
 
             List<string> combinedProcesses = new List<string>();
             combinedProcesses.AddRange(WrapperMonitoringThread.steamProcesses);
             combinedProcesses.AddRange(WrapperMonitoringThread.viveProcesses);
 
-            CommandLine.queryVRProcesses(combinedProcesses, true);
+            CommandLine.QueryVRProcesses(combinedProcesses, true);
             await SessionController.PutTaskDelay(2000);
 
             //have to add a waiting time to make sure it has exited
@@ -268,7 +283,7 @@ namespace Station
             }
 
             List<string> processesToQuery = SessionController.vrHeadset.GetProcessesToQuery();
-            while (CommandLine.queryVRProcesses(processesToQuery))
+            while (CommandLine.QueryVRProcesses(processesToQuery))
             {
                 await SessionController.PutTaskDelay(1000); //blocks progress but does not stop the program
                 if (attempts > 20)

@@ -1,4 +1,7 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Management;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
@@ -50,7 +53,7 @@ namespace Station
         /// <summary>
         /// Starts the server running on the local machine
         /// </summary>
-        public async static void startProgram()
+        public async static void StartProgram()
         {
             MockConsole.ClearConsole();
 
@@ -82,16 +85,16 @@ namespace Station
                     StationMonitoringThread.initializeMonitoring();
                     }
 
-                    setServerIPAddress();
-                    startServer();
+                    SetServerIPAddress();
+                    StartServer();
 
                     if (Environment.GetEnvironmentVariable("NucAddress") != null)
                     {
-                        Logger.WriteLog(Environment.GetEnvironmentVariable("NucAddress"), MockConsole.LogLevel.Debug);
-                        setRemoteEndPoint();
+                        Logger.WriteLog($"Expected NUC address: {Environment.GetEnvironmentVariable("NucAddress")}", MockConsole.LogLevel.Normal);
+                        SetRemoteEndPoint();
                         if (!Helper.GetStationMode().Equals(Helper.STATION_MODE_APPLIANCE))
                         {
-                            initialStartUp();
+                            InitialStartUp();
                         }
                     }
                 }).Start();
@@ -104,12 +107,12 @@ namespace Station
         /// <summary>
         /// Stop all instances of the Station program running
         /// </summary>
-        public static void stopProgram()
+        public static void StopProgram()
         {
             new Thread(() =>
             {
                 StationMonitoringThread.stopMonitoring();
-                stopServer();
+                StopServer();
                 wrapperManager?.ShutDownWrapper();
                 Logger.WriteLog("Station stopped", MockConsole.LogLevel.Normal);
             }).Start();
@@ -118,21 +121,21 @@ namespace Station
         /// <summary>
         /// Restart the station program
         /// </summary>
-        public static void restartProgram()
+        public static void RestartProgram()
         {
-            stopProgram();
+            StopProgram();
             Logger.WriteLog("Station restarting", MockConsole.LogLevel.Normal);
-            startProgram();
+            StartProgram();
         }
 
-        public static void startServer()
+        public static void StartServer()
         {
             server = new ServerThread();
             serverThread = new Thread(async () => await server.RunAsync());
             serverThread.Start();
         }
 
-        public static void stopServer()
+        public static void StopServer()
         {
             server?.Stop();
             serverThread?.Interrupt();
@@ -142,12 +145,12 @@ namespace Station
         /// <summary>
         /// On start up or NUC address change send the status, steam list and the current volume to the NUC.
         /// </summary>
-        public static void initialStartUp()
+        public static void InitialStartUp()
         {
-            Manager.sendResponse("NUC", "Station", "SetValue:status:On");
-            Manager.sendResponse("NUC", "Station", "SetValue:gameName:");
-            Manager.sendResponse("Android", "Station", "SetValue:gameId:");
-            Manager.sendResponse("NUC", "Station", "SetValue:volume:" + CommandLine.getVolume());
+            Manager.SendResponse("NUC", "Station", "SetValue:status:On");
+            Manager.SendResponse("NUC", "Station", "SetValue:gameName:");
+            Manager.SendResponse("Android", "Station", "SetValue:gameId:");
+            Manager.SendResponse("NUC", "Station", "SetValue:volume:" + CommandLine.GetVolume());
         }
 
         /// <summary>
@@ -156,7 +159,7 @@ namespace Station
         /// By connecting a UDP socket the correct IP address can be found
         /// when other applications such as VM are running.
         /// </summary>
-        public static void setServerIPAddress()
+        public static void SetServerIPAddress()
         {
             try
             {
@@ -168,9 +171,9 @@ namespace Station
                 {
                     localEndPoint = new IPEndPoint(endPoint.Address, localPort);
 
-                    App.SetWindowTitle($"Station {Environment.GetEnvironmentVariable("StationId")} -- {endPoint.Address}"); 
-
                     Logger.WriteLog("Server IP Address is: " + endPoint.Address.ToString(), MockConsole.LogLevel.Normal);
+
+                    App.SetWindowTitle($"Station ({Environment.GetEnvironmentVariable("StationId")}) -- {endPoint.Address} -- {GetMACAddress()}"); 
                 }
                 else
                 {
@@ -183,7 +186,21 @@ namespace Station
             }
         }
 
-        public static void setRemoteEndPoint()
+        /// <summary>
+        /// Retrieve the MAC address of the current machine.
+        /// </summary>
+        /// <returns>A string of the mac address</returns>
+        public static string? GetMACAddress()
+        {
+            ManagementObjectSearcher searcher = new ManagementObjectSearcher("SELECT * FROM Win32_NetworkAdapterConfiguration where IPEnabled=true");
+            IEnumerable<ManagementObject> objects = searcher.Get().Cast<ManagementObject>();
+            string? mac = (from o in objects orderby o["IPConnectionMetric"] select o["MACAddress"].ToString()).FirstOrDefault();
+
+            Logger.WriteLog("MAC Address is: " + mac, MockConsole.LogLevel.Normal);
+            return mac;
+        }
+
+        public static void SetRemoteEndPoint()
         {
             remoteEndPoint = new IPEndPoint(IPAddress.Parse((ReadOnlySpan<char>)Environment.GetEnvironmentVariable("NucAddress")), NUCPort);
         }
@@ -192,7 +209,7 @@ namespace Station
         /// Create a new script thread and start it, passing in the data collected from 
         /// the recently connected client.
         /// </summery>
-        public static void runScript(string data)
+        public static void RunScript(string data)
         {
             ScriptThread script = new(data);
             Thread scriptThread = new(script.run);
@@ -202,7 +219,7 @@ namespace Station
         /// <summary>
         /// Send a response back to the android server detailing what has happened.
         /// </summary>
-        public static void sendResponse(string destination, string actionNamespace, string? additionalData, bool writeToLog = true)
+        public static void SendResponse(string destination, string actionNamespace, string? additionalData, bool writeToLog = true)
         {
             string source = "Station," + Environment.GetEnvironmentVariable("StationId");
             string response = source + ":" + destination + ":" + actionNamespace;

@@ -55,7 +55,6 @@ namespace Station
         public async void RestartCurrentSession()
         {
             SessionController.PassStationMessage("Processing,false");
-
             SessionController.PassStationMessage("MessageToAndroid,SetValue:session:Restarted");
         }
     }

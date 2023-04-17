@@ -39,9 +39,9 @@ namespace Station
                     bool isValidUrl = Uri.IsWellFormedUriString(url, UriKind.Absolute);
                     if (isValidUrl)
                     {
-                        CommandLine.executeBrowserCommand(url);
-                        Manager.sendResponse(source, "Station", "SetValue:gameName:" + url);
-                        Manager.sendResponse("Android", "Station", "SetValue:gameId:");
+                        CommandLine.ExecuteBrowserCommand(url);
+                        Manager.SendResponse(source, "Station", "SetValue:gameName:" + url);
+                        Manager.SendResponse("Android", "Station", "SetValue:gameId:");
                     }
                 }
             }
@@ -66,7 +66,7 @@ namespace Station
                     cancelTime = 0;
                     actualCancelTime = 0;
                 }
-                CommandLine.shutdownStation(actualCancelTime);
+                CommandLine.ShutdownStation(actualCancelTime);
                 tokenSource = new CancellationTokenSource();
                 var timer = new System.Timers.Timer(cancelTime);
 
@@ -77,9 +77,9 @@ namespace Station
                         if (!tokenSource.IsCancellationRequested)
                         {
                             endVRSession();
-                            Manager.sendResponse(source, "Station", "SetValue:status:Off");
-                            Manager.sendResponse(source, "Station", "SetValue:gameName:");
-                            Manager.sendResponse(source, "Station", "SetValue:gameId:");
+                            Manager.SendResponse(source, "Station", "SetValue:status:Off");
+                            Manager.SendResponse(source, "Station", "SetValue:gameName:");
+                            Manager.SendResponse(source, "Station", "SetValue:gameId:");
                         }
                     }
                 }
@@ -90,7 +90,7 @@ namespace Station
             }
             else if (additionalData.Equals("CancelShutdown"))
             {
-                CommandLine.cancelShutdown();
+                CommandLine.CancelShutdown();
                 tokenSource?.Cancel();
             }
             else if (additionalData.Equals("StopGame"))
@@ -114,11 +114,11 @@ namespace Station
         /// <returns></returns>
         public static void restartVRSession()
         {
-            Manager.sendResponse("Android", "Station", "SetValue:status:On");
+            Manager.SendResponse("Android", "Station", "SetValue:status:On");
             if (!processing)
             {
                 processing = true;
-                Manager.sendResponse("Android", "Station", "SetValue:status:On");
+                Manager.SendResponse("Android", "Station", "SetValue:status:On");
                 Manager.wrapperManager?.ActionHandler("Session", "Restart");
             }
             else
@@ -132,9 +132,9 @@ namespace Station
         /// </summary>
         public static void endVRSession()
         {
-            Manager.sendResponse("Android", "Station", "SetValue:status:On");
+            Manager.SendResponse("Android", "Station", "SetValue:status:On");
             Manager.wrapperManager?.ActionHandler("Session", "Stop");
-            Manager.sendResponse("Android", "Station", "SetValue:session:Ended");
+            Manager.SendResponse("Android", "Station", "SetValue:session:Ended");
         }
     }
 }

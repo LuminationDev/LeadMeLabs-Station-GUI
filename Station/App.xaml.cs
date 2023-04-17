@@ -25,9 +25,24 @@ namespace Station
             currentDomain.UnhandledException += UnhandledExceptionHandler;
             currentDomain.ProcessExit += ProcessExitHandler;
 
-            initSentry();
+            InitSentry();
+            CheckStorage();
 
-            Manager.startProgram();
+            Manager.StartProgram();
+        }
+
+        /// <summary>
+        /// Check the local storage, sending a sentry error message if there is less than 10GB of free space.
+        /// </summary>
+        private static void CheckStorage()
+        {
+            int? freeStorage = CommandLine.GetFreeStorage();
+            if (freeStorage != null && freeStorage < 10)
+            {
+                SentrySdk.CaptureMessage("Low memory detected (" + freeStorage + ") at: " +
+                                         (Environment.GetEnvironmentVariable("LabLocation",
+                                             EnvironmentVariableTarget.User) ?? "Unknown"));
+            }
         }
 
         /// <summary>
@@ -47,21 +62,21 @@ namespace Station
             Logger.WriteLog("UnhandledExceptionHandler caught : " + e.Message, MockConsole.LogLevel.Error);
             Logger.WriteLog($"Runtime terminating: {args.IsTerminating}", MockConsole.LogLevel.Error);
             Logger.WorkQueue();
-            Manager.sendResponse("Android", "Station", "SetValue:status:Off");
-            Manager.sendResponse("Android", "Station", "SetValue:gameName:Unexpected error occured, please restart station");
-            Manager.sendResponse("Android", "Station", "SetValue:gameId:");
+            Manager.SendResponse("Android", "Station", "SetValue:status:Off");
+            Manager.SendResponse("Android", "Station", "SetValue:gameName:Unexpected error occured, please restart station");
+            Manager.SendResponse("Android", "Station", "SetValue:gameId:");
         }
 
         static void ProcessExitHandler(object? sender, EventArgs args)
         {
             Logger.WriteLog("Process Exiting", MockConsole.LogLevel.Verbose);
             Logger.WorkQueue();
-            Manager.sendResponse("Android", "Station", "SetValue:status:Off");
-            Manager.sendResponse("Android", "Station", "SetValue:gameName:");
-            Manager.sendResponse("Android", "Station", "SetValue:gameId:");
+            Manager.SendResponse("Android", "Station", "SetValue:status:Off");
+            Manager.SendResponse("Android", "Station", "SetValue:gameName:");
+            Manager.SendResponse("Android", "Station", "SetValue:gameId:");
         }
 
-        public static void initSentry()
+        public static void InitSentry()
         {
             string? sentryDsn = "";
 

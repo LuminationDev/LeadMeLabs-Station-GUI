@@ -19,7 +19,7 @@ namespace Station
         /// Only try terminate the monitoring if it is actively monitoring, otherwise it will immediately 
         /// exit the next time.
         /// </summary>
-        public static void stopMonitoring()
+        public static void StopMonitoring()
         {
             if (activelyMonitoring)
             {
@@ -31,7 +31,7 @@ namespace Station
         /// Run a while loop to track if the Vive program is up and running.
         /// </summary>
         /// <returns></returns>
-        public static async Task<bool> viveCheck(string type)
+        public static async Task<bool> ViveCheck(string type)
         {
             //Determine if the awaiting headset connection has already been sent.
             bool sent = false;
@@ -60,6 +60,7 @@ namespace Station
                 }
                 else //Message has already been sent to the NUC, block so it does not take up too much processing power
                 {
+                    //Loop for a period of time before declaring a headset timeout
                     if (count == 30) // (30 * 2000ms) this loop + 2000ms initial loop 
                     {
                         terminateMonitoring = true;

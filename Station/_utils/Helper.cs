@@ -21,7 +21,7 @@ namespace Station
 
             if (!STATION_MODES.Contains(mode))
             {
-                throw new Exception("Station in unsupported mode");
+                //throw new Exception("Station in unsupported mode");
             }
 
             return mode;

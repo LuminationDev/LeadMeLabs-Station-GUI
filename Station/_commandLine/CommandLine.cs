@@ -14,8 +14,6 @@ namespace Station
     /// </summary>
     public static class CommandLine
     {
-        
-        private static string stationPowershell = "powershell.exe";
         /// <summary>
         /// Process name of the Launcher that coordinates the LeadMe software suite.
         /// </summary>
@@ -37,6 +35,11 @@ namespace Station
         private static readonly string stationCmd = "cmd.exe";
 
         /// <summary>
+        /// A string representing the powershell executable.
+        /// </summary>
+        private static readonly string stationPowershell = "powershell.exe";
+
+        /// <summary>
         /// The relative path of the steamCMD executable on the local machine.
         /// </summary>
         public static string steamCmd = stationLocation + @"\external\steamcmd\steamcmd.exe";
@@ -52,7 +55,7 @@ namespace Station
         /// </summary>
         /// <param name="type">A string representing what applicaiton to be launched</param>
         /// <returns>A instance of the newly created process</returns>
-        private static Process setupCommand(string type)
+        private static Process SetupCommand(string type)
         {
             Process temp = new();
             temp.StartInfo.FileName = type;
@@ -110,17 +113,17 @@ namespace Station
         /// </summary>
         /// <param name="executable">A string representing the address of the executable on the local machine</param>
         /// <param name="arguments">A string representing the any arguements the program needs while opening</param>
-        public static void startProgram(string executable, string arguments = "")
+        public static void StartProgram(string executable, string arguments = "")
         {
-            Process cmd = setupCommand(executable);
+            Process cmd = SetupCommand(executable);
             cmd.StartInfo.Arguments = arguments;
             cmd.Start();
             cmd.Close();
         }
 
-        public static string? runProgramWithOutput(string executable, string arguments = "")
+        public static string? RunProgramWithOutput(string executable, string arguments = "")
         {
-            Process cmd = setupCommand(executable);
+            Process cmd = SetupCommand(executable);
             cmd.StartInfo.Arguments = arguments;
             cmd.Start();
             string? result = outcome(cmd);
@@ -135,9 +138,9 @@ namespace Station
         /// </summary>
         /// <param name="command">A string representing the command line to be executed</param>
         /// <returns>A string representing the result of the command</returns>
-        public static string? executeStationCommand(string command)
+        public static string? ExecuteStationCommand(string command)
         {
-            Process cmd = setupCommand(stationCmd);
+            Process cmd = SetupCommand(stationCmd);
             cmd.Start();
 
             cmd.StandardInput.WriteLine(command);
@@ -150,34 +153,34 @@ namespace Station
         /// </summary>
         /// <param name="url">A string representing the url of a website being pushed.</param>
         /// <returns>A string representing the results of the command</returns>
-        public static void executeBrowserCommand(string url)
+        public static void ExecuteBrowserCommand(string url)
         {
             Process.Start(new ProcessStartInfo(url) { UseShellExecute = true });
         }
 
-        public static string? cancelShutdown()
+        public static string? CancelShutdown()
         {
-            string? output = executeStationCommand("shutdown /a");
+            string? output = ExecuteStationCommand("shutdown /a");
             return output;
         }
 
-        public static string? shutdownStation(int time)
+        public static string? ShutdownStation(int time)
         {
-            string? output = executeStationCommand("shutdown /s /t " + time);
+            string? output = ExecuteStationCommand("shutdown /s /t " + time);
             return output;
         }
 
-        public static List<Process> getAllProcesses(List<string> processNames, List<string> processIds)
+        public static List<Process> GetAllProcesses(List<string> processNames, List<string> processIds)
         {
             List<Process> allProcesses = new();
             if (processNames.Count > 0)
             {
-                allProcesses.AddRange(getProcessesByName(processNames));
+                allProcesses.AddRange(GetProcessesByName(processNames));
             }
 
             if (processIds.Count > 0)
             {
-                allProcesses.AddRange(getProcessesById(processIds));
+                allProcesses.AddRange(GetProcessesById(processIds));
             }
 
             return allProcesses;
@@ -188,7 +191,7 @@ namespace Station
         /// </summary>
         /// <param name="processIds">An array of string ids containing the processes to fetch</param>
         /// <returns>A list of the processes for the ids supplied</returns>
-        public static List<Process> getProcessesById(List<string> processIds)
+        public static List<Process> GetProcessesById(List<string> processIds)
         {
             List<Process> list = new();
 
@@ -213,7 +216,7 @@ namespace Station
         /// </summary>
         /// <param name="processId">The id of the process to retreive</param>
         /// <returns>The process corresponding to the id, or null if it doesn't exist</returns>
-        public static Process? getProcessById(string processId)
+        public static Process? GetProcessById(string processId)
         {
             if (processId.Equals(""))
             {
@@ -235,7 +238,7 @@ namespace Station
         /// Retrieve any processes running on the local machine.
         /// </summary>
         /// <returns>A list of all active processes currently running</returns>
-        public static Process[] getAllProcesses()
+        public static Process[] GetAllProcesses()
         {
             Process[] processes = Process.GetProcesses();
 
@@ -252,7 +255,7 @@ namespace Station
         /// every set amount of time.
         /// </summary>
         /// <returns>A list of processes that have stopped responding</returns>
-        public static List<Process> checkAllProcesses()
+        public static List<Process> CheckAllProcesses()
         {
             List<Process> list = new();
             Process[] processes = Process.GetProcesses();
@@ -273,11 +276,11 @@ namespace Station
         /// application within the next five minutes, updating the Launcher and Station software.
         /// </summary>
         /// <param name="time">A list containing the current time sections [0]-hours, [1]-minutes, [2]-seconds</param>
-        public static void restartProgram()
+        public static void RestartProgram()
         {
             Logger.WriteLog("Daily restart", MockConsole.LogLevel.Verbose);
 
-            List<Process> processes = getProcessesByName(new List<string> { launcherProcessName, stationProcessName });
+            List<Process> processes = GetProcessesByName(new List<string> { launcherProcessName, stationProcessName });
 
             foreach (Process process in processes)
             {
@@ -289,7 +292,7 @@ namespace Station
         /// Set the volume of the Station using the third party SetVol program.
         /// </summary>
         /// <param name="volume">A string representing the level at which to set the volume.</param>
-        public static void setVolume(string volume)
+        public static void SetVolume(string volume)
         {
             if (!File.Exists(SetVol))
             {
@@ -303,13 +306,13 @@ namespace Station
                 {
                     if (volume.Equals("0"))
                     {
-                        startProgram(SetVol, "mute");
+                        StartProgram(SetVol, "mute");
                     }
                     else
                     {
-                        startProgram(SetVol, "unmute");
+                        StartProgram(SetVol, "unmute");
                     }
-                    startProgram(SetVol, volume);
+                    StartProgram(SetVol, volume);
                 }
             }
             catch (Exception e)
@@ -322,7 +325,7 @@ namespace Station
         /// Get the current volume of the Station usgin the third party SetVol program.
         /// </summary>
         /// <returns>A string representing the current volume of the Station.</returns>
-        public static string? getVolume()
+        public static string? GetVolume()
         {
             if (!File.Exists(SetVol))
             {
@@ -332,7 +335,7 @@ namespace Station
 
             try
             {
-                string? output = runProgramWithOutput(SetVol, "report");
+                string? output = RunProgramWithOutput(SetVol, "report");
                 if (output == null)
                 {
                     return null;
@@ -364,7 +367,7 @@ namespace Station
         /// </summary>
         /// <param name="command">A collection of steam commands that will be run in sequence.</param>
         /// <returns>A string representing the results of the command</returns>
-        public static string? executeSteamCommand(string command)
+        public static string? ExecuteSteamCommand(string command)
         {
             if (!File.Exists(steamCmd))
             {
@@ -372,7 +375,7 @@ namespace Station
                 return null;
             }
 
-            Process cmd = setupCommand(steamCmd);
+            Process cmd = SetupCommand(steamCmd);
             cmd.StartInfo.Arguments = "\"+force_install_dir \\\"C:/Program Files (x86)/Steam\\\"\" " + command;
             cmd.Start();
 
@@ -394,7 +397,7 @@ namespace Station
         /// </summary>
         /// <param name="command">A collection of steam commands that will be run in sequence.</param>
         /// <returns>A string representing the results of the command</returns>
-        public static string? executeSteamCommandSDrive(string command)
+        public static string? ExecuteSteamCommandSDrive(string command)
         {
             if (!File.Exists(steamCmd))
             {
@@ -402,7 +405,7 @@ namespace Station
                 return null;
             }
 
-            Process cmd = setupCommand(steamCmd);
+            Process cmd = SetupCommand(steamCmd);
             cmd.StartInfo.Arguments = "\"+force_install_dir \\\"S:/SteamLibrary\\\"\" " + command;
             cmd.Start();
 
@@ -414,7 +417,7 @@ namespace Station
         /// </summary>
         /// <param name="processTitles">An array of strings containing the name of processes to search for</param>
         /// <returns>A list of all active processes for the titles supplied</returns>
-        public static List<Process> getProcessesByName(List<string> processTitles)
+        public static List<Process> GetProcessesByName(List<string> processTitles)
         {
             List<Process> list = new();
 
@@ -431,7 +434,7 @@ namespace Station
         /// </summary>
         public static void KillSteamSigninWindow()
         {
-            List<Process> list = getProcessesByName(new List<string> { "steam" });
+            List<Process> list = GetProcessesByName(new List<string> { "steam" });
             foreach (Process process in list)
             {
                 Logger.WriteLog($"Inside kill steam signin: Process: {process.ProcessName} ID: {process.Id}, MainWindowTitle: {process.MainWindowTitle}", MockConsole.LogLevel.Debug);
@@ -450,7 +453,7 @@ namespace Station
         /// </summary>
         /// <param name="allProcesses">Array of process names to check</param>
         /// <returns>boolean of if any of the processes are not responding according to powershell</returns>
-        public static bool checkThatAllProcessesAreResponding(List<Process> allProcesses)
+        public static bool CheckThatAllProcessesAreResponding(List<Process> allProcesses)
         {
             foreach (Process process in allProcesses)
             {
@@ -470,9 +473,9 @@ namespace Station
         /// <param name="processes">An array of strings containing the name of processes to search for</param>
         /// <param name="kill">A bool representing if the processes should be stopped or not</param>
         /// <returns>A boolean representing if a process is still running</returns>
-        public static bool queryVRProcesses(List<string> processes, bool kill = false)
+        public static bool QueryVRProcesses(List<string> processes, bool kill = false)
         {
-            List<Process> list = getProcessesByName(processes);
+            List<Process> list = GetProcessesByName(processes);
 
             foreach (Process process in list)
             {
@@ -493,7 +496,47 @@ namespace Station
 
             return list.Any();
         }
-        
+
+        /// <summary>
+        /// Start a powershell window to check the free space of the local computer.
+        /// </summary>
+        /// <returns>An integer representing the free space of the computer in GB</returns>
+        public static int? GetFreeStorage()
+        {
+            try
+            {
+                Process cmd = SetupCommand(stationPowershell);
+                cmd.Start();
+                cmd.StandardInput.WriteLine(
+                    "Get-WmiObject -Class win32_logicaldisk | Format-Table @{n=\"FreeSpace\";e={[math]::Round($_.FreeSpace/1GB,2)}}");
+                string? output = outcome(cmd);
+
+                if(output == null)
+                {
+                    return 9999;
+                }
+
+                string[] outputP = output.Split("\n");
+                // if there is less than 14 items, the app probably hasn't launched yet
+                if (output.Length < 10)
+                {
+                    return 9999;
+                }
+
+                if (outputP[7].Equals("FreeSpace"))
+                {
+                    int result = Convert.ToInt32(Math.Floor(Convert.ToDouble(outputP[9].Trim())));
+                    return result;
+                }
+            }
+            catch (Exception e)
+            {
+                SentrySdk.CaptureException(e);
+            }
+
+            return 9999;
+        }
+
         /// <summary>
         /// Pass in a steam application directory to get the process id if running
         /// </summary>
@@ -501,10 +544,22 @@ namespace Station
         /// <returns>Process id if the application is running</returns>
         public static string? GetProcessIdFromDir(string dir)
         {
-            Process cmd = setupCommand(stationPowershell);
+            Process cmd = SetupCommand(stationPowershell);
             cmd.Start();
             cmd.StandardInput.WriteLine("gps | where {$_.Path -Like \"" + dir + "*\"} | where {$_.MainWindowHandle -ne 0} | select ID");
-            string output = outcome(cmd);
+
+            //This works as an alternate to the powershell command
+            //Process cmd = setupCommand(stationCmd);
+            //cmd.Start();
+            //cmd.StandardInput.WriteLine($"wmic process where \"ExecutablePath like '%{dir}%'\" get ProcessID,ExecutablePath");
+
+            string? output = outcome(cmd);
+
+            if(output == null)
+            {
+                return null;
+            }
+
             string[] outputP = output.Split("\n");
             // if there is less than 14 items, the app probably hasn't launched yet
             if (outputP.Length < 15)

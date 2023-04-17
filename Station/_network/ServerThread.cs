@@ -1,8 +1,8 @@
 using System;
+using System.IO;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
-using System.Threading;
 using System.Threading.Tasks;
 
 namespace Station
@@ -30,7 +30,7 @@ namespace Station
         /// </summery>
         public async Task RunAsync()
         {
-            CommandLine.getVolume();
+            CommandLine.GetVolume();
 
             try
             {
@@ -87,23 +87,49 @@ namespace Station
             {
                 NetworkStream stream = clientConnection.GetStream();
 
-                //Read the header to determine the incoming data
-                Memory<byte> headerLengthBytes = new byte[4];
-                await stream.ReadAsync(headerLengthBytes);
-                int headerLength = BitConverter.ToInt32(headerLengthBytes.Span);
-
-                // Read the header message type
-                Memory<byte> headerMessageTypeBytes = new byte[headerLength];
-                await stream.ReadAsync(headerMessageTypeBytes);
-                string headerMessageType = Encoding.UTF8.GetString(headerMessageTypeBytes.Span);
-
-                if (headerMessageType.Equals("text"))
+                // Read the incoming data into a MemoryStream so we can re-read it at anytime
+                using (MemoryStream memoryStream = new())
                 {
-                    StringMessageReceived(clientConnection, endPoint, stream);
-                }
-                else
-                {
-                    Logger.WriteLog($"Unknown header connection attempt: {headerMessageType}", MockConsole.LogLevel.Error);
+                    await stream.CopyToAsync(memoryStream);
+
+                    // Dispose of the original network stream.
+                    stream.Close();
+                    stream.Dispose();
+
+                    // Reset the position of the MemoryStream to the beginning
+                    memoryStream.Position = 0;
+
+                    //Read the header to determine the incoming data
+                    byte[] headerLengthBytes = new byte[4];
+                    await memoryStream.ReadAsync(headerLengthBytes, 0, headerLengthBytes.Length);
+                    int headerLength = BitConverter.ToInt32(headerLengthBytes, 0);
+
+                    MockConsole.WriteLine($"Header length: {headerLength}", MockConsole.LogLevel.Debug);
+
+                    //No header means that an older tablet version has connected and is sending a message
+                    if (headerLength > 4)
+                    {
+                        MockConsole.WriteLine($"NUC version 1 connecting.", MockConsole.LogLevel.Debug);
+
+                        // Reset the position of the MemoryStream to the beginning
+                        memoryStream.Position = 0;
+                        StringMessageReceived(clientConnection, endPoint, memoryStream);
+                    } else
+                    {
+                        // Read the header message type
+                        byte[] headerMessageTypeBytes = new byte[headerLength];
+                        await memoryStream.ReadAsync(headerMessageTypeBytes, 0, headerLength);
+                        string headerMessageType = Encoding.UTF8.GetString(headerMessageTypeBytes);
+
+                        if (headerMessageType.Equals("text"))
+                        {
+                            StringMessageReceived(clientConnection, endPoint, memoryStream);
+                        }
+                        else
+                        {
+                            Logger.WriteLog($"Unknown header connection attempt: {headerMessageType}", MockConsole.LogLevel.Error);
+                        }
+                    }
                 }
             }
             catch (Exception e)
@@ -115,7 +141,7 @@ namespace Station
         /// <summary>
         /// The server has determined that the incoming message is a string based message.
         /// </summary>
-        private void StringMessageReceived(TcpClient clientConnection, EndPoint? endPoint, NetworkStream stream)
+        private void StringMessageReceived(TcpClient clientConnection, EndPoint? endPoint, MemoryStream stream)
         {
             // Incoming data from the client.
             string? data = null;
@@ -142,7 +168,7 @@ namespace Station
                     Logger.WriteLog($"From {endPoint}, Decrypted Text received : {data}", MockConsole.LogLevel.Debug, !data.Contains(":Ping:"));
 
                     //Run the appropriate script
-                    Manager.runScript(data);
+                    Manager.RunScript(data);
                 }
                 else
                 {

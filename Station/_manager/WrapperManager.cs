@@ -94,7 +94,7 @@ namespace Station
             switch (tokens[0])
             {
                 case "details":
-                    Manager.sendResponse("Android", "Station", $"SetValue:details:{CheckExperienceName(tokens[1])}");
+                    Manager.SendResponse("Android", "Station", $"SetValue:details:{CheckExperienceName(tokens[1])}");
                     break;
                 default:
                     LogHandler($"Unknown actionspace: {tokens[0]}");
@@ -360,6 +360,9 @@ namespace Station
         /// </summary>
         public static void StopAProcess()
         {
+            //Stop looking for Vive headset reguardless
+            ViveScripts.StopMonitoring();
+
             if (CurrentWrapper == null)
             {
                 SessionController.PassStationMessage("No process wrapper present.");
@@ -370,7 +373,6 @@ namespace Station
             UIUpdater.ResetUIDisplay();
             CurrentWrapper.StopCurrentProcess();
             WrapperMonitoringThread.stopMonitoring();
-            ViveScripts.stopMonitoring();
             RecycleWrapper();
         }
 
