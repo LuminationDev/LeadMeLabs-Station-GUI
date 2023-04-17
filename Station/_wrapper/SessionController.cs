@@ -95,6 +95,8 @@ namespace Station
                     break;
                 default:
                     MockConsole.WriteLine("Wrapper: No experience type set.", MockConsole.LogLevel.Error);
+                    SessionController.PassStationMessage("Processing,false");
+                    SessionController.PassStationMessage("MessageToAndroid,SetValue:session:Restarted");
                     break;
             }
 

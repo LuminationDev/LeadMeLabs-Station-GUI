@@ -112,6 +112,7 @@ namespace Station
                 {
                     experienceName = line.Split("\t")[3].Trim('\"');
                 }
+
                 if (line.StartsWith("\t\"installdir\""))
                 {
                     installDir = line.Split("\t")[3].Trim('\"');
