@@ -76,7 +76,7 @@ namespace Station
 
                 currentProcess.Start();
 
-                FindCurrentProcess(experience);
+                FindCurrentProcess();
             });
         }
 
@@ -143,17 +143,17 @@ namespace Station
         /// <summary>
         /// Find the active process that has been launched.
         /// </summary>
-        private void FindCurrentProcess(Experience experience)
+        private void FindCurrentProcess()
         {
             int attempts = 0; //Track the loop for finding child processes
 
-            Process? child = GetExperienceProcess(experience);
+            Process? child = GetExperienceProcess();
             while(child == null && attempts < 10)
             {
                 attempts++;
                 MockConsole.WriteLine($"Checking for child process...", MockConsole.LogLevel.Debug);
                 Task.Delay(3000).Wait();
-                child = GetExperienceProcess(experience);
+                child = GetExperienceProcess();
             }
             currentProcess = child;
             launchingExperience = false;
@@ -175,7 +175,7 @@ namespace Station
         /// MainWindowTitle that is represented by the Steam application name.
         /// </summary>
         /// <returns>The launched application process</returns>
-        private Process? GetExperienceProcess(Experience experience)
+        private Process? GetExperienceProcess()
         {
             if (installdir != null)
             {
