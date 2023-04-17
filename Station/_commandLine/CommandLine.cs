@@ -547,6 +547,12 @@ namespace Station
             Process cmd = setupCommand(stationPowershell);
             cmd.Start();
             cmd.StandardInput.WriteLine("gps | where {$_.Path -Like \"" + dir + "*\"} | where {$_.MainWindowHandle -ne 0} | select ID");
+
+            //This works as an alternate to the powershell command
+            //Process cmd = setupCommand(stationCmd);
+            //cmd.Start();
+            //cmd.StandardInput.WriteLine($"wmic process where \"ExecutablePath like '%{dir}%'\" get ProcessID,ExecutablePath");
+
             string? output = outcome(cmd);
 
             if(output == null)

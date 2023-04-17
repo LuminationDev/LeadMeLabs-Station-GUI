@@ -43,12 +43,19 @@ namespace Station
         {
             if (experience.ID == null)
             {
-                SessionController.PassStationMessage($"MessageToAndroid,GameLaunchFailed:Unknown Experience");
+                SessionController.PassStationMessage($"MessageToAndroid,GameLaunchFailed:Unknown experience");
                 return;
             };
 
             SteamScripts.lastApp = experience;
-            GetGameProcessName();
+            GetGameProcessDetails();
+
+            if(experienceName == null || installDir == null)
+            {
+                SessionController.PassStationMessage($"MessageToAndroid,GameLaunchFailed:Fail to find experience");
+                Logger.WriteLog($"Unable to find Steam experience details (name & install directory) for: {experience.Name}", MockConsole.LogLevel.Normal);
+                return;
+            }
 
             MockConsole.WriteLine($"Wrapping: {experienceName}", MockConsole.LogLevel.Debug);
 
@@ -84,7 +91,7 @@ namespace Station
         /// Collect the name of the application from the Steam install directory, the executable name is what windows uses
         /// as the 'Image Name' and will not change unless the executable is changed which does not matter for this function.
         /// </summary>
-        private void GetGameProcessName()
+        private void GetGameProcessDetails()
         {
             string fileLocation = "S:\\SteamLibrary\\steamapps\\appmanifest_" + SteamScripts.lastApp.ID + ".acf";
             if (!File.Exists(fileLocation))
@@ -97,6 +104,8 @@ namespace Station
                 }
             }
 
+            Logger.WriteLog($"Steam experience file location: {fileLocation}", MockConsole.LogLevel.Normal);
+
             foreach (string line in File.ReadLines(fileLocation))
             {
                 if (line.StartsWith("\t\"name\""))
@@ -108,11 +117,13 @@ namespace Station
                     installDir = line.Split("\t")[3].Trim('\"');
                 }
 
-                if (experienceName != null)
+                if (experienceName != null && installDir != null)
                 {
                     break;
                 }
             }
+
+            Logger.WriteLog($"Steam experience install directory: {installDir}", MockConsole.LogLevel.Normal);
         }
 
         /// <summary>
@@ -159,6 +170,8 @@ namespace Station
 
             if(child != null)
             {
+                Logger.WriteLog($"Child process found: {child.Id}, {child.MainWindowTitle}, {child.ProcessName}", MockConsole.LogLevel.Normal);
+
                 SteamScripts.popupDetect = false;
                 ListenForClose();
                 WindowManager.MaximizeProcess(child); //Maximise the process experience
@@ -192,12 +205,13 @@ namespace Station
                 processId = CommandLine.GetProcessIdFromDir(steamPath);
                 if (processId != null)
                 {
+                    Logger.WriteLog("A proccess ID was found: " + processId, MockConsole.LogLevel.Normal);
                     activeProcessId = processId;
                 }
                 if (activeProcessId != null)
                 {
                     Process proc = Process.GetProcessById(Int32.Parse(activeProcessId));
-                    MockConsole.WriteLine($"Application found: {proc.MainWindowTitle}/{proc.Id}", MockConsole.LogLevel.Debug);
+                    Logger.WriteLog($"Application found: {proc.MainWindowTitle}/{proc.Id}", MockConsole.LogLevel.Debug);
 
                     UIUpdater.UpdateProcess(proc.MainWindowTitle);
                     UIUpdater.UpdateStatus("Running...");
