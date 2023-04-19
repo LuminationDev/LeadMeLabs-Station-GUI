@@ -357,26 +357,6 @@ namespace Station
             return "0";
         }
 
-
-        ///////////////////////////////////////////////
-        ///Wrapper Specific Methods
-        ///////////////////////////////////////////////
-
-        /// <summary>
-        /// Configure SteamCMD for the current computer with the supplied guardkey
-        /// </summary>
-        /// <param name="command">A command to set the steam guard key for the local SteamCMD</param>
-        //public static void ConfigureSteamCommand(string command)
-        //{
-        //    Process cmd = SetupCommand(steamCmd);
-        //    cmd.StartInfo.Arguments = "\"+force_install_dir \\\"C:/Program Files (x86)/Steam\\\"\" " + command;
-        //    cmd.Start();
-
-        //    //TODO check the output
-        //    string? output = outcome(cmd);
-        //    MockConsole.WriteLine(output, MockConsole.LogLevel.Normal);
-        //}
-
         /// <summary>
         /// Used to interact with Steamcmd. Uses the Arguments parameter for issuing commands instead
         /// of the writeline funciton like in executeStationCommand. This way it can run multiple commands
