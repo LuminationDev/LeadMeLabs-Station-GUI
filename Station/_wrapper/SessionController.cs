@@ -115,7 +115,7 @@ namespace Station
                     break;
                 case "Steam":
                     ViveScripts.StopMonitoring();
-                    CommandLine.QueryVRProcesses(WrapperMonitoringThread.steamProcesses, true);
+                    //CommandLine.QueryVRProcesses(WrapperMonitoringThread.steamProcesses, true);
                     break;
                 case "Vive":
                     MockConsole.WriteLine("endVRSession not implemented for type: Vive.", MockConsole.LogLevel.Error);

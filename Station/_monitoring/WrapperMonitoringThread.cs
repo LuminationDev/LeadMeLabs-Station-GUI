@@ -123,6 +123,9 @@ namespace Station
             if(responding == false)
             {
                 SessionController.PassStationMessage("MessageToAndroid,SetValue:status:Not Responding");
+            } else
+            {
+                SessionController.PassStationMessage("MessageToAndroid,SetValue:status:On");
             }
         }
 

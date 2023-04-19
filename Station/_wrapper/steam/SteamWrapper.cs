@@ -106,6 +106,9 @@ namespace Station
 
             Logger.WriteLog($"Steam experience file location: {fileLocation}", MockConsole.LogLevel.Normal);
 
+            experienceName = null;
+            installDir = null;
+
             foreach (string line in File.ReadLines(fileLocation))
             {
                 if (line.StartsWith("\t\"name\""))
@@ -176,12 +179,12 @@ namespace Station
                 SteamScripts.popupDetect = false;
                 ListenForClose();
                 WindowManager.MaximizeProcess(child); //Maximise the process experience
-                SessionController.PassStationMessage($"ApplicationUpdate,{experienceName}/{currentProcess?.Id}/Steam");
+                SessionController.PassStationMessage($"ApplicationUpdate,{experienceName}/{SteamScripts.lastApp.ID}/Steam");
             } else
             {
-                Logger.WriteLog("Game launch failure: " + experienceName, MockConsole.LogLevel.Normal);
+                Logger.WriteLog("Game launch failure: " + SteamScripts.lastApp.Name, MockConsole.LogLevel.Normal);
                 UIUpdater.ResetUIDisplay();
-                SessionController.PassStationMessage($"MessageToAndroid,GameLaunchFailed:{experienceName}");
+                SessionController.PassStationMessage($"MessageToAndroid,GameLaunchFailed:{SteamScripts.lastApp.Name}");
             }
         }
 

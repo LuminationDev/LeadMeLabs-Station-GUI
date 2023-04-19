@@ -88,6 +88,14 @@ namespace Station
                 return;
             }
 
+            //Close any open custom processes before opening the next one
+            if(currentProcess != null)
+            {
+                MockConsole.WriteLine($"Closing existing process: {lastExperience.Name}", MockConsole.LogLevel.Normal);
+                currentProcess.Kill(true);
+            }
+
+
             MockConsole.WriteLine($"Launching process: {experience.Name}", MockConsole.LogLevel.Normal);
             Task.Factory.StartNew(() =>
             {
@@ -168,20 +176,21 @@ namespace Station
         /// <returns>The launched application process</returns>
         private Process? GetExperienceProcess()
         {
-            Process[] processes = Process.GetProcesses();
-
-            foreach (var proc in processes)
+            MockConsole.WriteLine($"Attempting to get id for " + lastExperience.ExeName, MockConsole.LogLevel.Debug);
+            string id = CommandLine.GetProcessIdFromDir(lastExperience.ExeName);
+            if (id == null || id == "")
             {
-                //Get the steam process name from the CommandLine function and compare here instead of removing any external child processes
-                if (proc.MainWindowTitle.Contains(lastExperience.ExeName))
-                {
-                    MockConsole.WriteLine($"Application found: {proc.MainWindowTitle}/{proc.Id}", MockConsole.LogLevel.Debug);
+                return null;
+            }
+            Process proc = Process.GetProcessById(Int32.Parse(id));
 
-                    UIUpdater.UpdateProcess(proc.MainWindowTitle);
-                    UIUpdater.UpdateStatus("Running...");
-
-                    return proc;
-                }
+            //Get the steam process name from the CommandLine function and compare here instead of removing any external child processes
+            if (proc.MainWindowTitle.Contains(lastExperience.ExeName))
+            {
+                MockConsole.WriteLine($"Application found: {proc.MainWindowTitle}/{proc.Id}", MockConsole.LogLevel.Debug);
+                UIUpdater.UpdateProcess(proc.MainWindowTitle);
+                UIUpdater.UpdateStatus("Running...");
+                return proc;
             }
 
             return null;
@@ -220,7 +229,6 @@ namespace Station
                 currentProcess.Kill();
                 //WrapperManager.ClosePipeServer();
             }
-            CommandLine.QueryVRProcesses(WrapperMonitoringThread.steamProcesses, true);
         }
 
         public void RestartCurrentProcess()

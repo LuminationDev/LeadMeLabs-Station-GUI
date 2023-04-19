@@ -83,7 +83,9 @@ namespace Station
 #if DEBUG
             sentryDsn = "https://ca9abb6c77444340802da0c5a3805841@o1294571.ingest.sentry.io/6704982"; //Development
 #elif RELEASE
-	        sentryDsn = "https://812f2b29bf3c4d129071683c7cf62361@o1294571.ingest.sentry.io/6518754"; //Production
+            //While testing the new updates run on development
+            sentryDsn = "https://ca9abb6c77444340802da0c5a3805841@o1294571.ingest.sentry.io/6704982"; //Development
+	        //sentryDsn = "https://812f2b29bf3c4d129071683c7cf62361@o1294571.ingest.sentry.io/6518754"; //Production
 #endif
             if (sentryDsn != null && sentryDsn.Length > 0)
             {

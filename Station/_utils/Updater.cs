@@ -75,12 +75,16 @@ namespace Station
 				// Create the final destination's parent file it is does not exist
 				Directory.CreateDirectory(destinationPath);
 
+				MockConsole.WriteLine("Creating necessary subfolders.", MockConsole.LogLevel.Normal);
+
 				//Create any necessary subfolders.
 				foreach (string newFolder in Directory.GetDirectories(extractTarget))
 				{
 					MockConsole.WriteLine(newFolder.Replace(extractTarget, destinationPath), MockConsole.LogLevel.Error);
 					Directory.CreateDirectory(newFolder.Replace(extractTarget, destinationPath));
 				}
+
+				MockConsole.WriteLine("Moving necessary files.", MockConsole.LogLevel.Normal);
 
 				// Copy the extracted files and replace everything in the current directory to finish the update
 				// C# doesn't easily let us extract & replace at the same time
@@ -110,21 +114,21 @@ namespace Station
 
 			MockConsole.WriteLine("Migration Complete, exiting Station and opening Launcher", MockConsole.LogLevel.Normal);
 
-			//Needs to exit the current application and start the 'new' launcher with a command line argument
-			//Open launcher with command line
-			string launcher = $@"C:\Users\{Environment.GetEnvironmentVariable("UserDirectory", EnvironmentVariableTarget.User)}\Launcher\LeadMe.exe";
-			string arguments = $" --software=Station --directory={Environment.GetEnvironmentVariable("UserDirectory", EnvironmentVariableTarget.User)}";
+            //Needs to exit the current application and start the 'new' launcher with a command line argument
+            //Open launcher with command line
+            string launcher = $@"C:\Users\{Environment.GetEnvironmentVariable("UserDirectory", EnvironmentVariableTarget.User)}\Launcher\LeadMe.exe";
+            string arguments = $" --software=Station --directory={Environment.GetEnvironmentVariable("UserDirectory", EnvironmentVariableTarget.User)}";
 
-			Process temp = new();
-			temp.StartInfo.FileName = launcher;
-			temp.StartInfo.Arguments = arguments;
-			temp.StartInfo.UseShellExecute = true;
-			temp.Start();
-			temp.Close();
+            Process temp = new();
+            temp.StartInfo.FileName = launcher;
+            temp.StartInfo.Arguments = arguments;
+            temp.StartInfo.UseShellExecute = true;
+            temp.Start();
+            temp.Close();
 
-			//Immediately close the current application
-			Environment.Exit(0);
-		}
+            //Immediately close the current application
+            Environment.Exit(0);
+        }
 
 		/// <summary>
 		/// Delete the contents of a folder.
