@@ -190,6 +190,7 @@ namespace Station
                 MockConsole.WriteLine($"Application found: {proc.MainWindowTitle}/{proc.Id}", MockConsole.LogLevel.Debug);
                 UIUpdater.UpdateProcess(proc.MainWindowTitle);
                 UIUpdater.UpdateStatus("Running...");
+                
                 return proc;
             }
 
