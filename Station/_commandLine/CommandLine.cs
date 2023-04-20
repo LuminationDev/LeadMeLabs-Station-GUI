@@ -45,6 +45,11 @@ namespace Station
         public static string steamCmd = stationLocation + @"\external\steamcmd\steamcmd.exe";
 
         /// <summary>
+        /// Track if SteamCMD is currently being configured with a Guard Key.
+        /// </summary>
+        private static bool configuringSteam = false;
+
+        /// <summary>
         /// The relative path to the SetVol executable
         /// </summary>
         public static string SetVol = stationLocation + @"\external\SetVol\SetVol.exe";
@@ -357,6 +362,58 @@ namespace Station
             return "0";
         }
 
+
+        ///////////////////////////////////////////////
+        ///Wrapper Specific Methods
+        ///////////////////////////////////////////////
+        /// <summary>
+        /// Configure SteamCMD for the current computer, monitor the output to determine what the
+        /// result of the entered code was. Sending a message back to the android tablet of the 
+        /// outcome.
+        /// </summary>
+        /// <param name="command">A command to set the steam guard key for the local SteamCMD</param>
+        public static void MonitorSteamConfiguration(string command)
+        {
+            if (!configuringSteam)
+            {
+                configuringSteam = true;
+            
+                Process cmd = SetupCommand(steamCmd);
+                cmd.StartInfo.Arguments = command;
+                cmd.Start();
+
+                //Check the output for a result
+                string? output = outcome(cmd);
+
+                if(output == null)
+                {
+                    Logger.WriteLog("Unable to read output", MockConsole.LogLevel.Normal);
+                    Manager.SendResponse("Android", "Station", "SetValue:steamCMD:error");
+                    configuringSteam = false;
+                    return;
+                }
+
+                Logger.WriteLog(output, MockConsole.LogLevel.Normal);
+
+                if(output.Contains("FAILED (Invalid Login Auth Code)")) {
+                    Logger.WriteLog("AUTH FAILED", MockConsole.LogLevel.Normal);
+                    Manager.SendResponse("Android", "Station", "SetValue:steamCMD:failure");
+                    configuringSteam = false;
+                } else if(output.Contains("Waiting for user info...OK"))
+                {
+                    Logger.WriteLog("AUTH SUCCESS, restarting VR system", MockConsole.LogLevel.Normal);
+                    Manager.SendResponse("Android", "Station", "SetValue:steamCMD:configured");
+
+                    //Recollect the installed experiences
+                    Manager.wrapperManager?.ActionHandler("CollectApplications");
+                    configuringSteam = false;
+                }
+
+                //Manually kill the process or it will stay on the guard code input 
+                cmd.Kill(true);
+            };
+        }
+
         /// <summary>
         /// Used to interact with Steamcmd. Uses the Arguments parameter for issuing commands instead
         /// of the writeline funciton like in executeStationCommand. This way it can run multiple commands
@@ -382,6 +439,9 @@ namespace Station
             {
                 Manager.SendResponse("Android", "Station", "SetValue:steamCMD:required");
                 MockConsole.WriteLine("Steam Guard is not enabled for this account.");
+
+                //Manually kill the process or it will stay on the guard code input 
+                cmd.Kill(true);
                 return null;
             }
 
