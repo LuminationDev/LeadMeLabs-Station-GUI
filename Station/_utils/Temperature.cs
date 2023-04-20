@@ -49,7 +49,11 @@ namespace Station
                         {
                             if (sensor.SensorType == SensorType.Temperature)
                             {
-                                if (sensor.Value > maxTemp)
+                                // there looks to be a bug somewhere, where occasionally sensors
+                                // just report 100.0 degrees constantly. We will just throw
+                                // out this result, because if there is a genuine problem
+                                // it should vary around 100.0, not just bang on 100.0
+                                if (sensor.Value > maxTemp && sensor.Value != 100 && !sensor.Name.Contains("Hot Spot"))
                                 {
                                     maxTemp = sensor.Value;
                                 }

@@ -357,9 +357,6 @@ namespace Station
             return "0";
         }
 
-
-        ///Wrapper Specific Methods
-
         /// <summary>
         /// Used to interact with Steamcmd. Uses the Arguments parameter for issuing commands instead
         /// of the writeline funciton like in executeStationCommand. This way it can run multiple commands
@@ -383,9 +380,12 @@ namespace Station
 
             if (output.Contains("Steam Guard code:"))
             {
+                Manager.SendResponse("Android", "Station", "SetValue:steamCMD:required");
                 MockConsole.WriteLine("Steam Guard is not enabled for this account.");
                 return null;
             }
+
+            Manager.SendResponse("Android", "Station", "SetValue:steamCMD:configured");
 
             return output;
         }

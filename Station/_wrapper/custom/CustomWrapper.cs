@@ -88,6 +88,14 @@ namespace Station
                 return;
             }
 
+            //Close any open custom processes before opening the next one
+            if(currentProcess != null)
+            {
+                MockConsole.WriteLine($"Closing existing process: {lastExperience.Name}", MockConsole.LogLevel.Normal);
+                currentProcess.Kill(true);
+            }
+
+
             MockConsole.WriteLine($"Launching process: {experience.Name}", MockConsole.LogLevel.Normal);
             Task.Factory.StartNew(() =>
             {
@@ -180,10 +188,9 @@ namespace Station
             if (proc.MainWindowTitle.Contains(lastExperience.ExeName))
             {
                 MockConsole.WriteLine($"Application found: {proc.MainWindowTitle}/{proc.Id}", MockConsole.LogLevel.Debug);
-
                 UIUpdater.UpdateProcess(proc.MainWindowTitle);
                 UIUpdater.UpdateStatus("Running...");
-
+                
                 return proc;
             }
 
@@ -223,7 +230,6 @@ namespace Station
                 currentProcess.Kill();
                 //WrapperManager.ClosePipeServer();
             }
-            CommandLine.QueryVRProcesses(WrapperMonitoringThread.steamProcesses, true);
         }
 
         public void RestartCurrentProcess()

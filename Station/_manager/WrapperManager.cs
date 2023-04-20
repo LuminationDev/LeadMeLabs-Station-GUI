@@ -164,6 +164,51 @@ namespace Station
             SessionController.PassStationMessage($"ApplicationList,{response}");
 
             alreadyCollecting = false;
+
+            _ = RestartVRProcesses();
+        }
+
+        /// <summary>
+        /// Start or restart the VR session associated with the VR headset type
+        /// </summary>
+        private async Task RestartVRProcesses()
+        {
+            if (SessionController.vrHeadset != null)
+            {
+                List<string> combinedProcesses = new List<string>();
+                combinedProcesses.AddRange(WrapperMonitoringThread.steamProcesses);
+                combinedProcesses.AddRange(WrapperMonitoringThread.viveProcesses);
+
+                CommandLine.QueryVRProcesses(combinedProcesses, true);
+                await SessionController.PutTaskDelay(2000);
+
+                //have to add a waiting time to make sure it has exited
+                int attempts = 0;
+
+                if (SessionController.vrHeadset == null)
+                {
+                    SessionController.PassStationMessage("No headset type specified.");
+                    SessionController.PassStationMessage("Processing,false");
+                    return;
+                }
+
+                List<string> processesToQuery = SessionController.vrHeadset.GetProcessesToQuery();
+                while (CommandLine.QueryVRProcesses(processesToQuery))
+                {
+                    await SessionController.PutTaskDelay(1000);
+                    if (attempts > 20)
+                    {
+                        SessionController.PassStationMessage("MessageToAndroid,FailedRestart");
+                        SessionController.PassStationMessage("Processing,false");
+                        return;
+                    }
+                    attempts++;
+                }
+
+                await SessionController.PutTaskDelay(5000);
+
+                SessionController.vrHeadset.StartVrSession();
+            }
         }
 
         /// <summary>
@@ -266,6 +311,9 @@ namespace Station
                 SessionController.PassStationMessage("No process wrapper created.");
                 return;
             }
+
+            //Stop any current processes before trying to launch a new one
+            CurrentWrapper.StopCurrentProcess();
 
             UIUpdater.UpdateProcess("Launching");
             UIUpdater.UpdateStatus("Loading...");

@@ -11,6 +11,7 @@ namespace Station
     public class VivePro1 : VrHeadset
     {
         private Timer? timer;
+        private static bool minimising = false;
 
         public List<string> GetProcessesToQuery()
         {
@@ -29,21 +30,26 @@ namespace Station
             CommandLine.StartProgram(SessionController.steam, "-noreactlogin -login " + Environment.GetEnvironmentVariable("SteamUserName") + " " + Environment.GetEnvironmentVariable("SteamPassword") + " steam://rungameid/250820"); //Open up steam and run steamVR
             CommandLine.StartProgram(SessionController.vive); //Start VireWireless up
 
-            timer = new Timer(5000); // every 5 seconds try to minimize the processes
-            int attempts = 0;
-
-            void TimerElapsed(object? obj, ElapsedEventArgs args)
+            if (!minimising)
             {
-                MinimizeVrProcesses();
-                attempts++;
-                if (attempts > 6) // after 30 seconds, we can stop
+                minimising = true;
+                timer = new Timer(5000); // every 5 seconds try to minimize the processes
+                int attempts = 0;
+
+                void TimerElapsed(object? obj, ElapsedEventArgs args)
                 {
-                    timer.Stop();
+                    MinimizeVrProcesses();
+                    attempts++;
+                    if (attempts > 6) // after 30 seconds, we can stop
+                    {
+                        timer.Stop();
+                        minimising = false;
+                    }
                 }
+                timer.Elapsed += TimerElapsed;
+                timer.AutoReset = true;
+                timer.Enabled = true;
             }
-            timer.Elapsed += TimerElapsed;
-            timer.AutoReset = true;
-            timer.Enabled = true;
         }
 
         /// <summary>
@@ -60,20 +66,18 @@ namespace Station
         /// <returns></returns>
         public bool QueryMonitorProcesses()
         {
-            List<string> software = new() { "Steam", "SteamVR", "ViveConsole" };
-
             HashSet<string> list = new();
             Process[] processes = Process.GetProcesses();
 
             foreach (Process process in processes)
             {
-                if (software.Contains(process.ProcessName))
+                if (GetProcessesToQuery().Contains(process.ProcessName))
                 {
                     list.Add(process.ProcessName);
                 }
             }
 
-            return list.Count == software.Count;
+            return list.Count == GetProcessesToQuery().Count;
         }
 
         public void MinimizeVrProcesses()
