@@ -28,6 +28,22 @@ namespace Station
         private static string availableGames = "";
         private static bool refreshing = false; //keep track of if the station is currently refreshing the steam list
 
+        /// <summary>
+        /// Create a command to pass user details and a steam guard code to a command line process in order
+        /// to set the SteamCMD steam gaurd.
+        /// </summary>
+        /// <param name="guardKey">A 5 digit string representing the SteamGuard</param>
+        public static void ConfigureSteamCommand(string guardKey)
+        {
+            string command = "\"+force_install_dir \\\"C:/Program Files (x86)/Steam\\\"\" ";
+            command += $"{loginUser} {guardKey} {quit}";
+            CommandLine.MonitorSteamConfiguration(command);
+        }
+
+        /// <summary>
+        /// Attempt to collect the local Steam experiences from SteamCMD
+        /// </summary>
+        /// <returns>A string list of the currently installed experiences and their unique IDs</returns>
         public static async Task<string> getAvailableGames()
         {
             Logger.WriteLog("Get available games function", MockConsole.LogLevel.Verbose);
@@ -63,9 +79,16 @@ namespace Station
             string filePath = CommandLine.stationLocation + @"\external\steamcmd\steamerrorreporter.exe";
 #endif
 
+            //TODO automate this?
             if(!File.Exists(filePath))
             {
-                MockConsole.WriteLine($"SteamCMD not initialised yet.", MockConsole.LogLevel.Error);
+                Logger.WriteLog($"SteamCMD not initialised yet. Initialising now.", MockConsole.LogLevel.Error);
+                Manager.SendResponse("Android", "Station", "SetValue:steamCMD:required");
+
+                //Login to initialise/update SteamCMD and get the Steam Guard email sent off
+                string command = $"{loginDetails} {quit}";
+                CommandLine.ExecuteSteamCommand(command);
+                
                 return null;
             }
 

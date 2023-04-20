@@ -64,10 +64,14 @@ namespace Station
                 {
                     string[] keyValue = additionalData.Split(":", 3);
                     string key = keyValue[1];
-                    string value = keyValue[2];
+                    string? value = keyValue[2];
                     if (key == "volume")
                     {
                         CommandLine.SetVolume(value);
+                    }
+                    if (key == "steamCMD")
+                    {
+                        SteamScripts.ConfigureSteamCommand(value);
                     }
                 }
             }
