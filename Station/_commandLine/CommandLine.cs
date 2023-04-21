@@ -626,6 +626,7 @@ namespace Station
             Logger.WriteLog(output, MockConsole.LogLevel.Debug);
 
             string[] outputP = output.Split("\n");
+
             // if there is less than 14 items, the app probably hasn't launched yet
             int iterator = 0;
             while (iterator < outputP.Length)
