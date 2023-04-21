@@ -624,7 +624,7 @@ namespace Station
             int iterator = 0;
             while (iterator < outputP.Length)
             {
-                if (outputP[iterator].Trim().EndsWith("Id"))
+                if (outputP[iterator].Trim().EndsWith("ID"))
                 {
                     break;
                 }
