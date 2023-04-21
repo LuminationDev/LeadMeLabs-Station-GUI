@@ -399,7 +399,7 @@ namespace Station
                     Logger.WriteLog("AUTH FAILED", MockConsole.LogLevel.Normal);
                     Manager.SendResponse("Android", "Station", "SetValue:steamCMD:failure");
                     configuringSteam = false;
-                } else if(output.Contains("Waiting for user info...OK"))
+                } else if(output.Contains("OK"))
                 {
                     Logger.WriteLog("AUTH SUCCESS, restarting VR system", MockConsole.LogLevel.Normal);
                     Manager.SendResponse("Android", "Station", "SetValue:steamCMD:configured");
@@ -604,6 +604,8 @@ namespace Station
         /// <returns>Process id if the application is running</returns>
         public static string? GetProcessIdFromDir(string dir)
         {
+            Logger.WriteLog("gps | where {$_.Path -Like \"" + dir + "*\"} | where {$_.MainWindowHandle -ne 0} | select ID", MockConsole.LogLevel.Debug);
+
             Process cmd = SetupCommand(stationPowershell);
             cmd.Start();
             cmd.StandardInput.WriteLine("gps | where {$_.Path -Like \"" + dir + "*\"} | where {$_.MainWindowHandle -ne 0} | select ID");
@@ -615,10 +617,13 @@ namespace Station
 
             string? output = outcome(cmd);
 
-            if(output == null)
+            if (output == null)
             {
+                Logger.WriteLog($"No output recorded for {dir}", MockConsole.LogLevel.Debug);
                 return null;
             }
+
+            Logger.WriteLog(output, MockConsole.LogLevel.Debug);
 
             string[] outputP = output.Split("\n");
             // if there is less than 14 items, the app probably hasn't launched yet

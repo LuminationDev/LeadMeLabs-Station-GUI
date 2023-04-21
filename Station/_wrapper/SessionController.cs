@@ -76,6 +76,8 @@ namespace Station
         /// </summary>
         public static void RestartVRSession()
         {
+            _ = WrapperManager.RestartVRProcesses();
+
             if (experienceType == null)
             {
                 PassStationMessage("No experience is currently running.");
@@ -95,12 +97,8 @@ namespace Station
                     break;
                 default:
                     MockConsole.WriteLine("Wrapper: No experience type set.", MockConsole.LogLevel.Error);
-                    SessionController.PassStationMessage("Processing,false");
-                    SessionController.PassStationMessage("MessageToAndroid,SetValue:session:Restarted");
                     break;
             }
-
-            WrapperManager.CurrentWrapper?.RestartCurrentSession();
         }
 
         /// <summary>

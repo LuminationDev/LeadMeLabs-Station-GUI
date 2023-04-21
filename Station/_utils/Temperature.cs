@@ -78,6 +78,10 @@ namespace Station
                 computer.Close();
                 return maxTemp;
             }
+            catch (NullReferenceException e)
+            {
+                return 0;
+            }
             catch (Exception e)
             {
                 SentrySdk.CaptureException(e);

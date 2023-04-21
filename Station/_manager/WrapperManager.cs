@@ -24,7 +24,7 @@ namespace Station
         private static bool alreadyCollecting = false;
 
         //Store the list of applications (key = ID: [[0] = wrapper type, [1] = application name, [2] = launch params (nullable)])
-        public readonly static Dictionary<int, Experience> applicationList = new();
+        public readonly static Dictionary<string, Experience> applicationList = new();
 
         /// <summary>
         /// Open the pipe server for message to and from external applications (Steam, Custom, etc..) and setup
@@ -171,7 +171,7 @@ namespace Station
         /// <summary>
         /// Start or restart the VR session associated with the VR headset type
         /// </summary>
-        private async Task RestartVRProcesses()
+        public static async Task RestartVRProcesses()
         {
             if (SessionController.vrHeadset != null)
             {
@@ -232,7 +232,7 @@ namespace Station
                 exeName = name;
             }
 
-            applicationList.TryAdd(int.Parse(id), new Experience(wrapperType, id, name, exeName, launchParameters, altPath));
+            applicationList.TryAdd(id, new Experience(wrapperType, id, name, exeName, launchParameters, altPath));
         }
 
         /// <summary>
@@ -291,7 +291,7 @@ namespace Station
         {
             //Get the type from the application dictionary
             //entry [application type, application name, application launch parameters]
-            Experience experience = applicationList.GetValueOrDefault(int.Parse(appID));
+            Experience experience = applicationList.GetValueOrDefault(appID);
             if (experience.IsNull())
             {
                 SessionController.PassStationMessage($"No application found: {appID}");
@@ -400,7 +400,7 @@ namespace Station
                 SessionController.PassStationMessage("No process wrapper present.");
                 return;
             }
-            Task.Factory.StartNew(() => CurrentWrapper.RestartCurrentProcess());
+            Task.Factory.StartNew(() => CurrentWrapper.RestartCurrentExperience());
         }
 
         /// <summary>

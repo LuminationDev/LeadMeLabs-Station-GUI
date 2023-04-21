@@ -252,7 +252,7 @@ namespace Station
             SteamScripts.popupDetect = false;
         }
 
-        public void RestartCurrentProcess()
+        public void RestartCurrentExperience()
         {
             if(currentProcess != null)
             {
@@ -265,51 +265,51 @@ namespace Station
 
         public async void RestartCurrentSession()
         {
-            SessionController.PassStationMessage("Processing,false");
-            StopCurrentProcess();
+            //SessionController.PassStationMessage("Processing,false");
+            //StopCurrentProcess();
 
-            List<string> combinedProcesses = new List<string>();
-            combinedProcesses.AddRange(WrapperMonitoringThread.steamProcesses);
-            combinedProcesses.AddRange(WrapperMonitoringThread.viveProcesses);
+            //List<string> combinedProcesses = new List<string>();
+            //combinedProcesses.AddRange(WrapperMonitoringThread.steamProcesses);
+            //combinedProcesses.AddRange(WrapperMonitoringThread.viveProcesses);
 
-            CommandLine.QueryVRProcesses(combinedProcesses, true);
-            await SessionController.PutTaskDelay(2000);
+            //CommandLine.QueryVRProcesses(combinedProcesses, true);
+            //await SessionController.PutTaskDelay(2000);
 
-            //have to add a waiting time to make sure it has exited
-            int attempts = 0;
+            ////have to add a waiting time to make sure it has exited
+            //int attempts = 0;
 
-            if (SessionController.vrHeadset == null)
-            {
-                SessionController.PassStationMessage("No headset type specified.");
-                SessionController.PassStationMessage("Processing,false");
-                return;
-            }
+            //if (SessionController.vrHeadset == null)
+            //{
+            //    SessionController.PassStationMessage("No headset type specified.");
+            //    SessionController.PassStationMessage("Processing,false");
+            //    return;
+            //}
 
-            List<string> processesToQuery = SessionController.vrHeadset.GetProcessesToQuery();
-            while (CommandLine.QueryVRProcesses(processesToQuery))
-            {
-                await SessionController.PutTaskDelay(1000); //blocks progress but does not stop the program
-                if (attempts > 20)
-                {
-                    SessionController.PassStationMessage("MessageToAndroid,FailedRestart");
+            //List<string> processesToQuery = SessionController.vrHeadset.GetProcessesToQuery();
+            //while (CommandLine.QueryVRProcesses(processesToQuery))
+            //{
+            //    await SessionController.PutTaskDelay(1000); //blocks progress but does not stop the program
+            //    if (attempts > 20)
+            //    {
+            //        SessionController.PassStationMessage("MessageToAndroid,FailedRestart");
 
-                    launchingExperience = false;
+            //        launchingExperience = false;
 
-                    SessionController.PassStationMessage("Processing,false");
-                    return;
-                }
-                attempts++;
-            }
+            //        SessionController.PassStationMessage("Processing,false");
+            //        return;
+            //    }
+            //    attempts++;
+            //}
 
-            await SessionController.PutTaskDelay(5000); //blocks progress but does not stop the program
+            //await SessionController.PutTaskDelay(5000); //blocks progress but does not stop the program
 
-            SessionController.StartVRSession(wrapperType);
+            //SessionController.StartVRSession(wrapperType);
 
-            launchingExperience = false;
+            //launchingExperience = false;
 
-            SessionController.PassStationMessage("Processing,false");
+            //SessionController.PassStationMessage("Processing,false");
 
-            SessionController.PassStationMessage("MessageToAndroid,SetValue:session:Restarted");
+            //SessionController.PassStationMessage("MessageToAndroid,SetValue:session:Restarted");
         }
     }
 }

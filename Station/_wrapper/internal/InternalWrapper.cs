@@ -87,7 +87,7 @@ namespace Station
             throw new NotImplementedException();
         }
 
-        public void RestartCurrentProcess()
+        public void RestartCurrentExperience()
         {
             throw new NotImplementedException();
         }

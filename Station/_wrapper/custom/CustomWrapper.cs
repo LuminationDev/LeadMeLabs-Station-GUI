@@ -27,7 +27,7 @@ namespace Station
         {
             Task.Factory.StartNew(() =>
             {
-                WrapperManager.applicationList.TryGetValue(int.Parse(experienceID), out var experience);
+                WrapperManager.applicationList.TryGetValue(experienceID, out var experience);
                 string? experienceName = experience.Name;
                 string? altPath = experience.AltPath;
 
@@ -176,8 +176,8 @@ namespace Station
         /// <returns>The launched application process</returns>
         private Process? GetExperienceProcess()
         {
-            MockConsole.WriteLine($"Attempting to get id for " + lastExperience.ExeName, MockConsole.LogLevel.Debug);
-            string id = CommandLine.GetProcessIdFromDir(lastExperience.ExeName);
+            Logger.WriteLog($"Attempting to get id for " + lastExperience.ExeName, MockConsole.LogLevel.Debug);
+            string id = CommandLine.GetProcessIdFromDir($"*{lastExperience.ExeName}");
             if (id == null || id == "")
             {
                 return null;
@@ -187,7 +187,7 @@ namespace Station
             //Get the steam process name from the CommandLine function and compare here instead of removing any external child processes
             if (proc.MainWindowTitle.Contains(lastExperience.ExeName))
             {
-                MockConsole.WriteLine($"Application found: {proc.MainWindowTitle}/{proc.Id}", MockConsole.LogLevel.Debug);
+                Logger.WriteLog($"Application found: {proc.MainWindowTitle}/{proc.Id}", MockConsole.LogLevel.Debug);
                 UIUpdater.UpdateProcess(proc.MainWindowTitle);
                 UIUpdater.UpdateStatus("Running...");
                 
@@ -232,7 +232,7 @@ namespace Station
             }
         }
 
-        public void RestartCurrentProcess()
+        public void RestartCurrentExperience()
         {
             if (currentProcess != null && !lastExperience.IsNull())
             {

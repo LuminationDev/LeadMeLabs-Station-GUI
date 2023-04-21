@@ -87,7 +87,7 @@ namespace Station
         /// <summary>
         /// Restart the current experience without restarting any external software.
         /// </summary>
-        void RestartCurrentProcess();
+        void RestartCurrentExperience();
 
         /// <summary>
         /// Restart the current session, this includes the current experience and any external applications that are required.
