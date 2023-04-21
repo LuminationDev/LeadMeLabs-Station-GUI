@@ -207,6 +207,9 @@ namespace Station
 
                 await SessionController.PutTaskDelay(5000);
 
+                SessionController.PassStationMessage("MessageToAndroid,SetValue:session:Restarted");
+                SessionController.PassStationMessage("Processing,false");
+
                 SessionController.vrHeadset.StartVrSession();
             }
         }
@@ -421,15 +424,6 @@ namespace Station
             UIUpdater.ResetUIDisplay();
             CurrentWrapper.StopCurrentProcess();
             WrapperMonitoringThread.stopMonitoring();
-            RecycleWrapper();
-        }
-
-        /// <summary>
-        /// Destroy the current process wrapper ready for the next action.
-        /// </summary>
-        public static void RecycleWrapper()
-        {
-            CurrentWrapper = null;
         }
 
         /// <summary>

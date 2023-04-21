@@ -51,11 +51,5 @@ namespace Station
         {
             throw new NotImplementedException();
         }
-
-        public async void RestartCurrentSession()
-        {
-            SessionController.PassStationMessage("Processing,false");
-            SessionController.PassStationMessage("MessageToAndroid,SetValue:session:Restarted");
-        }
     }
 }

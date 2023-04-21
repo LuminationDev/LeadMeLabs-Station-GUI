@@ -191,8 +191,6 @@ namespace Station
 
                     default:
                         MockConsole.WriteLine("Non-primary command", MockConsole.LogLevel.Debug);
-                        PassStationMessage("Processing,false");
-                        PassStationMessage("MessageToAndroid,SetValue:session:Restarted");
                         break;
                 }
             }).Start();

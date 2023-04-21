@@ -627,12 +627,27 @@ namespace Station
 
             string[] outputP = output.Split("\n");
             // if there is less than 14 items, the app probably hasn't launched yet
-            if (outputP.Length < 15)
+            int iterator = 0;
+            while (iterator < outputP.Length)
+            {
+                Logger.WriteLog($"Output line {iterator}: {outputP[iterator].Trim()}", MockConsole.LogLevel.Debug);
+
+                if (outputP[iterator].Trim().Equals("Id"))
+                {
+                    break;
+                }
+
+                iterator++;
+            }
+
+            if (outputP.Length < iterator + 2)
             {
                 return null;
             }
-            string id = outputP[9].Trim();
-            return id;
+
+            Logger.WriteLog($"ID: {outputP[iterator + 2].Trim()}", MockConsole.LogLevel.Debug);
+
+            return outputP[iterator + 2].Trim();
         }
     }
 }

@@ -87,7 +87,6 @@ namespace Station
         private static void callCustomCheck(Object? source, System.Timers.ElapsedEventArgs e)
         {
             ViveCheck();
-            AppCheck();
             SteamCheck();
 
             Logger.WorkQueue();
@@ -98,8 +97,6 @@ namespace Station
             MockConsole.WriteLine("About to check Vive status", MockConsole.LogLevel.Verbose);
             ViveCheck();
             MockConsole.WriteLine("Checked Vive status", MockConsole.LogLevel.Verbose);
-
-            AppCheck();
             SteamCheck();
 
             Logger.WorkQueue();
@@ -108,25 +105,8 @@ namespace Station
         private static void callViveCheck(Object? source, System.Timers.ElapsedEventArgs e)
         {
             ViveCheck();
-            AppCheck();
 
             Logger.WorkQueue();
-        }
-
-        /// <summary>
-        /// Check that the currently running main process is responding. Only send once to avoid clogging up the 
-        /// TCP server.
-        /// </summary>
-        private static void AppCheck()
-        {
-            bool? responding = WrapperManager.CurrentWrapper?.CheckCurrentProcess();
-            if(responding == false)
-            {
-                SessionController.PassStationMessage("MessageToAndroid,SetValue:status:Not Responding");
-            } else
-            {
-                SessionController.PassStationMessage("MessageToAndroid,SetValue:status:On");
-            }
         }
 
         /// <summary>
