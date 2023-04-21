@@ -621,13 +621,23 @@ namespace Station
             }
 
             string[] outputP = output.Split("\n");
-            // if there is less than 14 items, the app probably hasn't launched yet
-            if (outputP.Length < 15)
+            int iterator = 0;
+            while (iterator < outputP.Length)
+            {
+                if (outputP[iterator].Trim().EndsWith("Id"))
+                {
+                    break;
+                }
+
+                iterator++;
+            }
+
+            if (outputP.Length < iterator + 2)
             {
                 return null;
             }
-            string id = outputP[9].Trim();
-            return id;
+
+            return outputP[iterator + 2].Trim();
         }
     }
 }
