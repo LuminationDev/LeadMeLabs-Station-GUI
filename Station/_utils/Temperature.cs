@@ -56,7 +56,6 @@ namespace Station
                                 if (sensor.Value > maxTemp && sensor.Value != 100 && !sensor.Name.Contains("Hot Spot"))
                                 {
                                     maxTemp = sensor.Value;
-                                    Logger.WriteLog($"\t\tSensor: {sensor.Name}, value: {sensor.Value}, type: {sensor.SensorType}", MockConsole.LogLevel.Debug);
                                 }
                             }
                         }
@@ -66,11 +65,10 @@ namespace Station
                     {
                         if (sensor.SensorType == SensorType.Temperature)
                         {
-                            if (sensor.Value > maxTemp)
+                            if (sensor.Value > maxTemp && sensor.Value != 100 && !sensor.Name.Contains("Hot Spot"))
                             {
                                 maxTemp = sensor.Value;
                             }
-                            // Console.WriteLine("\t\tSensor: {0}, value: {1}, type: {2}", sensor.Name, sensor.Value, sensor.SensorType);
                         }
                     }
                 }
