@@ -27,7 +27,7 @@ namespace Station
         {
             Task.Factory.StartNew(() =>
             {
-                WrapperManager.applicationList.TryGetValue(int.Parse(experienceID), out var experience);
+                WrapperManager.applicationList.TryGetValue(experienceID, out var experience);
                 string? experienceName = experience.Name;
                 string? altPath = experience.AltPath;
 
@@ -142,7 +142,7 @@ namespace Station
             int attempts = 0; //Track the loop for finding child processes
 
             Process? child = GetExperienceProcess();
-            while (child == null && attempts < 10)
+            while (child == null && attempts < 20)
             {
                 attempts++;
                 MockConsole.WriteLine($"Checking for child process...", MockConsole.LogLevel.Debug);
@@ -156,8 +156,8 @@ namespace Station
                 UIUpdater.UpdateProcess(lastExperience.Name);
                 UIUpdater.UpdateStatus("Running...");
                 WindowManager.MaximizeProcess(child); //Maximise the process experience
-                SessionController.PassStationMessage($"ApplicationUpdate,{lastExperience.Name}/{currentProcess?.Id}/Custom");
-                MockConsole.WriteLine($"Application launching: {currentProcess?.MainWindowTitle}/{currentProcess?.Id}", MockConsole.LogLevel.Normal);
+                SessionController.PassStationMessage($"ApplicationUpdate,{lastExperience.Name}/{lastExperience.ID}/Custom");
+                MockConsole.WriteLine($"Application launching: {currentProcess?.MainWindowTitle}/{lastExperience.ID}", MockConsole.LogLevel.Normal);
 
                 ListenForClose();
             }
@@ -176,8 +176,8 @@ namespace Station
         /// <returns>The launched application process</returns>
         private Process? GetExperienceProcess()
         {
-            MockConsole.WriteLine($"Attempting to get id for " + lastExperience.ExeName, MockConsole.LogLevel.Debug);
-            string id = CommandLine.GetProcessIdFromDir(lastExperience.ExeName);
+            Logger.WriteLog($"Attempting to get id for " + lastExperience.ExeName, MockConsole.LogLevel.Debug);
+            string id = CommandLine.GetProcessIdFromDir($"*{lastExperience.ExeName}");
             if (id == null || id == "")
             {
                 return null;
@@ -185,9 +185,9 @@ namespace Station
             Process proc = Process.GetProcessById(Int32.Parse(id));
 
             //Get the steam process name from the CommandLine function and compare here instead of removing any external child processes
-            if (proc.MainWindowTitle.Contains(lastExperience.ExeName))
+            if (proc != null)
             {
-                MockConsole.WriteLine($"Application found: {proc.MainWindowTitle}/{proc.Id}", MockConsole.LogLevel.Debug);
+                Logger.WriteLog($"Application found: {proc.MainWindowTitle}/{lastExperience.ID}", MockConsole.LogLevel.Debug);
                 UIUpdater.UpdateProcess(proc.MainWindowTitle);
                 UIUpdater.UpdateStatus("Running...");
                 
@@ -208,7 +208,6 @@ namespace Station
                 Trace.WriteLine("The current process has just exited.");
                 SessionController.PassStationMessage($"ApplicationClosed");
                 UIUpdater.ResetUIDisplay();
-                WrapperManager.RecycleWrapper();
             });
         }
 
@@ -232,7 +231,7 @@ namespace Station
             }
         }
 
-        public void RestartCurrentProcess()
+        public void RestartCurrentExperience()
         {
             if (currentProcess != null && !lastExperience.IsNull())
             {
@@ -240,12 +239,6 @@ namespace Station
                 Task.Delay(3000).Wait();
                 WrapProcess(lastExperience);
             }
-        }
-
-        public async void RestartCurrentSession()
-        {
-            SessionController.PassStationMessage("Processing,false");
-            SessionController.PassStationMessage("MessageToAndroid,SetValue:session:Restarted");
         }
     }
 }

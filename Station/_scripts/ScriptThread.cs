@@ -99,6 +99,11 @@ namespace Station
                     Manager.wrapperManager?.ActionHandler("CollectApplications");
                 }
 
+                if (additionalData.StartsWith("Restart"))
+                {
+                    Manager.wrapperManager?.ActionHandler("Restart");
+                }
+
                 if (additionalData.StartsWith("Thumbnails"))
                 {
                     string[] split = additionalData.Split(":", 2);

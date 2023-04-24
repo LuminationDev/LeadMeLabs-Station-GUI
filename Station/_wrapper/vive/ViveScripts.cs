@@ -76,7 +76,7 @@ namespace Station
                 //Externally stop the loop incase of ending VR session
                 if (terminateMonitoring)
                 {
-                    SessionController.PassStationMessage("MessageToAndroid,SetValue:gameName:");
+                    SessionController.PassStationMessage("ApplicationClosed");
                     await Task.Delay(1000);
                     SessionController.PassStationMessage("MessageToAndroid,SetValue:status:On");
 

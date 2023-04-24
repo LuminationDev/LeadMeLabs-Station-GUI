@@ -87,15 +87,9 @@ namespace Station
             throw new NotImplementedException();
         }
 
-        public void RestartCurrentProcess()
+        public void RestartCurrentExperience()
         {
             throw new NotImplementedException();
-        }
-
-        public void RestartCurrentSession()
-        {
-            SessionController.PassStationMessage("Processing,false");
-            SessionController.PassStationMessage("MessageToAndroid,SetValue:session:Restarted");
         }
     }
 }
