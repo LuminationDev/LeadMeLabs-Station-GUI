@@ -1,0 +1,119 @@
+version: 2.1
+
+orbs:
+  windows: circleci/windows@5.0.0
+
+commands:
+  clone_hosting:
+    steps:
+      - add_ssh_keys:
+          fingerprints:
+            - "bd:dc:58:24:df:b4:3f:8e:66:69:b9:9c:3b:73:2e:3e"
+      - run:
+          name: Setup git config
+          command: git config --global user.name "CircleCI" && git config --global user.email "CircleCI@lumination.com.au"
+      - run: 
+          name: Add github to known hosts
+          command: ssh-keyscan github.com >> ~/.ssh/known_hosts
+      - run:
+          name: Write ssh config file
+          command: echo "Host github.com" > ~/.ssh/config && echo "  IdentitiesOnly yes" >> ~/.ssh/config && echo "  IdentityFile /home/circleci/.ssh/id_rsa_bddc5824dfb43f8e6669b99c3b732e3e" >> ~/.ssh/config
+      - run:
+          name: Clone hosting server
+          command: cd ~/ && git clone git@github.com:LuminationDev/LeadMeLabs---HostingServer.git
+
+  copy_and_push:
+    parameters:
+      branch:
+        type: string
+    steps:
+      - run:
+          name: Checkout <<parameters.branch>>
+          command: cd ~/LeadMeLabs---HostingServer && git checkout <<parameters.branch>>
+      - run:
+          name: Copy Station.zip to git repository
+          command: cp ./project/Station/Station.zip ~/LeadMeLabs---HostingServer/applications
+      - run: 
+          name: Add Station.zip with git
+          command: cd ~/LeadMeLabs---HostingServer && git add applications/Station.zip
+      - run:
+          name: Commit
+          command: cd ~/LeadMeLabs---HostingServer && git commit -m "Updating <<parameters.branch>> Station"
+      - run:
+          name: Push
+          command: cd ~/LeadMeLabs---HostingServer && git push
+
+  build:
+    parameters:
+      buildType:
+        type: string
+    steps:
+      - checkout
+      - run:
+          name: "Build dotnet <<parameters.buildType>>"
+          command: "dotnet.exe build --configuration <<parameters.buildType>>"
+      - run: 
+          name: Compress built files to Station.zip
+          command: Compress-Archive -Path ~/project/Station/bin/<<parameters.buildType>>/net6.0/* -DestinationPath ~/project/Station/Station.zip
+      - store_artifacts:
+          path: ~/project/Station/Station.zip
+      - persist_to_workspace:
+          root: ~/
+          paths:
+            - project/Station/Station.zip
+
+jobs:
+  build:
+    parameters:
+      buildType:
+        type: string
+    executor:
+      name: windows/default
+    steps:
+      - build:
+          buildType: <<parameters.buildType>>
+
+  commit-and-push:
+    parameters:
+      branch:
+        type: string
+    docker:
+      - image: cimg/base:stable
+    steps:
+      - clone_hosting
+      - attach_workspace:
+          at: ./
+      - copy_and_push:
+          branch: <<parameters.branch>>
+
+workflows:
+  build_debug:
+    jobs:
+      - hold:
+          context: LeadMeDeployers
+          type: approval
+      - build:
+          buildType: "Debug"
+          requires:
+            - hold
+      - commit-and-push:
+          branch: "development"
+          requires:
+            - build
+  build_release:
+    jobs:
+      - hold:
+          context: LeadMeDeployers
+          type: approval
+          filters:
+            branches:
+              only:
+                - main
+      - build:
+          buildType: "Release"
+          requires:
+            - hold
+      - commit-and-push:
+          branch: "main"
+          requires:
+            - build
