@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.IO;
 using System;
 using System.Threading.Tasks;
+using Sentry;
 
 namespace Station
 {
@@ -111,6 +112,11 @@ namespace Station
 				Directory.Delete(extractTarget, true);
 				MockConsole.WriteLine("done.", MockConsole.LogLevel.Error);
 			}
+
+			SentrySdk.CaptureMessage("Migration Complete at: " +
+										(Environment.GetEnvironmentVariable("LabLocation", EnvironmentVariableTarget.User) ?? "Unknown") + 
+										"for Station " +
+										(Environment.GetEnvironmentVariable("LabLocation", EnvironmentVariableTarget.User) ?? "Unknown"));
 
 			MockConsole.WriteLine("Migration Complete, exiting Station and opening Launcher", MockConsole.LogLevel.Normal);
 
