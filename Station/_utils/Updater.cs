@@ -116,7 +116,7 @@ namespace Station
 			SentrySdk.CaptureMessage("Migration Complete at: " +
 										(Environment.GetEnvironmentVariable("LabLocation", EnvironmentVariableTarget.User) ?? "Unknown") + 
 										"for Station " +
-										(Environment.GetEnvironmentVariable("LabLocation", EnvironmentVariableTarget.User) ?? "Unknown"));
+										(Environment.GetEnvironmentVariable("StationId", EnvironmentVariableTarget.User) ?? "Unknown"));
 
 			MockConsole.WriteLine("Migration Complete, exiting Station and opening Launcher", MockConsole.LogLevel.Normal);
 
