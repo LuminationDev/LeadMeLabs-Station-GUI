@@ -318,6 +318,13 @@ namespace Station
             //Stop any current processes before trying to launch a new one
             CurrentWrapper.StopCurrentProcess();
 
+            //If vive pro 1, stop Steam VR before opening an new process,
+            //the new process is responsbile opening SteamVR
+            if(SessionController.vrHeadset is VivePro1)
+            {
+                SessionController.vrHeadset.StopLinkedProcess("vrmonitor");
+            }
+
             UIUpdater.UpdateProcess("Launching");
             UIUpdater.UpdateStatus("Loading...");
 
