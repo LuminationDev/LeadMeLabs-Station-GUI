@@ -96,10 +96,6 @@ workflows:
           buildType: "Debug"
           requires:
             - hold
-      - commit-and-push:
-          branch: "development"
-          requires:
-            - build
   build_release:
     jobs:
       - hold:
