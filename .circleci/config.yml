@@ -51,6 +51,9 @@ commands:
       - checkout
       - run: ls
       - run:
+          name: "dotnet restore"
+          command: dotnet.exe restore
+      - run:
           name: "Build dotnet <<parameters.buildType>>"
           command: dotnet.exe msbuild -v:normal .\Station\Station.csproj -p:Configuration=<<parameters.buildType>>
       - run: 
