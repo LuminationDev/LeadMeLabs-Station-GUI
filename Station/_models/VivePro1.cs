@@ -140,9 +140,9 @@ namespace Station
         /// <summary>
         /// Kill off the Steam VR process.
         /// </summary>
-        public void StopLinkedProcess(string processName)
+        public void StopProcessesBeforeLaunch()
         {
-            CommandLine.QueryVRProcesses(new List<string> { processName }, true);
+            CommandLine.QueryVRProcesses(new List<string> { "vrmonitor" }, true);
         }
     }
 }
