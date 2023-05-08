@@ -51,7 +51,7 @@ commands:
       - checkout
       - run:
           name: "Build dotnet <<parameters.buildType>>"
-          command: "dotnet.exe build --configuration <<parameters.buildType>>"
+          command: "dotnet.exe msbuild --configuration <<parameters.buildType>>"
       - run: 
           name: Compress built files to Station.zip
           command: Compress-Archive -Path ~/project/Station/bin/<<parameters.buildType>>/net6.0-windows/* -DestinationPath ~/project/Station/Station.zip
