@@ -81,7 +81,7 @@
 
   <ItemGroup>
     <Reference Include="leadme_api">
-      <HintPath>..\..\..\.Net Standard 2.0\leadme_api\leadme_api\bin\Release\netstandard2.0\leadme_api.dll</HintPath>
+      <HintPath>.\leadme_api.dll</HintPath>
     </Reference>
   </ItemGroup>
 
