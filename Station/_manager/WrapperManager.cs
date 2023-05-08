@@ -318,6 +318,12 @@ namespace Station
             //Stop any current processes before trying to launch a new one
             CurrentWrapper.StopCurrentProcess();
 
+            //Stop any accessory processes before opening a new process
+            if(SessionController.vrHeadset != null)
+            {
+                SessionController.vrHeadset.StopProcessesBeforeLaunch();
+            }
+
             UIUpdater.UpdateProcess("Launching");
             UIUpdater.UpdateStatus("Loading...");
 

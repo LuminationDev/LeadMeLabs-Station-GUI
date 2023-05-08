@@ -136,5 +136,13 @@ namespace Station
 
             return currentViveStatus;
         }
+
+        /// <summary>
+        /// Kill off the Steam VR process.
+        /// </summary>
+        public void StopProcessesBeforeLaunch()
+        {
+            CommandLine.QueryVRProcesses(new List<string> { "vrmonitor" }, true);
+        }
     }
 }

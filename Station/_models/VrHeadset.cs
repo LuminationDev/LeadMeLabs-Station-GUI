@@ -13,5 +13,7 @@ namespace Station
         void StopTimer();
 
         string MonitorVrConnection(string currentViveStatus);
+
+        string StopProcessesBeforeLaunch();
     }
 }
