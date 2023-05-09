@@ -58,6 +58,7 @@ namespace Station
             MockConsole.ClearConsole();
 
             MockConsole.WriteLine("Loading ENV variables", MockConsole.LogLevel.Error);
+            MockConsole.WriteLine("I have updated and I work", MockConsole.LogLevel.Error);
 
             bool result = await DotEnv.Load();
 
