@@ -56,7 +56,7 @@ commands:
           command: dotnet.exe restore
       - run:
           name: "Build dotnet <<parameters.buildType>>"
-          command: dotnet.exe msbuild -v:normal .\Station\Station.csproj -p:Configuration=<<parameters.buildType>>
+          command: msbuild -v:normal .\Station\Station.csproj -p:Configuration=<<parameters.buildType>>
       - run: 
           name: Compress built files to Station.zip
           command: Compress-Archive -Path ~/project/Station/bin/<<parameters.buildType>>/net6.0-windows/* -DestinationPath ~/project/Station/Station.zip
