@@ -49,8 +49,6 @@ commands:
         type: string
     steps:
       - checkout
-      - run: ls
-      - run: ls Station
       - run:
           name: "dotnet restore"
           command: dotnet.exe restore
