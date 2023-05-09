@@ -73,11 +73,7 @@ namespace Station
             CommandLine.QueryVRProcesses(WrapperMonitoringThread.steamProcesses, true);
 
             //Check if SteamCMD has been initialised
-#if DEBUG
-            string filePath = $@"C:\Users\{Environment.GetEnvironmentVariable("Directory")}\steamcmd\steamerrorreporter.exe";
-#else
             string filePath = CommandLine.stationLocation + @"\external\steamcmd\steamerrorreporter.exe";
-#endif
 
             //TODO automate this?
             if(!File.Exists(filePath))

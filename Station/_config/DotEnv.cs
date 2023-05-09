@@ -85,10 +85,6 @@ namespace Station
                 MockConsole.WriteLine(ex.ToString(), MockConsole.LogLevel.Error);
             }
 
-#if DEBUG
-            Environment.SetEnvironmentVariable("Directory", Environment.GetEnvironmentVariable("UserDirectory", EnvironmentVariableTarget.User));
-#endif
-
             return true;
         }
 
