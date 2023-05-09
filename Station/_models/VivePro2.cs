@@ -129,7 +129,7 @@ namespace Station
         /// <summary>
         /// Kill off the Steam VR process.
         /// </summary>
-        public void StopProcessesBeforeLaunch(string processName)
+        public void StopProcessesBeforeLaunch()
         {
         }
     }
