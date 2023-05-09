@@ -14,6 +14,6 @@ namespace Station
 
         string MonitorVrConnection(string currentViveStatus);
 
-        string StopProcessesBeforeLaunch();
+        void StopProcessesBeforeLaunch();
     }
 }

@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Threading.Tasks;
 using System.Timers;
 
 namespace Station
@@ -140,9 +141,11 @@ namespace Station
         /// <summary>
         /// Kill off the Steam VR process.
         /// </summary>
-        public void StopProcessesBeforeLaunch()
+        public async void StopProcessesBeforeLaunch()
         {
             CommandLine.QueryVRProcesses(new List<string> { "vrmonitor" }, true);
+
+            await Task.Delay(3000);
         }
     }
 }
