@@ -42,11 +42,7 @@ namespace Station
 
             List<string> apps = new List<string>();
 
-#if DEBUG
-            string manifestPath = Path.GetFullPath(Path.Combine($@"C:\Users\{Environment.GetEnvironmentVariable("Directory")}\Projects\leadme_apps", "manifest.json"));
-#else
             string manifestPath = Path.GetFullPath(Path.Combine(CommandLine.stationLocation, @"..", "manifest.json"));
-#endif
 
             if(!File.Exists(manifestPath))
             {

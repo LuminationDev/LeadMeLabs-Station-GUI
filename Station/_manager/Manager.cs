@@ -67,12 +67,6 @@ namespace Station
             //Load the environment files, do not continue if file is incomplete
             if (result)
             {
-#if DEBUG
-                //If in development override the program paths with the absolute paths dictated by Directory value in the config.env file.
-                CommandLine.steamCmd = $@"C:\Users\{Environment.GetEnvironmentVariable("Directory")}\steamcmd\steamcmd.exe";
-                CommandLine.SetVol = $@"C:\Users\{Environment.GetEnvironmentVariable("Directory")}\SetVol\SetVol.exe";
-#endif
-
                 new Thread(() =>
                 {
                     if (!Helper.GetStationMode().Equals(Helper.STATION_MODE_APPLIANCE))
