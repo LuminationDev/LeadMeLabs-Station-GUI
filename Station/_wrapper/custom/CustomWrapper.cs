@@ -176,8 +176,9 @@ namespace Station
         /// <returns>The launched application process</returns>
         private Process? GetExperienceProcess()
         {
-            Logger.WriteLog($"Attempting to get id for " + lastExperience.ExeName, MockConsole.LogLevel.Debug);
-            string id = CommandLine.GetProcessIdFromDir($"*{lastExperience.ExeName}");
+            string altPathWithoutExe = Path.GetDirectoryName(lastExperience.AltPath);
+            Logger.WriteLog($"Attempting to get id for " + altPathWithoutExe, MockConsole.LogLevel.Debug);
+            string id = CommandLine.GetProcessIdFromDir(altPathWithoutExe);
             if (id == null || id == "")
             {
                 return null;
