@@ -1,10 +1,12 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Management;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
+using Sentry;
 
 namespace Station
 {
@@ -56,9 +58,9 @@ namespace Station
         public async static void StartProgram()
         {
             MockConsole.ClearConsole();
+            EnsureSteamCanRunOffline();
 
             MockConsole.WriteLine("Loading ENV variables", MockConsole.LogLevel.Error);
-            MockConsole.WriteLine("I have updated and I work", MockConsole.LogLevel.Error);
 
             bool result = await DotEnv.Load();
 
@@ -82,6 +84,7 @@ namespace Station
 
                     SetServerIPAddress();
                     StartServer();
+                    EnsureSteamCanRunOffline();
 
                     if (Environment.GetEnvironmentVariable("NucAddress") != null)
                     {
@@ -229,6 +232,36 @@ namespace Station
             if (key is null) throw new Exception("Encryption key not set");
             SocketClient client = new(EncryptionHelper.Encrypt(response, key));
             client.send(writeToLog);
+        }
+
+        private static void EnsureSteamCanRunOffline()
+        {
+            string fileLocation = "C:\\Program Files (x86)\\Steam\\config\\loginusers.vdf";
+            if (!File.Exists(fileLocation))
+            {
+                SentrySdk.CaptureMessage("Could not ensure Steam can run offline at: " + (Environment.GetEnvironmentVariable("LabLocation") ?? "Unknown"));
+                return;
+            }
+
+            try
+            {
+                string[] lines = File.ReadAllLines(fileLocation);
+                for (int i = 0; i < lines.Length; i++)
+                {
+                    if (lines[i].Contains("SkipOfflineModeWarning"))
+                    {
+                        lines[i] = lines[i].Replace("0", "1");
+                    }
+                }
+
+                File.WriteAllLines(fileLocation, lines);
+            }
+            catch (Exception e)
+            {
+                SentrySdk.CaptureException(e);
+            }
+
+
         }
     }
 }
