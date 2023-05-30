@@ -61,6 +61,7 @@ namespace Station
             EnsureSteamCanRunOffline();
 
             MockConsole.WriteLine("Loading ENV variables", MockConsole.LogLevel.Error);
+            MockConsole.WriteLine("Version 1.08", MockConsole.LogLevel.Error);
 
             bool result = await DotEnv.Load();
 
