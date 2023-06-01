@@ -1,3 +1,4 @@
+using Sentry;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -5,8 +6,9 @@ using System.Linq;
 using System.Management;
 using System.Net;
 using System.Net.Sockets;
+using System.Reflection;
 using System.Threading;
-using Sentry;
+using System.Threading.Tasks;
 
 namespace Station
 {
@@ -120,10 +122,11 @@ namespace Station
         /// <summary>
         /// Restart the station program
         /// </summary>
-        public static void RestartProgram()
+        public static async void RestartProgram()
         {
             StopProgram();
             Logger.WriteLog("Station restarting", MockConsole.LogLevel.Normal);
+            await Task.Delay(2000);
             StartProgram();
         }
 
@@ -172,7 +175,7 @@ namespace Station
 
                     Logger.WriteLog("Server IP Address is: " + endPoint.Address.ToString(), MockConsole.LogLevel.Normal);
 
-                    App.SetWindowTitle($"Station ({Environment.GetEnvironmentVariable("StationId")}) -- {endPoint.Address} -- {GetMACAddress()}"); 
+                    App.SetWindowTitle($"NUC -- {endPoint.Address} -- {GetMACAddress()} -- {GetVersionNumber()}");
                 }
                 else
                 {
@@ -181,8 +184,41 @@ namespace Station
             }
             catch (Exception e)
             {
+                SentrySdk.CaptureException(e);
                 Logger.WriteLog($"Unexpected exception : {e}", MockConsole.LogLevel.Error);
             }
+        }
+
+        /// <summary>
+        /// Collect just the IP address.
+        /// </summary>
+        /// <returns></returns>
+        public static string? GetIPAddress()
+        {
+            try
+            {
+                using (Socket socket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, 0))
+                {
+                    socket.Connect("8.8.8.8", 65530);
+                    IPEndPoint? endPoint = socket.LocalEndPoint as IPEndPoint;
+
+                    if (endPoint is not null)
+                    {
+                        return endPoint.Address.ToString();
+                    }
+                    else
+                    {
+                        throw new Exception("Manager class: Server IP Address could not be found");
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                SentrySdk.CaptureException(e);
+                Logger.WriteLog($"Unexpected exception : {e}", MockConsole.LogLevel.Error);
+            }
+
+            return "N/A";
         }
 
         /// <summary>
@@ -197,6 +233,21 @@ namespace Station
 
             Logger.WriteLog("MAC Address is: " + mac, MockConsole.LogLevel.Normal);
             return mac;
+        }
+
+        /// <summary>
+        /// Query the program to get the current version number of the software that is running.
+        /// </summary>
+        /// <returns>A string of the version number in the format X.X.X.X</returns>
+        public static string? GetVersionNumber()
+        {
+            Assembly? assembly = Assembly.GetEntryAssembly();
+            if (assembly == null) return "N/A";
+
+            Version? version = assembly.GetName().Version;
+            if (version == null) return "N/A";
+
+            return version.ToString();
         }
 
         public static void SetRemoteEndPoint()

@@ -28,7 +28,7 @@ namespace Station
             }
 
             CommandLine.KillSteamSigninWindow();
-            CommandLine.StartProgram(SessionController.steam, "-noreactlogin -login " + Environment.GetEnvironmentVariable("SteamUserName") + " " + Environment.GetEnvironmentVariable("SteamPassword") + " steam://rungameid/250820"); //Open up steam and run steamVR
+            CommandLine.StartProgram(SessionController.steam, " -login " + Environment.GetEnvironmentVariable("SteamUserName") + " " + Environment.GetEnvironmentVariable("SteamPassword") + " steam://rungameid/250820"); //Open up steam and run steamVR
             CommandLine.StartProgram(SessionController.vive); //Start VireWireless up
 
             if (!minimising)

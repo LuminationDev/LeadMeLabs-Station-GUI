@@ -72,7 +72,7 @@ namespace Station
         /// <param name="message">A string of the log to be displayed</param>
         public static void LogHandler(string message)
         {
-            MockConsole.WriteLine(message, MockConsole.LogLevel.Debug);
+            Logger.WriteLog(message, MockConsole.LogLevel.Debug);
         }
 
         /// <summary>
@@ -82,7 +82,7 @@ namespace Station
         /// <returns>An async task asscoiated with the action</returns>
         private static void ExternalActionHandler(string message)
         {
-            MockConsole.WriteLine($"Pipe message: {message}", MockConsole.LogLevel.Normal);
+            Logger.WriteLog($"Pipe message: {message}", MockConsole.LogLevel.Normal);
 
             if (message.Contains("Command recieved")) return;
 

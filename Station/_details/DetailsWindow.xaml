@@ -1,0 +1,200 @@
+﻿<Window x:Class="Station._details.DetailsWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:Station._details"
+        mc:Ignorable="d"
+        Title="Details" Height="385" Width="360"
+        ResizeMode="NoResize">
+    <Window.DataContext>
+        <local:DetailsWindowViewModel/>
+    </Window.DataContext>
+
+    <Window.Resources>
+        <Style
+            TargetType="{x:Type Button}">
+
+            <Setter Property="Background" Value="#5c5c5b"/>
+
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Name="border" CornerRadius="10" Background="{TemplateBinding Background}" BorderThickness="1" BorderBrush="{TemplateBinding Background}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="Button.IsPressed" Value="True">
+                                <Setter TargetName="border" Property="BorderBrush" Value="Transparent" />
+                            </Trigger>
+
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="#a8a8a8"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+
+            <Style.Resources>
+                <Style TargetType="Border">
+                    <Setter Property="CornerRadius" Value="4" />
+                </Style>
+            </Style.Resources>
+        </Style>
+
+        <Style 
+            x:Key="MainButton"
+            BasedOn="{StaticResource {x:Type Button}}"
+            TargetType="{x:Type Button}">
+
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Height" Value="30"/>
+            <Setter Property="Width" Value="30"/>
+            <Setter Property="HorizontalAlignment" Value="Left"/>
+            <Setter Property="VerticalAlignment" Value="Top"/>
+
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Foreground">
+                <Setter.Value>
+                    <LinearGradientBrush StartPoint="0.5,0" EndPoint="0.5,1">
+                        <LinearGradientBrush.GradientStops>
+                            <GradientStop Offset="0.0" Color="White" />
+                            <GradientStop Offset="1.0" Color="White" />
+                        </LinearGradientBrush.GradientStops>
+                    </LinearGradientBrush>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Window.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="30"/>
+            <RowDefinition Height="auto"/>
+            <RowDefinition Height="auto"/>
+        </Grid.RowDefinitions>
+
+        <TextBlock HorizontalAlignment="Left" VerticalAlignment="Center" Width="250" Height="auto" Margin="10, 0">
+                Software Type: Station
+        </TextBlock>
+
+        <StackPanel Grid.Row="1" Height="auto">
+            <WrapPanel Height="50">
+                <TextBlock VerticalAlignment="Center" Width="75" Margin="10">
+                    IP Address:
+                </TextBlock>
+                <TextBlock x:Name="ipAddress" VerticalAlignment="Center" Width="200">
+                    XXX.XXX.XXX.XXX
+                </TextBlock>
+                <Button 
+                Style="{StaticResource MainButton}"  
+                Margin="10" 
+                Command="{Binding RefreshIpAddressCommand}"
+                ToolTip="Recollect the IP address."
+                Click="IP_Click">
+                    <Image Source="../assets/refresh.ico" Width="25">
+                        <Image.RenderTransform>
+                            <RotateTransform x:Name="RotationIP" CenterX="12.5" CenterY="12.5" />
+                        </Image.RenderTransform>
+                    </Image>
+                </Button>
+            </WrapPanel>
+
+            <WrapPanel Height="50">
+                <TextBlock VerticalAlignment="Center" Width="75" Margin="10">
+                    Mac Address:
+                </TextBlock>
+                <TextBlock x:Name="macAddress" VerticalAlignment="Center" Width="200">
+                    XX:XX:XX:XX:XX
+                </TextBlock>
+                <Button 
+                Style="{StaticResource MainButton}" 
+                Margin="10" 
+                Command="{Binding RefreshMacAddressCommand}"
+                ToolTip="Refresh the MAC address."
+                Click="Mac_Click">
+                    <Image Source="../assets/refresh.ico" Width="25">
+                        <Image.RenderTransform>
+                            <RotateTransform x:Name="RotationMac" CenterX="12.5" CenterY="12.5" />
+                        </Image.RenderTransform>
+                    </Image>
+                </Button>
+            </WrapPanel>
+
+            <WrapPanel Height="50">
+                <TextBlock VerticalAlignment="Center" Width="75" Margin="10">
+                    Version:
+                </TextBlock>
+                <TextBlock x:Name="versionNumber" VerticalAlignment="Center" Width="200">
+                    X.X.X.X
+                </TextBlock>
+                <Button 
+                Style="{StaticResource MainButton}"
+                Margin="10"
+                Command="{Binding RefreshVersionCommand}"
+                ToolTip="Refresh the version number of the project."
+                Click="Version_Click">
+                    <Image Source="../assets/refresh.ico" Width="25">
+                        <Image.RenderTransform>
+                            <RotateTransform x:Name="RotationVersion" CenterX="12.5" CenterY="12.5" />
+                        </Image.RenderTransform>
+                    </Image>
+                </Button>
+            </WrapPanel>
+
+            <Button 
+                Style="{StaticResource MainButton}"
+                Command="{Binding RefreshAllCommand}"
+                Content="Refresh All" 
+                Margin="10,10,10,10" 
+                Width="100" 
+                Height="25" 
+                HorizontalAlignment="Center" 
+                VerticalAlignment="Bottom"
+                ToolTip="Resfresh all health checks."/>
+        </StackPanel>
+
+        <StackPanel 
+            Grid.Row="2"
+            Height="200"
+            Width="360"
+            Background="#424242" 
+            HorizontalAlignment="Left" 
+            VerticalAlignment="Bottom">
+
+            <Label 
+                Name="ProcessLabel"
+                FontFamily="Fonts/#Poppins-Medium"
+                Content="NUC Address:" 
+                Foreground="#828282" 
+                Height="25" 
+                Margin="5,5,10,0"/>
+
+            <Label 
+                x:Name="ProcessConsole"
+                FontFamily="Fonts/#Poppins-Medium"
+                Content="XXX.XXX.XXX.XXX"
+                Foreground="#a8a8a8"
+                Height="25" 
+                Margin="5,5,10,0"/>
+
+            <Label 
+                x:Name="StatusLabel"
+                FontFamily="Fonts/#Poppins-Medium"
+                Content="Firewall Status:" 
+                Foreground="#828282" 
+                Height="25" 
+                Margin="5,5,10,0"/>
+
+            <Label 
+                x:Name="StatusConsole"
+                FontFamily="Fonts/#Poppins-Medium"
+                Content="Unknown"
+                Foreground="#a8a8a8"
+                Height="25" 
+                Margin="5,5,10,0"/>
+        </StackPanel>
+    </Grid>
+</Window>

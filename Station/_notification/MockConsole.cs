@@ -26,7 +26,6 @@ namespace Station
             Verbose
         }
 
-        private static int _lineCount = 0;
         private static int _lineLimit = 100;
         public static LogLevel _logLevel = LogLevel.Normal;
 
@@ -104,9 +103,9 @@ namespace Station
             {
                 var lines = _viewModel.ConsoleText.Split(new[] { '\n' }, StringSplitOptions.RemoveEmptyEntries);
 
-                if (lines.Length >= 100)
+                if (lines.Length >= _lineLimit)
                 {
-                    var newLines = new string[100];
+                    var newLines = new string[_lineLimit];
                     Array.Copy(lines, 1, newLines, 0, newLines.Length - 1);
                     newLines[newLines.Length - 1] = string.Empty;
                     _viewModel.ConsoleText = string.Join("\n", newLines);
