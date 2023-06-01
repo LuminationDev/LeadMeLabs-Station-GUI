@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:Station._details"
         mc:Ignorable="d"
-        Title="Details" Height="385" Width="360"
+        Title="Details" Height="455" Width="360"
         ResizeMode="NoResize">
     <Window.DataContext>
         <local:DetailsWindowViewModel/>
@@ -139,6 +139,27 @@
                     <Image Source="../assets/refresh.ico" Width="25">
                         <Image.RenderTransform>
                             <RotateTransform x:Name="RotationVersion" CenterX="12.5" CenterY="12.5" />
+                        </Image.RenderTransform>
+                    </Image>
+                </Button>
+            </WrapPanel>
+
+            <WrapPanel Height="50">
+                <TextBlock VerticalAlignment="Center" Width="75" Margin="10">
+                    Steam Guard:
+                </TextBlock>
+                <TextBlock x:Name="steamGuard" VerticalAlignment="Center" Width="200">
+                    X.X.X.X
+                </TextBlock>
+                <Button 
+                Style="{StaticResource MainButton}"
+                Margin="10"
+                Command="{Binding RefreshSteamGuardCommand}"
+                ToolTip="Refresh the version number of the project."
+                Click="SteamGuard_Click">
+                    <Image Source="../assets/refresh.ico" Width="25">
+                        <Image.RenderTransform>
+                            <RotateTransform x:Name="RotationSteam" CenterX="12.5" CenterY="12.5" />
                         </Image.RenderTransform>
                     </Image>
                 </Button>

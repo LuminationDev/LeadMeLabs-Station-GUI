@@ -11,12 +11,14 @@ namespace Station._details
             RefreshIpAddressCommand = new RelayCommand(() => RefreshIpAddress());
             RefreshMacAddressCommand = new RelayCommand(() => RefreshMacAddress());
             RefreshVersionCommand = new RelayCommand(() => RefreshVersion());
+            RefreshSteamGuardCommand = new RelayCommand(() => RefreshSteamGuard());
             RefreshAllCommand = new RelayCommand(() => RefreshAll());
         }
 
         public ICommand RefreshIpAddressCommand { get; }
         public ICommand RefreshMacAddressCommand { get; }
         public ICommand RefreshVersionCommand { get; }
+        public ICommand RefreshSteamGuardCommand { get; }
         public ICommand RefreshAllCommand { get; }
 
         private async void RefreshIpAddress()
@@ -41,6 +43,15 @@ namespace Station._details
             Logger.WriteLog("Refreshing Version code", MockConsole.LogLevel.Normal);
             await Task.Delay(2000);
             DetailsWindow.VersionNum.Text = Manager.GetVersionNumber();
+        }
+
+        private async void RefreshSteamGuard()
+        {
+            DetailsWindow.SteamGuard.Text = "Loading...";
+            Logger.WriteLog("Refreshing Version code", MockConsole.LogLevel.Normal);
+            SteamScripts.QuerySteamConfig();
+            await Task.Delay(5000);
+            DetailsWindow.SteamGuard.Text = SteamScripts.steamCMDConfigured;
         }
 
         private void RefreshAll()
