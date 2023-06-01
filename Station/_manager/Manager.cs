@@ -175,7 +175,7 @@ namespace Station
 
                     Logger.WriteLog("Server IP Address is: " + endPoint.Address.ToString(), MockConsole.LogLevel.Normal);
 
-                    App.SetWindowTitle($"NUC -- {endPoint.Address} -- {GetMACAddress()} -- {GetVersionNumber()}");
+                    App.SetWindowTitle($"Station({Environment.GetEnvironmentVariable("StationId")}) -- {endPoint.Address} -- {GetMACAddress()} -- {GetVersionNumber()}");
                 }
                 else
                 {
