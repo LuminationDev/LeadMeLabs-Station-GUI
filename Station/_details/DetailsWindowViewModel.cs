@@ -60,6 +60,7 @@ namespace Station._details
             RefreshIpAddress();
             RefreshMacAddress();
             RefreshVersion();
+            RefreshSteamGuard();
         }
     }
 }
