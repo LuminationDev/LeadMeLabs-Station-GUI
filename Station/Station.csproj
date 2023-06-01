@@ -16,13 +16,13 @@
     <None Remove="assets\offline.ico" />
     <None Remove="assets\online.ico" />
     <None Remove="assets\refresh.ico" />
+    <None Remove="leadme_api.dll" />
     <None Remove="_batch\LeadMeLabs-SoftwareChecker.deps.json" />
     <None Remove="_batch\LeadMeLabs-SoftwareChecker.dll" />
     <None Remove="_batch\LeadMeLabs-SoftwareChecker.exe" />
     <None Remove="_batch\LeadMeLabs-SoftwareChecker.pdb" />
     <None Remove="_batch\LeadMeLabs-SoftwareChecker.runtimeconfig.json" />
     <None Remove="_config\base_config.env" />
-    <None Remove="_config\config.env" />
     <None Remove="_config\config.txt" />
     <None Remove="_logs\.gitkeep" />
     <None Remove="_logs\placeholder.txt" />
@@ -53,6 +53,9 @@
     <Content Include="assets\refresh.ico">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
+    <Content Include="leadme_api.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <Content Include="_batch\LeadMeLabs-SoftwareChecker.deps.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
@@ -70,9 +73,6 @@
     </Content>
     <Content Include="_config\base_config.env">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="_config\config.env">
-      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </Content>
     <Content Include="_config\config.txt">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>

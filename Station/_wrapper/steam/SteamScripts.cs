@@ -24,9 +24,20 @@ namespace Station
         public static Experience lastApp;
         public static bool launchingGame = false;
         public static bool popupDetect = false;
+        public static string steamCMDConfigured = "Missing";
 
         private static string availableGames = "";
         private static bool refreshing = false; //keep track of if the station is currently refreshing the steam list
+
+        /// <summary>
+        /// Run a basic Steam Command query to check if the Steam Guard has been configured or not. Afterwards restart
+        /// the VR processes so that Steam GUI is not disconnected.
+        /// </summary>
+        public static void QuerySteamConfig()
+        {
+            CommandLine.ExecuteSteamCommand(loginUser + licenses + quit);
+            _ = WrapperManager.RestartVRProcesses();
+        }
 
         /// <summary>
         /// Create a command to pass user details and a steam guard code to a command line process in order
@@ -80,6 +91,8 @@ namespace Station
             {
                 Logger.WriteLog($"SteamCMD not initialised yet. Initialising now.", MockConsole.LogLevel.Error);
                 Manager.SendResponse("Android", "Station", "SetValue:steamCMD:required");
+
+                steamCMDConfigured = "Missing";
 
                 //Login to initialise/update SteamCMD and get the Steam Guard email sent off
                 string command = $"{loginDetails} {quit}";

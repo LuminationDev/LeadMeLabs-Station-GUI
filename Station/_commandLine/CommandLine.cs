@@ -426,6 +426,7 @@ namespace Station
             if (!File.Exists(steamCmd))
             {
                 SessionController.PassStationMessage($"StationError,File not found:{steamCmd}");
+                SteamScripts.steamCMDConfigured = "steamcmd.exe not found";
                 return null;
             }
 
@@ -439,6 +440,7 @@ namespace Station
             {
                 Manager.SendResponse("Android", "Station", "SetValue:steamCMD:required");
                 MockConsole.WriteLine("Steam Guard is not enabled for this account.");
+                SteamScripts.steamCMDConfigured = "Missing";
 
                 //Manually kill the process or it will stay on the guard code input 
                 cmd.Kill(true);
@@ -446,6 +448,7 @@ namespace Station
             }
 
             Manager.SendResponse("Android", "Station", "SetValue:steamCMD:configured");
+            SteamScripts.steamCMDConfigured = "Configured";
 
             return output;
         }

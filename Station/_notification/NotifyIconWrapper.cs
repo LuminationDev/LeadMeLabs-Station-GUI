@@ -1,5 +1,7 @@
-﻿using System;
+﻿using Station._details;
+using System;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Drawing;
 using System.IO;
 using System.Reflection;
@@ -92,12 +94,16 @@ namespace Station
             var openItem = new ToolStripMenuItem("Open");
             openItem.Click += OpenItemOnClick;
 
-            //var healthItem = new ToolStripMenuItem("Health Status");
-            //healthItem.Click += OpenItemOnClick;
+            var openDetails = new ToolStripMenuItem("Details");
+            openDetails.Click += OpenDetailsOnClick;
+
+            var goToLogs = new ToolStripMenuItem("Logs");
+            goToLogs.Click += GoToLogsOnClick;
 
             var exitItem = new ToolStripMenuItem("Exit");
             exitItem.Click += ExitItemOnClick;
-            var contextMenu = new ContextMenuStrip { Items = { openItem, exitItem } };
+
+            var contextMenu = new ContextMenuStrip { Items = { openItem, openDetails, goToLogs, exitItem } };
             return contextMenu;
         }
 
@@ -105,6 +111,26 @@ namespace Station
         {
             var args = new RoutedEventArgs(OpenSelectedEvent);
             RaiseEvent(args);
+        }
+
+        private void OpenDetailsOnClick(object? sender, EventArgs eventArgs)
+        {
+            DetailsWindow details = new DetailsWindow();
+            details.Show();
+        }
+
+        private void GoToLogsOnClick(object? sender, EventArgs eventArgs)
+        {
+            string path = @$"C:\Users\{Environment.GetEnvironmentVariable("UserDirectory")}\AppData\Roaming\leadme_apps\Station\_logs";
+
+            try
+            {
+                Process.Start("explorer.exe", path);
+            }
+            catch (Exception ex)
+            {
+                Logger.WriteLog("An error occurred: " + ex.Message, MockConsole.LogLevel.Error);
+            }
         }
 
         private void ExitItemOnClick(object? sender, EventArgs eventArgs)
