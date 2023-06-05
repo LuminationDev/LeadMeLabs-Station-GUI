@@ -60,7 +60,7 @@ namespace Station
         public async static void StartProgram()
         {
             MockConsole.ClearConsole();
-            EnsureSteamCanRunOffline();
+            VerifySteamLoginUserConfig();
 
             MockConsole.WriteLine("Loading ENV variables", MockConsole.LogLevel.Error);
             MockConsole.WriteLine("Version 1.08", MockConsole.LogLevel.Error);
@@ -87,7 +87,7 @@ namespace Station
 
                     SetServerIPAddress();
                     StartServer();
-                    EnsureSteamCanRunOffline();
+                    VerifySteamLoginUserConfig();
 
                     if (Environment.GetEnvironmentVariable("NucAddress") != null)
                     {
@@ -286,7 +286,7 @@ namespace Station
             client.send(writeToLog);
         }
 
-        private static void EnsureSteamCanRunOffline()
+        private static void VerifySteamLoginUserConfig()
         {
             string fileLocation = "C:\\Program Files (x86)\\Steam\\config\\loginusers.vdf";
             if (!File.Exists(fileLocation))
@@ -303,6 +303,17 @@ namespace Station
                     if (lines[i].Contains("SkipOfflineModeWarning"))
                     {
                         lines[i] = lines[i].Replace("0", "1");
+                    }
+                    if (lines[i].Contains("AllowAutoLogin"))
+                    {
+                        lines[i] = lines[i].Replace("0", "1");
+                    }
+                    if (lines[i].Contains("WantsOfflineMode"))
+                    {
+                        if ((Environment.GetEnvironmentVariable("OfflineMode") ?? "false").Equals("true"))
+                        {
+                            lines[i] = lines[i].Replace("0", "1");
+                        }
                     }
                 }
 

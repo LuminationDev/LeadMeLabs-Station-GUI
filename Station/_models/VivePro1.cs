@@ -6,6 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Timers;
+using Timer = System.Timers.Timer;
 
 namespace Station
 {
@@ -31,7 +32,7 @@ namespace Station
             CommandLine.StartProgram(SessionController.steam, " -login " + Environment.GetEnvironmentVariable("SteamUserName") + " " + Environment.GetEnvironmentVariable("SteamPassword") + " steam://rungameid/250820"); //Open up steam and run steamVR
             CommandLine.StartProgram(SessionController.vive); //Start VireWireless up
 
-            if (!minimising)
+            if (!minimising && !(Environment.GetEnvironmentVariable("OfflineMode") ?? "false").Equals("true"))
             {
                 minimising = true;
                 timer = new Timer(5000); // every 5 seconds try to minimize the processes
@@ -50,6 +51,11 @@ namespace Station
                 timer.Elapsed += TimerElapsed;
                 timer.AutoReset = true;
                 timer.Enabled = true;
+            }
+
+            if ((Environment.GetEnvironmentVariable("OfflineMode") ?? "false").Equals("true"))
+            {
+                SteamWrapper.HandleOfflineSteam();
             }
         }
 

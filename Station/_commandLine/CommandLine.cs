@@ -5,6 +5,8 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.InteropServices;
+using System.Threading.Tasks;
 
 namespace Station
 {
@@ -600,6 +602,59 @@ namespace Station
             return 9999;
         }
 
+        [DllImport("user32.dll")]
+        public static extern int SetForegroundWindow(int hwnd);
+        
+        [DllImport("user32.dll")]
+        public static extern bool ShowWindow(int handle, int state);
+
+        public async static void PowershellCommand(Process steamSignInWindow)
+        {
+            OverlayManager.SetText("Initialising Steam");
+            await Task.Delay(15000);
+            MockConsole.WriteLine($"First command", MockConsole.LogLevel.Debug);
+            Process cmd = SetupCommand(stationPowershell);
+            cmd.Start();
+            cmd.StandardInput.WriteLine("$StartDHCP = New-Object -ComObject wscript.shell;");
+            cmd.StandardInput.WriteLine("$StartDHCP.SendKeys('{TAB}')");
+            cmd.StandardInput.WriteLine("$StartDHCP.SendKeys('{ENTER}')");
+            ShowWindow(steamSignInWindow.MainWindowHandle.ToInt32(), 3);    
+            SetForegroundWindow(steamSignInWindow.MainWindowHandle.ToInt32());
+            outcome(cmd);
+
+            OverlayManager.SetText("Loading SteamVR");
+            await Task.Delay(2000);
+            MockConsole.WriteLine($"Second command", MockConsole.LogLevel.Debug);
+            Process cmd2 = SetupCommand(stationPowershell);
+            cmd2.Start();
+            cmd2.StandardInput.WriteLine("$StartDHCP = New-Object -ComObject wscript.shell;");
+            cmd2.StandardInput.WriteLine($"$StartDHCP.SendKeys('{Environment.GetEnvironmentVariable("SteamPassword")}')");
+            cmd2.StandardInput.WriteLine("$StartDHCP.SendKeys('{TAB}')");
+            cmd2.StandardInput.WriteLine("$StartDHCP.SendKeys('{TAB}')");
+            cmd2.StandardInput.WriteLine("$StartDHCP.SendKeys('{ENTER}')");
+            ShowWindow(steamSignInWindow.MainWindowHandle.ToInt32(), 3);
+            SetForegroundWindow(steamSignInWindow.MainWindowHandle.ToInt32());
+            outcome(cmd2);
+
+            OverlayManager.SetText("Almost there");
+            await Task.Delay(5000);
+            OverlayManager.SetText("Here we go");
+            await Task.Delay(5000);
+            MockConsole.WriteLine($"Third command", MockConsole.LogLevel.Debug);
+            Process cmd3 = SetupCommand(stationPowershell);
+            cmd3.Start();
+            cmd3.StandardInput.WriteLine("$StartDHCP = New-Object -ComObject wscript.shell;");
+            cmd3.StandardInput.WriteLine("$StartDHCP.SendKeys('{TAB}')");
+            cmd3.StandardInput.WriteLine("$StartDHCP.SendKeys('{TAB}')");
+            cmd3.StandardInput.WriteLine("$StartDHCP.SendKeys('{ENTER}')");
+            ShowWindow(steamSignInWindow.MainWindowHandle.ToInt32(), 3);
+            SetForegroundWindow(steamSignInWindow.MainWindowHandle.ToInt32());
+            outcome(cmd3);
+
+            await Task.Delay(2000);
+            OverlayManager.ManualStop();
+        }
+        
         /// <summary>
         /// Pass in a steam application directory to get the process id if running
         /// </summary>

@@ -2,7 +2,10 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Threading;
 using System.Threading.Tasks;
+using System.Timers;
+using Timer = System.Timers.Timer;
 
 namespace Station
 {
@@ -260,6 +263,43 @@ namespace Station
                 WrapProcess(SteamScripts.lastApp);
             }
             SteamScripts.popupDetect = false;
+        }
+
+        public static void HandleOfflineSteam()
+        {
+            new Thread(() =>
+            {
+                Overlay overlay = OverlayManager.OverlayThreadManual("Loading VR processes");
+                Process? steamSignInWindow = null;
+                Timer timer = new Timer(1000);
+                int attempts = 0;
+
+                void TimerElapsed(object? obj, ElapsedEventArgs args)
+                {
+                    if (attempts > 10)
+                    {
+                        timer.Stop();
+                    }
+                    List<Process> list = CommandLine.GetProcessesByName(new List<string> { "steam" });
+                    foreach (Process process in list)
+                    {
+                        MockConsole.WriteLine($"Looking for steam sign in process: Process: {process.ProcessName} ID: {process.Id}, MainWindowTitle: {process.MainWindowTitle}", MockConsole.LogLevel.Debug);
+
+                        if (process.MainWindowTitle.Equals("Steam Sign In"))
+                        {
+                            steamSignInWindow = process;
+                            timer.Stop();
+                            MockConsole.WriteLine($"Time for powershell command", MockConsole.LogLevel.Debug);
+                            CommandLine.PowershellCommand(steamSignInWindow);
+                        }
+                    }
+
+                    attempts++;
+                }
+                timer.Elapsed += TimerElapsed;
+                timer.AutoReset = true;
+                timer.Enabled = true;
+            }).Start();
         }
     }
 }

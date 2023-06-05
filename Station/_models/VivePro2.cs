@@ -32,7 +32,7 @@ namespace Station
             CommandLine.KillSteamSigninWindow();
             CommandLine.StartProgram(SessionController.steam, "-noreactlogin -login " + Environment.GetEnvironmentVariable("SteamUserName") + " " + Environment.GetEnvironmentVariable("SteamPassword") + " steam://rungameid/1635730"); //Open up steam and run vive console
 
-            if (!minimising)
+            if (!minimising && !(Environment.GetEnvironmentVariable("OfflineMode") ?? "false").Equals("true"))
             {
                 minimising = true;
                 timer = new Timer(5000); // every 5 seconds try to minimize the processes
@@ -51,6 +51,11 @@ namespace Station
                 timer.Elapsed += TimerElapsed;
                 timer.AutoReset = true;
                 timer.Enabled = true;
+            }
+            
+            if ((Environment.GetEnvironmentVariable("OfflineMode") ?? "false").Equals("true"))
+            {
+                SteamWrapper.HandleOfflineSteam();
             }
         }
 
