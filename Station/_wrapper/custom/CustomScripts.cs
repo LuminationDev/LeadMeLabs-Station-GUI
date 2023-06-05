@@ -66,7 +66,7 @@ namespace Station
                 foreach (var item in array)
                 {
                     //Do not collect the Station or NUC application from the manifest file.
-                    if (item.type == "LeadMe") continue;
+                    if (item.type == "LeadMe" || item.GetType == "Launcher") continue;
 
                     //Basic application requirements
                     string application = $"{item.type}|{item.id}|{item.name}";
