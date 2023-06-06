@@ -60,7 +60,7 @@ namespace Station
                 }
 
                 //Add the header image to the sending image queue through action transformation
-                SocketImage socketImage = new(experienceName, filePath);
+                SocketFile socketImage = new("image", experienceName, filePath);
                 System.Action sendImage = new(() => socketImage.send());
 
                 //Queue the send function for invoking
