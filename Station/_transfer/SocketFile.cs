@@ -11,27 +11,41 @@ using System.Threading.Tasks;
 // communication is established.
 namespace Station
 {
-    public class SocketImage
+    public class SocketFile
     {
+        /// <summary>
+        /// The type of file being sent to the NUC.
+        /// </summary>
+        private readonly string type = "";
+
         /// <summary>
         /// The name of the file as to be saved on the NUC.
         /// </summary>
-        private string name = "";
+        private readonly string name = "";
 
         /// <summary>
-        /// A file path of an image to be sent to the NUC.
+        /// An absolute file path of a local file on the NUC.
         /// </summery>
-        private string filePath = "";
+        private readonly string filePath = "";
 
         private TcpClient? client;
 
         //Timeout for the socket connection in seconds
         private int timeOut = 1;
 
-        public SocketImage(string name, string filePath)
+        public SocketFile(string type, string name, string filePath)
         {
-            this.name = $"{name}_header.jpg";
+            this.type = type;
+            this.name = GetName(type, name);
             this.filePath = filePath;
+        }
+
+        /// <summary>
+        /// Determine if the name needs modification depending on the type of file being sent.
+        /// </summary>
+        private string GetName(string type, string name)
+        {
+            return type == "image" ? $"{name}_header.jpg" : name;
         }
 
         /// <summary>
@@ -95,7 +109,7 @@ namespace Station
                     NetworkStream stream = client.GetStream();
 
                     // Construct and send the header
-                    string headerMessageType = "image";
+                    string headerMessageType = this.type;
                     byte[] headerMessageTypeBytes = System.Text.Encoding.UTF8.GetBytes(headerMessageType);
 
                     // Convert the header to network byte order
@@ -120,7 +134,7 @@ namespace Station
                     // Send the message to the connected TcpServer.
                     stream.Write(buffer, 0, (int)fs.Length);
 
-                    Logger.WriteLog($"Sent image: {filePath}", MockConsole.LogLevel.Normal, writeToLog);
+                    Logger.WriteLog($"Sent {this.type}: {filePath}", MockConsole.LogLevel.Normal, writeToLog);
 
                     // Close everything.
                     fs.Close();
@@ -146,6 +160,11 @@ namespace Station
                 client?.Close();
 
                 Logger.WriteLog($"Unexpected exception : {e}", MockConsole.LogLevel.Error);
+
+                if (this.type.Equals("file"))
+                {
+                    Manager.SendResponse("NUC", "Station", "LogRequest:TransferFailed");
+                }
             }
         }
     }

@@ -3,13 +3,9 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:Station._details"
         mc:Ignorable="d"
         Title="Details" Height="455" Width="360"
         ResizeMode="NoResize">
-    <Window.DataContext>
-        <local:DetailsWindowViewModel/>
-    </Window.DataContext>
 
     <Window.Resources>
         <Style
@@ -82,18 +78,25 @@
 
         <StackPanel Grid.Row="1" Height="auto">
             <WrapPanel Height="50">
-                <TextBlock VerticalAlignment="Center" Width="75" Margin="10">
-                    IP Address:
-                </TextBlock>
-                <TextBlock x:Name="ipAddress" VerticalAlignment="Center" Width="200">
-                    XXX.XXX.XXX.XXX
-                </TextBlock>
+                <TextBlock 
+                    Text="IP Address:" 
+                    VerticalAlignment="Center" 
+                    Width="75" 
+                    Margin="10"/>
+
+                <TextBlock 
+                    x:Name="ipAddress" 
+                    Tag="InfoText" 
+                    Text="XXX.XXX.XXX.XXX" 
+                    VerticalAlignment="Center" 
+                    Width="200"/>
+                
                 <Button 
-                Style="{StaticResource MainButton}"  
-                Margin="10" 
-                Command="{Binding RefreshIpAddressCommand}"
-                ToolTip="Recollect the IP address."
-                Click="IP_Click">
+                    Style="{StaticResource MainButton}"
+                    x:Name="IPAddress"
+                    Margin="10"
+                    ToolTip="Recollect the IP address."
+                    Click="Button_Click">
                     <Image Source="../assets/refresh.ico" Width="25">
                         <Image.RenderTransform>
                             <RotateTransform x:Name="RotationIP" CenterX="12.5" CenterY="12.5" />
@@ -103,18 +106,25 @@
             </WrapPanel>
 
             <WrapPanel Height="50">
-                <TextBlock VerticalAlignment="Center" Width="75" Margin="10">
-                    Mac Address:
-                </TextBlock>
-                <TextBlock x:Name="macAddress" VerticalAlignment="Center" Width="200">
-                    XX:XX:XX:XX:XX
-                </TextBlock>
+                <TextBlock 
+                    Text="Mac Address:" 
+                    VerticalAlignment="Center" 
+                    Width="75" 
+                    Margin="10"/>
+
+                <TextBlock 
+                    x:Name="macAddress" 
+                    Tag="InfoText" 
+                    Text="XX:XX:XX:XX:XX" 
+                    VerticalAlignment="Center" 
+                    Width="200"/>
+
                 <Button 
-                Style="{StaticResource MainButton}" 
-                Margin="10" 
-                Command="{Binding RefreshMacAddressCommand}"
-                ToolTip="Refresh the MAC address."
-                Click="Mac_Click">
+                    Style="{StaticResource MainButton}" 
+                    x:Name="MAC"
+                    Margin="10"
+                    ToolTip="Refresh the MAC address."
+                    Click="Button_Click">
                     <Image Source="../assets/refresh.ico" Width="25">
                         <Image.RenderTransform>
                             <RotateTransform x:Name="RotationMac" CenterX="12.5" CenterY="12.5" />
@@ -124,18 +134,25 @@
             </WrapPanel>
 
             <WrapPanel Height="50">
-                <TextBlock VerticalAlignment="Center" Width="75" Margin="10">
-                    Version:
-                </TextBlock>
-                <TextBlock x:Name="versionNumber" VerticalAlignment="Center" Width="200">
-                    X.X.X.X
-                </TextBlock>
+                <TextBlock 
+                    Text="Version:" 
+                    VerticalAlignment="Center" 
+                    Width="75" 
+                    Margin="10"/>
+
+                <TextBlock 
+                    x:Name="versionNumber" 
+                    Tag="InfoText"
+                    Text="X.X.X.X" 
+                    VerticalAlignment="Center" 
+                    Width="200"/>
+
                 <Button 
-                Style="{StaticResource MainButton}"
-                Margin="10"
-                Command="{Binding RefreshVersionCommand}"
-                ToolTip="Refresh the version number of the project."
-                Click="Version_Click">
+                    Style="{StaticResource MainButton}"
+                    x:Name="Version"
+                    Margin="10"
+                    ToolTip="Refresh the version number of the project."
+                    Click="Button_Click">
                     <Image Source="../assets/refresh.ico" Width="25">
                         <Image.RenderTransform>
                             <RotateTransform x:Name="RotationVersion" CenterX="12.5" CenterY="12.5" />
@@ -145,18 +162,25 @@
             </WrapPanel>
 
             <WrapPanel Height="50">
-                <TextBlock VerticalAlignment="Center" Width="75" Margin="10">
-                    Steam Guard:
-                </TextBlock>
-                <TextBlock x:Name="steamGuard" VerticalAlignment="Center" Width="200">
-                    X.X.X.X
-                </TextBlock>
+                <TextBlock 
+                    Text="Steam Guard:" 
+                    VerticalAlignment="Center" 
+                    Width="75" 
+                    Margin="10"/>
+                
+                <TextBlock 
+                    x:Name="steamGuard"
+                    Tag="InfoText"
+                    Text="X.X.X.X" 
+                    VerticalAlignment="Center"
+                    Width="200"/>
+                
                 <Button 
-                Style="{StaticResource MainButton}"
-                Margin="10"
-                Command="{Binding RefreshSteamGuardCommand}"
-                ToolTip="Refresh the version number of the project."
-                Click="SteamGuard_Click">
+                    Style="{StaticResource MainButton}"
+                    x:Name="SteamGuard"
+                    Margin="10"
+                    ToolTip="Refresh the version number of the project."
+                    Click="Button_Click">
                     <Image Source="../assets/refresh.ico" Width="25">
                         <Image.RenderTransform>
                             <RotateTransform x:Name="RotationSteam" CenterX="12.5" CenterY="12.5" />
@@ -167,13 +191,14 @@
 
             <Button 
                 Style="{StaticResource MainButton}"
-                Command="{Binding RefreshAllCommand}"
+                x:Name="RefreshAll"
                 Content="Refresh All" 
                 Margin="10,10,10,10" 
                 Width="100" 
                 Height="25" 
                 HorizontalAlignment="Center" 
                 VerticalAlignment="Bottom"
+                Click="RefreshAll_Click"
                 ToolTip="Resfresh all health checks."/>
         </StackPanel>
 
@@ -193,10 +218,10 @@
                 Height="25" 
                 Margin="5,5,10,0"/>
 
-            <Label 
+            <TextBlock 
                 x:Name="ProcessConsole"
                 FontFamily="Fonts/#Poppins-Medium"
-                Content="XXX.XXX.XXX.XXX"
+                Text="XXX.XXX.XXX.XXX"
                 Foreground="#a8a8a8"
                 Height="25" 
                 Margin="5,5,10,0"/>
@@ -209,10 +234,10 @@
                 Height="25" 
                 Margin="5,5,10,0"/>
 
-            <Label 
+            <TextBlock 
                 x:Name="StatusConsole"
                 FontFamily="Fonts/#Poppins-Medium"
-                Content="Unknown"
+                Text="Unknown"
                 Foreground="#a8a8a8"
                 Height="25" 
                 Margin="5,5,10,0"/>

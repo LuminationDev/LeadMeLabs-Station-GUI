@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+using System.IO;
 using System.Threading.Tasks;
 
 namespace Station
@@ -124,6 +126,15 @@ namespace Station
                 {
                     string[] split = additionalData.Split(":", 2);
                     Manager.wrapperManager?.ActionHandler("Message", split[1]);
+                }
+            }
+
+            if (actionNamespace == "LogFiles")
+            {
+                if (additionalData.StartsWith("Request"))
+                {
+                    string[] split = additionalData.Split(":", 2);
+                    Logger.LogRequest(int.Parse(split[1]));
                 }
             }
         }
