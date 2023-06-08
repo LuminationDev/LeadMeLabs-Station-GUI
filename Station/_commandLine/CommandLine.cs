@@ -29,7 +29,8 @@ namespace Station
         /// <summary>
         /// The location of the executing assembly. This is used to find the relative path for externally used applications.
         /// </summary>
-        public static readonly string? stationLocation = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+        public static readonly string?
+            stationLocation = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
 
         /// <summary>
         /// A string representing the regular command prompt executable.
@@ -88,15 +89,15 @@ namespace Station
             string error = "";
 
             temp.OutputDataReceived += new DataReceivedEventHandler((s, e) =>
-            {
-                output += e.Data + "\n";
-            }
+                {
+                    output += e.Data + "\n";
+                }
             );
 
             temp.ErrorDataReceived += new DataReceivedEventHandler((s, e) =>
-            {
-                error += e.Data + "\n";
-            }
+                {
+                    error += e.Data + "\n";
+                }
             );
 
             temp.BeginOutputReadLine();
@@ -162,7 +163,7 @@ namespace Station
         /// <returns>A string representing the results of the command</returns>
         public static void ExecuteBrowserCommand(string url)
         {
-            Process.Start(new ProcessStartInfo(url) { UseShellExecute = true });
+            Process.Start(new ProcessStartInfo(url) {UseShellExecute = true});
         }
 
         public static string? CancelShutdown()
@@ -287,7 +288,7 @@ namespace Station
         {
             Logger.WriteLog("Daily restart", MockConsole.LogLevel.Verbose);
 
-            List<Process> processes = GetProcessesByName(new List<string> { launcherProcessName, stationProcessName });
+            List<Process> processes = GetProcessesByName(new List<string> {launcherProcessName, stationProcessName});
 
             foreach (Process process in processes)
             {
@@ -319,6 +320,7 @@ namespace Station
                     {
                         StartProgram(SetVol, "unmute");
                     }
+
                     StartProgram(SetVol, volume);
                 }
             }
@@ -347,6 +349,7 @@ namespace Station
                 {
                     return null;
                 }
+
                 string[] lines = output.Split("\n");
                 foreach (var line in lines)
                 {
@@ -379,7 +382,7 @@ namespace Station
             if (!configuringSteam)
             {
                 configuringSteam = true;
-            
+
                 Process cmd = SetupCommand(steamCmd);
                 cmd.StartInfo.Arguments = command;
                 cmd.Start();
@@ -387,7 +390,7 @@ namespace Station
                 //Check the output for a result
                 string? output = outcome(cmd);
 
-                if(output == null)
+                if (output == null)
                 {
                     Logger.WriteLog("Unable to read output", MockConsole.LogLevel.Normal);
                     Manager.SendResponse("Android", "Station", "SetValue:steamCMD:error");
@@ -397,11 +400,13 @@ namespace Station
 
                 Logger.WriteLog(output, MockConsole.LogLevel.Normal);
 
-                if(output.Contains("FAILED (Invalid Login Auth Code)")) {
+                if (output.Contains("FAILED (Invalid Login Auth Code)"))
+                {
                     Logger.WriteLog("AUTH FAILED", MockConsole.LogLevel.Normal);
                     Manager.SendResponse("Android", "Station", "SetValue:steamCMD:failure");
                     configuringSteam = false;
-                } else if(output.Contains("OK"))
+                }
+                else if (output.Contains("OK"))
                 {
                     Logger.WriteLog("AUTH SUCCESS, restarting VR system", MockConsole.LogLevel.Normal);
                     Manager.SendResponse("Android", "Station", "SetValue:steamCMD:configured");
@@ -413,7 +418,9 @@ namespace Station
 
                 //Manually kill the process or it will stay on the guard code input 
                 cmd.Kill(true);
-            };
+            }
+
+            ;
         }
 
         /// <summary>
@@ -499,17 +506,41 @@ namespace Station
         /// </summary>
         public static void KillSteamSigninWindow()
         {
-            List<Process> list = GetProcessesByName(new List<string> { "steam" });
+            List<Process> list = GetProcessesByName(new List<string> {"steam"});
             foreach (Process process in list)
             {
-                Logger.WriteLog($"Inside kill steam signin: Process: {process.ProcessName} ID: {process.Id}, MainWindowTitle: {process.MainWindowTitle}", MockConsole.LogLevel.Debug);
+                Logger.WriteLog(
+                    $"Inside kill steam signin: Process: {process.ProcessName} ID: {process.Id}, MainWindowTitle: {process.MainWindowTitle}",
+                    MockConsole.LogLevel.Debug);
 
                 if (process.MainWindowTitle.Equals("Steam Sign In"))
                 {
-                    Logger.WriteLog($"Killing Process: {process.ProcessName} ID: {process.Id}, MainWindowTitle: {process.MainWindowTitle}", MockConsole.LogLevel.Debug);
+                    Logger.WriteLog(
+                        $"Killing Process: {process.ProcessName} ID: {process.Id}, MainWindowTitle: {process.MainWindowTitle}",
+                        MockConsole.LogLevel.Debug);
                     process.Kill();
                 }
             }
+        }
+
+        public static bool CheckIfConnectedToInternet()
+        {
+            Process cmd = SetupCommand(stationPowershell);
+            cmd.Start();
+            cmd.StandardInput.WriteLine(
+                "Get-NetRoute | ? DestinationPrefix -eq '0.0.0.0/0' | Get-NetIPInterface | Where ConnectionState -eq 'Connected'");
+            string? output = outcome(cmd);
+            if (output == null)
+            {
+                return false;
+            }
+
+            if (!output.Contains("ifIndex"))
+            {
+                return false;
+            }
+
+            return true;
         }
 
         /// <summary>
@@ -528,6 +559,7 @@ namespace Station
                     return false;
                 }
             }
+
             Logger.WriteLog("All processes are responding", MockConsole.LogLevel.Verbose, false);
             return true;
         }
@@ -576,7 +608,7 @@ namespace Station
                     "Get-WmiObject -Class win32_logicaldisk | Format-Table @{n=\"FreeSpace\";e={[math]::Round($_.FreeSpace/1GB,2)}}");
                 string? output = outcome(cmd);
 
-                if(output == null)
+                if (output == null)
                 {
                     return 9999;
                 }
@@ -604,15 +636,31 @@ namespace Station
 
         [DllImport("user32.dll")]
         public static extern int SetForegroundWindow(int hwnd);
-        
+
         [DllImport("user32.dll")]
         public static extern bool ShowWindow(int handle, int state);
 
+
+        private static string[] loadingMessages = {
+            "Preparing immersive learning environment...",
+            "Loading immersive experiences...",
+            "Configuring VR settings...",
+            "Automating the boring stuff...",
+            "Preparing virtual learning tools...",
+            "Sparking the lightbulb moment...",
+            "Almost there..."
+        };
+
         public async static void PowershellCommand(Process steamSignInWindow)
         {
-            OverlayManager.SetText("Initialising Steam");
-            await Task.Delay(15000);
-            MockConsole.WriteLine($"First command", MockConsole.LogLevel.Debug);
+            OverlayManager.SetText(loadingMessages[0]);
+            await Task.Delay(5000);
+            OverlayManager.SetText(loadingMessages[1]);
+            await Task.Delay(5000);
+            OverlayManager.SetText(loadingMessages[2]);
+            await Task.Delay(5000);
+            OverlayManager.SetText(loadingMessages[3]);
+            Logger.WriteLog($"Tabbing back out of offline warning", MockConsole.LogLevel.Debug);
             Process cmd = SetupCommand(stationPowershell);
             cmd.Start();
             cmd.StandardInput.WriteLine("$StartDHCP = New-Object -ComObject wscript.shell;");
@@ -621,10 +669,10 @@ namespace Station
             ShowWindow(steamSignInWindow.MainWindowHandle.ToInt32(), 3);    
             SetForegroundWindow(steamSignInWindow.MainWindowHandle.ToInt32());
             outcome(cmd);
-
-            OverlayManager.SetText("Loading SteamVR");
+            
             await Task.Delay(2000);
-            MockConsole.WriteLine($"Second command", MockConsole.LogLevel.Debug);
+            OverlayManager.SetText(loadingMessages[4]);
+            Logger.WriteLog($"Entering steam details", MockConsole.LogLevel.Debug);
             Process cmd2 = SetupCommand(stationPowershell);
             cmd2.Start();
             cmd2.StandardInput.WriteLine("$StartDHCP = New-Object -ComObject wscript.shell;");
@@ -635,12 +683,12 @@ namespace Station
             ShowWindow(steamSignInWindow.MainWindowHandle.ToInt32(), 3);
             SetForegroundWindow(steamSignInWindow.MainWindowHandle.ToInt32());
             outcome(cmd2);
-
-            OverlayManager.SetText("Almost there");
+            
             await Task.Delay(5000);
-            OverlayManager.SetText("Here we go");
+            OverlayManager.SetText(loadingMessages[5]);
             await Task.Delay(5000);
-            MockConsole.WriteLine($"Third command", MockConsole.LogLevel.Debug);
+            OverlayManager.SetText(loadingMessages[6]);
+            Logger.WriteLog($"Submitting offline form", MockConsole.LogLevel.Debug);
             Process cmd3 = SetupCommand(stationPowershell);
             cmd3.Start();
             cmd3.StandardInput.WriteLine("$StartDHCP = New-Object -ComObject wscript.shell;");
@@ -654,7 +702,7 @@ namespace Station
             await Task.Delay(2000);
             OverlayManager.ManualStop();
         }
-        
+
         /// <summary>
         /// Pass in a steam application directory to get the process id if running
         /// </summary>

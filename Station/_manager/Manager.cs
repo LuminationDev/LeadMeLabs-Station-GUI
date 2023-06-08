@@ -258,7 +258,7 @@ namespace Station
         /// <summary>
         /// Create a new script thread and start it, passing in the data collected from 
         /// the recently connected client.
-        /// </summery>
+        /// </summary>
         public static void RunScript(string data)
         {
             ScriptThread script = new(data);
@@ -291,7 +291,7 @@ namespace Station
             string fileLocation = "C:\\Program Files (x86)\\Steam\\config\\loginusers.vdf";
             if (!File.Exists(fileLocation))
             {
-                SentrySdk.CaptureMessage("Could not ensure Steam can run offline at: " + (Environment.GetEnvironmentVariable("LabLocation") ?? "Unknown"));
+                Logger.WriteLog("Could not verify steam login info: " + (Environment.GetEnvironmentVariable("LabLocation") ?? "Unknown"), MockConsole.LogLevel.Error);
                 return;
             }
 
@@ -310,7 +310,7 @@ namespace Station
                     }
                     if (lines[i].Contains("WantsOfflineMode"))
                     {
-                        if ((Environment.GetEnvironmentVariable("OfflineMode") ?? "false").Equals("true"))
+                        if (!CommandLine.CheckIfConnectedToInternet())
                         {
                             lines[i] = lines[i].Replace("0", "1");
                         }

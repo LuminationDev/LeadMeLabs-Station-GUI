@@ -39,6 +39,8 @@ namespace Station
                     Logger.WriteLog("Server not initialised..", MockConsole.LogLevel.Error);
                     return;
                 }
+                
+                SessionController.StartVRSession("steam");
 
                 server.Start();
 

@@ -269,7 +269,7 @@ namespace Station
         {
             new Thread(() =>
             {
-                Overlay overlay = OverlayManager.OverlayThreadManual("Loading VR processes");
+                Overlay overlay = OverlayManager.OverlayThreadManual("Initializing VR experiences ");
                 Process? steamSignInWindow = null;
                 Timer timer = new Timer(1000);
                 int attempts = 0;

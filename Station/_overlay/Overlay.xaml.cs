@@ -62,8 +62,14 @@ namespace Station
             }
         }
         
-        public void ManualStop()
+        public async Task ManualStop()
         {
+            for (int i = 80; i > 0; i--)
+            {
+                double level = (double)i / 100;
+                current.Opacity = level;
+                await Task.Delay(10);
+            }
             Close();
         }
         

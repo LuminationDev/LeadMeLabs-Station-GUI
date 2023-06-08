@@ -24,8 +24,10 @@
                 <BitmapImage UriSource="../assets/LuminationLogo.png" />
             </Image.Source>
         </Image>
-        <Image x:Name="Spinner" Height="256" Width="256" gif:ImageBehavior.AnimatedSource="../assets/loadingspinner.gif" Visibility="Hidden">
-        </Image>
+        <Border BorderThickness="15">
+            <Image x:Name="Spinner" Height="256" Width="256" gif:ImageBehavior.AnimatedSource="../assets/loadingspinner.gif" Visibility="Visible">
+            </Image>
+        </Border>
         <TextBlock x:Name="StationName" HorizontalAlignment="Center" TextWrapping="Wrap" Text="Station" VerticalAlignment="Center" Foreground="White" FontSize="72" FontFamily="Poppins Black"/>
     </StackPanel>
 </Window>

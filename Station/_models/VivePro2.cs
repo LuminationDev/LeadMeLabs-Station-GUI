@@ -32,28 +32,30 @@ namespace Station
             CommandLine.KillSteamSigninWindow();
             CommandLine.StartProgram(SessionController.steam, "-noreactlogin -login " + Environment.GetEnvironmentVariable("SteamUserName") + " " + Environment.GetEnvironmentVariable("SteamPassword") + " steam://rungameid/1635730"); //Open up steam and run vive console
 
-            if (!minimising && !(Environment.GetEnvironmentVariable("OfflineMode") ?? "false").Equals("true"))
+            if (CommandLine.CheckIfConnectedToInternet())
             {
-                minimising = true;
-                timer = new Timer(5000); // every 5 seconds try to minimize the processes
-                int attempts = 0;
-
-                void TimerElapsed(object? obj, ElapsedEventArgs args)
+                if (!minimising)
                 {
-                    MinimizeVrProcesses();
-                    attempts++;
-                    if (attempts > 6) // after 30 seconds, we can stop
+                    minimising = true;
+                    timer = new Timer(5000); // every 5 seconds try to minimize the processes
+                    int attempts = 0;
+
+                    void TimerElapsed(object? obj, ElapsedEventArgs args)
                     {
-                        timer.Stop();
-                        minimising = false;
+                        MinimizeVrProcesses();
+                        attempts++;
+                        if (attempts > 6) // after 30 seconds, we can stop
+                        {
+                            timer.Stop();
+                            minimising = false;
+                        }
                     }
+                    timer.Elapsed += TimerElapsed;
+                    timer.AutoReset = true;
+                    timer.Enabled = true;
                 }
-                timer.Elapsed += TimerElapsed;
-                timer.AutoReset = true;
-                timer.Enabled = true;
             }
-            
-            if ((Environment.GetEnvironmentVariable("OfflineMode") ?? "false").Equals("true"))
+            else
             {
                 SteamWrapper.HandleOfflineSteam();
             }
