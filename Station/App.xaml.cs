@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Windows;
 using Sentry;
+using Application = System.Windows.Application;
 
 namespace Station
 {

@@ -11,7 +11,7 @@ namespace Station
     {
         private readonly Overlay current;
 
-        public Overlay()
+        public Overlay(string? text = null)
         {
             InitializeComponent();
 
@@ -19,11 +19,10 @@ namespace Station
 
             current = this;
 
-            StationName.Text = "Station " + Environment.GetEnvironmentVariable("StationId");
-            _ = TunTask();
+            StationName.Text = text ?? "Station " + Environment.GetEnvironmentVariable("StationId");
+            Spinner.Visibility = Visibility.Hidden;
         }
-
-        public async Task TunTask()
+        public async Task RunTask()
         {
             current.Opacity = 0.1;
             await Identify();
@@ -49,6 +48,34 @@ namespace Station
             }
 
             OverlayManager.running = false;
+        }
+
+        public async Task ManualRun()
+        {
+            Spinner.Visibility = Visibility.Visible;
+            current.Opacity = 0.1;
+            for (int i = 0; i < 100; i++)
+            {
+                double level = (double)i / 100;
+                current.Opacity = level;
+                await Task.Delay(10);
+            }
+        }
+        
+        public async Task ManualStop()
+        {
+            for (int i = 80; i > 0; i--)
+            {
+                double level = (double)i / 100;
+                current.Opacity = level;
+                await Task.Delay(10);
+            }
+            Close();
+        }
+        
+        public void SetText(string text)
+        {
+            StationName.Text = text;
         }
     }
 }

@@ -3,16 +3,31 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:gif="http://wpfanimatedgif.codeplex.com"
         mc:Ignorable="d"
-        Title="Lumination" Height="450" Width="800" ShowInTaskbar="False" ResizeMode="NoResize" WindowState="Maximized" Cursor="AppStarting" Topmost="True" AllowsTransparency="True" WindowStyle="None" Opacity="0.6" Background="Black" FontFamily="Poppins">
-
-    <Grid>
-        <Image x:Name="logo" HorizontalAlignment="Left" VerticalAlignment="Top" Height="130" Width="341">
+        Title="Lumination"
+        Height="450"
+        Width="800"
+        ShowInTaskbar="False"
+        ResizeMode="NoResize"
+        WindowState="Maximized"
+        Cursor="AppStarting"
+        Topmost="True"
+        AllowsTransparency="True"
+        WindowStyle="None"
+        Opacity="0.6"
+        Background="Black"
+        FontFamily="Poppins">
+    <StackPanel>
+        <Image x:Name="Logo" Height="130" Width="341">
             <Image.Source>
-                <BitmapImage  UriSource="../assets/LuminationLogo.png" />
+                <BitmapImage UriSource="../assets/LuminationLogo.png" />
             </Image.Source>
         </Image>
-
+        <Border BorderThickness="15">
+            <Image x:Name="Spinner" Height="256" Width="256" gif:ImageBehavior.AnimatedSource="../assets/loadingspinner.gif" Visibility="Visible">
+            </Image>
+        </Border>
         <TextBlock x:Name="StationName" HorizontalAlignment="Center" TextWrapping="Wrap" Text="Station" VerticalAlignment="Center" Foreground="White" FontSize="72" FontFamily="Poppins Black"/>
-    </Grid>
+    </StackPanel>
 </Window>
