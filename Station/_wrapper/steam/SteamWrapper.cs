@@ -283,7 +283,7 @@ namespace Station
                     List<Process> list = CommandLine.GetProcessesByName(new List<string> { "steam" });
                     foreach (Process process in list)
                     {
-                        MockConsole.WriteLine($"Looking for steam sign in process: Process: {process.ProcessName} ID: {process.Id}, MainWindowTitle: {process.MainWindowTitle}", MockConsole.LogLevel.Debug);
+                        Logger.WriteLog($"Looking for steam sign in process: Process: {process.ProcessName} ID: {process.Id}, MainWindowTitle: {process.MainWindowTitle}", MockConsole.LogLevel.Debug);
 
                         if (process.MainWindowTitle.Equals("Steam Sign In"))
                         {
