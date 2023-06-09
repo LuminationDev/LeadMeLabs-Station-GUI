@@ -18,16 +18,18 @@
         Opacity="0.6"
         Background="Black"
         FontFamily="Poppins">
-    <StackPanel>
-        <Image x:Name="Logo" Height="130" Width="341">
+    <Grid>
+        <Image x:Name="Logo" HorizontalAlignment="Left" VerticalAlignment="Top" Height="130" Width="341">
             <Image.Source>
                 <BitmapImage UriSource="../assets/LuminationLogo.png" />
             </Image.Source>
         </Image>
-        <Border BorderThickness="15">
-            <Image x:Name="Spinner" Height="256" Width="256" gif:ImageBehavior.AnimatedSource="../assets/loadingspinner.gif" Visibility="Visible">
-            </Image>
-        </Border>
-        <TextBlock x:Name="StationName" HorizontalAlignment="Center" TextWrapping="Wrap" Text="Station" VerticalAlignment="Center" Foreground="White" FontSize="72" FontFamily="Poppins Black"/>
-    </StackPanel>
+        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+            <Border x:Name="Spinner" BorderThickness="15"  Visibility="Collapsed">
+                <Image Height="256" Width="256" gif:ImageBehavior.AnimatedSource="../assets/loadingspinner.gif">
+                </Image>
+            </Border>
+            <TextBlock x:Name="StationName" TextWrapping="Wrap" Text="Station" Foreground="White" FontSize="72" FontFamily="Poppins Black"/>
+        </StackPanel>
+    </Grid>
 </Window>
