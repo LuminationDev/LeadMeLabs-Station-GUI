@@ -1,6 +1,7 @@
 ﻿using Station;
 using System;
 using Xunit;
+using LeadMeLabsLibrary;
 
 namespace StationTests._utils
 {

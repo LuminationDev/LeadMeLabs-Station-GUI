@@ -3,6 +3,7 @@ using System;
 using Xunit;
 using System.Collections.Generic;
 using System.Threading;
+using LeadMeLabsLibrary;
 
 namespace StationTests._utils
 {
