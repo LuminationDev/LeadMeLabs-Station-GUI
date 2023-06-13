@@ -1,5 +1,4 @@
-﻿using System.Reflection;
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.IO;
 using System;
 using System.Threading.Tasks;
@@ -9,22 +8,6 @@ namespace Station
 {
     public static class Updater
     {
-        /// <summary>
-        /// Print out the current production version of the application to a text file.
-        /// </summary>
-        public static bool generateVersion()
-        {
-            Assembly assembly = Assembly.GetExecutingAssembly();
-            FileVersionInfo fileVersionInfo = FileVersionInfo.GetVersionInfo(assembly.Location);
-            string? version = fileVersionInfo.ProductVersion;
-            string? stationLocation = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
-
-            File.WriteAllText($"{stationLocation}\\_logs\\version.txt", version);
-
-            return version != null;
-        }
-
-
 		/// THIS IS ONLY HERE FOR PREVIOUS LEADMELABS VERSIONS
 		/// <summary>
 		/// After being launched by the launcher check if there was an update. The launcher automatically
