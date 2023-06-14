@@ -50,6 +50,9 @@ commands:
     steps:
       - checkout
       - run:
+            name: "load nuget config"
+            command: dotnet nuget add source --username $env:PACKAGE_ACCESS_USERNAME --password $env:PACKAGE_ACCESS_TOKEN --store-password-in-clear-text --name github "https://nuget.pkg.github.com/LuminationDev/index.json"
+      - run:
           name: "dotnet restore"
           command: dotnet.exe restore
       - run:
