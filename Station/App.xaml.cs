@@ -1,11 +1,8 @@
 ﻿using System;
 using System.Windows;
 using Sentry;
-<<<<<<< Updated upstream
 using Application = System.Windows.Application;
-=======
-using Version = LeadMeLabsLibrary.Version;
->>>>>>> Stashed changes
+using LeadMeLabsLibrary;
 
 namespace Station
 {
@@ -18,7 +15,7 @@ namespace Station
         {
             if (e.Args.Length > 0 && e.Args[0].Trim().ToLower() == "writeversion")
             {
-                Version.GenerateVersion();
+                SystemInformation.GenerateVersion();
                 Environment.Exit(1);
                 return;
             }
