@@ -3,7 +3,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Reflection;
 using Xunit;
-using Version = LeadMeLabsLibrary.Version;
+using LeadMeLabsLibrary;
 
 namespace StationTests._utils
 {
@@ -24,7 +24,7 @@ namespace StationTests._utils
             Assert.NotNull(expectedVersion);
 
             // Act
-            bool result = Version.GenerateVersion();
+            bool result = SystemInformation.GenerateVersion();
 
             // Assert
             Assert.True(result);
