@@ -39,11 +39,11 @@ namespace Station._details
         /// </summary>
         private void LoadInitialValues()
         {
-            ipAddress.Text = Manager.GetIPAddress();
-            macAddress.Text = Manager.GetMACAddress();
-            versionNumber.Text = Manager.GetVersionNumber();
-            ProcessConsole.Text = Environment.GetEnvironmentVariable("NUCAddress");
-            StatusConsole.Text = FirewallManagement.IsProgramAllowedThroughFirewall();
+            ipAddress.Text = SystemInformation.GetIPAddress().ToString() ?? "Unknown";
+            macAddress.Text = SystemInformation.GetMACAddress() ?? "Unknown";
+            versionNumber.Text = SystemInformation.GetVersionNumber() ?? "Unknown";
+            ProcessConsole.Text = Environment.GetEnvironmentVariable("NUCAddress") ?? "Not found";
+            StatusConsole.Text = FirewallManagement.IsProgramAllowedThroughFirewall() ?? "Unknown";
         }
 
         private DoubleAnimation _animation = new DoubleAnimation
@@ -156,9 +156,9 @@ namespace Station._details
         {
             return buttonName switch
             {
-                "IPAddress" => Manager.GetIPAddress() ?? "Unknown",
-                "MAC" => Manager.GetMACAddress() ?? "Unknown",
-                "Version" => Manager.GetVersionNumber() ?? "Unknown",
+                "IPAddress" => SystemInformation.GetIPAddress().ToString() ?? "Unknown",
+                "MAC" => SystemInformation.GetMACAddress() ?? "Unknown",
+                "Version" => SystemInformation.GetVersionNumber() ?? "Unknown",
                 _ => string.Empty,
             };
         }
