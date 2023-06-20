@@ -56,6 +56,7 @@ namespace Station
         public async static void StartProgram()
         {
             MockConsole.ClearConsole();
+            Logger.WriteLog($"Version: {Updater.GetVersionNumber()}", MockConsole.LogLevel.Error);
             MockConsole.WriteLine("Loading ENV variables", MockConsole.LogLevel.Error);
 
             bool result = await DotEnv.Load();
@@ -162,7 +163,7 @@ namespace Station
                 if(ip == null) throw new Exception("Manager class: Server IP Address could not be found");
 
                 string mac = SystemInformation.GetMACAddress() ?? "Unknown";
-                string version = SystemInformation.GetVersionNumber() ?? "Unknown";
+                string version = Updater.GetVersionNumber() ?? "Unknown";
 
                 localEndPoint = new IPEndPoint(ip.Address, localPort);
                 App.SetWindowTitle($"Station({Environment.GetEnvironmentVariable("StationId")}) -- {localEndPoint.Address} -- {mac} -- {version}");

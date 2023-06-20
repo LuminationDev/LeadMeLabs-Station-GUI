@@ -2,7 +2,6 @@
 using System.Windows;
 using Sentry;
 using Application = System.Windows.Application;
-using LeadMeLabsLibrary;
 
 namespace Station
 {
@@ -15,7 +14,7 @@ namespace Station
         {
             if (e.Args.Length > 0 && e.Args[0].Trim().ToLower() == "writeversion")
             {
-                SystemInformation.GenerateVersion();
+                Updater.GenerateVersion();
                 Environment.Exit(1);
                 return;
             }
