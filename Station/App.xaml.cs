@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Runtime.ExceptionServices;
 using System.Windows;
 using Sentry;
 using Application = System.Windows.Application;
