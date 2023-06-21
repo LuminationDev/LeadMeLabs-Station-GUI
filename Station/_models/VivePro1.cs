@@ -18,7 +18,7 @@ namespace Station
 
         public List<string> GetProcessesToQuery()
         {
-            return new List<string> { "vrmonitor", "steam", "HtcConnectionUtility" };
+            return new List<string> { "vrmonitor", "steam", "HtcConnectionUtility", "steamwebhelper" };
         }
 
         public void StartVrSession()

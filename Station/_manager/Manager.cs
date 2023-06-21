@@ -1,5 +1,6 @@
 using Sentry;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Net;
 using System.Threading;
@@ -50,12 +51,17 @@ namespace Station
         /// </summary>
         public static WrapperManager? wrapperManager;
 
+        private static string steamId = "";
+
         /// <summary>
         /// Starts the server running on the local machine
         /// </summary>
         public async static void StartProgram()
         {
             MockConsole.ClearConsole();
+            GetSteamId();
+            VerifySteamConfig();
+
             Logger.WriteLog($"Version: {Updater.GetVersionNumber()}", MockConsole.LogLevel.Error);
             MockConsole.WriteLine("Loading ENV variables", MockConsole.LogLevel.Error);
 
@@ -83,7 +89,7 @@ namespace Station
 
                     SetupServerDetails();
                     StartServer();
-                    VerifySteamLoginUserConfig();
+                    VerifySteamConfig();
 
                     if (Environment.GetEnvironmentVariable("NucAddress") != null)
                     {
@@ -216,12 +222,148 @@ namespace Station
             client.send(writeToLog);
         }
 
+        private static void GetSteamId()
+        {
+            string fileLocation = "C:\\Program Files (x86)\\Steam\\config\\config.vdf";
+            if (!File.Exists(fileLocation))
+            {
+                Logger.WriteLog(
+                    "Could not get steamid " +
+                    (Environment.GetEnvironmentVariable("LabLocation") ?? "Unknown"), MockConsole.LogLevel.Error);
+                return;
+            }
+
+            try
+            {
+                string[] lines = File.ReadAllLines(fileLocation);
+                string steamCommId = "";
+                for (int i = 0; i < lines.Length; i++)
+                {
+                    if (lines[i].Contains(Environment.GetEnvironmentVariable("SteamUserName")))
+                    {
+                        if (lines[i + 2].Contains("SteamID"))
+                        {
+                            steamCommId = lines[i + 2].Replace("\t", "").Replace("\"SteamID\"", "").Replace("\"", "");
+                            break;
+                        }
+                    }
+                }
+
+                long steamComm = 76561197960265728;
+                steamId = (long.Parse(steamCommId) - steamComm).ToString();
+            }
+            catch (Exception e)
+            {
+                SentrySdk.CaptureException(e);
+            }
+        }
+
+        private static void VerifySteamConfig()
+        {
+            VerifySteamLoginUserConfig();
+            VerifySteamDefaultPageConfig();
+            VerifySteamHideNotificationConfig();
+        }
+
+        private static void VerifySteamHideNotificationConfig()
+        {
+            if (steamId.Length == 0)
+            {
+                Logger.WriteLog(
+                    "Could not find steamId: " +
+                    (Environment.GetEnvironmentVariable("LabLocation") ?? "Unknown"), MockConsole.LogLevel.Error);
+                return;
+            }
+            string fileLocation = $"C:\\Program Files (x86)\\Steam\\userdata\\{steamId}\\config\\localconfig.vdf";
+            if (!File.Exists(fileLocation))
+            {
+                Logger.WriteLog(
+                    "Could not verify steam hide notification info: " +
+                    (Environment.GetEnvironmentVariable("LabLocation") ?? "Unknown"), MockConsole.LogLevel.Error);
+                return;
+            }
+
+            try
+            {
+                string[] lines = File.ReadAllLines(fileLocation);
+                for (int i = 0; i < lines.Length; i++)
+                {
+                    if (lines[i].Contains("NotifyAvailableGames"))
+                    {
+                        lines[i] = lines[i].Replace("1", "0");
+                    }
+                }
+
+                File.WriteAllLines(fileLocation, lines);
+            }
+            catch (Exception e)
+            {
+                SentrySdk.CaptureException(e);
+            }
+        }
+        
+        private static void VerifySteamDefaultPageConfig()
+        {
+            if (steamId.Length == 0)
+            {
+                Logger.WriteLog(
+                    "Could not find steamId: " +
+                    (Environment.GetEnvironmentVariable("LabLocation") ?? "Unknown"), MockConsole.LogLevel.Error);
+                return;
+            }
+            string fileLocation = $"C:\\Program Files (x86)\\Steam\\userdata\\{steamId}\\7\\remote\\sharedconfig.vdf";
+            if (!File.Exists(fileLocation))
+            {
+                Logger.WriteLog(
+                    "Could not verify steam default page info: " +
+                    (Environment.GetEnvironmentVariable("LabLocation") ?? "Unknown"), MockConsole.LogLevel.Error);
+                return;
+            }
+
+            bool didCloudSetting = false;
+            try
+            {
+                string[] lines = File.ReadAllLines(fileLocation);
+                for (int i = 0; i < lines.Length; i++)
+                {
+                    if (lines[i].Contains("SteamDefaultDialog"))
+                    {
+                        lines[i] = lines[i].Replace("#app_store", "#app_games");
+                        lines[i] = lines[i].Replace("#app_news", "#app_games");
+                        lines[i] = lines[i].Replace("#steam_menu_friend_activity", "#app_games");
+                        lines[i] = lines[i].Replace("#steam_menu_community_home", "#app_games");
+                    }
+                    if (lines[i].Contains("CloudEnabled"))
+                    {
+                        lines[i] = lines[i].Replace("1", "0");
+                        didCloudSetting = true;
+                    }
+                }
+
+                if (!didCloudSetting)
+                {
+                    List<string> linesList = new();
+                    linesList.AddRange(lines);
+                    linesList.Insert(9, "\t\t\t\t\"CloudEnabled\"\t\t\"0\"");
+                    lines = linesList.ToArray();
+                }
+
+                File.WriteAllLines(fileLocation, lines);
+            }
+            catch (Exception e)
+            {
+                SentrySdk.CaptureException(e);
+            }
+        }
+
         private static void VerifySteamLoginUserConfig()
         {
             string fileLocation = "C:\\Program Files (x86)\\Steam\\config\\loginusers.vdf";
             if (!File.Exists(fileLocation))
             {
-                Logger.WriteLog("Could not verify steam login info: " + (Environment.GetEnvironmentVariable("LabLocation") ?? "Unknown"), MockConsole.LogLevel.Error);
+                Logger.WriteLog(
+                    "Could not verify steam login info: " +
+                    (Environment.GetEnvironmentVariable("LabLocation") ?? "Unknown"), MockConsole.LogLevel.Error);
                 return;
             }
 
@@ -234,10 +376,12 @@ namespace Station
                     {
                         lines[i] = lines[i].Replace("0", "1");
                     }
+
                     if (lines[i].Contains("AllowAutoLogin"))
                     {
                         lines[i] = lines[i].Replace("0", "1");
                     }
+
                     if (lines[i].Contains("WantsOfflineMode"))
                     {
                         if (!CommandLine.CheckIfConnectedToInternet())
@@ -253,6 +397,7 @@ namespace Station
             {
                 SentrySdk.CaptureException(e);
             }
+
         }
     }
 }

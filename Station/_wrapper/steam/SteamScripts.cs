@@ -84,6 +84,56 @@ namespace Station
             //Close Steam if it is open
             CommandLine.QueryVRProcesses(WrapperMonitoringThread.steamProcesses, true);
 
+            if (!CommandLine.CheckIfConnectedToInternet())
+            {
+                return LoadAvailableGamesWithoutUsingInternetConnection();
+            }
+            else
+            {
+                return LoadAvailableGamesUsingInternetConnection();
+            }
+        }
+
+        private static List<string> AddInstalledSteamApplicationsFromDirectoryToList(List<string> list, string directoryPath)
+        {
+            List<string> blacklistedGames = new List<string>();
+            blacklistedGames.Add("1635730"); // vive console // todo this needs to be abstracted
+            if (Directory.Exists(directoryPath))
+            {
+                DirectoryInfo directoryInfo = new DirectoryInfo(directoryPath);
+                foreach (var file in directoryInfo.GetFiles("appmanifest_*.acf"))
+                {
+                    AcfReader acfReader = new AcfReader(file.FullName, true);
+                    acfReader.ACFFileToStruct();
+                    if (acfReader.gameName != null && acfReader.appId != null)
+                    {
+                        if (blacklistedGames.Contains(acfReader.appId))
+                        {
+                            continue;
+                        }
+                        list.Add($"{SteamWrapper.wrapperType}|{acfReader.appId}|{acfReader.gameName}");
+                        WrapperManager.StoreApplication(SteamWrapper.wrapperType, acfReader.appId, acfReader.gameName); // todo, I don't like this line here as it's a side-effect to the function
+                    }
+                }
+            }
+
+            return list;
+        }
+
+        private static List<string>? LoadAvailableGamesWithoutUsingInternetConnection()
+        {
+            List<string> installedGames = new List<string>();
+
+            installedGames =
+                AddInstalledSteamApplicationsFromDirectoryToList(installedGames, "S:\\SteamLibrary\\steamapps");
+            installedGames =
+                AddInstalledSteamApplicationsFromDirectoryToList(installedGames, "C:\\Program Files (x86)\\Steam\\steamapps");
+
+            return installedGames;
+        }
+
+        private static List<string>? LoadAvailableGamesUsingInternetConnection()
+        {
             //Check if SteamCMD has been initialised
             string filePath = CommandLine.stationLocation + @"\external\steamcmd\steamerrorreporter.exe";
 
