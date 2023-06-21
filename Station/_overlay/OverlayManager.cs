@@ -35,10 +35,17 @@ namespace Station
                 MockConsole.WriteLine("Already running");
             }
         }
-        
-        public static Overlay OverlayThreadManual(string? text = null)
+
+        public static void RunOverlay(string? text = null)
         {
-            MockConsole.WriteLine("Running overlay");
+            overlay = new(text);
+            overlay.RunTask();
+            overlay.Show();
+        }
+
+        public static void OverlayThreadManual(string? text = null)
+        {
+            Logger.WriteLog("Running offline overlay.", MockConsole.LogLevel.Normal);
 
             running = true;
 
@@ -49,19 +56,12 @@ namespace Station
                 overlay.ManualRun();
                 overlay.Show();
             });
-            return overlay;
-        }
-
-        public static void RunOverlay(string? text = null)
-        {
-            overlay = new(text);
-            overlay.RunTask();
-            overlay.Show();
-            
         }
 
         public static void ManualStop()
         {
+            Logger.WriteLog("Stopping offline overlay.", MockConsole.LogLevel.Normal);
+
             if (overlay == null)
             {
                 return;

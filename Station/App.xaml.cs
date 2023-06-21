@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Runtime.ExceptionServices;
 using System.Windows;
 using Sentry;
 using Application = System.Windows.Application;
@@ -25,7 +26,7 @@ namespace Station
             AppDomain currentDomain = AppDomain.CurrentDomain;
             currentDomain.UnhandledException += UnhandledExceptionHandler;
             currentDomain.ProcessExit += ProcessExitHandler;
-
+            
             InitSentry();
             CheckStorage();
 
@@ -70,7 +71,7 @@ namespace Station
 
         static void ProcessExitHandler(object? sender, EventArgs args)
         {
-            Logger.WriteLog("Process Exiting", MockConsole.LogLevel.Verbose);
+            Logger.WriteLog($"Process Exiting. Sender: {sender}, Event: {args}", MockConsole.LogLevel.Verbose);
             Logger.WorkQueue();
             Manager.SendResponse("Android", "Station", "SetValue:status:Off");
             Manager.SendResponse("Android", "Station", "SetValue:gameName:");

@@ -269,7 +269,8 @@ namespace Station
         {
             new Thread(() =>
             {
-                Overlay overlay = OverlayManager.OverlayThreadManual("Initializing VR experiences ");
+                //Overlay overlay = OverlayManager.OverlayThreadManual("Initializing VR experiences ");
+                OverlayManager.OverlayThreadManual("Initializing VR experiences ");
                 Process? steamSignInWindow = null;
                 Timer timer = new Timer(1000);
                 int attempts = 0;
@@ -279,6 +280,7 @@ namespace Station
                     if (attempts > 10)
                     {
                         timer.Stop();
+                        OverlayManager.ManualStop();
                     }
                     List<Process> list = CommandLine.GetProcessesByName(new List<string> { "steam" });
                     foreach (Process process in list)

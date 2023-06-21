@@ -70,6 +70,8 @@ namespace Station
                 current.Opacity = level;
                 await Task.Delay(10);
             }
+
+            OverlayManager.running = false;
             Close();
         }
         
