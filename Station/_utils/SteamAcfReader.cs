@@ -22,6 +22,8 @@ namespace Station
         public string? installdir { get; private set; }
         public string? gameName { get; private set; }
 
+        public string? appId { get; private set; }
+
         /// <summary>
         /// Initialize the AcfReader
         /// </summary>
@@ -34,6 +36,20 @@ namespace Station
                 this.FileLocation = fileLocation;
             else
                 throw new FileNotFoundException("Error", fileLocation);
+        }
+        
+        /// <summary>
+        /// Initialize the AcfReader
+        /// </summary>
+        /// <param name="filePath">File path for the ACF file</param>
+        /// <param name="placeholder">Differentiator to the other constructor</param>
+        /// <exception cref="FileNotFoundException"></exception>
+        public AcfReader(string filePath, bool placeholder)
+        {
+            if (File.Exists(filePath))
+                this.FileLocation = filePath;
+            else
+                throw new FileNotFoundException("Error", filePath);
         }
 
         public bool CheckIntegrity()
@@ -83,6 +99,11 @@ namespace Station
                         if (FirstItem.Equals("name"))
                         {
                             this.gameName = SecondItem;
+                        }
+                        
+                        if (FirstItem.Equals("appid"))
+                        {
+                            this.appId = SecondItem;
                         }
 
                         if (!ACF.SubItems.ContainsKey(FirstItem))

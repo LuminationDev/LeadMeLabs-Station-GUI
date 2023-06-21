@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Net;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
@@ -25,6 +26,8 @@ namespace Station
         /// Process name of the current application.
         /// </summary>
         private static readonly string stationProcessName = "Station";
+
+        private static bool connected = RunInternetCheck();
 
         /// <summary>
         /// The location of the executing assembly. This is used to find the relative path for externally used applications.
@@ -523,24 +526,25 @@ namespace Station
             }
         }
 
+        private static bool RunInternetCheck()
+        {
+            try
+            {
+                var request = (HttpWebRequest)WebRequest.Create("http://learninglablauncher.herokuapp.com/program-station-version");
+                request.KeepAlive = false;
+                request.Timeout = 10000;
+                using (var response = (HttpWebResponse)request.GetResponse())
+                    return true;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+        
         public static bool CheckIfConnectedToInternet()
         {
-            Process cmd = SetupCommand(stationPowershell);
-            cmd.Start();
-            cmd.StandardInput.WriteLine(
-                "Get-NetRoute | ? DestinationPrefix -eq '0.0.0.0/0' | Get-NetIPInterface | Where ConnectionState -eq 'Connected'");
-            string? output = outcome(cmd);
-            if (output == null)
-            {
-                return false;
-            }
-
-            if (!output.Contains("ifIndex"))
-            {
-                return false;
-            }
-
-            return true;
+            return connected;
         }
 
         /// <summary>

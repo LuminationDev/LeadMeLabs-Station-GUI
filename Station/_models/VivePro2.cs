@@ -17,7 +17,7 @@ namespace Station
 
         private string[] GetProcessesToMinimize()
         {
-            return new[] { "vrmonitor", "steam", "LhStatusMonitor", "WaveConsole" };
+            return new[] { "vrmonitor", "steam", "LhStatusMonitor", "WaveConsole", "steamwebhelper" };
         }
 
         public void StartVrSession()
