@@ -7,6 +7,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Timers;
 using Timer = System.Timers.Timer;
+using LeadMeLabsLibrary.Station;
 
 namespace Station
 {

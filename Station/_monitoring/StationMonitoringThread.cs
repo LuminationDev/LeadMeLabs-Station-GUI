@@ -62,7 +62,6 @@ namespace Station
                 if (process.MainWindowTitle.Length > 0)
                 {
                     Logger.WriteLog("Killing SetVol process: " + process.MainWindowTitle, MockConsole.LogLevel.Error);
-                    SentrySdk.CaptureMessage("Killing SetVol process: " + process.MainWindowTitle);
                     process.Kill();
                 }
             }

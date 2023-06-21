@@ -14,7 +14,7 @@ namespace Station
         {
             if (e.Args.Length > 0 && e.Args[0].Trim().ToLower() == "writeversion")
             {
-                Updater.generateVersion();
+                Updater.GenerateVersion();
                 Environment.Exit(1);
                 return;
             }

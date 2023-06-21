@@ -1,14 +1,10 @@
 using Sentry;
 using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Management;
 using System.Net;
-using System.Net.Sockets;
-using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
+using LeadMeLabsLibrary;
 
 namespace Station
 {
@@ -65,30 +61,32 @@ namespace Station
             GetSteamId();
             VerifySteamConfig();
 
+            Logger.WriteLog($"Version: {Updater.GetVersionNumber()}", MockConsole.LogLevel.Error);
             MockConsole.WriteLine("Loading ENV variables", MockConsole.LogLevel.Error);
-            MockConsole.WriteLine("Version 1.08", MockConsole.LogLevel.Error);
 
             bool result = await DotEnv.Load();
-
-            MockConsole.WriteLine("ENV variables loaded", MockConsole.LogLevel.Error);
 
             //Load the environment files, do not continue if file is incomplete
             if (result)
             {
+                MockConsole.WriteLine("ENV variables loaded", MockConsole.LogLevel.Error);
+
                 new Thread(() =>
                 {
                     if (!Helper.GetStationMode().Equals(Helper.STATION_MODE_APPLIANCE))
                     {
+                        VerifySteamLoginUserConfig();
+
                         wrapperManager = new WrapperManager();
 
-                    //Launch the custom wrapper application here
-                    wrapperManager.Startup();
+                        //Launch the custom wrapper application here
+                        wrapperManager.Startup();
 
-                    //Use to monitor SetVol and restart application
-                    StationMonitoringThread.initializeMonitoring();
+                        //Use to monitor SetVol and restart application
+                        StationMonitoringThread.initializeMonitoring();
                     }
 
-                    SetServerIPAddress();
+                    SetupServerDetails();
                     StartServer();
                     VerifySteamConfig();
 
@@ -159,98 +157,32 @@ namespace Station
         }
 
         /// <summary>
-        /// Set the IP address of the server running on the local machine
-        /// Get Host IP Address that is used to establish a connection
-        /// By connecting a UDP socket the correct IP address can be found
-        /// when other applications such as VM are running.
+        /// Collect the necessary system details for starting the service. Including the IP address, mac address
+        /// and the current version number.
         /// </summary>
-        public static void SetServerIPAddress()
+        public static void SetupServerDetails()
         {
             try
             {
-                using Socket socket = new(AddressFamily.InterNetwork, SocketType.Dgram, 0);
-                socket.Connect("8.8.8.8", 65530);
-                IPEndPoint? endPoint = socket.LocalEndPoint as IPEndPoint;
+                IPAddress? ip = SystemInformation.GetIPAddress();
+                if(ip == null) throw new Exception("Manager class: Server IP Address could not be found");
 
-                if (endPoint is not null)
-                {
-                    localEndPoint = new IPEndPoint(endPoint.Address, localPort);
+                string mac = SystemInformation.GetMACAddress() ?? "Unknown";
+                string version = Updater.GetVersionNumber() ?? "Unknown";
 
-                    Logger.WriteLog("Server IP Address is: " + endPoint.Address.ToString(), MockConsole.LogLevel.Normal);
+                localEndPoint = new IPEndPoint(ip.Address, localPort);
+                App.SetWindowTitle($"Station({Environment.GetEnvironmentVariable("StationId")}) -- {localEndPoint.Address} -- {mac} -- {version}");
 
-                    App.SetWindowTitle($"Station({Environment.GetEnvironmentVariable("StationId")}) -- {endPoint.Address} -- {GetMACAddress()} -- {GetVersionNumber()}");
-                }
-                else
-                {
-                    throw new Exception("Manager class: Server IP Address could not be found");
-                }
+                Logger.WriteLog("Server IP Address is: " + localEndPoint.Address.ToString(), MockConsole.LogLevel.Normal);
+                Logger.WriteLog("MAC Address is: " + mac, MockConsole.LogLevel.Normal);
+                Logger.WriteLog("Version is: " + version, MockConsole.LogLevel.Normal);
+                
             }
             catch (Exception e)
             {
                 SentrySdk.CaptureException(e);
                 Logger.WriteLog($"Unexpected exception : {e}", MockConsole.LogLevel.Error);
             }
-        }
-
-        /// <summary>
-        /// Collect just the IP address.
-        /// </summary>
-        /// <returns></returns>
-        public static string? GetIPAddress()
-        {
-            try
-            {
-                using (Socket socket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, 0))
-                {
-                    socket.Connect("8.8.8.8", 65530);
-                    IPEndPoint? endPoint = socket.LocalEndPoint as IPEndPoint;
-
-                    if (endPoint is not null)
-                    {
-                        return endPoint.Address.ToString();
-                    }
-                    else
-                    {
-                        throw new Exception("Manager class: Server IP Address could not be found");
-                    }
-                }
-            }
-            catch (Exception e)
-            {
-                SentrySdk.CaptureException(e);
-                Logger.WriteLog($"Unexpected exception : {e}", MockConsole.LogLevel.Error);
-            }
-
-            return "N/A";
-        }
-
-        /// <summary>
-        /// Retrieve the MAC address of the current machine.
-        /// </summary>
-        /// <returns>A string of the mac address</returns>
-        public static string? GetMACAddress()
-        {
-            ManagementObjectSearcher searcher = new ManagementObjectSearcher("SELECT * FROM Win32_NetworkAdapterConfiguration where IPEnabled=true");
-            IEnumerable<ManagementObject> objects = searcher.Get().Cast<ManagementObject>();
-            string? mac = (from o in objects orderby o["IPConnectionMetric"] select o["MACAddress"].ToString()).FirstOrDefault();
-
-            Logger.WriteLog("MAC Address is: " + mac, MockConsole.LogLevel.Normal);
-            return mac;
-        }
-
-        /// <summary>
-        /// Query the program to get the current version number of the software that is running.
-        /// </summary>
-        /// <returns>A string of the version number in the format X.X.X.X</returns>
-        public static string? GetVersionNumber()
-        {
-            Assembly? assembly = Assembly.GetEntryAssembly();
-            if (assembly == null) return "N/A";
-
-            Version? version = assembly.GetName().Version;
-            if (version == null) return "N/A";
-
-            return version.ToString();
         }
 
         public static void SetRemoteEndPoint()

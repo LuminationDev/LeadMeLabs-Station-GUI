@@ -1,5 +1,4 @@
-﻿using Sentry;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -168,7 +167,6 @@ namespace Station
             {
                 Process process = steamVrErrorDialogs[i];
                 Logger.WriteLog("Killing steam error process: " + process.MainWindowTitle, MockConsole.LogLevel.Error);
-                SentrySdk.CaptureMessage("Killing steam error process: " + process.MainWindowTitle);
                 process.Kill();
             }
 
