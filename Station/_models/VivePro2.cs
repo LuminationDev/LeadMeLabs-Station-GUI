@@ -32,32 +32,25 @@ namespace Station
             CommandLine.KillSteamSigninWindow();
             CommandLine.StartProgram(SessionController.steam, "-noreactlogin -login " + Environment.GetEnvironmentVariable("SteamUserName") + " " + Environment.GetEnvironmentVariable("SteamPassword") + " steam://rungameid/1635730"); //Open up steam and run vive console
 
-            if (CommandLine.CheckIfConnectedToInternet())
+            if (!minimising)
             {
-                if (!minimising)
-                {
-                    minimising = true;
-                    timer = new Timer(5000); // every 5 seconds try to minimize the processes
-                    int attempts = 0;
+                minimising = true;
+                timer = new Timer(5000); // every 5 seconds try to minimize the processes
+                int attempts = 0;
 
-                    void TimerElapsed(object? obj, ElapsedEventArgs args)
+                void TimerElapsed(object? obj, ElapsedEventArgs args)
+                {
+                    MinimizeVrProcesses();
+                    attempts++;
+                    if (attempts > 6) // after 30 seconds, we can stop
                     {
-                        MinimizeVrProcesses();
-                        attempts++;
-                        if (attempts > 6) // after 30 seconds, we can stop
-                        {
-                            timer.Stop();
-                            minimising = false;
-                        }
+                        timer.Stop();
+                        minimising = false;
                     }
-                    timer.Elapsed += TimerElapsed;
-                    timer.AutoReset = true;
-                    timer.Enabled = true;
                 }
-            }
-            else
-            {
-                SteamWrapper.HandleOfflineSteam();
+                timer.Elapsed += TimerElapsed;
+                timer.AutoReset = true;
+                timer.Enabled = true;
             }
         }
 
