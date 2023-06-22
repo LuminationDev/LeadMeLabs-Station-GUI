@@ -66,8 +66,13 @@ namespace Station
         /// </summary>
         /// <param name="type">A string representing what applicaiton to be launched</param>
         /// <returns>A instance of the newly created process</returns>
-        private static Process SetupCommand(string type)
+        private static Process? SetupCommand(string type)
         {
+            if (string.IsNullOrEmpty(type))
+            {
+                return null;
+            }
+
             Process temp = new();
             temp.StartInfo.FileName = type;
             temp.StartInfo.RedirectStandardInput = true;
@@ -126,7 +131,13 @@ namespace Station
         /// <param name="arguments">A string representing the any arguements the program needs while opening</param>
         public static void StartProgram(string executable, string arguments = "")
         {
-            Process cmd = SetupCommand(executable);
+            Process? cmd = SetupCommand(executable);
+            if(cmd == null)
+            {
+                Logger.WriteLog($"Cannot start: {executable}, StartProgram -> SetupCommand returned null value.", MockConsole.LogLevel.Error);
+                return;
+            }
+
             cmd.StartInfo.Arguments = arguments;
             cmd.Start();
             cmd.Close();
@@ -134,7 +145,13 @@ namespace Station
 
         public static string? RunProgramWithOutput(string executable, string arguments = "")
         {
-            Process cmd = SetupCommand(executable);
+            Process? cmd = SetupCommand(executable);
+            if (cmd == null)
+            {
+                Logger.WriteLog($"Cannot start: {executable}, RunProgramWithOutput -> SetupCommand returned null value.", MockConsole.LogLevel.Error);
+                return null;
+            }
+
             cmd.StartInfo.Arguments = arguments;
             cmd.Start();
             string? result = outcome(cmd);
@@ -151,9 +168,13 @@ namespace Station
         /// <returns>A string representing the result of the command</returns>
         public static string? ExecuteStationCommand(string command)
         {
-            Process cmd = SetupCommand(stationCmd);
+            Process? cmd = SetupCommand(stationCmd);
+            if (cmd == null)
+            {
+                Logger.WriteLog($"Cannot start: {stationCmd} and run '{command}', ExecuteStationCommand -> SetupCommand returned null value.", MockConsole.LogLevel.Error);
+                return null;
+            }
             cmd.Start();
-
             cmd.StandardInput.WriteLine(command);
 
             return outcome(cmd);
@@ -386,7 +407,13 @@ namespace Station
             {
                 configuringSteam = true;
 
-                Process cmd = SetupCommand(steamCmd);
+                Process? cmd = SetupCommand(steamCmd);
+                if (cmd == null)
+                {
+                    Logger.WriteLog($"Cannot start: {steamCmd} and run '{command}', MonitorSteamConfiguration -> SetupCommand returned null value.", MockConsole.LogLevel.Error);
+                    return;
+                }
+
                 cmd.StartInfo.Arguments = command;
                 cmd.Start();
 
@@ -442,7 +469,12 @@ namespace Station
                 return null;
             }
 
-            Process cmd = SetupCommand(steamCmd);
+            Process? cmd = SetupCommand(steamCmd);
+            if (cmd == null)
+            {
+                Logger.WriteLog($"Cannot start: {steamCmd} and run '{command}', ExecuteSteamCommand -> SetupCommand returned null value.", MockConsole.LogLevel.Error);
+                return null;
+            }
             cmd.StartInfo.Arguments = "\"+force_install_dir \\\"C:/Program Files (x86)/Steam\\\"\" " + command;
             cmd.Start();
 
@@ -480,7 +512,12 @@ namespace Station
                 return null;
             }
 
-            Process cmd = SetupCommand(steamCmd);
+            Process? cmd = SetupCommand(steamCmd);
+            if (cmd == null)
+            {
+                Logger.WriteLog($"Cannot start: {steamCmd} and run '{command}', ExecuteSteamCommandSDrive -> SetupCommand returned null value.", MockConsole.LogLevel.Error);
+                return null;
+            }
             cmd.StartInfo.Arguments = "\"+force_install_dir \\\"S:/SteamLibrary\\\"\" " + command;
             cmd.Start();
 
@@ -606,7 +643,12 @@ namespace Station
         {
             try
             {
-                Process cmd = SetupCommand(stationPowershell);
+                Process? cmd = SetupCommand(stationPowershell);
+                if (cmd == null)
+                {
+                    Logger.WriteLog($"Cannot start: {stationPowershell}, GetFreeStorage -> SetupCommand returned null value.", MockConsole.LogLevel.Error);
+                    return 9999;
+                }
                 cmd.Start();
                 cmd.StandardInput.WriteLine(
                     "Get-WmiObject -Class win32_logicaldisk | Format-Table @{n=\"FreeSpace\";e={[math]::Round($_.FreeSpace/1GB,2)}}");
@@ -665,7 +707,12 @@ namespace Station
             await Task.Delay(5000);
             OverlayManager.SetText(loadingMessages[3]);
             Logger.WriteLog($"Tabbing back out of offline warning", MockConsole.LogLevel.Debug);
-            Process cmd = SetupCommand(stationPowershell);
+            Process? cmd = SetupCommand(stationPowershell);
+            if (cmd == null)
+            {
+                Logger.WriteLog($"Cannot start: {stationPowershell}, PowershellCommand (cmd) -> SetupCommand returned null value.", MockConsole.LogLevel.Error);
+                return;
+            }
             cmd.Start();
             cmd.StandardInput.WriteLine("$StartDHCP = New-Object -ComObject wscript.shell;");
             cmd.StandardInput.WriteLine("$StartDHCP.SendKeys('{TAB}')");
@@ -677,7 +724,12 @@ namespace Station
             await Task.Delay(2000);
             OverlayManager.SetText(loadingMessages[4]);
             Logger.WriteLog($"Entering steam details", MockConsole.LogLevel.Debug);
-            Process cmd2 = SetupCommand(stationPowershell);
+            Process? cmd2 = SetupCommand(stationPowershell);
+            if (cmd2 == null)
+            {
+                Logger.WriteLog($"Cannot start: {stationPowershell}, PowershellCommand (cmd2) -> SetupCommand returned null value.", MockConsole.LogLevel.Error);
+                return;
+            }
             cmd2.Start();
             cmd2.StandardInput.WriteLine("$StartDHCP = New-Object -ComObject wscript.shell;");
             cmd2.StandardInput.WriteLine($"$StartDHCP.SendKeys('{Environment.GetEnvironmentVariable("SteamPassword")}')");
@@ -694,6 +746,11 @@ namespace Station
             OverlayManager.SetText(loadingMessages[6]);
             Logger.WriteLog($"Submitting offline form", MockConsole.LogLevel.Debug);
             Process cmd3 = SetupCommand(stationPowershell);
+            if (cmd3 == null)
+            {
+                Logger.WriteLog($"Cannot start: {stationPowershell}, PowershellCommand (cmd3) -> SetupCommand returned null value.", MockConsole.LogLevel.Error);
+                return;
+            }
             cmd3.Start();
             cmd3.StandardInput.WriteLine("$StartDHCP = New-Object -ComObject wscript.shell;");
             cmd3.StandardInput.WriteLine("$StartDHCP.SendKeys('{TAB}')");
@@ -716,7 +773,12 @@ namespace Station
         {
             Logger.WriteLog("gps | where {$_.Path -Like \"" + dir + "*\"} | where {$_.MainWindowHandle -ne 0} | select ID", MockConsole.LogLevel.Debug);
 
-            Process cmd = SetupCommand(stationPowershell);
+            Process? cmd = SetupCommand(stationPowershell);
+            if (cmd == null)
+            {
+                Logger.WriteLog($"Cannot start: {stationPowershell}, GetProcessIdFromDir -> SetupCommand returned null value.", MockConsole.LogLevel.Error);
+                return null;
+            }
             cmd.Start();
             cmd.StandardInput.WriteLine("gps | where {$_.Path -Like \"" + dir + "*\"} | where {$_.MainWindowHandle -ne 0} | select ID");
 

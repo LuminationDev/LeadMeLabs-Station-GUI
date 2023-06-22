@@ -59,10 +59,6 @@ namespace Station
         public async static void StartProgram()
         {
             MockConsole.ClearConsole();
-            GetSteamId();
-            VerifySteamConfig();
-
-            Logger.WriteLog($"Version: {Updater.GetVersionNumber()}", MockConsole.LogLevel.Error);
             MockConsole.WriteLine("Loading ENV variables", MockConsole.LogLevel.Error);
 
             bool result = await DotEnv.Load();
@@ -76,7 +72,9 @@ namespace Station
                 {
                     if (!Helper.GetStationMode().Equals(Helper.STATION_MODE_APPLIANCE))
                     {
-                        VerifySteamLoginUserConfig();
+                        //Check if in VR mode before running Steam checks
+                        GetSteamId();
+                        VerifySteamConfig();
 
                         wrapperManager = new WrapperManager();
 
@@ -89,7 +87,6 @@ namespace Station
 
                     SetupServerDetails();
                     StartServer();
-                    VerifySteamConfig();
 
                     if (Environment.GetEnvironmentVariable("NucAddress") != null)
                     {
