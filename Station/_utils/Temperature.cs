@@ -34,6 +34,7 @@ namespace Station
 
                 float? maxTemp = 0;
 
+                computer.Reset();
                 computer.Open();
                 computer.Accept(new UpdateVisitor());
 

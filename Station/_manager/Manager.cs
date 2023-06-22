@@ -59,13 +59,13 @@ namespace Station
         public async static void StartProgram()
         {
             MockConsole.ClearConsole();
-            GetSteamId();
-            VerifySteamConfig();
 
             Logger.WriteLog($"Version: {Updater.GetVersionNumber()}", MockConsole.LogLevel.Error);
             MockConsole.WriteLine("Loading ENV variables", MockConsole.LogLevel.Error);
 
             bool result = await DotEnv.Load();
+            GetSteamId();
+            VerifySteamConfig();
 
             //Load the environment files, do not continue if file is incomplete
             if (result)
@@ -76,8 +76,6 @@ namespace Station
                 {
                     if (!Helper.GetStationMode().Equals(Helper.STATION_MODE_APPLIANCE))
                     {
-                        VerifySteamLoginUserConfig();
-
                         wrapperManager = new WrapperManager();
 
                         //Launch the custom wrapper application here
@@ -222,8 +220,12 @@ namespace Station
             client.send(writeToLog);
         }
 
-        private static void GetSteamId()
+        public static void GetSteamId()
         {
+            if (steamId.Length > 0)
+            {
+                return;
+            }
             string fileLocation = "C:\\Program Files (x86)\\Steam\\config\\config.vdf";
             if (!File.Exists(fileLocation))
             {
@@ -258,7 +260,7 @@ namespace Station
             }
         }
 
-        private static void VerifySteamConfig()
+        public static void VerifySteamConfig()
         {
             VerifySteamLoginUserConfig();
             VerifySteamDefaultPageConfig();
@@ -283,6 +285,7 @@ namespace Station
                 return;
             }
 
+            bool didNotifyAvailableGames = false;
             try
             {
                 string[] lines = File.ReadAllLines(fileLocation);
@@ -291,7 +294,19 @@ namespace Station
                     if (lines[i].Contains("NotifyAvailableGames"))
                     {
                         lines[i] = lines[i].Replace("1", "0");
+                        didNotifyAvailableGames = true;
                     }
+                }
+
+                if (!didNotifyAvailableGames)
+                {
+                    List<string> linesList = new();
+                    linesList.AddRange(lines);
+                    linesList.Insert(9, "\t}");
+                    linesList.Insert(9, "\t\t\"NotifyAvailableGames\"\t\t\"0\"");
+                    linesList.Insert(9, "\t{");
+                    linesList.Insert(9, "\t\"News\"");
+                    lines = linesList.ToArray();
                 }
 
                 File.WriteAllLines(fileLocation, lines);
@@ -321,6 +336,7 @@ namespace Station
             }
 
             bool didCloudSetting = false;
+            bool didDefaultDialogSetting = false;
             try
             {
                 string[] lines = File.ReadAllLines(fileLocation);
@@ -332,6 +348,7 @@ namespace Station
                         lines[i] = lines[i].Replace("#app_news", "#app_games");
                         lines[i] = lines[i].Replace("#steam_menu_friend_activity", "#app_games");
                         lines[i] = lines[i].Replace("#steam_menu_community_home", "#app_games");
+                        didDefaultDialogSetting = true;
                     }
                     if (lines[i].Contains("CloudEnabled"))
                     {
@@ -345,6 +362,13 @@ namespace Station
                     List<string> linesList = new();
                     linesList.AddRange(lines);
                     linesList.Insert(9, "\t\t\t\t\"CloudEnabled\"\t\t\"0\"");
+                    lines = linesList.ToArray();
+                }
+                if (!didDefaultDialogSetting)
+                {
+                    List<string> linesList = new();
+                    linesList.AddRange(lines);
+                    linesList.Insert(9, "\t\t\t\t\"SteamDefaultDialog\"\t\t\"#app_games\"");
                     lines = linesList.ToArray();
                 }
 
