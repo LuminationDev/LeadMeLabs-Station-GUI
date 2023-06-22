@@ -69,8 +69,9 @@ namespace Station
             }
 
             float? temperature = 0;
-            if (DateTime.Now > latestHighTemperatureWarning.AddMinutes(5) && (numberOfChecks % 20 == 0))
+            if (DateTime.Now > latestHighTemperatureWarning.AddMinutes(5) && (numberOfChecks == 20))
             {
+                numberOfChecks = 0;
                 temperature = Temperature.GetTemperature();
             }
 
