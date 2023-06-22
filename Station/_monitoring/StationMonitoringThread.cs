@@ -40,6 +40,7 @@ namespace Station
             timer.Start();
         }
 
+        private static int numberOfChecks = 0;
         /// <summary>
         /// Calls a function to check that all required VR processes are running
         /// If they are not sends a messages to the NUC/Tablet that there are tasks
@@ -47,6 +48,7 @@ namespace Station
         /// </summary>
         private static void callCheck(Object? source, System.Timers.ElapsedEventArgs e)
         {
+            numberOfChecks++;
             //Restart if the time equals xx::yy::zz
             if (timeCheck(DateTime.Now.ToString("HH:mm:ss").Split(':')))
             {
@@ -67,8 +69,9 @@ namespace Station
             }
 
             float? temperature = 0;
-            if (DateTime.Now > latestHighTemperatureWarning.AddMinutes(5))
+            if (DateTime.Now > latestHighTemperatureWarning.AddMinutes(5) && (numberOfChecks == 20))
             {
+                numberOfChecks = 0;
                 temperature = Temperature.GetTemperature();
             }
 

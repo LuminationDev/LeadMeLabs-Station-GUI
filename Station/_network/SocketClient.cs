@@ -114,8 +114,6 @@ namespace Station
                     // Send the message to the connected TcpServer.
                     stream.Write(data, 0, data.Length);
 
-                    Logger.WriteLog($"Sent: {message}", MockConsole.LogLevel.Normal, writeToLog);
-
                     // Close everything.
                     stream.Close();
                     client.Close();

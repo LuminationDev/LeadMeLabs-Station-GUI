@@ -30,6 +30,8 @@ namespace Station
             }
 
             CommandLine.KillSteamSigninWindow();
+            Manager.GetSteamId();
+            Manager.VerifySteamConfig();
             CommandLine.StartProgram(SessionController.steam, "-noreactlogin -login " + Environment.GetEnvironmentVariable("SteamUserName") + " " + Environment.GetEnvironmentVariable("SteamPassword") + " steam://rungameid/1635730"); //Open up steam and run vive console
 
             if (!minimising)
