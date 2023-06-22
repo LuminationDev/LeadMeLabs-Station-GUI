@@ -154,7 +154,7 @@ namespace Station
 
             if (child != null && currentProcess != null && lastExperience.ExeName != null)
             {
-                UIUpdater.UpdateProcess(lastExperience.Name);
+                UIUpdater.UpdateProcess(lastExperience.Name ?? "Uknown");
                 UIUpdater.UpdateStatus("Running...");
                 WindowManager.MaximizeProcess(child); //Maximise the process experience
                 SessionController.PassStationMessage($"ApplicationUpdate,{lastExperience.Name}/{lastExperience.ID}/Custom");

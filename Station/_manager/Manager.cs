@@ -87,7 +87,6 @@ namespace Station
 
                     SetupServerDetails();
                     StartServer();
-                    VerifySteamConfig();
 
                     if (Environment.GetEnvironmentVariable("NucAddress") != null)
                     {

@@ -57,7 +57,7 @@ namespace Station
             else
             {
                 //Clear the Queue as it will never Dequeue otherwise.
-                MockConsole.WriteLine("_logs/ cannot be found, please run from Launcher", MockConsole.LogLevel.Error);
+                MockConsole.WriteLine($"_logs/ cannot be found, please run from Launcher. Looking in: {logFilePath}", MockConsole.LogLevel.Error);
                 logQueue.Clear();
             }
         }

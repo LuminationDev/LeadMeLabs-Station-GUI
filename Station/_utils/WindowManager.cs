@@ -11,12 +11,25 @@ namespace Station
 
         public static void MinimizeProcess(Process process)
         {
-            ShowWindow(process.MainWindowHandle, SW_SHOWMINIMIZED);
+            if (process != null)
+            {
+                ShowWindow(process.MainWindowHandle, SW_SHOWMINIMIZED);
+            } else
+            {
+                Logger.WriteLog("A process was null when trying to minimise", MockConsole.LogLevel.Normal);
+            }
         }
 
         public static void MaximizeProcess(Process process)
         {
-            ShowWindow(process.MainWindowHandle, SW_SHOWMAXIMIZED);
+            if (process != null)
+            {
+                ShowWindow(process.MainWindowHandle, SW_SHOWMAXIMIZED);
+            }
+            else
+            {
+                Logger.WriteLog("A process was null when trying to maximise", MockConsole.LogLevel.Normal);
+            }
         }
 
         [DllImport("user32.dll")]
