@@ -48,7 +48,7 @@ namespace Station
         /// <summary>
         /// The relative path of the steamCMD executable on the local machine.
         /// </summary>
-        public static string steamCmd = stationLocation + @"\external\steamcmd\steamcmd.exe";
+        public static string steamCmd = @"\external\steamcmd\steamcmd.exe";
 
         /// <summary>
         /// Track if SteamCMD is currently being configured with a Guard Key.
@@ -407,10 +407,17 @@ namespace Station
             {
                 configuringSteam = true;
 
-                Process? cmd = SetupCommand(steamCmd);
+                if (string.IsNullOrEmpty(stationLocation))
+                {
+                    Logger.WriteLog($"Station location null or empty: cannot run '{command}', MonitorSteamConfiguration -> SetupCommand returned null value.", MockConsole.LogLevel.Error);
+                    return;
+                }
+                string fullPath = stationLocation + steamCmd;
+
+                Process ? cmd = SetupCommand(fullPath);
                 if (cmd == null)
                 {
-                    Logger.WriteLog($"Cannot start: {steamCmd} and run '{command}', MonitorSteamConfiguration -> SetupCommand returned null value.", MockConsole.LogLevel.Error);
+                    Logger.WriteLog($"Cannot start: {fullPath} and run '{command}', MonitorSteamConfiguration -> SetupCommand returned null value.", MockConsole.LogLevel.Error);
                     return;
                 }
 
@@ -462,17 +469,24 @@ namespace Station
         /// <returns>A string representing the results of the command</returns>
         public static string? ExecuteSteamCommand(string command)
         {
-            if (!File.Exists(steamCmd))
+            if (string.IsNullOrEmpty(stationLocation))
             {
-                SessionController.PassStationMessage($"StationError,File not found:{steamCmd}");
+                Logger.WriteLog($"Station location null or empty: cannot run '{command}', MonitorSteamConfiguration -> SetupCommand returned null value.", MockConsole.LogLevel.Error);
+                return null;
+            }
+            string fullPath = stationLocation + steamCmd;
+
+            if (!File.Exists(fullPath))
+            {
+                SessionController.PassStationMessage($"StationError,File not found:{fullPath}");
                 SteamScripts.steamCMDConfigured = "steamcmd.exe not found";
                 return null;
             }
 
-            Process? cmd = SetupCommand(steamCmd);
+            Process? cmd = SetupCommand(fullPath);
             if (cmd == null)
             {
-                Logger.WriteLog($"Cannot start: {steamCmd} and run '{command}', ExecuteSteamCommand -> SetupCommand returned null value.", MockConsole.LogLevel.Error);
+                Logger.WriteLog($"Cannot start: {fullPath} and run '{command}', ExecuteSteamCommand -> SetupCommand returned null value.", MockConsole.LogLevel.Error);
                 return null;
             }
             cmd.StartInfo.Arguments = "\"+force_install_dir \\\"C:/Program Files (x86)/Steam\\\"\" " + command;
@@ -506,16 +520,23 @@ namespace Station
         /// <returns>A string representing the results of the command</returns>
         public static string? ExecuteSteamCommandSDrive(string command)
         {
-            if (!File.Exists(steamCmd))
+            if (string.IsNullOrEmpty(stationLocation))
             {
-                SessionController.PassStationMessage($"StationError,File not found:{steamCmd}");
+                Logger.WriteLog($"Station location null or empty: cannot run '{command}', MonitorSteamConfiguration -> SetupCommand returned null value.", MockConsole.LogLevel.Error);
+                return null;
+            }
+            string fullPath = stationLocation + steamCmd;
+
+            if (!File.Exists(fullPath))
+            {
+                SessionController.PassStationMessage($"StationError,File not found:{fullPath}");
                 return null;
             }
 
-            Process? cmd = SetupCommand(steamCmd);
+            Process? cmd = SetupCommand(fullPath);
             if (cmd == null)
             {
-                Logger.WriteLog($"Cannot start: {steamCmd} and run '{command}', ExecuteSteamCommandSDrive -> SetupCommand returned null value.", MockConsole.LogLevel.Error);
+                Logger.WriteLog($"Cannot start: {fullPath} and run '{command}', ExecuteSteamCommandSDrive -> SetupCommand returned null value.", MockConsole.LogLevel.Error);
                 return null;
             }
             cmd.StartInfo.Arguments = "\"+force_install_dir \\\"S:/SteamLibrary\\\"\" " + command;
