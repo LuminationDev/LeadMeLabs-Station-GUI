@@ -264,6 +264,7 @@ namespace Station
             VerifySteamLoginUserConfig();
             VerifySteamDefaultPageConfig();
             VerifySteamHideNotificationConfig();
+            VerifyConfigSharedConfigFile();
         }
 
         private static void VerifySteamHideNotificationConfig()
@@ -313,6 +314,67 @@ namespace Station
             catch (Exception e)
             {
                 SentrySdk.CaptureException(e);
+            }
+        }
+        
+        private static void VerifyConfigSharedConfigFile()
+        {
+            if (steamId.Length == 0)
+            {
+                Logger.WriteLog(
+                    "Could not find steamId: " +
+                    (Environment.GetEnvironmentVariable("LabLocation") ?? "Unknown"), MockConsole.LogLevel.Error);
+                return;
+            }
+            string fileLocation = $"C:\\Program Files (x86)\\Steam\\userdata\\{steamId}\\config\\sharedconfig.vdf";
+
+            if (File.Exists(fileLocation))
+            {
+                try
+                {
+                    string[] lines = File.ReadAllLines(fileLocation);
+                    for (int i = 0; i < lines.Length; i++)
+                    {
+                        if (lines[i].Contains("CloudEnabled"))
+                        {
+                            lines[i] = lines[i].Replace("1", "0");
+                        }
+                    }
+
+                    File.WriteAllLines(fileLocation, lines);
+                }
+                catch (Exception e)
+                {
+                    SentrySdk.CaptureException(e);
+                }
+            }
+            else
+            {
+                try
+                {
+                    string[] lines = new[]
+                    {
+                        "\"UserRoamingConfigStore\"",
+                        "{",
+                        "\t\"Software\"",
+                        "\t{",
+                        "\t\t\"Valve\"",
+                        "\t\t{",
+                        "\t\t\t\"Steam\"",
+                        "\t\t\t{",
+                        "\t\t\t\t\"CloudEnabled\"\t\t\"0\"",
+                        "\t\t\t}",
+                        "\t\t}",
+                        "\t}",
+                        "}"
+                    };
+
+                    File.WriteAllLines(fileLocation, lines);
+                }
+                catch (Exception e)
+                {
+                    SentrySdk.CaptureException(e);
+                }
             }
         }
         
