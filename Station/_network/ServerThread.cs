@@ -164,7 +164,7 @@ namespace Station
                 //Data should never be null at this point
                 if (data is not null)
                 {
-                    string? key = Environment.GetEnvironmentVariable("AppKey");
+                    string? key = Environment.GetEnvironmentVariable("AppKey", EnvironmentVariableTarget.Process);
                     if (key is null) throw new Exception("Encryption key not set");
                     data = EncryptionHelper.Decrypt(data, key);
 

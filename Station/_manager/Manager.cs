@@ -83,9 +83,9 @@ namespace Station
 
                     StartServer();
 
-                    if (Environment.GetEnvironmentVariable("NucAddress") != null)
+                    if (Environment.GetEnvironmentVariable("NucAddress", EnvironmentVariableTarget.Process) != null)
                     {
-                        Logger.WriteLog($"Expected NUC address: {Environment.GetEnvironmentVariable("NucAddress")}", MockConsole.LogLevel.Normal);
+                        Logger.WriteLog($"Expected NUC address: {Environment.GetEnvironmentVariable("NucAddress", EnvironmentVariableTarget.Process)}", MockConsole.LogLevel.Normal);
                         SetRemoteEndPoint();
                         if (!Helper.GetStationMode().Equals(Helper.STATION_MODE_APPLIANCE))
                         {
@@ -164,7 +164,7 @@ namespace Station
                 string version = Updater.GetVersionNumber() ?? "Unknown";
 
                 localEndPoint = new IPEndPoint(ip.Address, localPort);
-                App.SetWindowTitle($"Station({Environment.GetEnvironmentVariable("StationId")}) -- {localEndPoint.Address} -- {mac} -- {version}");
+                App.SetWindowTitle($"Station({Environment.GetEnvironmentVariable("StationId", EnvironmentVariableTarget.Process)}) -- {localEndPoint.Address} -- {mac} -- {version}");
 
                 Logger.WriteLog("Server IP Address is: " + localEndPoint.Address.ToString(), MockConsole.LogLevel.Normal);
                 Logger.WriteLog("MAC Address is: " + mac, MockConsole.LogLevel.Normal);
@@ -180,7 +180,7 @@ namespace Station
 
         public static void SetRemoteEndPoint()
         {
-            remoteEndPoint = new IPEndPoint(IPAddress.Parse((ReadOnlySpan<char>)Environment.GetEnvironmentVariable("NucAddress")), NUCPort);
+            remoteEndPoint = new IPEndPoint(IPAddress.Parse((ReadOnlySpan<char>)Environment.GetEnvironmentVariable("NucAddress", EnvironmentVariableTarget.Process)), NUCPort);
         }
 
         /// <summary>
@@ -199,7 +199,7 @@ namespace Station
         /// </summary>
         public static void SendResponse(string destination, string actionNamespace, string? additionalData, bool writeToLog = true)
         {
-            string source = "Station," + Environment.GetEnvironmentVariable("StationId");
+            string source = "Station," + Environment.GetEnvironmentVariable("StationId", EnvironmentVariableTarget.Process);
             string response = source + ":" + destination + ":" + actionNamespace;
             if (additionalData != null)
             {
@@ -208,7 +208,7 @@ namespace Station
 
             Logger.WriteLog("Sending: " + response, MockConsole.LogLevel.Normal, writeToLog);
 
-            string? key = Environment.GetEnvironmentVariable("AppKey");
+            string? key = Environment.GetEnvironmentVariable("AppKey", EnvironmentVariableTarget.Process);
             if (key is null) throw new Exception("Encryption key not set");
             SocketClient client = new(EncryptionHelper.Encrypt(response, key));
             client.send(writeToLog);

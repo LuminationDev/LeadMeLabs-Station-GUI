@@ -24,7 +24,7 @@ namespace StationTests._utils
             Assert.NotNull(expectedVersion);
 
             // Act
-            bool result = SystemInformation.GenerateVersion();
+            bool result = Updater.GenerateVersion();
 
             // Assert
             Assert.True(result);

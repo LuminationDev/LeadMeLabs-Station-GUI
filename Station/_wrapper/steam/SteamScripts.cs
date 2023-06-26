@@ -12,7 +12,8 @@ namespace Station
     {
         // login details as formatted "username password" - need to hide this/turn into a secret
         private static string loginDetailsAnonymous = "anonymous";
-        private static string loginDetails = Environment.GetEnvironmentVariable("SteamUserName") + " " + Environment.GetEnvironmentVariable("SteamPassword");
+        private static string loginDetails = Environment.GetEnvironmentVariable("SteamUserName", EnvironmentVariableTarget.Process) + " " + 
+            Environment.GetEnvironmentVariable("SteamPassword", EnvironmentVariableTarget.Process);
 
         private static string loginAnonymous = $"+login {loginDetailsAnonymous}";
         private static string loginUser = $"+login {loginDetails}";

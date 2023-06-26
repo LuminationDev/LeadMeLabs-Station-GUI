@@ -121,7 +121,7 @@ namespace Station
 
         private void GoToLogsOnClick(object? sender, EventArgs eventArgs)
         {
-            string path = @$"C:\Users\{Environment.GetEnvironmentVariable("UserDirectory")}\AppData\Roaming\leadme_apps\Station\_logs";
+            string path = @$"C:\Users\{Environment.GetEnvironmentVariable("UserDirectory", EnvironmentVariableTarget.Process)}\AppData\Roaming\leadme_apps\Station\_logs";
 
             try
             {

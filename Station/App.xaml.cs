@@ -42,7 +42,7 @@ namespace Station
             {
                 SentrySdk.CaptureMessage("Low memory detected (" + freeStorage + ") at: " +
                                          (Environment.GetEnvironmentVariable("LabLocation",
-                                             EnvironmentVariableTarget.User) ?? "Unknown"));
+                                             EnvironmentVariableTarget.Process) ?? "Unknown"));
             }
         }
 
@@ -115,10 +115,14 @@ namespace Station
                 });
                 SentrySdk.ConfigureScope(scope =>
                 {
-                    scope.SetTag("lab_location", Environment.GetEnvironmentVariable("LabLocation") ?? "Unknown");
-                    scope.SetTag("station_id", Environment.GetEnvironmentVariable("StationId") ?? "Unknown");
-                    scope.SetTag("headset_type", Environment.GetEnvironmentVariable("HeadsetType") ?? "Unknown");
-                    scope.SetTag("room", Environment.GetEnvironmentVariable("room") ?? "Unknown");
+                    scope.SetTag("lab_location", Environment.GetEnvironmentVariable("LabLocation",
+                                             EnvironmentVariableTarget.Process) ?? "Unknown");
+                    scope.SetTag("station_id", Environment.GetEnvironmentVariable("StationId",
+                                             EnvironmentVariableTarget.Process) ?? "Unknown");
+                    scope.SetTag("headset_type", Environment.GetEnvironmentVariable("HeadsetType",
+                                             EnvironmentVariableTarget.Process) ?? "Unknown");
+                    scope.SetTag("room", Environment.GetEnvironmentVariable("room",
+                                             EnvironmentVariableTarget.Process) ?? "Unknown");
                 });
             }
         }

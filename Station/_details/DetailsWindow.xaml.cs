@@ -42,7 +42,7 @@ namespace Station._details
             ipAddress.Text = SystemInformation.GetIPAddress()?.ToString() ?? "Unknown";
             macAddress.Text = SystemInformation.GetMACAddress() ?? "Unknown";
             versionNumber.Text = SystemInformation.GetVersionNumber() ?? "Unknown";
-            ProcessConsole.Text = Environment.GetEnvironmentVariable("NUCAddress") ?? "Not found";
+            ProcessConsole.Text = Environment.GetEnvironmentVariable("NUCAddress", EnvironmentVariableTarget.Process) ?? "Not found";
             StatusConsole.Text = FirewallManagement.IsProgramAllowedThroughFirewall() ?? "Unknown";
         }
 

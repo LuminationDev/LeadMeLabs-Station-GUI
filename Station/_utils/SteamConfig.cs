@@ -8,7 +8,7 @@ namespace Station
     public class SteamConfig
     {
         private static string steamId = "";
-        private static readonly string location = Environment.GetEnvironmentVariable("LabLocation") ?? "Unknown";
+        private static readonly string location = Environment.GetEnvironmentVariable("LabLocation", EnvironmentVariableTarget.Process) ?? "Unknown";
 
         public static void VerifySteamConfig()
         {
@@ -34,7 +34,7 @@ namespace Station
                 return;
             }
 
-            string? username = Environment.GetEnvironmentVariable("SteamUserName");
+            string? username = Environment.GetEnvironmentVariable("SteamUserName", EnvironmentVariableTarget.Process);
             if (string.IsNullOrEmpty(username))
             {
                 Logger.WriteLog(

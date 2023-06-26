@@ -737,7 +737,7 @@ namespace Station
             }
             cmd2.Start();
             cmd2.StandardInput.WriteLine("$StartDHCP = New-Object -ComObject wscript.shell;");
-            cmd2.StandardInput.WriteLine($"$StartDHCP.SendKeys('{Environment.GetEnvironmentVariable("SteamPassword")}')");
+            cmd2.StandardInput.WriteLine($"$StartDHCP.SendKeys('{Environment.GetEnvironmentVariable("SteamPassword", EnvironmentVariableTarget.Process)}')");
             cmd2.StandardInput.WriteLine("$StartDHCP.SendKeys('{TAB}')");
             cmd2.StandardInput.WriteLine("$StartDHCP.SendKeys('{TAB}')");
             cmd2.StandardInput.WriteLine("$StartDHCP.SendKeys('{ENTER}')");
