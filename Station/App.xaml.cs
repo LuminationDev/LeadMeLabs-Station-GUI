@@ -94,24 +94,31 @@ namespace Station
                     options.Debug = false;
                     options.TracesSampleRate = 0.1;
 
-                    options.BeforeSend = sentryEvent =>
+                    options.SetBeforeSend((SentryEvent sentryEvent) =>
                     {
                         if (sentryEvent.Exception != null
-                          && sentryEvent.Exception.Message.Contains("Aggregate Exception")
-                          && sentryEvent.Exception.Message.Contains("WSACancelBlockingCall"))
+                            && sentryEvent.Exception.Message.Contains("Aggregate Exception")
+                            && sentryEvent.Exception.Message.Contains("WSACancelBlockingCall"))
                         {
-
                             return null; // Don't send this event to Sentry
                         }
 
-                        Console.WriteLine(sentryEvent.Exception);
-                        Console.WriteLine(sentryEvent.Message);
                         Logger.WriteLog("Sentry Exception", MockConsole.LogLevel.Error);
-                        Logger.WriteLog(sentryEvent.Exception, MockConsole.LogLevel.Error);
+
+                        if (sentryEvent.Exception != null)
+                        {
+                            MockConsole.WriteLine(sentryEvent.Exception.ToString(), MockConsole.LogLevel.Error);
+                            Logger.WriteLog(sentryEvent.Exception, MockConsole.LogLevel.Error);
+                        }
+                        if (sentryEvent.Message != null)
+                        {
+                            MockConsole.WriteLine(sentryEvent.Message.ToString() ?? "Unknown", MockConsole.LogLevel.Error);
+                            Logger.WriteLog(sentryEvent.Message, MockConsole.LogLevel.Error);
+                        }
 
                         sentryEvent.ServerName = null; // Never send Server Name to Sentry
                         return sentryEvent;
-                    };
+                    });
                 });
                 SentrySdk.ConfigureScope(scope =>
                 {
