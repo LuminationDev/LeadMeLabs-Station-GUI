@@ -60,12 +60,22 @@ namespace Station
             SetupServerDetails();
             MockConsole.WriteLine("Loading ENV variables", MockConsole.LogLevel.Error);
 
-            bool result = await DotEnv.Load();
-            SteamConfig.VerifySteamConfig();
+            //Check if the Encryption key and env variables are set correctly before starting anything else
+            bool result = false;
+            try
+            {
+                result = await DotEnv.Load();
+            }
+            catch (Exception ex)
+            {
+                Logger.WriteLog(ex, MockConsole.LogLevel.Error);
+            }
 
             //Load the environment files, do not continue if file is incomplete
             if (result)
             {
+                SteamConfig.VerifySteamConfig();
+
                 MockConsole.WriteLine("ENV variables loaded", MockConsole.LogLevel.Error);
 
                 new Thread(() =>
