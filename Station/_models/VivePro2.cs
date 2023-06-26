@@ -132,6 +132,7 @@ namespace Station
         /// </summary>
         public void StopProcessesBeforeLaunch()
         {
+            //Not currently required for VivePro2
         }
     }
 }

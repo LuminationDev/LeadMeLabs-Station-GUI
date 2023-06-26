@@ -77,7 +77,7 @@ namespace Station
                 computer.Close();
                 return maxTemp;
             }
-            catch (NullReferenceException e)
+            catch (NullReferenceException)
             {
                 return 0;
             }

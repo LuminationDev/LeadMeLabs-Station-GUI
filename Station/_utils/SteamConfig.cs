@@ -63,7 +63,7 @@ namespace Station
                 if (string.IsNullOrEmpty(steamCommId))
                 {
                     Logger.WriteLog(
-                    "Could not get steamid " +
+                    "Could not get steamId: " +
                     location, MockConsole.LogLevel.Error);
                     return;
                 }
@@ -278,7 +278,7 @@ namespace Station
 
                     if (lines[i].Contains("WantsOfflineMode"))
                     {
-                        if (!CommandLine.CheckIfConnectedToInternet())
+                        if (!Network.CheckIfConnectedToInternet())
                         {
                             lines[i] = lines[i].Replace("0", "1");
                         }

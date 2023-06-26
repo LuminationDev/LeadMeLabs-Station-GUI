@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Net;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
@@ -26,8 +25,6 @@ namespace Station
         /// Process name of the current application.
         /// </summary>
         private static readonly string stationProcessName = "Station";
-
-        private static bool connected = RunInternetCheck();
 
         /// <summary>
         /// The location of the executing assembly. This is used to find the relative path for externally used applications.
@@ -310,7 +307,9 @@ namespace Station
         /// <param name="time">A list containing the current time sections [0]-hours, [1]-minutes, [2]-seconds</param>
         public static void RestartProgram()
         {
+            //Log the daily restart and write the Work Queue before exiting.
             Logger.WriteLog("Daily restart", MockConsole.LogLevel.Verbose);
+            Logger.WorkQueue();
 
             List<Process> processes = GetProcessesByName(new List<string> {launcherProcessName, stationProcessName});
 
@@ -494,6 +493,12 @@ namespace Station
 
             string? output = outcome(cmd);
 
+            if (output == null)
+            {
+                Logger.WriteLog($"ExecuteSteamCommand -> SteamCMD output returned null value.", MockConsole.LogLevel.Error);
+                return null;
+            }
+
             if (output.Contains("Steam Guard code:"))
             {
                 Manager.SendResponse("Android", "Station", "SetValue:steamCMD:required");
@@ -582,27 +587,6 @@ namespace Station
                     process.Kill();
                 }
             }
-        }
-
-        private static bool RunInternetCheck()
-        {
-            try
-            {
-                var request = (HttpWebRequest)WebRequest.Create("http://learninglablauncher.herokuapp.com/program-station-version");
-                request.KeepAlive = false;
-                request.Timeout = 10000;
-                using (var response = (HttpWebResponse)request.GetResponse())
-                    return true;
-            }
-            catch
-            {
-                return false;
-            }
-        }
-        
-        public static bool CheckIfConnectedToInternet()
-        {
-            return connected;
         }
 
         /// <summary>

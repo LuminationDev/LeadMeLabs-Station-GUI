@@ -39,7 +39,7 @@ namespace Station
         public static void RunOverlay(string? text = null)
         {
             overlay = new(text);
-            overlay.RunTask();
+            _ = overlay.RunTask();
             overlay.Show();
         }
 
@@ -53,7 +53,7 @@ namespace Station
             Application.Current.Dispatcher.Invoke((Action)delegate
             {
                 overlay = new Overlay(text);
-                overlay.ManualRun();
+                _ = overlay.ManualRun();
                 overlay.Show();
             });
         }
@@ -68,7 +68,7 @@ namespace Station
             }
             Application.Current.Dispatcher.Invoke((Action)delegate
             {
-                overlay.ManualStop();
+                _ = overlay.ManualStop();
             });
         }
         

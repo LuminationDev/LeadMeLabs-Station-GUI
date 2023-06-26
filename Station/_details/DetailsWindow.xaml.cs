@@ -39,7 +39,7 @@ namespace Station._details
         /// </summary>
         private void LoadInitialValues()
         {
-            ipAddress.Text = SystemInformation.GetIPAddress().ToString() ?? "Unknown";
+            ipAddress.Text = SystemInformation.GetIPAddress()?.ToString() ?? "Unknown";
             macAddress.Text = SystemInformation.GetMACAddress() ?? "Unknown";
             versionNumber.Text = SystemInformation.GetVersionNumber() ?? "Unknown";
             ProcessConsole.Text = Environment.GetEnvironmentVariable("NUCAddress") ?? "Not found";
@@ -156,7 +156,7 @@ namespace Station._details
         {
             return buttonName switch
             {
-                "IPAddress" => SystemInformation.GetIPAddress().ToString() ?? "Unknown",
+                "IPAddress" => SystemInformation.GetIPAddress()?.ToString() ?? "Unknown",
                 "MAC" => SystemInformation.GetMACAddress() ?? "Unknown",
                 "Version" => SystemInformation.GetVersionNumber() ?? "Unknown",
                 _ => string.Empty,

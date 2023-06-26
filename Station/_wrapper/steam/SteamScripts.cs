@@ -84,7 +84,7 @@ namespace Station
             //Close Steam if it is open
             CommandLine.QueryVRProcesses(WrapperMonitoringThread.steamProcesses, true);
 
-            if (!CommandLine.CheckIfConnectedToInternet())
+            if (!Network.CheckIfConnectedToInternet())
             {
                 return LoadAvailableGamesWithoutUsingInternetConnection();
             }
