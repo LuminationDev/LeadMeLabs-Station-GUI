@@ -107,13 +107,11 @@ namespace Station
 
                         if (sentryEvent.Exception != null)
                         {
-                            MockConsole.WriteLine(sentryEvent.Exception.ToString(), MockConsole.LogLevel.Error);
                             Logger.WriteLog(sentryEvent.Exception, MockConsole.LogLevel.Error);
                         }
                         if (sentryEvent.Message != null)
                         {
-                            MockConsole.WriteLine(sentryEvent.Message.ToString() ?? "Unknown", MockConsole.LogLevel.Error);
-                            Logger.WriteLog(sentryEvent.Message, MockConsole.LogLevel.Error);
+                            Logger.WriteLog(sentryEvent.Message.ToString() ?? "No message", MockConsole.LogLevel.Error);
                         }
 
                         sentryEvent.ServerName = null; // Never send Server Name to Sentry
