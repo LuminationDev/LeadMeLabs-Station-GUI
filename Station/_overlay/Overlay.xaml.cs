@@ -19,7 +19,7 @@ namespace Station
 
             current = this;
 
-            StationName.Text = text ?? "Station " + Environment.GetEnvironmentVariable("StationId");
+            StationName.Text = text ?? "Station " + Environment.GetEnvironmentVariable("StationId", EnvironmentVariableTarget.Process);
             Spinner.Visibility = Visibility.Collapsed;
         }
         public async Task RunTask()

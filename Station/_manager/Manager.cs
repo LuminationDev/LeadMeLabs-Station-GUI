@@ -1,7 +1,5 @@
 using Sentry;
 using System;
-using System.Collections.Generic;
-using System.IO;
 using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
@@ -51,8 +49,6 @@ namespace Station
         /// </summary>
         public static WrapperManager? wrapperManager;
 
-        private static string steamId = "";
-
         /// <summary>
         /// Starts the server running on the local machine
         /// </summary>
@@ -60,16 +56,26 @@ namespace Station
         {
             MockConsole.ClearConsole();
 
-            Logger.WriteLog($"Version: {Updater.GetVersionNumber()}", MockConsole.LogLevel.Error);
+            //Load details before dotenv config check - otherwise they don't load for the user
+            SetupServerDetails();
             MockConsole.WriteLine("Loading ENV variables", MockConsole.LogLevel.Error);
 
-            bool result = await DotEnv.Load();
-            GetSteamId();
-            VerifySteamConfig();
+            //Check if the Encryption key and env variables are set correctly before starting anything else
+            bool result = false;
+            try
+            {
+                result = await DotEnv.Load();
+            }
+            catch (Exception ex)
+            {
+                Logger.WriteLog(ex, MockConsole.LogLevel.Error);
+            }
 
             //Load the environment files, do not continue if file is incomplete
             if (result)
             {
+                SteamConfig.VerifySteamConfig();
+
                 MockConsole.WriteLine("ENV variables loaded", MockConsole.LogLevel.Error);
 
                 new Thread(() =>
@@ -85,12 +91,11 @@ namespace Station
                         StationMonitoringThread.initializeMonitoring();
                     }
 
-                    SetupServerDetails();
                     StartServer();
 
-                    if (Environment.GetEnvironmentVariable("NucAddress") != null)
+                    if (Environment.GetEnvironmentVariable("NucAddress", EnvironmentVariableTarget.Process) != null)
                     {
-                        Logger.WriteLog($"Expected NUC address: {Environment.GetEnvironmentVariable("NucAddress")}", MockConsole.LogLevel.Normal);
+                        Logger.WriteLog($"Expected NUC address: {Environment.GetEnvironmentVariable("NucAddress", EnvironmentVariableTarget.Process)}", MockConsole.LogLevel.Normal);
                         SetRemoteEndPoint();
                         if (!Helper.GetStationMode().Equals(Helper.STATION_MODE_APPLIANCE))
                         {
@@ -169,7 +174,7 @@ namespace Station
                 string version = Updater.GetVersionNumber() ?? "Unknown";
 
                 localEndPoint = new IPEndPoint(ip.Address, localPort);
-                App.SetWindowTitle($"Station({Environment.GetEnvironmentVariable("StationId")}) -- {localEndPoint.Address} -- {mac} -- {version}");
+                App.SetWindowTitle($"Station({Environment.GetEnvironmentVariable("StationId", EnvironmentVariableTarget.Process)}) -- {localEndPoint.Address} -- {mac} -- {version}");
 
                 Logger.WriteLog("Server IP Address is: " + localEndPoint.Address.ToString(), MockConsole.LogLevel.Normal);
                 Logger.WriteLog("MAC Address is: " + mac, MockConsole.LogLevel.Normal);
@@ -185,7 +190,7 @@ namespace Station
 
         public static void SetRemoteEndPoint()
         {
-            remoteEndPoint = new IPEndPoint(IPAddress.Parse((ReadOnlySpan<char>)Environment.GetEnvironmentVariable("NucAddress")), NUCPort);
+            remoteEndPoint = new IPEndPoint(IPAddress.Parse((ReadOnlySpan<char>)Environment.GetEnvironmentVariable("NucAddress", EnvironmentVariableTarget.Process)), NUCPort);
         }
 
         /// <summary>
@@ -204,7 +209,7 @@ namespace Station
         /// </summary>
         public static void SendResponse(string destination, string actionNamespace, string? additionalData, bool writeToLog = true)
         {
-            string source = "Station," + Environment.GetEnvironmentVariable("StationId");
+            string source = "Station," + Environment.GetEnvironmentVariable("StationId", EnvironmentVariableTarget.Process);
             string response = source + ":" + destination + ":" + actionNamespace;
             if (additionalData != null)
             {
@@ -213,276 +218,10 @@ namespace Station
 
             Logger.WriteLog("Sending: " + response, MockConsole.LogLevel.Normal, writeToLog);
 
-            string? key = Environment.GetEnvironmentVariable("AppKey");
+            string? key = Environment.GetEnvironmentVariable("AppKey", EnvironmentVariableTarget.Process);
             if (key is null) throw new Exception("Encryption key not set");
             SocketClient client = new(EncryptionHelper.Encrypt(response, key));
             client.send(writeToLog);
-        }
-
-        public static void GetSteamId()
-        {
-            if (steamId.Length > 0)
-            {
-                return;
-            }
-            string fileLocation = "C:\\Program Files (x86)\\Steam\\config\\config.vdf";
-            if (!File.Exists(fileLocation))
-            {
-                Logger.WriteLog(
-                    "Could not get steamid " +
-                    (Environment.GetEnvironmentVariable("LabLocation") ?? "Unknown"), MockConsole.LogLevel.Error);
-                return;
-            }
-
-            try
-            {
-                string[] lines = File.ReadAllLines(fileLocation);
-                string steamCommId = "";
-                for (int i = 0; i < lines.Length; i++)
-                {
-                    if (lines[i].Contains(Environment.GetEnvironmentVariable("SteamUserName")))
-                    {
-                        if (lines[i + 2].Contains("SteamID"))
-                        {
-                            steamCommId = lines[i + 2].Replace("\t", "").Replace("\"SteamID\"", "").Replace("\"", "");
-                            break;
-                        }
-                    }
-                }
-
-                long steamComm = 76561197960265728;
-                steamId = (long.Parse(steamCommId) - steamComm).ToString();
-            }
-            catch (Exception e)
-            {
-                SentrySdk.CaptureException(e);
-            }
-        }
-
-        public static void VerifySteamConfig()
-        {
-            VerifySteamLoginUserConfig();
-            VerifySteamDefaultPageConfig();
-            VerifySteamHideNotificationConfig();
-            VerifyConfigSharedConfigFile();
-        }
-
-        private static void VerifySteamHideNotificationConfig()
-        {
-            if (steamId.Length == 0)
-            {
-                Logger.WriteLog(
-                    "Could not find steamId: " +
-                    (Environment.GetEnvironmentVariable("LabLocation") ?? "Unknown"), MockConsole.LogLevel.Error);
-                return;
-            }
-            string fileLocation = $"C:\\Program Files (x86)\\Steam\\userdata\\{steamId}\\config\\localconfig.vdf";
-            if (!File.Exists(fileLocation))
-            {
-                Logger.WriteLog(
-                    "Could not verify steam hide notification info: " +
-                    (Environment.GetEnvironmentVariable("LabLocation") ?? "Unknown"), MockConsole.LogLevel.Error);
-                return;
-            }
-
-            bool didNotifyAvailableGames = false;
-            try
-            {
-                string[] lines = File.ReadAllLines(fileLocation);
-                for (int i = 0; i < lines.Length; i++)
-                {
-                    if (lines[i].Contains("NotifyAvailableGames"))
-                    {
-                        lines[i] = lines[i].Replace("1", "0");
-                        didNotifyAvailableGames = true;
-                    }
-                }
-
-                if (!didNotifyAvailableGames)
-                {
-                    List<string> linesList = new();
-                    linesList.AddRange(lines);
-                    linesList.Insert(9, "\t}");
-                    linesList.Insert(9, "\t\t\"NotifyAvailableGames\"\t\t\"0\"");
-                    linesList.Insert(9, "\t{");
-                    linesList.Insert(9, "\t\"News\"");
-                    lines = linesList.ToArray();
-                }
-
-                File.WriteAllLines(fileLocation, lines);
-            }
-            catch (Exception e)
-            {
-                SentrySdk.CaptureException(e);
-            }
-        }
-        
-        private static void VerifyConfigSharedConfigFile()
-        {
-            if (steamId.Length == 0)
-            {
-                Logger.WriteLog(
-                    "Could not find steamId: " +
-                    (Environment.GetEnvironmentVariable("LabLocation") ?? "Unknown"), MockConsole.LogLevel.Error);
-                return;
-            }
-            string fileLocation = $"C:\\Program Files (x86)\\Steam\\userdata\\{steamId}\\config\\sharedconfig.vdf";
-
-            if (File.Exists(fileLocation))
-            {
-                try
-                {
-                    string[] lines = File.ReadAllLines(fileLocation);
-                    for (int i = 0; i < lines.Length; i++)
-                    {
-                        if (lines[i].Contains("CloudEnabled"))
-                        {
-                            lines[i] = lines[i].Replace("1", "0");
-                        }
-                    }
-
-                    File.WriteAllLines(fileLocation, lines);
-                }
-                catch (Exception e)
-                {
-                    SentrySdk.CaptureException(e);
-                }
-            }
-            else
-            {
-                try
-                {
-                    string[] lines = new[]
-                    {
-                        "\"UserRoamingConfigStore\"",
-                        "{",
-                        "\t\"Software\"",
-                        "\t{",
-                        "\t\t\"Valve\"",
-                        "\t\t{",
-                        "\t\t\t\"Steam\"",
-                        "\t\t\t{",
-                        "\t\t\t\t\"CloudEnabled\"\t\t\"0\"",
-                        "\t\t\t}",
-                        "\t\t}",
-                        "\t}",
-                        "}"
-                    };
-
-                    File.WriteAllLines(fileLocation, lines);
-                }
-                catch (Exception e)
-                {
-                    SentrySdk.CaptureException(e);
-                }
-            }
-        }
-        
-        private static void VerifySteamDefaultPageConfig()
-        {
-            if (steamId.Length == 0)
-            {
-                Logger.WriteLog(
-                    "Could not find steamId: " +
-                    (Environment.GetEnvironmentVariable("LabLocation") ?? "Unknown"), MockConsole.LogLevel.Error);
-                return;
-            }
-            string fileLocation = $"C:\\Program Files (x86)\\Steam\\userdata\\{steamId}\\7\\remote\\sharedconfig.vdf";
-            if (!File.Exists(fileLocation))
-            {
-                Logger.WriteLog(
-                    "Could not verify steam default page info: " +
-                    (Environment.GetEnvironmentVariable("LabLocation") ?? "Unknown"), MockConsole.LogLevel.Error);
-                return;
-            }
-
-            bool didCloudSetting = false;
-            bool didDefaultDialogSetting = false;
-            try
-            {
-                string[] lines = File.ReadAllLines(fileLocation);
-                for (int i = 0; i < lines.Length; i++)
-                {
-                    if (lines[i].Contains("SteamDefaultDialog"))
-                    {
-                        lines[i] = lines[i].Replace("#app_store", "#app_games");
-                        lines[i] = lines[i].Replace("#app_news", "#app_games");
-                        lines[i] = lines[i].Replace("#steam_menu_friend_activity", "#app_games");
-                        lines[i] = lines[i].Replace("#steam_menu_community_home", "#app_games");
-                        didDefaultDialogSetting = true;
-                    }
-                    if (lines[i].Contains("CloudEnabled"))
-                    {
-                        lines[i] = lines[i].Replace("1", "0");
-                        didCloudSetting = true;
-                    }
-                }
-
-                if (!didCloudSetting)
-                {
-                    List<string> linesList = new();
-                    linesList.AddRange(lines);
-                    linesList.Insert(9, "\t\t\t\t\"CloudEnabled\"\t\t\"0\"");
-                    lines = linesList.ToArray();
-                }
-                if (!didDefaultDialogSetting)
-                {
-                    List<string> linesList = new();
-                    linesList.AddRange(lines);
-                    linesList.Insert(9, "\t\t\t\t\"SteamDefaultDialog\"\t\t\"#app_games\"");
-                    lines = linesList.ToArray();
-                }
-
-                File.WriteAllLines(fileLocation, lines);
-            }
-            catch (Exception e)
-            {
-                SentrySdk.CaptureException(e);
-            }
-        }
-
-        private static void VerifySteamLoginUserConfig()
-        {
-            string fileLocation = "C:\\Program Files (x86)\\Steam\\config\\loginusers.vdf";
-            if (!File.Exists(fileLocation))
-            {
-                Logger.WriteLog(
-                    "Could not verify steam login info: " +
-                    (Environment.GetEnvironmentVariable("LabLocation") ?? "Unknown"), MockConsole.LogLevel.Error);
-                return;
-            }
-
-            try
-            {
-                string[] lines = File.ReadAllLines(fileLocation);
-                for (int i = 0; i < lines.Length; i++)
-                {
-                    if (lines[i].Contains("SkipOfflineModeWarning"))
-                    {
-                        lines[i] = lines[i].Replace("0", "1");
-                    }
-
-                    if (lines[i].Contains("AllowAutoLogin"))
-                    {
-                        lines[i] = lines[i].Replace("0", "1");
-                    }
-
-                    if (lines[i].Contains("WantsOfflineMode"))
-                    {
-                        if (!CommandLine.CheckIfConnectedToInternet())
-                        {
-                            lines[i] = lines[i].Replace("0", "1");
-                        }
-                    }
-                }
-
-                File.WriteAllLines(fileLocation, lines);
-            }
-            catch (Exception e)
-            {
-                SentrySdk.CaptureException(e);
-            }
-
         }
     }
 }

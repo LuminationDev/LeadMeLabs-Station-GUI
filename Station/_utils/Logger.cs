@@ -91,7 +91,7 @@ namespace Station
                 MockConsole.WriteLine($"Attempting to send: {fileName}", MockConsole.LogLevel.Debug);
 
                 //Add the header image to the sending image queue through action transformation
-                SocketFile socketFile = new("file", $"{fileName}::::{Environment.GetEnvironmentVariable("StationId")}", $"{filePath}");
+                SocketFile socketFile = new("file", $"{fileName}::::{Environment.GetEnvironmentVariable("StationId", EnvironmentVariableTarget.Process)}", $"{filePath}");
                 Action sendFile = () => socketFile.send();
 
                 //Queue the send function for invoking

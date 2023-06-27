@@ -33,7 +33,7 @@ namespace Station
         public static void SetupHeadsetType()
         {
             //Read from env file
-            switch (Environment.GetEnvironmentVariable("HeadsetType"))
+            switch (Environment.GetEnvironmentVariable("HeadsetType", EnvironmentVariableTarget.Process))
             {
                 case "VivePro1":
                     vrHeadset = new VivePro1();

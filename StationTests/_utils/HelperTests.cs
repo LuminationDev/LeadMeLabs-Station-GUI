@@ -14,7 +14,7 @@ namespace StationTests._utils
         public void GetStationMode_Should_Return_Default_Mode_When_Environment_Variable_Is_Null()
         {
             // Arrange
-            var expectedMode = "vr";
+            var expectedMode = "VR";
             Environment.SetEnvironmentVariable("StationMode", null);
 
             // Act
@@ -46,7 +46,7 @@ namespace StationTests._utils
         public void GetStationMode_Should_Return_Environment_Variable_Value_When_It_Is_Supported()
         {
             // Arrange
-            var expectedMode = "appliance";
+            var expectedMode = "Appliance";
             Environment.SetEnvironmentVariable("StationMode", expectedMode);
 
             // Act

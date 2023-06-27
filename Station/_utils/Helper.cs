@@ -12,7 +12,7 @@ namespace Station
 
         public static string GetStationMode()
         {
-            string? mode = Environment.GetEnvironmentVariable("StationMode");
+            string? mode = Environment.GetEnvironmentVariable("StationMode", EnvironmentVariableTarget.Process);
             if (mode == null)
             {
                 Environment.SetEnvironmentVariable("StationMode", STATION_MODE_VR);
@@ -21,7 +21,8 @@ namespace Station
 
             if (!STATION_MODES.Contains(mode))
             {
-                //throw new Exception("Station in unsupported mode");
+                Logger.WriteLog($"Station Mode is not set or supported: {mode}.", MockConsole.LogLevel.Error);
+                throw new Exception("Station in unsupported mode");
             }
 
             return mode;

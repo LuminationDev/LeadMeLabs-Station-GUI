@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Net;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
@@ -27,8 +26,6 @@ namespace Station
         /// </summary>
         private static readonly string stationProcessName = "Station";
 
-        private static bool connected = RunInternetCheck();
-
         /// <summary>
         /// The location of the executing assembly. This is used to find the relative path for externally used applications.
         /// </summary>
@@ -48,7 +45,7 @@ namespace Station
         /// <summary>
         /// The relative path of the steamCMD executable on the local machine.
         /// </summary>
-        public static string steamCmd = stationLocation + @"\external\steamcmd\steamcmd.exe";
+        public static string steamCmd = @"\external\steamcmd\steamcmd.exe";
 
         /// <summary>
         /// Track if SteamCMD is currently being configured with a Guard Key.
@@ -310,7 +307,9 @@ namespace Station
         /// <param name="time">A list containing the current time sections [0]-hours, [1]-minutes, [2]-seconds</param>
         public static void RestartProgram()
         {
+            //Log the daily restart and write the Work Queue before exiting.
             Logger.WriteLog("Daily restart", MockConsole.LogLevel.Verbose);
+            Logger.WorkQueue();
 
             List<Process> processes = GetProcessesByName(new List<string> {launcherProcessName, stationProcessName});
 
@@ -407,10 +406,17 @@ namespace Station
             {
                 configuringSteam = true;
 
-                Process? cmd = SetupCommand(steamCmd);
+                if (string.IsNullOrEmpty(stationLocation))
+                {
+                    Logger.WriteLog($"Station location null or empty: cannot run '{command}', MonitorSteamConfiguration -> SetupCommand returned null value.", MockConsole.LogLevel.Error);
+                    return;
+                }
+                string fullPath = stationLocation + steamCmd;
+
+                Process ? cmd = SetupCommand(fullPath);
                 if (cmd == null)
                 {
-                    Logger.WriteLog($"Cannot start: {steamCmd} and run '{command}', MonitorSteamConfiguration -> SetupCommand returned null value.", MockConsole.LogLevel.Error);
+                    Logger.WriteLog($"Cannot start: {fullPath} and run '{command}', MonitorSteamConfiguration -> SetupCommand returned null value.", MockConsole.LogLevel.Error);
                     return;
                 }
 
@@ -462,23 +468,36 @@ namespace Station
         /// <returns>A string representing the results of the command</returns>
         public static string? ExecuteSteamCommand(string command)
         {
-            if (!File.Exists(steamCmd))
+            if (string.IsNullOrEmpty(stationLocation))
             {
-                SessionController.PassStationMessage($"StationError,File not found:{steamCmd}");
+                Logger.WriteLog($"Station location null or empty: cannot run '{command}', MonitorSteamConfiguration -> SetupCommand returned null value.", MockConsole.LogLevel.Error);
+                return null;
+            }
+            string fullPath = stationLocation + steamCmd;
+
+            if (!File.Exists(fullPath))
+            {
+                SessionController.PassStationMessage($"StationError,File not found:{fullPath}");
                 SteamScripts.steamCMDConfigured = "steamcmd.exe not found";
                 return null;
             }
 
-            Process? cmd = SetupCommand(steamCmd);
+            Process? cmd = SetupCommand(fullPath);
             if (cmd == null)
             {
-                Logger.WriteLog($"Cannot start: {steamCmd} and run '{command}', ExecuteSteamCommand -> SetupCommand returned null value.", MockConsole.LogLevel.Error);
+                Logger.WriteLog($"Cannot start: {fullPath} and run '{command}', ExecuteSteamCommand -> SetupCommand returned null value.", MockConsole.LogLevel.Error);
                 return null;
             }
             cmd.StartInfo.Arguments = "\"+force_install_dir \\\"C:/Program Files (x86)/Steam\\\"\" " + command;
             cmd.Start();
 
             string? output = outcome(cmd);
+
+            if (output == null)
+            {
+                Logger.WriteLog($"ExecuteSteamCommand -> SteamCMD output returned null value.", MockConsole.LogLevel.Error);
+                return null;
+            }
 
             if (output.Contains("Steam Guard code:"))
             {
@@ -506,16 +525,23 @@ namespace Station
         /// <returns>A string representing the results of the command</returns>
         public static string? ExecuteSteamCommandSDrive(string command)
         {
-            if (!File.Exists(steamCmd))
+            if (string.IsNullOrEmpty(stationLocation))
             {
-                SessionController.PassStationMessage($"StationError,File not found:{steamCmd}");
+                Logger.WriteLog($"Station location null or empty: cannot run '{command}', MonitorSteamConfiguration -> SetupCommand returned null value.", MockConsole.LogLevel.Error);
+                return null;
+            }
+            string fullPath = stationLocation + steamCmd;
+
+            if (!File.Exists(fullPath))
+            {
+                SessionController.PassStationMessage($"StationError,File not found:{fullPath}");
                 return null;
             }
 
-            Process? cmd = SetupCommand(steamCmd);
+            Process? cmd = SetupCommand(fullPath);
             if (cmd == null)
             {
-                Logger.WriteLog($"Cannot start: {steamCmd} and run '{command}', ExecuteSteamCommandSDrive -> SetupCommand returned null value.", MockConsole.LogLevel.Error);
+                Logger.WriteLog($"Cannot start: {fullPath} and run '{command}', ExecuteSteamCommandSDrive -> SetupCommand returned null value.", MockConsole.LogLevel.Error);
                 return null;
             }
             cmd.StartInfo.Arguments = "\"+force_install_dir \\\"S:/SteamLibrary\\\"\" " + command;
@@ -561,27 +587,6 @@ namespace Station
                     process.Kill();
                 }
             }
-        }
-
-        private static bool RunInternetCheck()
-        {
-            try
-            {
-                var request = (HttpWebRequest)WebRequest.Create("http://learninglablauncher.herokuapp.com/program-station-version");
-                request.KeepAlive = false;
-                request.Timeout = 10000;
-                using (var response = (HttpWebResponse)request.GetResponse())
-                    return true;
-            }
-            catch
-            {
-                return false;
-            }
-        }
-        
-        public static bool CheckIfConnectedToInternet()
-        {
-            return connected;
         }
 
         /// <summary>
@@ -732,7 +737,7 @@ namespace Station
             }
             cmd2.Start();
             cmd2.StandardInput.WriteLine("$StartDHCP = New-Object -ComObject wscript.shell;");
-            cmd2.StandardInput.WriteLine($"$StartDHCP.SendKeys('{Environment.GetEnvironmentVariable("SteamPassword")}')");
+            cmd2.StandardInput.WriteLine($"$StartDHCP.SendKeys('{Environment.GetEnvironmentVariable("SteamPassword", EnvironmentVariableTarget.Process)}')");
             cmd2.StandardInput.WriteLine("$StartDHCP.SendKeys('{TAB}')");
             cmd2.StandardInput.WriteLine("$StartDHCP.SendKeys('{TAB}')");
             cmd2.StandardInput.WriteLine("$StartDHCP.SendKeys('{ENTER}')");

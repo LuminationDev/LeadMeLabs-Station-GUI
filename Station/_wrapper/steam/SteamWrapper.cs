@@ -13,7 +13,9 @@ namespace Station
     {
         public static string wrapperType = "Steam";
         private static Process? currentProcess;
-        private static string launch_params = "-noreactlogin -login " + Environment.GetEnvironmentVariable("SteamUserName") + " " + Environment.GetEnvironmentVariable("SteamPassword") + " steam://rungameid/";
+        private static string launch_params = "-noreactlogin -login " + 
+            Environment.GetEnvironmentVariable("SteamUserName", EnvironmentVariableTarget.Process) + " " + 
+            Environment.GetEnvironmentVariable("SteamPassword", EnvironmentVariableTarget.Process) + " steam://rungameid/";
         public static string? experienceName = null;
         public static string? installDir = null;
 

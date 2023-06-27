@@ -42,7 +42,7 @@ namespace Station
             {
                 SentrySdk.CaptureMessage("Low memory detected (" + freeStorage + ") at: " +
                                          (Environment.GetEnvironmentVariable("LabLocation",
-                                             EnvironmentVariableTarget.User) ?? "Unknown"));
+                                             EnvironmentVariableTarget.Process) ?? "Unknown"));
             }
         }
 
@@ -94,31 +94,40 @@ namespace Station
                     options.Debug = false;
                     options.TracesSampleRate = 0.1;
 
-                    options.BeforeSend = sentryEvent =>
+                    options.SetBeforeSend((SentryEvent sentryEvent) =>
                     {
                         if (sentryEvent.Exception != null
-                          && sentryEvent.Exception.Message.Contains("Aggregate Exception")
-                          && sentryEvent.Exception.Message.Contains("WSACancelBlockingCall"))
+                            && sentryEvent.Exception.Message.Contains("Aggregate Exception")
+                            && sentryEvent.Exception.Message.Contains("WSACancelBlockingCall"))
                         {
-
                             return null; // Don't send this event to Sentry
                         }
 
-                        Console.WriteLine(sentryEvent.Exception);
-                        Console.WriteLine(sentryEvent.Message);
                         Logger.WriteLog("Sentry Exception", MockConsole.LogLevel.Error);
-                        Logger.WriteLog(sentryEvent.Exception, MockConsole.LogLevel.Error);
+
+                        if (sentryEvent.Exception != null)
+                        {
+                            Logger.WriteLog(sentryEvent.Exception, MockConsole.LogLevel.Error);
+                        }
+                        if (sentryEvent.Message != null)
+                        {
+                            Logger.WriteLog(sentryEvent.Message.ToString() ?? "No message", MockConsole.LogLevel.Error);
+                        }
 
                         sentryEvent.ServerName = null; // Never send Server Name to Sentry
                         return sentryEvent;
-                    };
+                    });
                 });
                 SentrySdk.ConfigureScope(scope =>
                 {
-                    scope.SetTag("lab_location", Environment.GetEnvironmentVariable("LabLocation") ?? "Unknown");
-                    scope.SetTag("station_id", Environment.GetEnvironmentVariable("StationId") ?? "Unknown");
-                    scope.SetTag("headset_type", Environment.GetEnvironmentVariable("HeadsetType") ?? "Unknown");
-                    scope.SetTag("room", Environment.GetEnvironmentVariable("room") ?? "Unknown");
+                    scope.SetTag("lab_location", Environment.GetEnvironmentVariable("LabLocation",
+                                             EnvironmentVariableTarget.Process) ?? "Unknown");
+                    scope.SetTag("station_id", Environment.GetEnvironmentVariable("StationId",
+                                             EnvironmentVariableTarget.Process) ?? "Unknown");
+                    scope.SetTag("headset_type", Environment.GetEnvironmentVariable("HeadsetType",
+                                             EnvironmentVariableTarget.Process) ?? "Unknown");
+                    scope.SetTag("room", Environment.GetEnvironmentVariable("room",
+                                             EnvironmentVariableTarget.Process) ?? "Unknown");
                 });
             }
         }
