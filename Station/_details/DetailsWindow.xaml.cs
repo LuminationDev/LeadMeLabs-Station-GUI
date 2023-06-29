@@ -16,11 +16,13 @@ namespace Station._details
     public partial class DetailsWindow : Window
     {
         private readonly Dictionary<string, RotateTransform> buttonRotationMap;
+        private bool SteamRules;
 
         public DetailsWindow()
         {
             InitializeComponent();
             LoadInitialValues();
+            InitaliseSteamRules();
 
             //Steam is handled differently
             steamGuard.Text = SteamScripts.steamCMDConfigured;
@@ -199,6 +201,79 @@ namespace Station._details
             {
                 steamGuard.Text = SteamScripts.steamCMDConfigured;
             });
+        }
+
+        /// <summary>
+        /// Initializes the Steam firewall rules by performing an initial check and updating the UI accordingly.
+        /// </summary>
+        private void InitaliseSteamRules()
+        {
+            string response = FirewallManagement.InitialCheck();
+
+            if(!bool.TryParse(response, out SteamRules))
+            {
+                //Default
+                SteamRules = true;
+            }
+            
+            ToggleOffline.Content = "Steam: " + (SteamRules ? "Offline" : "Online");
+        }
+
+        /// <summary>
+        /// Handles the click event for the Toggle Steam button, toggling the Steam firewall rules and updating the UI accordingly.
+        /// </summary>
+        /// <param name="sender">The sender of the event.</param>
+        /// <param name="e">The event arguments.</param>
+        private void ToggleSteam_Click(object sender, RoutedEventArgs e)
+        {
+            Logger.WriteLog($"Attempting to toggle Steam firewall rules, enabled: {SteamRules}", MockConsole.LogLevel.Error);
+            string responseSteam = FirewallManagement.ToggleRule("SteamBlocker", @"C:\Program Files (x86)\Steam\Steam.exe", SteamRules);
+            string responseWeb = FirewallManagement.ToggleRule("SteamBlockerWeb", @"C:\Program Files (x86)\Steam\bin\cef\cef.win7x64\steamwebhelper.exe", SteamRules);
+            string responseTour = FirewallManagement.ToggleRule("SteamBlockerTours", @"C:\program files (x86)\steam\steamapps\common\steamvr\tools\steamvr_environments\game\bin\win64\steamtours.exe", SteamRules);
+            string responseVR = FirewallManagement.ToggleRule("SteamBlockerVR", @"C:\Program Files (x86)\Steam\steamapps\common\SteamVR\bin\win32\vrstartup.exe", SteamRules);
+
+            bool successSteam = LogResponse(responseSteam, "SteamBlocker", SteamRules);
+            bool successWeb = LogResponse(responseWeb, "SteamBlockerWeb", SteamRules);
+            bool successTour = LogResponse(responseTour, "SteamBlockerTours", SteamRules);
+            bool successVR = LogResponse(responseVR, "SteamBlockerVR", SteamRules);
+
+            if (successSteam && successWeb && successTour && successVR)
+            {
+                ToggleOffline.Content = "Steam: " + (SteamRules ? "Offline" : "Online");
+                Logger.WriteLog("Successfully toggled Steam firewall. Rules now: " + (SteamRules ? "Enabled" : "Disabled"), MockConsole.LogLevel.Error);
+                SteamRules = !SteamRules;
+            } else
+            {
+                Logger.WriteLog("Failed to toggle Steam firewall rules.", MockConsole.LogLevel.Error);
+            }            
+        }
+
+        ///<summary>
+        /// Logs the response of a specific action related to an outbound rule.
+        ///</summary>
+        ///<param name="action">The action performed.</param>
+        ///<param name="ruleName">The name of the outbound rule.</param>
+        ///<param name="enabled">Indicates whether the outbound rule is enabled or disabled.</param>
+        ///<returns>
+        /// Returns true if the action is "true" and the log entry is successfully written.
+        /// Returns true if the action is "Created" and a new outbound rule is created successfully.
+        /// Returns false for any other action.
+        ///</returns>
+        private bool LogResponse(string action, string ruleName, bool enabled)
+        {
+            if(action.Equals("true"))
+            {
+                Logger.WriteLog($"Existing outbound rule '{ruleName}' " + (enabled ? "enabled" : "disabled") + " successfully.", MockConsole.LogLevel.Error);
+                return true;
+            }
+            else if (action.Equals("Created"))
+            {
+                Logger.WriteLog($"New outbound rule '{ruleName}' created successfully.", MockConsole.LogLevel.Error);
+                return true;
+            } else
+            {
+                return false;
+            }
         }
     }
 }

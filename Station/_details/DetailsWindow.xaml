@@ -4,7 +4,7 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d"
-        Title="Details" Height="455" Width="380"
+        Title="Details" Height="465" Width="380"
         ResizeMode="NoResize">
 
     <Window.Resources>
@@ -193,7 +193,7 @@
                 Style="{StaticResource MainButton}"
                 x:Name="RefreshAll"
                 Content="Refresh All" 
-                Margin="10,10,10,10" 
+                Margin="10,5,10,10" 
                 Width="100" 
                 Height="25" 
                 HorizontalAlignment="Center" 
@@ -241,6 +241,18 @@
                 Foreground="#a8a8a8"
                 Height="25" 
                 Margin="5,5,10,0"/>
+
+            <Button 
+                Style="{StaticResource MainButton}"
+                x:Name="ToggleOffline"
+                Content="Steam: Online" 
+                Margin="0,0,10,10" 
+                Width="100" 
+                Height="25" 
+                HorizontalAlignment="Center" 
+                VerticalAlignment="Bottom"
+                Click="ToggleSteam_Click"
+                ToolTip="Toggle Steam firewall rules for offline mode."/>
         </StackPanel>
     </Grid>
 </Window>
