@@ -43,7 +43,7 @@ namespace Station._details
         {
             ipAddress.Text = SystemInformation.GetIPAddress()?.ToString() ?? "Unknown";
             macAddress.Text = SystemInformation.GetMACAddress() ?? "Unknown";
-            versionNumber.Text = SystemInformation.GetVersionNumber() ?? "Unknown";
+            versionNumber.Text = Updater.GetVersionNumber() ?? "Unknown";
             ProcessConsole.Text = Environment.GetEnvironmentVariable("NUCAddress", EnvironmentVariableTarget.Process) ?? "Not found";
             StatusConsole.Text = FirewallManagement.IsProgramAllowedThroughFirewall() ?? "Unknown";
         }
@@ -160,7 +160,7 @@ namespace Station._details
             {
                 "IPAddress" => SystemInformation.GetIPAddress()?.ToString() ?? "Unknown",
                 "MAC" => SystemInformation.GetMACAddress() ?? "Unknown",
-                "Version" => SystemInformation.GetVersionNumber() ?? "Unknown",
+                "Version" => Updater.GetVersionNumber() ?? "Unknown",
                 _ => string.Empty,
             };
         }
