@@ -14,6 +14,7 @@ namespace Station
         //Store each wrapper class
         private readonly Wrapper customWrapper = new CustomWrapper();
         private readonly Wrapper steamWrapper = new SteamWrapper();
+        private readonly Wrapper synthesisWrapper = new SynthesisWrapper();
         private readonly Wrapper viveWrapper = new ViveWrapper();
 
         //Used for multiple 'internal' applications, operations are separate from the other wrapper classes
@@ -157,6 +158,12 @@ namespace Station
             if (viveApplications != null)
             {
                 applications.AddRange(viveApplications);
+            }
+            
+            List<string>? synthesisApplications = synthesisWrapper.CollectApplications();
+            if (synthesisApplications != null)
+            {
+                applications.AddRange(synthesisApplications);
             }
 
             string response = string.Join('/', applications);
@@ -338,6 +345,9 @@ namespace Station
                         CurrentWrapper.WrapProcess(experience);
                         break;
                     case "Steam":
+                        CurrentWrapper.WrapProcess(experience);
+                        break;
+                    case "Synthesis":
                         CurrentWrapper.WrapProcess(experience);
                         break;
                     case "Vive":

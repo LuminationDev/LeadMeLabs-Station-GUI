@@ -293,7 +293,7 @@ namespace Station
                             steamSignInWindow = process;
                             timer.Stop();
                             MockConsole.WriteLine($"Time for powershell command", MockConsole.LogLevel.Debug);
-                            CommandLine.PowershellCommand(steamSignInWindow);
+                            CommandLine.AutomateSteamOfflineWindow(steamSignInWindow);
                         }
                     }
 

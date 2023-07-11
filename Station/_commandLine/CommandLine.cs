@@ -702,7 +702,20 @@ namespace Station
             "Almost there..."
         };
 
-        public async static void PowershellCommand(Process steamSignInWindow)
+        public static void RunPowershellCommand(string command)
+        {
+            Process? cmd = SetupCommand(stationPowershell);
+            if (cmd == null)
+            {
+                Logger.WriteLog($"Cannot start: {stationPowershell}, PowershellCommand (cmd) -> SetupCommand returned null value.", MockConsole.LogLevel.Error);
+                return;
+            }
+            cmd.Start();
+            cmd.StandardInput.WriteLine(command);
+            outcome(cmd);
+        }
+
+        public async static void AutomateSteamOfflineWindow(Process steamSignInWindow)
         {
             OverlayManager.SetText(loadingMessages[0]);
             await Task.Delay(5000);

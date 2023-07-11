@@ -65,6 +65,10 @@ namespace Station
                 case "Steam":
                     timer.Elapsed += callSteamCheck;
                     break;
+                
+                case "Synthesis":
+                    timer.Elapsed += callSynthesisCheck;
+                    break;
 
                 case "Vive":
                     timer.Elapsed += callViveCheck;
@@ -97,6 +101,17 @@ namespace Station
             ViveCheck();
             MockConsole.WriteLine("Checked Vive status", MockConsole.LogLevel.Verbose);
             SteamCheck();
+
+            Logger.WorkQueue();
+        }
+        
+        private static void callSynthesisCheck(Object? source, System.Timers.ElapsedEventArgs e)
+        {
+            // todo
+            MockConsole.WriteLine("About to check Vive status", MockConsole.LogLevel.Verbose);
+            ViveCheck();
+            MockConsole.WriteLine("Checked Vive status", MockConsole.LogLevel.Verbose);
+            SteamCheck(); // todo - make steamvr no longer located in steam
 
             Logger.WorkQueue();
         }

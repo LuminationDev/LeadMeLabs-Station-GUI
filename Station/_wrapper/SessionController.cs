@@ -61,6 +61,7 @@ namespace Station
                     MockConsole.WriteLine("startVRSession not implemented for type: Custom.", MockConsole.LogLevel.Error);
                     break;
                 case "Steam":
+                case "Synthesis":
                     vrHeadset?.StartVrSession();
                     break;
                 case "Vive":
