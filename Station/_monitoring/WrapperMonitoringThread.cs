@@ -24,6 +24,7 @@ namespace Station
         /// An array representing the process names needed to stop a VR session.
         /// </summary>
         public static List<string> steamProcesses = new List<string> { "vrmonitor", "steam", "vrserver", "steamerrorreporter64" };
+        public static List<string> synthesisProcesses = new List<string> { "SynthesisVR" };
         public static List<string> viveProcesses = new List<string> { "HtcConnectionUtility", "LhStatusMonitor", "WaveConsole", "ViveVRServer", "ViveSettings" };
 
         /// <summary>
@@ -111,7 +112,7 @@ namespace Station
             MockConsole.WriteLine("About to check Vive status", MockConsole.LogLevel.Verbose);
             ViveCheck();
             MockConsole.WriteLine("Checked Vive status", MockConsole.LogLevel.Verbose);
-            SteamCheck(); // todo - make steamvr no longer located in steam
+            SynthesisCheck(); // todo - make steamvr no longer located in steam
 
             Logger.WorkQueue();
         }
@@ -203,6 +204,58 @@ namespace Station
                         Console.WriteLine(process.MainWindowTitle);
                         Manager.SendResponse("Android", "Station", "PopupDetected:" + SteamWrapper.experienceName);
                     }
+                }
+            }
+        }
+        
+        /// <summary>
+        /// Look for any steam errors, this may be from the Steam VR application or a Steam popup.
+        /// </summary>
+        private static void SynthesisCheck()
+        {
+            //Check the regular Steam processes are running
+            List<string> combinedProcesses = new List<string>();
+            combinedProcesses.AddRange(synthesisProcesses);
+            combinedProcesses.AddRange(viveProcesses);
+
+            processes = CommandLine.GetProcessesByName(combinedProcesses);
+            bool processesAreAllResponding = CommandLine.CheckThatAllProcessesAreResponding(processes);
+            bool allProcessesAreRunning = processes.Count >= steamProcesses.Count;
+
+            Console.WriteLine("Just checked that all processes are responding. Result: {0}", processesAreAllResponding);
+            Console.WriteLine("Just checked that all processes are running. Result: {0}", allProcessesAreRunning);
+
+            if (processesAreAllResponding != processesAreResponding)
+            {
+                processesAreResponding = processesAreAllResponding;
+                if (!processesAreAllResponding)
+                {
+                    SessionController.PassStationMessage("MessageToAndroid,SetValue:status:Not Responding");
+                }
+                else
+                {
+                    SessionController.PassStationMessage("MessageToAndroid,SetValue:status:On");
+                }
+            }
+            
+            vrMonitorProcesses = Process.GetProcessesByName("vrmonitor");
+            for (int i = 0; i < vrMonitorProcesses.Length; i++)
+            {
+                Process process = vrMonitorProcesses[i];
+                if (process.MainWindowTitle.Equals("Unexpected SteamVR Error"))
+                {
+                    if (!steamError)
+                    {
+                        SessionController.PassStationMessage("MessageToAndroid,SteamError");
+                    }
+
+                    steamError = true;
+                    break;
+                }
+
+                if (steamError && i == vrMonitorProcesses.Length - 1)
+                {
+                    steamError = false;
                 }
             }
         }
