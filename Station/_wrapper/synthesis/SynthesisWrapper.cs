@@ -8,6 +8,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Timers;
 using Newtonsoft.Json.Linq;
+using Sentry;
 using Timer = System.Timers.Timer;
 
 namespace Station
@@ -19,6 +20,7 @@ namespace Station
         public static string? experienceName = null;
         public static Experience lastApp;
         private static HttpClient synthesisHttpClient = new HttpClient();
+        private const string SynthesisAccessPointProcessName = "SynthesisVR";
 
         /// <summary>
         /// Track if an experience is being launched.
@@ -32,28 +34,55 @@ namespace Station
 
         public List<string>? CollectApplications()
         {
-            var task = Task.Run(() => synthesisHttpClient.GetAsync("127.0.0.1:8080/control/status/me")); 
-            task.Wait();
-            HttpResponseMessage response = task.Result;
-            var readTask = Task.Run(() => response.Content.ReadAsStringAsync()); 
-            readTask.Wait();
-            JObject joResponse = JObject.Parse(readTask.Result);
-            JObject applications = (JObject) joResponse["games"];
-            List<string> applicationsList = new List<string>();
-
-            foreach (var app in applications)
+            Process[] processes = Process.GetProcessesByName(SynthesisAccessPointProcessName);
+            if (processes.Length == 0)
             {
-                string id = app.Key;
-                string name = ((JObject) app.Value)["name"].ToString(); // todo - error checking
-                applicationsList.Add($"{wrapperType}|{id}|{name}");
-                WrapperManager.StoreApplication(wrapperType, id, name);
+                CommandLine.RunPowershellCommand("Start-Process -FilePath \"svr://\"");
+
+                // wait for svr to start
+                int attempts = 0;
+                while (Process.GetProcessesByName(SynthesisAccessPointProcessName).Length == 0 || attempts < 5)
+                {
+                    attempts++;
+                    Task.Delay(3000);
+                }
+
+                if (attempts == 5)
+                {
+                    return null;
+                }
             }
-            return applicationsList;
+
+            // todo - error checking in here
+            try
+            {
+                var task = Task.Run(() => synthesisHttpClient.GetAsync("http://127.0.0.1:8080/control/status/me"));
+                task.Wait();
+                HttpResponseMessage response = task.Result;
+                var readTask = Task.Run(() => response.Content.ReadAsStringAsync());
+                readTask.Wait();
+                JObject joResponse = JObject.Parse(readTask.Result);
+                JObject applications = (JObject) joResponse["games"];
+                List<string> applicationsList = new List<string>();
+                foreach (var app in applications)
+                {
+                    string id = app.Key;
+                    string name = ((JObject) app.Value)["title"].ToString(); // todo - error checking
+                    applicationsList.Add($"{wrapperType}|{id}|\"{name}\"");
+                    WrapperManager.StoreApplication(wrapperType, id, name);
+                }
+                return applicationsList;
+            } catch (Exception e)
+            {
+                SentrySdk.CaptureException(e);
+                Logger.WriteLog($"Unexpected exception loading synthesis : {e}", MockConsole.LogLevel.Error);
+            }
+
+            return null;
         }
 
         public void CollectHeaderImage(string experienceName)
         {
-            // todo https://svrstorage.s3.amazonaws.com/gameassets/svr_{id}/header.jpg
             throw new NotImplementedException();
         }
 
@@ -66,7 +95,7 @@ namespace Station
         {
             if (experience.ID == null)
             {
-                SessionController.PassStationMessage($"MessageToAndroid,GameLaunchFailed:Unknown experience");
+                SessionController.PassStationMessage("MessageToAndroid,GameLaunchFailed:Unknown experience");
                 return;
             };
 
@@ -74,14 +103,35 @@ namespace Station
 
             //Start the external processes to handle SteamVR
             SessionController.StartVRSession(wrapperType);
+            Process[] processes = Process.GetProcessesByName(SynthesisAccessPointProcessName);
+            if (processes.Length == 0)
+            {
+                CommandLine.RunPowershellCommand("Start-Process -FilePath \"svr://\"");
+                
+                // wait for svr to start
+                int attempts = 0;
+                while (Process.GetProcessesByName(SynthesisAccessPointProcessName).Length == 0 || attempts < 5)
+                {
+                    attempts++;
+                    Task.Delay(3000);
+                }
 
+                if (attempts == 5)
+                {
+                    Logger.WriteLog("Game launch failure: " + lastApp.Name, MockConsole.LogLevel.Normal);
+                    UIUpdater.ResetUIDisplay();
+                    SessionController.PassStationMessage($"MessageToAndroid,GameLaunchFailed:{lastApp.Name}");
+                    return;
+                }
+            }
+            
             //Begin monitoring the different processes
             WrapperMonitoringThread.initializeMonitoring(wrapperType);
 
             //Wait for Vive to start
             if (!WaitForVive().Result) return;
 
-            CommandLine.RunPowershellCommand($"Start-Process -FilePath \"svr://startGame/${experience.ID}\"");
+            CommandLine.RunPowershellCommand($"Start-Process -FilePath \"svr://startGame/{experience.ID}\"");
             lastApp = experience;
             FindCurrentProcess();
         }
@@ -134,7 +184,7 @@ namespace Station
 
                 ListenForClose();
                 WindowManager.MaximizeProcess(child); //Maximise the process experience
-                SessionController.PassStationMessage($"ApplicationUpdate,{experienceName}/{lastApp.ID}/Synthesis");
+                SessionController.PassStationMessage($"ApplicationUpdate,{lastApp.Name}/{lastApp.ID}/{wrapperType}");
             } else
             {
                 Logger.WriteLog("Game launch failure: " + lastApp.Name, MockConsole.LogLevel.Normal);
@@ -151,7 +201,7 @@ namespace Station
         private Process? GetExperienceProcess()
         {
             string? activeProcessId = null;
-            string appDirectory = $"C:\\SynthesisVR Exclusive Content\\${lastApp.ID}\\";
+            string appDirectory = $"C:\\SynthesisVR Exclusive Content\\{lastApp.ID}\\";
             string? processId = CommandLine.GetProcessIdFromDir(appDirectory);
             if (processId != null)
             {

@@ -373,6 +373,9 @@ namespace Station
                 case "Steam":
                     CurrentWrapper = steamWrapper;
                     break;
+                case "Synthesis":
+                    CurrentWrapper = synthesisWrapper;
+                    break;
                 case "Vive":
                     CurrentWrapper = viveWrapper;
                     break;
