@@ -18,7 +18,7 @@ namespace Station
 
         public List<string> GetProcessesToQuery()
         {
-            return new List<string> { "vrmonitor", "steam", "HtcConnectionUtility", "steamwebhelper" };
+            return new List<string> { "vrmonitor", "vrserver", "steam", "HtcConnectionUtility", "steamwebhelper" };
         }
 
         public void StartVrSession()
@@ -55,6 +55,18 @@ namespace Station
                 timer.Elapsed += TimerElapsed;
                 timer.AutoReset = true;
                 timer.Enabled = true;
+            }
+            
+            Process[] processes = Process.GetProcessesByName("vrmonitor");
+            if (processes.Length == 0)
+            {
+                // wait for svr to start
+                int attempts = 0;
+                while (Process.GetProcessesByName("vrmonitor").Length == 0 || attempts < 5)
+                {
+                    attempts++;
+                    Task.Delay(3000);
+                }
             }
         }
 
@@ -148,7 +160,7 @@ namespace Station
         /// </summary>
         public async void StopProcessesBeforeLaunch()
         {
-            CommandLine.QueryVRProcesses(new List<string> { "vrmonitor" }, true);
+            CommandLine.QueryVRProcesses(new List<string> { "vrmonitor", "vrserver" }, true);
 
             await Task.Delay(3000);
         }

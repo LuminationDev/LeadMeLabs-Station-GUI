@@ -37,7 +37,7 @@ namespace Station
             bool sent = false;
             int count = 0;
 
-            MockConsole.WriteLine("About to launch a steam app, vive status is: " + WrapperMonitoringThread.viveStatus, MockConsole.LogLevel.Normal);
+            MockConsole.WriteLine("About to launch an app, vive status is: " + WrapperMonitoringThread.viveStatus, MockConsole.LogLevel.Normal);
             while (!WrapperMonitoringThread.viveStatus.Contains("CONNECTED"))
             {
                 MockConsole.WriteLine("Vive check looping", MockConsole.LogLevel.Debug);

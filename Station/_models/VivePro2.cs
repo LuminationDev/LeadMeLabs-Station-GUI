@@ -12,12 +12,12 @@ namespace Station
 
         public List<string> GetProcessesToQuery()
         {
-            return new List<string> { "vrmonitor", "steam", "LhStatusMonitor" };
+            return new List<string> { "vrmonitor", "vrserver", "steam", "LhStatusMonitor" };
         }
 
         private string[] GetProcessesToMinimize()
         {
-            return new[] { "vrmonitor", "steam", "LhStatusMonitor", "WaveConsole", "steamwebhelper" };
+            return new[] { "vrmonitor", "vrserver", "steam", "LhStatusMonitor", "WaveConsole", "steamwebhelper" };
         }
 
         public void StartVrSession()

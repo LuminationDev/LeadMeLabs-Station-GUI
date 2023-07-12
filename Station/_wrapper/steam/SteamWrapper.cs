@@ -87,6 +87,7 @@ namespace Station
                 }
 
                 currentProcess.Start();
+                Logger.WriteLog($"Just ran start command, attempting to find process: {experience.Name}", MockConsole.LogLevel.Normal);
 
                 FindCurrentProcess();
             });

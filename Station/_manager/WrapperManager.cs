@@ -330,6 +330,10 @@ namespace Station
             {
                 SessionController.vrHeadset.StopProcessesBeforeLaunch();
             }
+            
+            Logger.WriteLog("waiting for existing processes to stop", MockConsole.LogLevel.Debug);
+            Task.Delay(3000).Wait();
+            Logger.WriteLog("finished waiting for existing processes to stop", MockConsole.LogLevel.Debug);
 
             UIUpdater.UpdateProcess("Launching");
             UIUpdater.UpdateStatus("Loading...");
@@ -342,12 +346,8 @@ namespace Station
                 switch (experience.Type)
                 {
                     case "Custom":
-                        CurrentWrapper.WrapProcess(experience);
-                        break;
-                    case "Steam":
-                        CurrentWrapper.WrapProcess(experience);
-                        break;
                     case "Synthesis":
+                    case "Steam":
                         CurrentWrapper.WrapProcess(experience);
                         break;
                     case "Vive":
