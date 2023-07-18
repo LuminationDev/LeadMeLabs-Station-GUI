@@ -43,6 +43,8 @@ namespace Station
                 return;
             }
 
+            username = username.ToLower();
+
             try
             {
                 string[] lines = File.ReadAllLines(fileLocation);
