@@ -15,10 +15,7 @@ namespace Station
             GetSteamId();
             VerifySteamLoginUserConfig();
             VerifySteamDefaultPageConfig();
-            if (!Environment.GetEnvironmentVariable("LabLocation", EnvironmentVariableTarget.Process).Equals("Thebarton"))
-            {
-                VerifySteamHideNotificationConfig();
-            }
+            // VerifySteamHideNotificationConfig();
             VerifyConfigSharedConfigFile();
         }
 
