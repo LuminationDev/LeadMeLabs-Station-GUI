@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Threading.Tasks;
 using System.Timers;
 
 namespace Station
@@ -30,10 +31,7 @@ namespace Station
             }
 
             CommandLine.KillSteamSigninWindow();
-            if (!Environment.GetEnvironmentVariable("LabLocation", EnvironmentVariableTarget.Process).Equals("Thebarton"))
-            {
-                SteamConfig.VerifySteamConfig();
-            }
+            SteamConfig.VerifySteamConfig();
             CommandLine.StartProgram(SessionController.steam, "-noreactlogin -login " + 
                 Environment.GetEnvironmentVariable("SteamUserName", EnvironmentVariableTarget.Process) + " " + 
                 Environment.GetEnvironmentVariable("SteamPassword", EnvironmentVariableTarget.Process) + " steam://rungameid/1635730"); //Open up steam and run vive console
