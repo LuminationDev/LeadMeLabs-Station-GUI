@@ -228,8 +228,8 @@ namespace Station
         {
             if (currentProcess != null)
             {
-                currentProcess.Kill();
-                //WrapperManager.ClosePipeServer();
+                currentProcess.Kill(true);
+                WrapperMonitoringThread.stopMonitoring();
             }
         }
 
@@ -237,7 +237,7 @@ namespace Station
         {
             if (currentProcess != null && !lastExperience.IsNull())
             {
-                currentProcess.Kill(true);
+                StopCurrentProcess();
                 Task.Delay(3000).Wait();
                 WrapProcess(lastExperience);
             }

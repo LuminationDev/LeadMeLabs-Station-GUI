@@ -250,8 +250,9 @@ namespace Station
         {
             if (currentProcess != null)
             {
-                currentProcess.Kill();
+                currentProcess.Kill(true);
             }
+            WrapperMonitoringThread.stopMonitoring();
             ViveScripts.StopMonitoring();
             SteamScripts.popupDetect = false;
         }
@@ -260,7 +261,7 @@ namespace Station
         {
             if(currentProcess != null)
             {
-                currentProcess.Kill(true);
+                StopCurrentProcess();
                 Task.Delay(3000).Wait();
                 WrapProcess(SteamScripts.lastApp);
             }
