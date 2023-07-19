@@ -74,12 +74,13 @@ namespace Station
             //Load the environment files, do not continue if file is incomplete
             if (result)
             {
-                SteamConfig.VerifySteamConfig();
-
                 MockConsole.WriteLine("ENV variables loaded", MockConsole.LogLevel.Error);
 
                 new Thread(() =>
                 {
+                    //Call in new thread to stop UI from hanging whilst reading the files
+                    SteamConfig.VerifySteamConfig();
+
                     if (!Helper.GetStationMode().Equals(Helper.STATION_MODE_APPLIANCE))
                     {
                         wrapperManager = new WrapperManager();
