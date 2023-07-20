@@ -18,6 +18,11 @@ namespace Station
                 Environment.SetEnvironmentVariable("StationMode", STATION_MODE_VR);
                 mode = STATION_MODE_VR;
             }
+            if (mode.Equals("vr"))
+            {
+                Environment.SetEnvironmentVariable("StationMode", STATION_MODE_VR);
+                mode = STATION_MODE_VR;
+            }
 
             if (!STATION_MODES.Contains(mode))
             {
