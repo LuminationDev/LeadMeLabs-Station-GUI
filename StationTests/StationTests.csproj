@@ -10,7 +10,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="LeadMeLabsLibrary" Version="1.0.5" />
+    <PackageReference Include="LeadMeLabsLibrary" Version="1.0.6" />
     <PackageReference Include="leadme_api" Version="1.0.0" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.6.2" />
     <PackageReference Include="MSTest.TestAdapter" Version="3.0.4" />

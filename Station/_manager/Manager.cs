@@ -49,15 +49,17 @@ namespace Station
         /// </summary>
         public static WrapperManager? wrapperManager;
 
+        private static string? macAddress = null;
+        private static string? versionNumber = null;
+
+        private static Timer? variableCheck;
+
         /// <summary>
         /// Starts the server running on the local machine
         /// </summary>
         public async static void StartProgram()
         {
             MockConsole.ClearConsole();
-
-            //Load details before dotenv config check - otherwise they don't load for the user
-            SetupServerDetails();
             MockConsole.WriteLine("Loading ENV variables", MockConsole.LogLevel.Error);
 
             //Check if the Encryption key and env variables are set correctly before starting anything else
@@ -71,15 +73,28 @@ namespace Station
                 Logger.WriteLog(ex, MockConsole.LogLevel.Error);
             }
 
+            //Even if DotEnv fails, still load up the server details to show the details to the user.
+            MockConsole.WriteLine("Setting up server.", MockConsole.LogLevel.Error);
+            bool connected = SetupServerDetails();
+            if (!connected)
+            {
+                Logger.WriteLog("Server details were not collected.", MockConsole.LogLevel.Error);
+                return;
+            }
+
             //Load the environment files, do not continue if file is incomplete
             if (result)
             {
+                App.SetWindowTitle($"Station({Environment.GetEnvironmentVariable("StationId", EnvironmentVariableTarget.Process)}) -- {localEndPoint.Address} -- {macAddress} -- {versionNumber}");
                 MockConsole.WriteLine("ENV variables loaded", MockConsole.LogLevel.Error);
 
                 new Thread(() =>
                 {
                     //Call in new thread to stop UI from hanging whilst reading the files
                     SteamConfig.VerifySteamConfig();
+
+                    // Schedule the function to run after a 5-minute delay (300,000 milliseconds)
+                    variableCheck = new Timer(OnTimerCallback, null, 300000, Timeout.Infinite);
 
                     if (!Helper.GetStationMode().Equals(Helper.STATION_MODE_APPLIANCE))
                     {
@@ -106,7 +121,45 @@ namespace Station
                 }).Start();
             } else
             {
+                App.SetWindowTitle("Station - Failed to load ENV variables.");
                 MockConsole.WriteLine("Failed loading ENV variables", MockConsole.LogLevel.Error);
+            }
+        }
+
+        /// <summary>
+        /// Re-check any variables that may have changed in the first 5 minutes of operation.
+        /// </summary>
+        public static void OnTimerCallback(object? state)
+        {
+            try
+            {
+                IPAddress? ip = SystemInformation.GetIPAddress();
+                if(ip == null || ip.Equals(localEndPoint.Address))
+                {
+                    throw new Exception("ReChecked IP address is not the same.");
+                }
+
+                Logger.WriteLog("Re-checking software details after 5 minutes of operation.", MockConsole.LogLevel.Normal);
+                Logger.WriteLog("Server IP Address is: " + ip, MockConsole.LogLevel.Normal);
+                Logger.WriteLog("MAC Address is: " + SystemInformation.GetMACAddress() ?? "Unknown", MockConsole.LogLevel.Normal);
+                Logger.WriteLog("Version is: " + Updater.GetVersionNumber() ?? "Unknown", MockConsole.LogLevel.Normal);
+            }
+            catch (Exception e)
+            {
+                SentrySdk.CaptureException(e);
+                Logger.WriteLog($"Unexpected exception : {e}", MockConsole.LogLevel.Error);
+            }
+        }
+
+        /// <summary>
+        /// Stop and dispose of the variable timer and all resources associated with it.
+        /// </summary>
+        public static void StopVariableTimer()
+        {
+            if(variableCheck != null)
+            {
+                variableCheck.Change(Timeout.Infinite, Timeout.Infinite);
+                variableCheck.Dispose();
             }
         }
 
@@ -117,6 +170,7 @@ namespace Station
         {
             new Thread(() =>
             {
+                StopVariableTimer();
                 StationMonitoringThread.stopMonitoring();
                 StopServer();
                 wrapperManager?.ShutDownWrapper();
@@ -164,29 +218,58 @@ namespace Station
         /// Collect the necessary system details for starting the service. Including the IP address, mac address
         /// and the current version number.
         /// </summary>
-        public static void SetupServerDetails()
+        public static bool SetupServerDetails()
         {
             try
             {
-                IPAddress? ip = SystemInformation.GetIPAddress();
-                if(ip == null) throw new Exception("Manager class: Server IP Address could not be found");
+                IPAddress? ip = AttemptIPAddressRetrieval();
+                if (ip == null) throw new Exception("Manager class: Server IP Address could not be found");
 
-                string mac = SystemInformation.GetMACAddress() ?? "Unknown";
-                string version = Updater.GetVersionNumber() ?? "Unknown";
-
+                macAddress = SystemInformation.GetMACAddress() ?? "Unknown";
+                versionNumber = Updater.GetVersionNumber() ?? "Unknown";
                 localEndPoint = new IPEndPoint(ip.Address, localPort);
-                App.SetWindowTitle($"Station({Environment.GetEnvironmentVariable("StationId", EnvironmentVariableTarget.Process)}) -- {localEndPoint.Address} -- {mac} -- {version}");
 
                 Logger.WriteLog("Server IP Address is: " + localEndPoint.Address.ToString(), MockConsole.LogLevel.Normal);
-                Logger.WriteLog("MAC Address is: " + mac, MockConsole.LogLevel.Normal);
-                Logger.WriteLog("Version is: " + version, MockConsole.LogLevel.Normal);
-                
+                Logger.WriteLog("MAC Address is: " + macAddress, MockConsole.LogLevel.Normal);
+                Logger.WriteLog("Version is: " + versionNumber, MockConsole.LogLevel.Normal);
+                return true;
             }
             catch (Exception e)
             {
                 SentrySdk.CaptureException(e);
                 Logger.WriteLog($"Unexpected exception : {e}", MockConsole.LogLevel.Error);
+                return false;
             }
+        }
+
+        /// <summary>
+        /// Attempt to collect the local IP address, the function will try a total of 5 times to find the IP
+        /// address. The attempts are done 15 seconds apart.
+        /// </summary>
+        /// <returns></returns>
+        private static IPAddress? AttemptIPAddressRetrieval()
+        {
+            int attemptLimit = 5;
+            int attempts = 0;
+            IPAddress? ip = null;
+
+            while (attempts < attemptLimit)
+            {
+                try
+                {
+                    ip = SystemInformation.GetIPAddress();
+                    if (ip != null) break;
+                }
+                catch (Exception e)
+                {
+                    Logger.WriteLog($"Unexpected exception AttemptIPAddressRetrieval (attempt {attempts}): {e}", MockConsole.LogLevel.Error);
+                }
+
+                Task.Delay(15000).Wait();
+                attempts++;
+            }
+
+            return ip;
         }
 
         public static void SetRemoteEndPoint()
