@@ -62,9 +62,6 @@ namespace Station
             MockConsole.ClearConsole();
             MockConsole.WriteLine("Loading ENV variables", MockConsole.LogLevel.Error);
 
-            // Schedule the function to run after a 5-minute delay (300,000 milliseconds)
-            variableCheck = new Timer(OnTimerCallback, null, 10000, Timeout.Infinite);
-
             //Check if the Encryption key and env variables are set correctly before starting anything else
             bool result = false;
             try
