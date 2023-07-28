@@ -92,7 +92,7 @@ namespace Station
 
                 //Add the header image to the sending image queue through action transformation
                 SocketFile socketFile = new("file", $"{fileName}::::{Environment.GetEnvironmentVariable("StationId", EnvironmentVariableTarget.Process)}", $"{filePath}");
-                Action sendFile = () => socketFile.send();
+                Action sendFile = () => socketFile.Send();
 
                 //Queue the send function for invoking
                 TaskQueue.Queue(false, sendFile);

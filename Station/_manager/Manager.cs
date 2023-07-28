@@ -304,7 +304,7 @@ namespace Station
 
             string? key = Environment.GetEnvironmentVariable("AppKey", EnvironmentVariableTarget.Process);
             if (key is null) throw new Exception("Encryption key not set");
-            SocketClient client = new(EncryptionHelper.Encrypt(response, key));
+            SocketClient client = new(EncryptionHelper.UnicodeEncrypt(response, key));
             client.send(writeToLog);
         }
     }

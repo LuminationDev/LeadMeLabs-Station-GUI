@@ -47,19 +47,18 @@ namespace Station
             {
                 if (!File.Exists(filePath))
                 {
-                    MockConsole.WriteLine($"StationError, Config file not found:{filePath}");
+                    MockConsole.WriteLine($"StationError, Config file not found:{filePath}", MockConsole.LogLevel.Error);
                     return false;
                 }
 
                 //Decrypt the data in the file
-                string text = File.ReadAllText(filePath);
-                if (text.Length == 0)
+                string? decryptedText = EncryptionHelper.DetectFileEncryption(filePath);
+
+                if (decryptedText == null || decryptedText.Length == 0)
                 {
-                    MockConsole.WriteLine($"StationError, Config file empty:{filePath}");
+                    MockConsole.WriteLine($"StationError, Config file empty:{filePath}", MockConsole.LogLevel.Error);
                     return false;
                 }
-
-                string decryptedText = EncryptionHelper.DecryptNode(text);
 
                 foreach (var line in decryptedText.Split('\n'))
                 {
@@ -148,11 +147,21 @@ namespace Station
             }
 
             // Read the current config file
-            string text = File.ReadAllText(filePath);
-            if(text.Length != 0)
+            string? text = File.ReadAllText(filePath);
+            if (text.Length == 0)
             {
-                text = EncryptionHelper.DecryptNode(text);
+                MockConsole.WriteLine($"Station Error,Config file empty:{filePath}", MockConsole.LogLevel.Error);
+                return;
             }
+
+            text = EncryptionHelper.DetectFileEncryption(filePath);
+
+            if (text == null)
+            {
+                MockConsole.WriteLine($"Station Error,Config file returned null:{filePath}", MockConsole.LogLevel.Error);
+                return;
+            }
+
             string[] arrLine = text.Split("\n");
             List<string> listLine;
 
@@ -197,7 +206,7 @@ namespace Station
 
             MockConsole.WriteLine($"Environment variables added", MockConsole.LogLevel.Normal);
 
-            string encryptedText = EncryptionHelper.EncryptNode(string.Join("\n", listLine));
+            string encryptedText = EncryptionHelper.UnicodeEncryptNode(string.Join("\n", listLine));
 
             //Rewrite the file with the new variables
             File.WriteAllText(filePath, encryptedText);

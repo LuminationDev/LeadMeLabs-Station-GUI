@@ -79,7 +79,7 @@ namespace Station
         /// Sends a message to the android server with details about certain outputs or machine
         /// states.
         /// </summery>
-        public void send(bool writeToLog = true)
+        public void Send(bool writeToLog = true)
         {
             try
             {
@@ -110,7 +110,7 @@ namespace Station
 
                     // Construct and send the header
                     string headerMessageType = this.type;
-                    byte[] headerMessageTypeBytes = System.Text.Encoding.UTF8.GetBytes(headerMessageType);
+                    byte[] headerMessageTypeBytes = System.Text.Encoding.Unicode.GetBytes(headerMessageType);
 
                     // Convert the header to network byte order
                     int headerLength = IPAddress.HostToNetworkOrder(headerMessageTypeBytes.Length);
@@ -120,7 +120,7 @@ namespace Station
 
                     // Send the file name second
                     string fileName = name;
-                    byte[] fileNameBytes = System.Text.Encoding.UTF8.GetBytes(fileName);
+                    byte[] fileNameBytes = System.Text.Encoding.Unicode.GetBytes(fileName);
                     stream.Write(BitConverter.GetBytes(fileNameBytes.Length), 0, 4);
                     stream.Write(fileNameBytes, 0, fileNameBytes.Length);
 

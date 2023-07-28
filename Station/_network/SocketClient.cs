@@ -98,7 +98,7 @@ namespace Station
 
                     // Construct and send the header first
                     string headerMessageType = "text";
-                    byte[] headerMessageTypeBytes = System.Text.Encoding.UTF8.GetBytes(headerMessageType);
+                    byte[] headerMessageTypeBytes = System.Text.Encoding.Unicode.GetBytes(headerMessageType);
 
                     // Convert the header to network byte order
                     int headerLength = IPAddress.HostToNetworkOrder(headerMessageTypeBytes.Length);

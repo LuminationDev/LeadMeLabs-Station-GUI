@@ -50,12 +50,13 @@ namespace Station
                 return null;
             }
 
+            //TODO THIS NEEDS THE ENCRYPTION UPDATED
             //Read the manifest
             using (StreamReader r = new StreamReader(manifestPath))
             {
                 //Read and decipher the encrypted manifest
                 string? encrytedJson = r.ReadToEnd();
-                string? json = EncryptionHelper.DecryptNode(encrytedJson);
+                string? json = EncryptionHelper.UnicodeDecryptNode(encrytedJson);
 
                 dynamic? array = JsonConvert.DeserializeObject(json);
 
