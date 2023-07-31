@@ -2,6 +2,8 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Net.Http;
+using System.Text;
 
 namespace Station
 {
@@ -9,14 +11,20 @@ namespace Station
     {
         private static string steamId = "";
         private static readonly string location = Environment.GetEnvironmentVariable("LabLocation", EnvironmentVariableTarget.Process) ?? "Unknown";
+        private static readonly string stationId = Environment.GetEnvironmentVariable("StationId", EnvironmentVariableTarget.Process) ?? "Unknown";
 
-        public static void VerifySteamConfig()
+        public static void VerifySteamConfig(bool initialCall = false)
         {
             GetSteamId();
             VerifySteamLoginUserConfig();
             VerifySteamDefaultPageConfig();
             // VerifySteamHideNotificationConfig();
             VerifyConfigSharedConfigFile();
+
+            if (initialCall)
+            {
+                ReadAndReportSteamStats();
+            }
         }
 
         public static void GetSteamId()
@@ -288,6 +296,95 @@ namespace Station
                 }
 
                 File.WriteAllLines(fileLocation, lines);
+            }
+            catch (Exception e)
+            {
+                SentrySdk.CaptureException(e);
+            }
+        }
+        
+        private static async void ReadAndReportSteamStats()
+        {
+            if (steamId.Length == 0)
+            {
+                Logger.WriteLog(
+                    "Could not find steamId: " +
+                    location, MockConsole.LogLevel.Error);
+                return;
+            }
+            string fileLocation = $"C:\\Program Files (x86)\\Steam\\userdata\\{steamId}\\config\\localconfig.vdf";
+            if (!File.Exists(fileLocation))
+            {
+                Logger.WriteLog(
+                    "Could not get steam stats: " +
+                    location, MockConsole.LogLevel.Error);
+                return;
+            }
+
+            try
+            {
+                Dictionary<String, String> experienceStats = new Dictionary<string, string>();
+                using (var fs = new FileStream(fileLocation, FileMode.Open, FileAccess.Read, FileShare.ReadWrite, 0x1000, FileOptions.SequentialScan))
+                using (var sr = new StreamReader(fs, Encoding.UTF8))
+                {
+                    string line;
+                    string mostRecentId = "";
+                    bool startReadingApps = false;
+                    while ((line = sr.ReadLine()) != null)
+                    {
+                        if (!startReadingApps && line.Equals("\t\t\t\t\"apps\""))
+                        {
+                            startReadingApps = true;
+                            continue;
+                        }
+
+                        if (line.Equals("\t\t\t\t}"))
+                        {
+                            break;
+                        }
+
+                        if (!startReadingApps)
+                        {
+                            continue;
+                        }
+
+                        if (line.StartsWith("\t\t\t\t\t\""))
+                        {
+                            mostRecentId = line.Trim('\t').Trim('\"');
+                            continue;
+                        }
+
+                        if (line.Equals("\t\t\t\t\t}"))
+                        {
+                            mostRecentId = "";
+                            continue;
+                        }
+
+                        if (mostRecentId.Length > 0 && line.StartsWith("\t\t\t\t\t\t\"Playtime\""))
+                        {
+                            experienceStats.Add(mostRecentId, line.Remove(0, 19).Trim('\"'));
+                        }
+                    }
+                }
+
+                if (experienceStats.Count > 0)
+                {
+                    using var httpClient = new HttpClient();
+                    string strJSON = "{";
+                    var datetime = new DateTimeOffset(DateTime.UtcNow).ToUnixTimeSeconds();
+                    foreach (KeyValuePair<string,string> experienceStat in experienceStats)
+                    {
+                        strJSON += String.Format("\"{0}/{1}\": {2},", experienceStat.Key, datetime, experienceStat.Value);
+                    }
+
+                    strJSON = strJSON.Remove(strJSON.Length - 1, 1);
+                    strJSON += "}";
+                    StringContent objData = new StringContent(strJSON, Encoding.UTF8, "application/json");
+                    await httpClient.PatchAsync(
+                        $"https://leadme-labs-default-rtdb.asia-southeast1.firebasedatabase.app/lab_experience_playtime/{location}/{stationId}.json",
+                        objData
+                    );
+                }
             }
             catch (Exception e)
             {
