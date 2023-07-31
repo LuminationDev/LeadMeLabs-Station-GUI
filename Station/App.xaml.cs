@@ -18,7 +18,7 @@ namespace Station
                 Environment.Exit(1);
                 return;
             }
-            SteamConfig.VerifySteamConfig(true);
+            SteamConfig.VerifySteamConfig();
 
             MainWindow mainWindow = new();
             mainWindow.Show();

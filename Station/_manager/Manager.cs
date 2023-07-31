@@ -91,7 +91,7 @@ namespace Station
                 new Thread(() =>
                 {
                     //Call in new thread to stop UI from hanging whilst reading the files
-                    SteamConfig.VerifySteamConfig();
+                    SteamConfig.VerifySteamConfig(true);
 
                     // Schedule the function to run after a 5-minute delay (300,000 milliseconds)
                     variableCheck = new Timer(OnTimerCallback, null, 300000, Timeout.Infinite);
