@@ -76,6 +76,12 @@ namespace Station
             Manager.SendResponse("Android", "Station", "SetValue:status:Off");
             Manager.SendResponse("Android", "Station", "SetValue:gameName:");
             Manager.SendResponse("Android", "Station", "SetValue:gameId:");
+
+            //Shut down the pipe server if running
+            WrapperManager.ClosePipeServer();
+
+            //Shut down any OpenVR systems
+            Manager.openVRManager?.OpenVrSystem?.Shutdown();
         }
 
         public static void InitSentry()

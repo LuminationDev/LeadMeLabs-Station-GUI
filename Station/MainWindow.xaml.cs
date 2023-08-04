@@ -13,6 +13,9 @@ namespace Station
 
         //Control the different log levels
         public static Button? logLevel;
+        
+        //Image for OpenVR connection
+        public static Image? openVrConnection;
 
         //Labels for the current process
         public static Label? processConsole;
@@ -28,6 +31,7 @@ namespace Station
 
             console = this.ConsoleWindow;
             logLevel = this.LoggingLevel;
+            openVrConnection = this.OpenVrConnection;
             processConsole = this.ProcessConsole;
             statusConsole = this.StatusConsole;
             MockConsole.WriteLine("Program Started", MockConsole.LogLevel.Error);

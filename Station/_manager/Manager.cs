@@ -49,9 +49,13 @@ namespace Station
         /// </summary>
         public static WrapperManager? wrapperManager;
 
+        /// <summary>
+        /// Access the non-static classes of the openvr manager
+        /// </summary>
+        public static OpenVRManager? openVRManager;
+
         private static string? macAddress = null;
         private static string? versionNumber = null;
-
         private static Timer? variableCheck;
 
         /// <summary>
@@ -98,6 +102,7 @@ namespace Station
 
                     if (!Helper.GetStationMode().Equals(Helper.STATION_MODE_APPLIANCE))
                     {
+                        openVRManager = new OpenVRManager();
                         wrapperManager = new WrapperManager();
 
                         //Launch the custom wrapper application here
@@ -171,7 +176,7 @@ namespace Station
             new Thread(() =>
             {
                 StopVariableTimer();
-                StationMonitoringThread.stopMonitoring();
+                StationMonitoringThread.StopMonitoring();
                 StopServer();
                 wrapperManager?.ShutDownWrapper();
                 Logger.WriteLog("Station stopped", MockConsole.LogLevel.Normal);

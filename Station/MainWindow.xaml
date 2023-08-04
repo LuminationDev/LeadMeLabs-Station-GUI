@@ -119,6 +119,17 @@
             Background="#424242" 
             HorizontalAlignment="Left" 
             VerticalAlignment="Bottom">
+            
+            <WrapPanel>
+                <Label 
+                    FontFamily="Fonts/#Poppins-Medium"
+                    Content="OpenVR" 
+                    Foreground="#828282" 
+                    Height="25" 
+                    Margin="5,0,10,0"/>
+                
+                <Image x:Name="OpenVrConnection" ToolTip="OpenVR Offline" Margin="25, 0, 0, 0" Source="../assets/openvr_offline.ico" Width="25"/>
+            </WrapPanel>
 
             <Label 
                 Name="ProcessLabel"
@@ -126,7 +137,7 @@
                 Content="Process:" 
                 Foreground="#828282" 
                 Height="25" 
-                Margin="5,5,10,0"/>
+                Margin="5,0,10,0"/>
 
             <Label 
                 x:Name="ProcessConsole"
@@ -134,7 +145,7 @@
                 Content="No active process..."
                 Foreground="#a8a8a8"
                 Height="25" 
-                Margin="5,5,10,0"/>
+                Margin="5,0,10,0"/>
 
             <Label 
                 x:Name="StatusLabel"
@@ -142,7 +153,7 @@
                 Content="Status:" 
                 Foreground="#828282" 
                 Height="25" 
-                Margin="5,5,10,0"/>
+                Margin="5,0,10,0"/>
 
             <Label 
                 x:Name="StatusConsole"
@@ -150,15 +161,15 @@
                 Content="Waiting..."
                 Foreground="#a8a8a8"
                 Height="25" 
-                Margin="5,5,10,0"/>
+                Margin="5,0,10,0"/>
 
             <Button 
                 Style="{StaticResource MainButton}"
                 Command="{Binding StopCurrentProcess}"
                 Content="Stop" 
-                Margin="10,10,10,10" 
+                Margin="10,5,10,10" 
                 Width="50" 
-                Height="25" 
+                Height="20" 
                 HorizontalAlignment="Right" 
                 VerticalAlignment="Bottom"
                 ToolTip="Stop the current application the Station has opened."/>

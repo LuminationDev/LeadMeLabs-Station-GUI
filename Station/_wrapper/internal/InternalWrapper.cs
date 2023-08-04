@@ -12,9 +12,24 @@ namespace Station
         //Track any internal executables in the dictionary to start/stop at will
         Dictionary<string, Process> InternalProcesses = new();
 
+        public Experience? GetLastExperience()
+        {
+            return null;
+        }
+        
+        public void SetLastExperience(Experience experience)
+        {
+            throw new NotImplementedException();
+        }
+
         public string? GetCurrentExperienceName()
         {
             return null;
+        }
+        
+        public void SetLaunchingExperience(bool isLaunching)
+        {
+            throw new NotImplementedException();
         }
         
         public List<string>? CollectApplications()
@@ -28,6 +43,11 @@ namespace Station
         }
 
         public void PassMessageToProcess(string message)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void SetCurrentProcess(Process process)
         {
             throw new NotImplementedException();
         }

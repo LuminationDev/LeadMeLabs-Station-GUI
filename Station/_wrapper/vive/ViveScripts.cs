@@ -1,4 +1,4 @@
-﻿using leadme_api;
+﻿using System;
 using System.Threading.Tasks;
 
 namespace Station
@@ -33,18 +33,20 @@ namespace Station
         /// <returns></returns>
         public static async Task<bool> ViveCheck(string type)
         {
+            if (SessionController.vrHeadset == null) return false;
+
             //Determine if the awaiting headset connection has already been sent.
             bool sent = false;
             int count = 0;
 
-            MockConsole.WriteLine("About to launch a steam app, vive status is: " + WrapperMonitoringThread.viveStatus, MockConsole.LogLevel.Normal);
-            while (!WrapperMonitoringThread.viveStatus.Contains("CONNECTED"))
+            MockConsole.WriteLine("About to launch a steam app, vive status is: " + Enum.GetName(typeof(HMDStatus), SessionController.vrHeadset.GetConnectionStatus()), MockConsole.LogLevel.Normal);
+            while (SessionController.vrHeadset.GetConnectionStatus() != HMDStatus.Connected)
             {
                 MockConsole.WriteLine("Vive check looping", MockConsole.LogLevel.Debug);
 
                 activelyMonitoring = true;
 
-                if (WrapperMonitoringThread.viveStatus.Contains("Terminated"))
+                if (SessionController.vrHeadset.GetConnectionStatus() == HMDStatus.Lost)
                 {
                     SessionController.StartVRSession(type);
                     SessionController.PassStationMessage($"ApplicationUpdate,Starting VR Session...");

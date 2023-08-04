@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Diagnostics;
 
 namespace Station
 {
@@ -39,6 +40,23 @@ namespace Station
     public interface Wrapper
     {
         /// <summary>
+        /// Return the last experience that was launched from the wrapper.
+        /// </summary>
+        /// <returns>An Experience object.</returns>
+        Experience? GetLastExperience();
+
+        /// <summary>
+        /// Set the experience that a wrapper is monitoring.
+        /// </summary>
+        void SetLastExperience(Experience experience);
+
+        /// <summary>
+        /// Set whether the Station is actively trying to launch an experience.
+        /// </summary>
+        /// <returns></returns>
+        void SetLaunchingExperience(bool isLaunching);
+        
+        /// <summary>
         /// Query the current experience for it's name.
         /// </summary>
         /// <returns>A string or null representing the current experiences name</returns>
@@ -62,6 +80,13 @@ namespace Station
         /// </summary>
         /// <param name="message">A string an action to pass into an experience.</param>
         void PassMessageToProcess(string message);
+
+        /// <summary>
+        /// Set the current process for the wrapper class, this is primarly used be OpenVR once it has collected information through
+        /// the QueryApplications function.
+        /// </summary>
+        /// <param name="process">A process representing a running experience</param>
+        void SetCurrentProcess(Process process);
 
         /// <summary>
         /// Start the supplied process and maintain a connection through the current process variable.

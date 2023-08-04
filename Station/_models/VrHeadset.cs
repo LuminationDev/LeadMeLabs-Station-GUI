@@ -2,8 +2,18 @@
 
 namespace Station
 {
+    public enum HMDStatus
+    {
+        Connected,
+        Lost
+    }
+
     public interface VrHeadset
     {
+        HMDStatus GetConnectionStatus();
+
+        void SetOpenVRStatus(HMDStatus status);
+
         List<string> GetProcessesToQuery();
 
         void StartVrSession();
@@ -12,7 +22,7 @@ namespace Station
 
         void StopTimer();
 
-        string MonitorVrConnection(string currentViveStatus);
+        void MonitorVrConnection();
 
         void StopProcessesBeforeLaunch();
     }

@@ -1,11 +1,27 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 
 namespace Station
 {
     internal class ViveWrapper : Wrapper
     {
         public static string wrapperType = "Vive";
+
+        public Experience? GetLastExperience()
+        {
+            return null;
+        }
+        
+        public void SetLastExperience(Experience experience)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void SetLaunchingExperience(bool isLaunching)
+        {
+            throw new NotImplementedException();
+        }
 
         public string? GetCurrentExperienceName()
         {
@@ -23,6 +39,11 @@ namespace Station
         }
 
         public void PassMessageToProcess(string message)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void SetCurrentProcess(Process process)
         {
             throw new NotImplementedException();
         }

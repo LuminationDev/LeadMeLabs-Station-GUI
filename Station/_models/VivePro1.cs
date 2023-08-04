@@ -13,8 +13,20 @@ namespace Station
 {
     public class VivePro1 : VrHeadset
     {
+        private static HMDStatus openVRStatus; //Determined by OpenVR
+        private static HMDStatus viveStatus; //Determined by Vive Logs
         private Timer? timer;
         private static bool minimising = false;
+
+        public HMDStatus GetConnectionStatus()
+        {
+            return viveStatus;
+        }
+
+        public void SetOpenVRStatus(HMDStatus status)
+        {
+            openVRStatus = status;
+        }
 
         public List<string> GetProcessesToQuery()
         {
@@ -100,7 +112,7 @@ namespace Station
             }
         }
 
-        public string MonitorVrConnection(string currentViveStatus)
+        public void MonitorVrConnection()
         {
             var directory = new DirectoryInfo(@"C:\ProgramData\VIVE Wireless\ConnectionUtility\Log");
             var file = directory.GetFiles()
@@ -108,7 +120,7 @@ namespace Station
                 .First();
             ReverseLineReader reverseLineReader = new ReverseLineReader(file.FullName, Encoding.Unicode);
             IEnumerator<string> enumerator = reverseLineReader.GetEnumerator();
-            Console.WriteLine(enumerator.Current);
+            MockConsole.WriteLine(enumerator.Current, MockConsole.LogLevel.Verbose);
             do
             {
                 string current = enumerator.Current;
@@ -119,28 +131,24 @@ namespace Station
                 if (current.Contains("Terminated"))
                 {
                     enumerator.Dispose();
-                    return "Terminated";
+                    viveStatus = HMDStatus.Lost;
                 }
 
                 if (current.Contains("Connection Status set to"))
                 {
-                    string previousViveStatus = (string)currentViveStatus.Clone();
-                    if (previousViveStatus.Contains("CONNECTION_STATUS_CONNECTED") &&
-                        current.Contains("CONNECTION_STATUS_SCANNING"))
+                    if (viveStatus == HMDStatus.Connected && current.Contains("CONNECTION_STATUS_SCANNING"))
                     {
                         SessionController.PassStationMessage("MessageToAndroid,LostHeadset");
+                        viveStatus = HMDStatus.Lost;
                     }
-                    else if (current.Contains("CONNECTION_STATUS_CONNECTED") &&
-                        previousViveStatus.Contains("CONNECTION_STATUS_SCANNING"))
+                    else if (current.Contains("CONNECTION_STATUS_CONNECTED") && viveStatus == HMDStatus.Lost)
                     {
                         SessionController.PassStationMessage("MessageToAndroid,FoundHeadset");
+                        viveStatus = HMDStatus.Connected;
                     }
                     enumerator.Dispose();
-                    return current;
                 }
             } while (enumerator.MoveNext());
-
-            return currentViveStatus;
         }
 
         /// <summary>
@@ -149,7 +157,7 @@ namespace Station
         public async void StopProcessesBeforeLaunch()
         {
             CommandLine.QueryVRProcesses(new List<string> { "vrmonitor" }, true);
-
+            
             await Task.Delay(3000);
         }
     }

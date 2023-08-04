@@ -23,7 +23,6 @@ namespace Station
         private static string licenses = " +licenses_print ";
         private static string quit = " +quit";
 
-        public static Experience lastApp;
         public static bool launchingGame = false;
         public static bool popupDetect = false;
         public static string steamCMDConfigured = "Missing";

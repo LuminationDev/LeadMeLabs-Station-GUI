@@ -12,9 +12,9 @@ namespace Station
     public class WrapperManager
     {
         //Store each wrapper class
-        private readonly Wrapper customWrapper = new CustomWrapper();
-        private readonly Wrapper steamWrapper = new SteamWrapper();
-        private readonly Wrapper viveWrapper = new ViveWrapper();
+        private static readonly Wrapper customWrapper = new CustomWrapper();
+        private static readonly Wrapper steamWrapper = new SteamWrapper();
+        private static readonly Wrapper viveWrapper = new ViveWrapper();
 
         //Used for multiple 'internal' applications, operations are separate from the other wrapper classes
         private readonly InternalWrapper internalWrapper = new();
@@ -56,7 +56,6 @@ namespace Station
             ParentPipeServer.Run(LogHandler, ExternalActionHandler);
         }
 
-        //TODO currently this is not closing anywhere
         /// <summary>
         /// Close a currently open pipe server.
         /// </summary>
@@ -318,16 +317,9 @@ namespace Station
             //Stop any current processes before trying to launch a new one
             CurrentWrapper.StopCurrentProcess();
 
-            //Stop any accessory processes before opening a new process
-            if(SessionController.vrHeadset != null)
-            {
-                SessionController.vrHeadset.StopProcessesBeforeLaunch();
-            }
-
             UIUpdater.UpdateProcess("Launching");
             UIUpdater.UpdateStatus("Loading...");
 
-            //TODO clean this up so we dont have to rely on appID or name
             //Determine what is need to launch the process(appID - Steam or name - Custom)
             //Pass in the launcher parameters if there are any
             Task.Factory.StartNew(() =>
@@ -353,7 +345,7 @@ namespace Station
         /// </summary>
         /// <param name="type">A string representing the type of wrapper to create.</param>
         /// <returns></returns>
-        private void LoadWrapper(string type)
+        public static void LoadWrapper(string type)
         {
             switch (type)
             {
@@ -426,10 +418,9 @@ namespace Station
                 return;
             }
 
-            //TODO this is being called from somewhere else?
             UIUpdater.ResetUIDisplay();
             CurrentWrapper.StopCurrentProcess();
-            WrapperMonitoringThread.stopMonitoring();
+            WrapperMonitoringThread.StopMonitoring();
         }
 
         /// <summary>

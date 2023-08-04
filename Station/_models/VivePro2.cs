@@ -1,15 +1,26 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Threading.Tasks;
 using System.Timers;
 
 namespace Station
 {
     public class VivePro2 : VrHeadset
     {
+        private static HMDStatus openVRStatus; //Determined by OpenVR
+        private static HMDStatus viveStatus; //Determined by Vive Logs
         private Timer? timer;
         private static bool minimising = false;
+
+        public HMDStatus GetConnectionStatus()
+        {
+            return viveStatus;
+        }
+
+        public void SetOpenVRStatus(HMDStatus status)
+        {
+            openVRStatus = status;
+        }
 
         public List<string> GetProcessesToQuery()
         {
@@ -23,7 +34,6 @@ namespace Station
 
         public void StartVrSession()
         {
-            //TODO this may not be correct
             //Bail out if Steam and SteamVR are already running
             if(QueryMonitorProcesses())
             {
@@ -100,7 +110,7 @@ namespace Station
             }
         }
 
-        public string MonitorVrConnection(string currentViveStatus)
+        public void MonitorVrConnection()
         {
             Process[] vivePro2Connector = Process.GetProcessesByName("WaveConsole");
             Process[] viveStatusMonitor = Process.GetProcessesByName("LhStatusMonitor");
@@ -110,24 +120,24 @@ namespace Station
                 {
                     if (process.MainWindowTitle.Equals("VIVE Console"))
                     {
-                        if (currentViveStatus.Equals("CONNECTED"))
+                        if (viveStatus == HMDStatus.Connected)
                         {
                             SessionController.PassStationMessage("MessageToAndroid,LostHeadset");
                         }
-                        return "TERMINATED";
+                        viveStatus = HMDStatus.Lost;
                     }
                 }
             }
             if (viveStatusMonitor.Length > 0)
             {
-                if (currentViveStatus.Equals("TERMINATED"))
+                if (viveStatus == HMDStatus.Lost)
                 {
                     SessionController.PassStationMessage("MessageToAndroid,FoundHeadset");
                 }
 
-                return "CONNECTED";
+                viveStatus = HMDStatus.Connected;
             }
-            return "TERMINATED";
+            viveStatus = HMDStatus.Lost;
         }
 
         /// <summary>
