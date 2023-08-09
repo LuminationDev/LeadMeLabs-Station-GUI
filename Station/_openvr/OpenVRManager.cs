@@ -245,54 +245,6 @@ namespace Station
             }
         }
         #endregion
-        
-        public void PerformDeviceChecks()
-        {
-            //Run through all connected devices
-            CheckDevices();
-
-            // Boundary && Controller Information (only check if the headset is connected and tracking)
-            if (_tracking)
-            {
-                CheckBoundary();
-            }
-            else
-            {
-                //TODO this makes a call to the nuc?
-                //App.UpdateDevices("Controller", "both", "Not Connected");
-            }
-        }
-
-        /// <summary>
-        /// Loop through the available devices.
-        /// </summary>
-        private void CheckDevices()
-        {
-            if (_ovrSystem == null)
-            {
-                return;
-            }
-
-            // Track the number of connected controllers & base stations
-            int controllerCount = 0;
-
-            for (uint deviceIndex = 0; deviceIndex < OpenVR.k_unMaxTrackedDeviceCount; deviceIndex++)
-            {
-                switch (_ovrSystem.GetTrackedDeviceClass(deviceIndex))
-                {
-                    case ETrackedDeviceClass.HMD:
-                        GetHeadsetPositionAndOrientation(deviceIndex);
-                        break;
-                    case ETrackedDeviceClass.Controller:
-                        controllerCount++;
-                        GetControllerInfo(deviceIndex);
-                        break;
-                }
-            }
-
-            if (controllerCount != 0) return;
-            MockConsole.WriteLine($"No controllers currently connected.", MockConsole.LogLevel.Debug);
-        }
 
         #region OpenVR Applications
         /// <summary>
@@ -463,6 +415,59 @@ namespace Station
         }
         #endregion
 
+        #region OpenVR Devices
+        /// <summary>
+        /// Check the connected VR devices, if _tracking is enabled then check if the boundary is configured.
+        /// </summary>
+        public void PerformDeviceChecks()
+        {
+            //Run through all connected devices
+            CheckDevices();
+
+            // Boundary && Controller Information (only check if the headset is connected and tracking)
+            if (_tracking)
+            {
+                CheckBoundary();
+            }
+            else
+            {
+                //TODO this makes a call to the nuc?
+                //App.UpdateDevices("Controller", "both", "Not Connected");
+            }
+        }
+
+        /// <summary>
+        /// Loop through the available devices.
+        /// </summary>
+        private void CheckDevices()
+        {
+            if (_ovrSystem == null)
+            {
+                return;
+            }
+
+            // Track the number of connected controllers & base stations
+            int controllerCount = 0;
+
+            for (uint deviceIndex = 0; deviceIndex < OpenVR.k_unMaxTrackedDeviceCount; deviceIndex++)
+            {
+                switch (_ovrSystem.GetTrackedDeviceClass(deviceIndex))
+                {
+                    case ETrackedDeviceClass.HMD:
+                        GetHeadsetPositionAndOrientation(deviceIndex);
+                        break;
+                    case ETrackedDeviceClass.Controller:
+                        controllerCount++;
+                        GetControllerInfo(deviceIndex);
+                        break;
+                }
+            }
+
+            if (controllerCount != 0) return;
+            MockConsole.WriteLine($"No controllers currently connected.", MockConsole.LogLevel.Debug);
+        }
+
+
         #region Headset Information
         /// <summary>
         /// Checks the calibration state of the VR Chaperone system using OpenVR SDK.
@@ -607,6 +612,7 @@ namespace Station
             OpenVR.Applications.GetApplicationPropertyString(pchKey, property, sb, (uint)sb.Capacity, ref error);
             return error == EVRApplicationError.None ? sb.ToString() : "Unknown";
         }
+        #endregion
         #endregion
     }
 }
