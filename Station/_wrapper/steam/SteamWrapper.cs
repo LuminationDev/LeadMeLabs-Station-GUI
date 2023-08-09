@@ -34,7 +34,12 @@ namespace Station
         {
             lastExperience = experience;
         }
-        
+
+        public bool GetLaunchingExperience()
+        {
+            return launchingExperience;
+        }
+
         public void SetLaunchingExperience(bool isLaunching)
         {
             launchingExperience = isLaunching;
@@ -98,22 +103,23 @@ namespace Station
             WrapperMonitoringThread.InitializeMonitoring(wrapperType);
 
             //Wait for Vive to start
-            if (!WaitForVive().Result) return;
+            if (!ViveScripts.WaitForVive(wrapperType).Result) return;
 
-            //TODO if VIVE Console is open (with headset connected) and OpenVrSystem cannot initialise then restart SteamVR
+            //If Vive is open (with headset connected) and OpenVrSystem cannot initialise then restart SteamVR
+            if (!OpenVRManager.WaitForOpenVR().Result) return;            
 
             Task.Factory.StartNew(() =>
             {
                 //Attempt to start the process using OpenVR
                 if (OpenVRManager.LaunchApplication(experience.Name)) return;
-                
+
+                //Fall back to the alternate if OpenVR launch fails or is not a registered VR experience in the vrmanifest
                 //Stop any accessory processes before opening a new process
-                if(SessionController.vrHeadset != null)
+                if (SessionController.vrHeadset != null)
                 {
                     SessionController.vrHeadset.StopProcessesBeforeLaunch();
                 }
-                
-                //Fall back to the alternate if it fails or is not a registered VR experience in the vrmanifest
+              
                 Logger.WriteLog($"SteamWrapper.WrapProcess - Using AlternateLaunchProcess", MockConsole.LogLevel.Normal);
                 AlternateLaunchProcess(experience);
             });
@@ -360,6 +366,17 @@ namespace Station
                 timer.AutoReset = true;
                 timer.Enabled = true;
             }).Start();
+        }
+
+        /// <summary>
+        /// Launch SteamVR as a process, SteamVR's appID is (250820)
+        /// </summary>
+        public static void LauncherSteamVR()
+        {
+            currentProcess = new Process();
+            currentProcess.StartInfo.FileName = SessionController.steam;
+            currentProcess.StartInfo.Arguments = launch_params + 250820;
+            currentProcess.Start();
         }
     }
 }

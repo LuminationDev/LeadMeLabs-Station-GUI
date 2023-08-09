@@ -26,7 +26,12 @@ namespace Station
         {
             return null;
         }
-        
+
+        public bool GetLaunchingExperience()
+        {
+            throw new NotImplementedException();
+        }
+
         public void SetLaunchingExperience(bool isLaunching)
         {
             throw new NotImplementedException();

@@ -28,7 +28,12 @@ namespace Station
         {
             lastExperience = experience;
         }
-        
+
+        public bool GetLaunchingExperience()
+        {
+            return launchingExperience;
+        }
+
         public void SetLaunchingExperience(bool isLaunching)
         {
             launchingExperience = isLaunching;
@@ -135,9 +140,10 @@ namespace Station
             lastExperience = experience;
 
             //Wait for Vive to start
-            if (!WaitForVive().Result) return;
+            if (!ViveScripts.WaitForVive(wrapperType).Result) return;
 
-            //TODO if VIVE Console is open (with headset connected) and OpenVrSystem cannot initialise then restart SteamVR            
+            //If Vive is open (with headset connected) and OpenVrSystem cannot initialise then restart SteamVR
+            if (!OpenVRManager.WaitForOpenVR().Result) return;
 
             MockConsole.WriteLine($"Launching process: {experience.Name}", MockConsole.LogLevel.Normal);
             Task.Factory.StartNew(() =>
@@ -155,32 +161,6 @@ namespace Station
                 Logger.WriteLog($"CustomWrapper.WrapProcess - Using AlternateLaunchProcess", MockConsole.LogLevel.Normal);
                 AlternateLaunchProcess(experience);
             });                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                
-        }
-
-        /// <summary>
-        /// Wait for Vive to be open and connected before going any further with the launcher sequence.
-        /// </summary>
-        /// <returns></returns>
-        private async Task<bool> WaitForVive()
-        {
-            if (SessionController.vrHeadset == null) return false;
-
-            //Wait for the Vive Check
-            Logger.WriteLog("About to launch a steam app, vive status is: " + Enum.GetName(typeof(HMDStatus), SessionController.vrHeadset.GetConnectionStatus()), MockConsole.LogLevel.Normal);
-            if (launchingExperience)
-            {
-                SessionController.PassStationMessage("MessageToAndroid,AlreadyLaunchingGame");
-                return false;
-            }
-            launchingExperience = true;
-
-            if (!await ViveScripts.ViveCheck(wrapperType))
-            {
-                launchingExperience = false;
-                return false;
-            }
-
-            return true;
         }
 
         #region Alternate Process Collection
@@ -250,6 +230,7 @@ namespace Station
                 child = GetExperienceProcess();
             }
             currentProcess = child;
+            launchingExperience = false;
 
             if (child != null && currentProcess != null && lastExperience.ExeName != null)
             {
