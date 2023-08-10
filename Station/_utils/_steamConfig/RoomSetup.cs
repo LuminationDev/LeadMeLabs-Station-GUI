@@ -73,20 +73,27 @@ namespace Station
             {
                 // Compare the content
                 bool filesAreEqual = AreFilesEqual(steamVRFilePath, defaultFilePath);
-                if(!filesAreEqual)
+                if (!filesAreEqual)
                 {
                     Logger.WriteLog("CompareRoomSetup - SteamVR is not equal to the Default", MockConsole.LogLevel.Error);
                     LoadRoomSetup();
-                } else
+                }
+                else
                 {
                     Logger.WriteLog("CompareRoomSetup - chaperone_info.vrchap is in working order, no action necessary", MockConsole.LogLevel.Error);
                 }
-            } else if (defaultExists)
+            }
+            else if (defaultExists)
             {
                 LoadRoomSetup();
                 Logger.WriteLog("CompareRoomSetup - SteamVR chaperone_info.vrchap does not exist, replacing with Default", MockConsole.LogLevel.Error);
-            } else
+            }
+            else if (steamExists)
             {
+                Logger.WriteLog("CompareRoomSetup - SteamVR chaperone_info.vrchap does exist, Default does not", MockConsole.LogLevel.Error);
+            }
+            else
+            { 
                 Logger.WriteLog($"CompareRoomSetup - chaperone_info.vrchap does not exist in SteamVR: {steamVRFilePath}. Or in _config: {defaultFilePath}, ROOM SETUP REQUIRED", MockConsole.LogLevel.Error);
             }
         }
