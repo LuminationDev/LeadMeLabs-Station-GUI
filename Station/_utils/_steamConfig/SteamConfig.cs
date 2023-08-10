@@ -23,6 +23,7 @@ namespace Station
 
             if (initialCall)
             {
+                RoomSetup.CompareRoomSetup();
                 ReadAndReportSteamStats();
             }
         }
