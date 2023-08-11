@@ -36,7 +36,8 @@ namespace Station
             if (SessionController.vrHeadset == null) return false;
 
             //Wait for the Vive Check
-            Logger.WriteLog("WaitForVive - Attempting to launch an application, vive status is: " + Enum.GetName(typeof(HMDStatus), SessionController.vrHeadset.GetConnectionStatus()), MockConsole.LogLevel.Normal);
+            Logger.WriteLog("WaitForVive - Attempting to launch an application, vive status is: " +
+                Enum.GetName(typeof(HMDStatus), SessionController.vrHeadset.GetConnectionStatus()), MockConsole.LogLevel.Normal);
             if (WrapperManager.CurrentWrapper?.GetLaunchingExperience() ?? false)
             {
                 SessionController.PassStationMessage("MessageToAndroid,AlreadyLaunchingGame");
@@ -65,7 +66,8 @@ namespace Station
             bool sent = false;
             int count = 0;
 
-            MockConsole.WriteLine("ViveCheck - About to launch a steam app, vive status is: " + Enum.GetName(typeof(HMDStatus), SessionController.vrHeadset.GetConnectionStatus()), MockConsole.LogLevel.Normal);
+            MockConsole.WriteLine("ViveCheck - About to launch a steam app, vive status is: " + 
+                Enum.GetName(typeof(HMDStatus), SessionController.vrHeadset.GetConnectionStatus()), MockConsole.LogLevel.Normal);
             while (SessionController.vrHeadset.GetConnectionStatus() != HMDStatus.Connected)
             {
                 MockConsole.WriteLine("Vive check looping", MockConsole.LogLevel.Debug);
