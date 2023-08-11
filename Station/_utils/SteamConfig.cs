@@ -4,6 +4,8 @@ using System.Collections.Generic;
 using System.IO;
 using System.Net.Http;
 using System.Text;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace Station
 {
@@ -16,6 +18,7 @@ namespace Station
         public static void VerifySteamConfig(bool initialCall = false)
         {
             GetSteamId();
+            UpdateSteamVRSettings();
             VerifySteamLoginUserConfig();
             VerifySteamDefaultPageConfig();
             // VerifySteamHideNotificationConfig();
@@ -390,6 +393,55 @@ namespace Station
             {
                 SentrySdk.CaptureException(e);
             }
+        }
+        
+        private static void UpdateSteamVRSettings()
+        {
+            string fileLocation = "C:\\Program Files (x86)\\Steam\\config\\steamvr.vrsettings";
+            if (!File.Exists(fileLocation))
+            {
+                Logger.WriteLog(
+                    "Could not update SteamVR settings: " +
+                    location, MockConsole.LogLevel.Error);
+                return;
+            }
+
+            try
+            {
+                string lines = File.ReadAllText(fileLocation);
+                JObject json = (JObject) JsonConvert.DeserializeObject(lines);
+
+                json.TryAdd("steamvr", new JObject());
+                json.TryAdd("power", new JObject());
+                json.TryAdd("dashboard", new JObject());
+                json["steamvr"]["enableHomeApp"] = false;
+                json["power"]["turnOffScreensTimeout"] = 1800;
+                json["power"]["pauseCompositorOnStandby"] = false;
+                json["dashboard"]["enableDashboard"] = false;
+                string? text = JsonConvert.SerializeObject(json);
+                if (text != null)
+                {
+                    File.WriteAllText(fileLocation, text);
+                }
+            }
+            catch (Exception e)
+            {
+                SentrySdk.CaptureException(e);
+            }
+        }
+
+        private static string[] UpdateFieldInFileConfigArray(string parentNode, string fieldName, string desiredValue,
+            string[] lines)
+        {
+            bool parentNodeExists = false;
+            foreach (var line in lines)
+            {
+                if (line.Equals($"   \"{parentNode}\" : {{"))
+                {
+                    break;
+                }
+            }
+            return lines;
         }
     }
 }
