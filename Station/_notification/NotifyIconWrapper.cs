@@ -97,13 +97,16 @@ namespace Station
             var openDetails = new ToolStripMenuItem("Details");
             openDetails.Click += OpenDetailsOnClick;
 
+            var roomSetup = new ToolStripMenuItem("Save room setup");
+            roomSetup.Click += SaveRoomSetupClick;
+
             var goToLogs = new ToolStripMenuItem("Logs");
             goToLogs.Click += GoToLogsOnClick;
 
             var exitItem = new ToolStripMenuItem("Exit");
             exitItem.Click += ExitItemOnClick;
 
-            var contextMenu = new ContextMenuStrip { Items = { openItem, openDetails, goToLogs, exitItem } };
+            var contextMenu = new ContextMenuStrip { Items = { openItem, openDetails, roomSetup, goToLogs, exitItem } };
             return contextMenu;
         }
 
@@ -117,6 +120,17 @@ namespace Station
         {
             DetailsWindow details = new DetailsWindow();
             details.Show();
+        }
+
+        private void SaveRoomSetupClick(object? sender, EventArgs eventArgs)
+        {
+            string message = RoomSetup.SaveRoomSetup();
+            NotifyRequest = new NotifyRequestRecord
+            {
+                Title = "Room Setup",
+                Text = message,
+                Duration = 5000
+            };
         }
 
         private void GoToLogsOnClick(object? sender, EventArgs eventArgs)

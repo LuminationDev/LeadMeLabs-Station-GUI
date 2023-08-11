@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Threading.Tasks;
 using System.Timers;
 
 namespace Station
@@ -146,6 +147,44 @@ namespace Station
         public void StopProcessesBeforeLaunch()
         {
             //Not currently required for VivePro2
+        }
+
+        /// <summary>
+        /// Restart the Vive Wireless. This reconnects lost or error state headsets without closing
+        /// SteamVR (which may close an open experience).
+        /// </summary>
+        public async void RestartVive() //TODO this is not called anywhere yet
+        {
+            CommandLine.QueryVRProcesses(new List<string> { "LhStatusMonitor", "WaveConsole" }, true);
+            SessionController.PassStationMessage($"ApplicationUpdate,Restarting Vive...");
+
+            await Task.Delay(5000);
+
+            CommandLine.StartProgram(SessionController.steam, "-noreactlogin -login " +
+                Environment.GetEnvironmentVariable("SteamUserName", EnvironmentVariableTarget.Process) + " " +
+                Environment.GetEnvironmentVariable("SteamPassword", EnvironmentVariableTarget.Process) + " steam://rungameid/1635730");
+
+
+            //Track the attempts
+            int monitorAttempts = 0;
+            int attemptLimit = 10;
+            int delay = 2000;
+
+            //Check the condition status (bail out after x amount)
+            do
+            {
+                monitorAttempts++;
+                await Task.Delay(delay);
+            } while (Process.GetProcessesByName("LhStatusMonitor").Length == 0 && monitorAttempts < attemptLimit);
+
+            // Connection bailed out, send a failure message
+            if (monitorAttempts == attemptLimit)
+            {
+                SessionController.PassStationMessage($"ApplicationUpdate,Vive Error");
+                return;
+            }
+
+            SessionController.PassStationMessage($"ApplicationUpdate,Vive Restarted");
         }
     }
 }

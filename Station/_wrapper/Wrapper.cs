@@ -51,6 +51,12 @@ namespace Station
         void SetLastExperience(Experience experience);
 
         /// <summary>
+        /// Get the wrappers current launching status.
+        /// </summary>
+        /// <returns></returns>
+        bool GetLaunchingExperience();
+
+        /// <summary>
         /// Set whether the Station is actively trying to launch an experience.
         /// </summary>
         /// <returns></returns>

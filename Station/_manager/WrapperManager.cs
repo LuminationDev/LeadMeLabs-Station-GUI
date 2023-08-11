@@ -174,6 +174,8 @@ namespace Station
         {
             if (SessionController.vrHeadset != null)
             {
+                RoomSetup.CompareRoomSetup();
+
                 List<string> combinedProcesses = new List<string>();
                 combinedProcesses.AddRange(WrapperMonitoringThread.steamProcesses);
                 combinedProcesses.AddRange(WrapperMonitoringThread.viveProcesses);

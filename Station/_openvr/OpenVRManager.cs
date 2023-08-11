@@ -15,6 +15,8 @@ namespace Station
     ///     - Called in the StationMonitoringThread, continuously tries to initialise if it has not been already.
     /// LoadManifests
     ///     - Called in the InitialiseOpenVR when OpenVR first establishes a connection.
+    /// WaitForOpenVR
+    ///     - Called by a wrapper before launching an experience. Attempts to initialise OpenVR, if Vive is connected but OpenVR fails it restarts SteamVR and monitors for a new connection
     /// QueryCurrentApplication
     ///     - Called in the StationMonitoringThread, continuously queries if there are any applications running in SteamVR, only if InitialiseOpenVR returns true
     /// PerformDeviceChecks
@@ -90,7 +92,7 @@ namespace Station
             }
             catch (Exception e)
             {
-                MockConsole.WriteLine($"OnVREvent task Error: {e}", MockConsole.LogLevel.Error);
+                Logger.WriteLog($"OnVREvent.LoadManifests task Error: {e}", MockConsole.LogLevel.Error);
             }
             
             //Create a listener for VR events - this handles the gentle exit of SteamVR
@@ -123,6 +125,83 @@ namespace Station
             // Load in the steam & custom manifest
             LoadVrManifest();
         }
+
+        /// <summary>
+        /// Wait for OpenVR to be open and connected before going any further with a wrappers' launcher sequence. No experience should
+        /// be open at this point so there is no concern that killing SteamVR will exit and experience.
+        /// </summary>
+        /// <returns></returns>
+        public static async Task<bool> WaitForOpenVR()
+        {
+            if (SessionController.vrHeadset == null) return false;
+
+            MockConsole.WriteLine($"WaitForOpenVR - Checking SteamVR. Vive status: {Enum.GetName(typeof(HMDStatus), SessionController.vrHeadset.GetConnectionStatus())} " +
+                $"- OpenVR status: {Manager.openVRManager?.InitialiseOpenVR() ?? false}", MockConsole.LogLevel.Normal);
+
+            //If Vive is connect but OpenVR is not/cannot be initialised, restart SteamVR and check again.
+            if (SessionController.vrHeadset.GetConnectionStatus() == HMDStatus.Connected && (!Manager.openVRManager?.InitialiseOpenVR() ?? true))
+            {
+                Logger.WriteLog($"OpenVRManager.WaitForOpenVR - Vive status: {SessionController.vrHeadset.GetConnectionStatus()}, " +
+                    $"OpenVR connection not established - restarting SteamVR", MockConsole.LogLevel.Normal);
+
+                //Send message to the tablet (Updating what is happening)
+                SessionController.PassStationMessage($"ApplicationUpdate,Restarting SteamVR...");
+
+                //Kill SteamVR
+                CommandLine.QueryVRProcesses(new List<string> { "vrmonitor" }, true);
+                await Task.Delay(5000);
+
+                //Launch SteamVR
+                SteamWrapper.LauncherSteamVR();
+                await Task.Delay(3000);
+
+                bool steamvr = await MonitorLoop(() => Process.GetProcessesByName("vrmonitor").Length == 0);
+                if (!steamvr) return false;
+
+                Logger.WriteLog($"OpenVRManager.WaitForOpenVR - Vive status: {SessionController.vrHeadset.GetConnectionStatus()}, " +
+                    $"SteamVR restarted successfully", MockConsole.LogLevel.Normal);
+
+                //Send message to the tablet (Updating what is happening)
+                SessionController.PassStationMessage($"ApplicationUpdate,Connecting OpenVR...");
+
+                bool openvr = await MonitorLoop(() => !Manager.openVRManager?.InitialiseOpenVR() ?? true);
+                if (!openvr) return false;
+
+                Logger.WriteLog($"OpenVRManager.WaitForOpenVR - Vive status: {SessionController.vrHeadset.GetConnectionStatus()}, " +
+                    $"OpenVR connection established", MockConsole.LogLevel.Normal);
+            }
+
+            return true;
+        }
+
+        /// <summary>
+        /// Monitors a specified condition using a loop, with optional timeout and attempt limits.
+        /// </summary>
+        /// <param name="conditionChecker">A delegate that returns a boolean value indicating whether the monitored condition is met.</param>
+        /// <returns>True if the condition was successfully met within the specified attempts; false otherwise.</returns>
+        private static async Task<bool> MonitorLoop(Func<bool> conditionChecker)
+        {
+            //Track the attempts
+            int monitorAttempts = 0;
+            int attemptLimit = 10;
+            int delay = 3000;
+
+            //Check the condition status (bail out after x amount)
+            do
+            {
+                monitorAttempts++;
+                await Task.Delay(delay);
+            } while (conditionChecker.Invoke() && monitorAttempts < attemptLimit);
+
+            // Connection bailed out, send a failure message
+            if (monitorAttempts == attemptLimit)
+            {
+                SessionController.PassStationMessage("MessageToAndroid,HeadsetTimeout");
+                return false;
+            }
+
+            return true;
+        }
         #endregion
 
         #region OpenVR Events
@@ -143,69 +222,29 @@ namespace Station
                         (uint)System.Runtime.InteropServices.Marshal.SizeOf(typeof(VREvent_t)))) continue;
                 
                 //TODO work out what to do if the program (SteamVR) has quit.
+
                 // Handle the specific VR event
-                if ((EVREventType)vrEvent.eventType == EVREventType.VREvent_Quit)
+                switch((EVREventType)vrEvent.eventType)
                 {
-                    quiting = true;
-                    Logger.WriteLog("SteamVR quitting", MockConsole.LogLevel.Normal);
-                    _ovrSystem.AcknowledgeQuit_Exiting();
-                    OpenVrSystem?.Shutdown();
-                    OpenVrSystem = null;
-                    UIUpdater.LoadImageFromAssetFolder(false);
+                    case EVREventType.VREvent_RestartRequested:
+                        //TODO send a message to the nuc?/Handle restart?
+                        //IDEA: SteamVR is in the _steamManifest, check if launching it closes the current steamvr program and opens a new one? Essentially a restart
+                        break;
+
+                    case EVREventType.VREvent_Quit:
+                        quiting = true;
+                        Logger.WriteLog("SteamVR quitting", MockConsole.LogLevel.Normal);
+                        _ovrSystem.AcknowledgeQuit_Exiting();
+                        OpenVrSystem?.Shutdown();
+                        OpenVrSystem = null;
+                        UIUpdater.LoadImageFromAssetFolder(false);
+                        break;
                 }
 
                 vrEvent = new VREvent_t();
             }
         }
         #endregion
-        
-        public void PerformDeviceChecks()
-        {
-            //Run through all connected devices
-            CheckDevices();
-
-            // Boundary && Controller Information (only check if the headset is connected and tracking)
-            if (_tracking)
-            {
-                CheckBoundary();
-            }
-            else
-            {
-                //TODO this makes a call to the nuc?
-                //App.UpdateDevices("Controller", "both", "Not Connected");
-            }
-        }
-
-        /// <summary>
-        /// Loop through the available devices.
-        /// </summary>
-        private void CheckDevices()
-        {
-            if (_ovrSystem == null)
-            {
-                return;
-            }
-
-            // Track the number of connected controllers & base stations
-            int controllerCount = 0;
-
-            for (uint deviceIndex = 0; deviceIndex < OpenVR.k_unMaxTrackedDeviceCount; deviceIndex++)
-            {
-                switch (_ovrSystem.GetTrackedDeviceClass(deviceIndex))
-                {
-                    case ETrackedDeviceClass.HMD:
-                        GetHeadsetPositionAndOrientation(deviceIndex);
-                        break;
-                    case ETrackedDeviceClass.Controller:
-                        controllerCount++;
-                        GetControllerInfo(deviceIndex);
-                        break;
-                }
-            }
-
-            if (controllerCount != 0) return;
-            MockConsole.WriteLine($"No controllers currently connected.", MockConsole.LogLevel.Debug);
-        }
 
         #region OpenVR Applications
         /// <summary>
@@ -255,7 +294,10 @@ namespace Station
                         vrApplicationCount++;
 
                         //If an application is in the dictionary it is therefore a VR experience
-                        _vrApplicationDictionary?.Add(applicationName, pchKey);
+                        if (!_vrApplicationDictionary?.ContainsKey(applicationName) ?? false)
+                        {
+                            _vrApplicationDictionary?.Add(applicationName, pchKey);
+                        }
                     }
                 }
                 else
@@ -373,7 +415,59 @@ namespace Station
         }
         #endregion
 
-        #region Headset Information
+        #region OpenVR Devices
+        /// <summary>
+        /// Check the connected VR devices, if _tracking is enabled then check if the boundary is configured.
+        /// </summary>
+        public void PerformDeviceChecks()
+        {
+            //Run through all connected devices
+            CheckDevices();
+
+            // Boundary && Controller Information (only check if the headset is connected and tracking)
+            if (_tracking)
+            {
+                CheckBoundary();
+            }
+            else
+            {
+                //TODO this makes a call to the nuc? (Headset is lost and therefore controllers are lost)
+                //App.UpdateDevices("Controller", "both", "Not Connected");
+            }
+        }
+
+        /// <summary>
+        /// Loop through the available devices.
+        /// </summary>
+        private void CheckDevices()
+        {
+            if (_ovrSystem == null)
+            {
+                return;
+            }
+
+            // Track the number of connected controllers & base stations
+            int controllerCount = 0;
+
+            for (uint deviceIndex = 0; deviceIndex < OpenVR.k_unMaxTrackedDeviceCount; deviceIndex++)
+            {
+                switch (_ovrSystem.GetTrackedDeviceClass(deviceIndex))
+                {
+                    case ETrackedDeviceClass.HMD:
+                        GetHeadsetPositionAndOrientation(deviceIndex);
+                        break;
+                    case ETrackedDeviceClass.Controller:
+                        controllerCount++;
+                        GetControllerInfo(deviceIndex);
+                        break;
+                }
+            }
+
+            if (controllerCount != 0) return;
+            MockConsole.WriteLine($"No controllers currently connected.", MockConsole.LogLevel.Debug);
+        }
+
+        #region Boundary Details
         /// <summary>
         /// Checks the calibration state of the VR Chaperone system using OpenVR SDK.
         /// If the Chaperone interface is available, it retrieves and outputs the calibration state to the console if in debug mode.
@@ -386,9 +480,35 @@ namespace Station
             }
 
             CVRChaperone chaperone = OpenVR.Chaperone;
+            if (chaperone == null)
+            {
+                return;
+            }
             MockConsole.WriteLine($"CVRChaperone CalibrationState: {chaperone.GetCalibrationState()}", MockConsole.LogLevel.Verbose);
         }
 
+        /// <summary>
+        /// Reload the boundary fence with the currently set collision bounds and play area within Steam's chaperone_info.vrchap.
+        /// This instantly refreshes the boundary with having to exit/restart SteamVR.
+        /// </summary>
+        public void ReloadBoundary() //TODO this is not called anywhere yet
+        {
+            if (_ovrSystem == null)
+            {
+                return;
+            }
+
+            CVRChaperoneSetup chaperoneSetup = OpenVR.ChaperoneSetup;
+            if (chaperoneSetup == null)
+            {
+                return;
+            }
+
+            chaperoneSetup.ReloadFromDisk(EChaperoneConfigFile.Live);
+        }
+        #endregion
+
+        #region Headset Information
         /// <summary>
         /// Obtains the position and orientation of the VR headset (HMD) using OpenVR SDK.
         /// Updates the "App" object with the tracking status of the headset.
@@ -517,6 +637,7 @@ namespace Station
             OpenVR.Applications.GetApplicationPropertyString(pchKey, property, sb, (uint)sb.Capacity, ref error);
             return error == EVRApplicationError.None ? sb.ToString() : "Unknown";
         }
+        #endregion
         #endregion
     }
 }

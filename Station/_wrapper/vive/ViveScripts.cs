@@ -28,10 +28,37 @@ namespace Station
         }
 
         /// <summary>
+        /// Wait for Vive to be open and connected before going any further with the launcher sequence.
+        /// </summary>
+        /// <returns></returns>
+        public static async Task<bool> WaitForVive(string wrapperType)
+        {
+            if (SessionController.vrHeadset == null) return false;
+
+            //Wait for the Vive Check
+            Logger.WriteLog("WaitForVive - Attempting to launch an application, vive status is: " +
+                Enum.GetName(typeof(HMDStatus), SessionController.vrHeadset.GetConnectionStatus()), MockConsole.LogLevel.Normal);
+            if (WrapperManager.CurrentWrapper?.GetLaunchingExperience() ?? false)
+            {
+                SessionController.PassStationMessage("MessageToAndroid,AlreadyLaunchingGame");
+                return false;
+            }
+            WrapperManager.CurrentWrapper?.SetLaunchingExperience(true);
+
+            if (!await ViveCheck(wrapperType))
+            {
+                WrapperManager.CurrentWrapper?.SetLaunchingExperience(false);
+                return false;
+            }
+
+            return true;
+        }
+
+        /// <summary>
         /// Run a while loop to track if the Vive program is up and running.
         /// </summary>
         /// <returns></returns>
-        public static async Task<bool> ViveCheck(string type)
+        private static async Task<bool> ViveCheck(string type)
         {
             if (SessionController.vrHeadset == null) return false;
 
@@ -39,7 +66,8 @@ namespace Station
             bool sent = false;
             int count = 0;
 
-            MockConsole.WriteLine("About to launch a steam app, vive status is: " + Enum.GetName(typeof(HMDStatus), SessionController.vrHeadset.GetConnectionStatus()), MockConsole.LogLevel.Normal);
+            MockConsole.WriteLine("ViveCheck - About to launch a steam app, vive status is: " + 
+                Enum.GetName(typeof(HMDStatus), SessionController.vrHeadset.GetConnectionStatus()), MockConsole.LogLevel.Normal);
             while (SessionController.vrHeadset.GetConnectionStatus() != HMDStatus.Connected)
             {
                 MockConsole.WriteLine("Vive check looping", MockConsole.LogLevel.Debug);
