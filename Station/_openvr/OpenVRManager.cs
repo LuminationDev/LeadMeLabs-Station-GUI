@@ -92,7 +92,7 @@ namespace Station
             }
             catch (Exception e)
             {
-                MockConsole.WriteLine($"OnVREvent task Error: {e}", MockConsole.LogLevel.Error);
+                Logger.WriteLog($"OnVREvent.LoadManifests task Error: {e}", MockConsole.LogLevel.Error);
             }
             
             //Create a listener for VR events - this handles the gentle exit of SteamVR
@@ -431,7 +431,7 @@ namespace Station
             }
             else
             {
-                //TODO this makes a call to the nuc?
+                //TODO this makes a call to the nuc? (Headset is lost and therefore controllers are lost)
                 //App.UpdateDevices("Controller", "both", "Not Connected");
             }
         }
@@ -467,8 +467,7 @@ namespace Station
             MockConsole.WriteLine($"No controllers currently connected.", MockConsole.LogLevel.Debug);
         }
 
-
-        #region Headset Information
+        #region Boundary Details
         /// <summary>
         /// Checks the calibration state of the VR Chaperone system using OpenVR SDK.
         /// If the Chaperone interface is available, it retrieves and outputs the calibration state to the console if in debug mode.
@@ -481,9 +480,35 @@ namespace Station
             }
 
             CVRChaperone chaperone = OpenVR.Chaperone;
+            if (chaperone == null)
+            {
+                return;
+            }
             MockConsole.WriteLine($"CVRChaperone CalibrationState: {chaperone.GetCalibrationState()}", MockConsole.LogLevel.Verbose);
         }
 
+        /// <summary>
+        /// Reload the boundary fence with the currently set collision bounds and play area within Steam's chaperone_info.vrchap.
+        /// This instantly refreshes the boundary with having to exit/restart SteamVR.
+        /// </summary>
+        public void ReloadBoundary() //TODO this is not called anywhere yet
+        {
+            if (_ovrSystem == null)
+            {
+                return;
+            }
+
+            CVRChaperoneSetup chaperoneSetup = OpenVR.ChaperoneSetup;
+            if (chaperoneSetup == null)
+            {
+                return;
+            }
+
+            chaperoneSetup.ReloadFromDisk(EChaperoneConfigFile.Live);
+        }
+        #endregion
+
+        #region Headset Information
         /// <summary>
         /// Obtains the position and orientation of the VR headset (HMD) using OpenVR SDK.
         /// Updates the "App" object with the tracking status of the headset.

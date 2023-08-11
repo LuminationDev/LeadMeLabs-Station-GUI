@@ -149,10 +149,14 @@ namespace Station
             Task.Factory.StartNew(() =>
             {
                 //Attempt to start the process using OpenVR
-                if (OpenVRManager.LaunchApplication(experience.Name)) return;
-                
+                if (OpenVRManager.LaunchApplication(experience.Name))
+                {
+                    Logger.WriteLog($"CustomWrapper.WrapProcess: Launching {experience.Name} via OpenVR", MockConsole.LogLevel.Verbose);
+                    return;
+                }
+
                 //Stop any accessory processes before opening a new process
-                if(SessionController.vrHeadset != null)
+                if (SessionController.vrHeadset != null)
                 {
                     SessionController.vrHeadset.StopProcessesBeforeLaunch();
                 }
@@ -163,7 +167,7 @@ namespace Station
             });                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                
         }
 
-        #region Alternate Process Collection
+        #region Alternate Launch Process
         /// <summary>
         /// Launches an alternate process for the given experience if the primary launch process fails.
         /// If the specified station location is unavailable, an error message is sent through the session controller.

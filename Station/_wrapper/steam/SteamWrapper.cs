@@ -111,7 +111,11 @@ namespace Station
             Task.Factory.StartNew(() =>
             {
                 //Attempt to start the process using OpenVR
-                if (OpenVRManager.LaunchApplication(experience.Name)) return;
+                if (OpenVRManager.LaunchApplication(experience.Name))
+                {
+                    Logger.WriteLog($"SteamWrapper.WrapProcess: Launching {experience.Name} via OpenVR", MockConsole.LogLevel.Verbose);
+                    return;
+                }
 
                 //Fall back to the alternate if OpenVR launch fails or is not a registered VR experience in the vrmanifest
                 //Stop any accessory processes before opening a new process
@@ -168,33 +172,7 @@ namespace Station
             Logger.WriteLog($"Steam experience install directory: {installDir}", MockConsole.LogLevel.Normal);
         }
 
-        /// <summary>
-        /// Wait for Vive to be open and connected before going any further with the launcher sequence.
-        /// </summary>
-        /// <returns></returns>
-        private async Task<bool> WaitForVive()
-        {
-            if (SessionController.vrHeadset == null) return false;
-
-            //Wait for the Vive Check
-            Logger.WriteLog("About to launch a steam app, vive status is: " + Enum.GetName(typeof(HMDStatus), SessionController.vrHeadset.GetConnectionStatus()), MockConsole.LogLevel.Normal);
-            if (launchingExperience)
-            {
-                SessionController.PassStationMessage("MessageToAndroid,AlreadyLaunchingGame");
-                return false;
-            }
-            launchingExperience = true;
-
-            if (!await ViveScripts.ViveCheck(wrapperType))
-            {
-                launchingExperience = false;
-                return false;
-            }
-
-            return true;
-        }
-
-        #region Alternate Process Collection
+        #region Alternate Launch Process
         /// <summary>
         /// Launches an alternate process for the given experience by executing a specified executable (e.g., Steam) with parameters.
         /// Starts a new process using the provided executable path (e.g., SessionController.steam) and the experience's launch parameters.
