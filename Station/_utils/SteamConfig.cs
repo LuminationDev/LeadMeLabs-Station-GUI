@@ -429,19 +429,5 @@ namespace Station
                 SentrySdk.CaptureException(e);
             }
         }
-
-        private static string[] UpdateFieldInFileConfigArray(string parentNode, string fieldName, string desiredValue,
-            string[] lines)
-        {
-            bool parentNodeExists = false;
-            foreach (var line in lines)
-            {
-                if (line.Equals($"   \"{parentNode}\" : {{"))
-                {
-                    break;
-                }
-            }
-            return lines;
-        }
     }
 }
