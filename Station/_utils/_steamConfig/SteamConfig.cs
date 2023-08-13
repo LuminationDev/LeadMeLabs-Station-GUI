@@ -415,10 +415,12 @@ namespace Station
                 json.TryAdd("steamvr", new JObject());
                 json.TryAdd("power", new JObject());
                 json.TryAdd("dashboard", new JObject());
+                json.TryAdd("userinterface", new JObject());
                 json["steamvr"]["enableHomeApp"] = false;
                 json["power"]["turnOffScreensTimeout"] = 1800;
                 json["power"]["pauseCompositorOnStandby"] = false;
                 json["dashboard"]["enableDashboard"] = false;
+                json["userinterface"]["StatusAlwaysOnTop"] = false;
                 string? text = JsonConvert.SerializeObject(json);
                 if (text != null)
                 {
