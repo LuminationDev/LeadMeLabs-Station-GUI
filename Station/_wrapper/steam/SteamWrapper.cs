@@ -84,6 +84,12 @@ namespace Station
                 return;
             };
 
+            if (SessionController.vrHeadset == null)
+            {
+                SessionController.PassStationMessage("No VR headset set.");
+                return;
+            }
+
             lastExperience = experience;
             GetGameProcessDetails();
 
@@ -102,10 +108,10 @@ namespace Station
             //Begin monitoring the different processes
             WrapperMonitoringThread.InitializeMonitoring(wrapperType);
 
-            //Wait for Vive to start
-            if (!ViveScripts.WaitForVive(wrapperType).Result) return;
+            //Wait for the Headset's connection method to respond
+            if (!SessionController.vrHeadset.WaitForConnection(wrapperType)) return;
 
-            //If Vive is open (with headset connected) and OpenVrSystem cannot initialise then restart SteamVR
+            //If headset management software is open (with headset connected) and OpenVrSystem cannot initialise then restart SteamVR
             if (!OpenVRManager.WaitForOpenVR().Result) return;            
 
             Task.Factory.StartNew(() =>
@@ -119,10 +125,7 @@ namespace Station
 
                 //Fall back to the alternate if OpenVR launch fails or is not a registered VR experience in the vrmanifest
                 //Stop any accessory processes before opening a new process
-                if (SessionController.vrHeadset != null)
-                {
-                    SessionController.vrHeadset.StopProcessesBeforeLaunch();
-                }
+                SessionController.vrHeadset.StopProcessesBeforeLaunch();
               
                 Logger.WriteLog($"SteamWrapper.WrapProcess - Using AlternateLaunchProcess", MockConsole.LogLevel.Normal);
                 AlternateLaunchProcess(experience);

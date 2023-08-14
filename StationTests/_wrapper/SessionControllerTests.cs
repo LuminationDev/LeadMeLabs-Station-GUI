@@ -3,6 +3,7 @@ using Xunit;
 using System;
 using System.Threading.Tasks;
 using System.Diagnostics;
+using Station._headset;
 
 namespace StationTests._wrapper
 {

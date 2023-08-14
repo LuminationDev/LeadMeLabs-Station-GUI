@@ -2,17 +2,26 @@
 
 namespace Station
 {
-    public enum HMDStatus
+    public enum VrManager
     {
-        Connected,
-        Lost
+        Software, //Third-party software that manages the headset to SteamVR connection
+        OpenVR //Steams' VR management software
+    }
+
+    public enum DeviceStatus
+    {
+        Connected, //Vive & OpenVR connection
+        Lost, //Vive or OpenVR not tracking
+        Off //No Vive connection
     }
 
     public interface VrHeadset
     {
-        HMDStatus GetConnectionStatus();
+        VrStatus GetStatusManager();
 
-        void SetOpenVRStatus(HMDStatus status);
+        DeviceStatus GetHeadsetManagementSoftwareStatus();
+
+        bool WaitForConnection(string wrapperType);
 
         List<string> GetProcessesToQuery();
 

@@ -210,7 +210,7 @@ namespace Station
             if (SessionController.vrHeadset == null) return;
 
             SessionController.vrHeadset.MonitorVrConnection();
-            Logger.WriteLog("ViveStatus: " + Enum.GetName(typeof(HMDStatus), SessionController.vrHeadset.GetConnectionStatus()), MockConsole.LogLevel.Debug);
+            Logger.WriteLog("ViveStatus: " + Enum.GetName(typeof(DeviceStatus), SessionController.vrHeadset.GetHeadsetManagementSoftwareStatus()), MockConsole.LogLevel.Debug);
         }
     }
 }

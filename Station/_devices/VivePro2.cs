@@ -8,19 +8,41 @@ namespace Station
 {
     public class VivePro2 : VrHeadset
     {
-        private static HMDStatus openVRStatus; //Determined by OpenVR
-        private static HMDStatus viveStatus; //Determined by Vive Logs
+        public VrStatus VrStatus { private set; get; }
+
         private Timer? timer;
         private static bool minimising = false;
 
-        public HMDStatus GetConnectionStatus()
+        public VivePro2() 
         {
-            return viveStatus;
+            VrStatus = new VrStatus();
         }
 
-        public void SetOpenVRStatus(HMDStatus status)
+        public VrStatus GetStatusManager()
         {
-            openVRStatus = status;
+            return VrStatus;
+        }
+
+        /// <summary>
+        /// If the headset is managed by more than just OpenVR return the management software connection
+        /// status. In this case it is managed by Vive Console.
+        /// </summary>
+        /// <returns></returns>
+        public DeviceStatus GetHeadsetManagementSoftwareStatus()
+        {
+            return VrStatus.SoftwareStatus;
+        }
+
+        /// <summary>
+        /// Collect the connection status of the headset from the headset's specific management software. In this case it
+        /// is Vive Console.
+        /// </summary>
+        /// <param name="wrapperType">A string of the Wrapper type that is being launched, required if the process
+        /// needs to restart/start the VR session.</param>
+        /// <returns>A bool representing the connection status.</returns>
+        public bool WaitForConnection(string wrapperType)
+        {
+            return ViveScripts.WaitForVive(wrapperType).Result;
         }
 
         public List<string> GetProcessesToQuery()
@@ -36,15 +58,15 @@ namespace Station
         public void StartVrSession()
         {
             //Bail out if Steam and SteamVR are already running
-            if(QueryMonitorProcesses())
+            if (QueryMonitorProcesses())
             {
                 return;
             }
 
             CommandLine.KillSteamSigninWindow();
             SteamConfig.VerifySteamConfig();
-            CommandLine.StartProgram(SessionController.steam, "-noreactlogin -login " + 
-                Environment.GetEnvironmentVariable("SteamUserName", EnvironmentVariableTarget.Process) + " " + 
+            CommandLine.StartProgram(SessionController.steam, "-noreactlogin -login " +
+                Environment.GetEnvironmentVariable("SteamUserName", EnvironmentVariableTarget.Process) + " " +
                 Environment.GetEnvironmentVariable("SteamPassword", EnvironmentVariableTarget.Process) + " steam://rungameid/1635730"); //Open up steam and run vive console
 
             if (!minimising)
@@ -121,24 +143,15 @@ namespace Station
                 {
                     if (process.MainWindowTitle.Equals("VIVE Console"))
                     {
-                        if (viveStatus == HMDStatus.Connected)
-                        {
-                            SessionController.PassStationMessage("MessageToAndroid,LostHeadset");
-                        }
-                        viveStatus = HMDStatus.Lost;
+                        VrStatus.UpdateHeadset(VrManager.Software, DeviceStatus.Lost);
                     }
                 }
             }
             if (viveStatusMonitor.Length > 0)
             {
-                if (viveStatus == HMDStatus.Lost)
-                {
-                    SessionController.PassStationMessage("MessageToAndroid,FoundHeadset");
-                }
-
-                viveStatus = HMDStatus.Connected;
+                VrStatus.UpdateHeadset(VrManager.Software, DeviceStatus.Connected);
             }
-            viveStatus = HMDStatus.Lost;
+            VrStatus.UpdateHeadset(VrManager.Software, DeviceStatus.Lost);
         }
 
         /// <summary>

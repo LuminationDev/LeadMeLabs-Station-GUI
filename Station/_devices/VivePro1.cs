@@ -13,19 +13,41 @@ namespace Station
 {
     public class VivePro1 : VrHeadset
     {
-        private static HMDStatus openVRStatus; //Determined by OpenVR
-        private static HMDStatus viveStatus; //Determined by Vive Logs
+        public VrStatus VrStatus { private set; get; }
+
         private Timer? timer;
         private static bool minimising = false;
 
-        public HMDStatus GetConnectionStatus()
+        public VivePro1()
         {
-            return viveStatus;
+            VrStatus = new VrStatus();
         }
 
-        public void SetOpenVRStatus(HMDStatus status)
+        public VrStatus GetStatusManager()
         {
-            openVRStatus = status;
+            return VrStatus;
+        }
+
+        /// <summary>
+        /// If the headset is managed by more than just OpenVR return the management software connection
+        /// status. In this case it is managed by Vive Wireless.
+        /// </summary>
+        /// <returns></returns>
+        public DeviceStatus GetHeadsetManagementSoftwareStatus()
+        {
+            return VrStatus.SoftwareStatus;
+        }
+
+        /// <summary>
+        /// Collect the connection status of the headset from the headset's specific management software. In this case it
+        /// is Vive Wireless.
+        /// </summary>
+        /// <param name="wrapperType">A string of the Wrapper type that is being launched, required if the process
+        /// needs to restart/start the VR session.</param>
+        /// <returns>A bool representing the connection status.</returns>
+        public bool WaitForConnection(string wrapperType)
+        {
+            return ViveScripts.WaitForVive(wrapperType).Result;
         }
 
         public List<string> GetProcessesToQuery()
@@ -131,20 +153,18 @@ namespace Station
                 if (current.Contains("Terminated"))
                 {
                     enumerator.Dispose();
-                    viveStatus = HMDStatus.Lost;
+                    VrStatus.UpdateHeadset(VrManager.Software, DeviceStatus.Lost);
                 }
 
                 if (current.Contains("Connection Status set to"))
                 {
-                    if (viveStatus == HMDStatus.Connected && current.Contains("CONNECTION_STATUS_SCANNING"))
+                    if (VrStatus.SoftwareStatus == DeviceStatus.Connected && current.Contains("CONNECTION_STATUS_SCANNING"))
                     {
-                        SessionController.PassStationMessage("MessageToAndroid,LostHeadset");
-                        viveStatus = HMDStatus.Lost;
+                        VrStatus.UpdateHeadset(VrManager.Software, DeviceStatus.Lost);
                     }
-                    else if (current.Contains("CONNECTION_STATUS_CONNECTED") && viveStatus == HMDStatus.Lost)
+                    else if (current.Contains("CONNECTION_STATUS_CONNECTED") && VrStatus.SoftwareStatus == DeviceStatus.Lost)
                     {
-                        SessionController.PassStationMessage("MessageToAndroid,FoundHeadset");
-                        viveStatus = HMDStatus.Connected;
+                        VrStatus.UpdateHeadset(VrManager.Software, DeviceStatus.Connected);
                     }
                     enumerator.Dispose();
                 }

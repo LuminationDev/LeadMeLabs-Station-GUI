@@ -135,13 +135,13 @@ namespace Station
         {
             if (SessionController.vrHeadset == null) return false;
 
-            MockConsole.WriteLine($"WaitForOpenVR - Checking SteamVR. Vive status: {Enum.GetName(typeof(HMDStatus), SessionController.vrHeadset.GetConnectionStatus())} " +
+            MockConsole.WriteLine($"WaitForOpenVR - Checking SteamVR. Vive status: {Enum.GetName(typeof(DeviceStatus), SessionController.vrHeadset.GetHeadsetManagementSoftwareStatus())} " +
                 $"- OpenVR status: {Manager.openVRManager?.InitialiseOpenVR() ?? false}", MockConsole.LogLevel.Normal);
 
             //If Vive is connect but OpenVR is not/cannot be initialised, restart SteamVR and check again.
-            if (SessionController.vrHeadset.GetConnectionStatus() == HMDStatus.Connected && (!Manager.openVRManager?.InitialiseOpenVR() ?? true))
+            if (SessionController.vrHeadset.GetHeadsetManagementSoftwareStatus() == DeviceStatus.Connected && (!Manager.openVRManager?.InitialiseOpenVR() ?? true))
             {
-                Logger.WriteLog($"OpenVRManager.WaitForOpenVR - Vive status: {SessionController.vrHeadset.GetConnectionStatus()}, " +
+                Logger.WriteLog($"OpenVRManager.WaitForOpenVR - Vive status: {SessionController.vrHeadset.GetHeadsetManagementSoftwareStatus()}, " +
                     $"OpenVR connection not established - restarting SteamVR", MockConsole.LogLevel.Normal);
 
                 //Send message to the tablet (Updating what is happening)
@@ -158,7 +158,7 @@ namespace Station
                 bool steamvr = await MonitorLoop(() => Process.GetProcessesByName("vrmonitor").Length == 0);
                 if (!steamvr) return false;
 
-                Logger.WriteLog($"OpenVRManager.WaitForOpenVR - Vive status: {SessionController.vrHeadset.GetConnectionStatus()}, " +
+                Logger.WriteLog($"OpenVRManager.WaitForOpenVR - Vive status: {SessionController.vrHeadset.GetHeadsetManagementSoftwareStatus()}, " +
                     $"SteamVR restarted successfully", MockConsole.LogLevel.Normal);
 
                 //Send message to the tablet (Updating what is happening)
@@ -167,7 +167,7 @@ namespace Station
                 bool openvr = await MonitorLoop(() => !Manager.openVRManager?.InitialiseOpenVR() ?? true);
                 if (!openvr) return false;
 
-                Logger.WriteLog($"OpenVRManager.WaitForOpenVR - Vive status: {SessionController.vrHeadset.GetConnectionStatus()}, " +
+                Logger.WriteLog($"OpenVRManager.WaitForOpenVR - Vive status: {SessionController.vrHeadset.GetHeadsetManagementSoftwareStatus()}, " +
                     $"OpenVR connection established", MockConsole.LogLevel.Normal);
             }
 
@@ -429,11 +429,6 @@ namespace Station
             {
                 CheckBoundary();
             }
-            else
-            {
-                //TODO this makes a call to the nuc? (Headset is lost and therefore controllers are lost)
-                //App.UpdateDevices("Controller", "both", "Not Connected");
-            }
         }
 
         /// <summary>
@@ -549,16 +544,14 @@ namespace Station
                 _tracking)
             {
                 _tracking = false;
-                //TODO send this information to the nuc?
-                SessionController.vrHeadset?.SetOpenVRStatus(HMDStatus.Lost);
+                SessionController.vrHeadset?.GetStatusManager().UpdateHeadset(VrManager.OpenVR, DeviceStatus.Lost);
                 MockConsole.WriteLine("Headset lost", MockConsole.LogLevel.Normal);
             }
             else if (headsetPosition != new Vector3(0, 0, 0) && headsetOrientation != new Quaternion(1, 0, 0, 0) &&
-                     !_tracking)
+                !_tracking)
             {
                 _tracking = true;
-                //TODO send this information to the nuc?
-                SessionController.vrHeadset?.SetOpenVRStatus(HMDStatus.Connected);
+                SessionController.vrHeadset?.GetStatusManager().UpdateHeadset(VrManager.OpenVR, DeviceStatus.Connected);
                 MockConsole.WriteLine("Headset found", MockConsole.LogLevel.Normal);
             }
         }
@@ -579,44 +572,54 @@ namespace Station
             }
 
             // Create a StringBuilder to hold the controller description
-            StringBuilder descriptionBuilder = new StringBuilder(256); // You can adjust the buffer size as needed
+            StringBuilder serialNumberBuilder = new StringBuilder(256); // You can adjust the buffer size as needed
 
             // Get the controller role (left or right)
             ETrackedControllerRole role = _ovrSystem.GetControllerRoleForTrackedDeviceIndex(controllerIndex);
+            DeviceRoll controllerRole = role == ETrackedControllerRole.LeftHand ? DeviceRoll.Left : DeviceRoll.Right;
 
             // Get the controller description
             ETrackedPropertyError error = ETrackedPropertyError.TrackedProp_Success;
             _ovrSystem.GetStringTrackedDeviceProperty(controllerIndex,
-                ETrackedDeviceProperty.Prop_RenderModelName_String, descriptionBuilder,
-                (uint)descriptionBuilder.Capacity, ref error);
-            string description = descriptionBuilder.ToString();
+                ETrackedDeviceProperty.Prop_RenderModelName_String, serialNumberBuilder,
+                (uint)serialNumberBuilder.Capacity, ref error);
+            string serialNumber = serialNumberBuilder.ToString();
 
             // Get the controller battery percentage as a float value
             float batteryLevel = _ovrSystem.GetFloatTrackedDeviceProperty(controllerIndex,
                 ETrackedDeviceProperty.Prop_DeviceBatteryPercentage_Float, ref error);
 
-            // Check if the battery percentage is valid (error is TrackedProp_Success)
-            if (error == ETrackedPropertyError.TrackedProp_Success)
+            // Check if the battery percentage is valid (error == TrackedProp_Success)
+            if (error == ETrackedPropertyError.TrackedProp_Success) //does this mean the controller is lost?
             {
-                // Do something with the controller information
-                string controllerRole = role == ETrackedControllerRole.LeftHand ? "Left" : "Right";
                 int formattedBatteryLevel = (int)(batteryLevel * 100);
-                //TODO send this information to the nuc?
+
                 MockConsole.WriteLine(
-                    $"Controller {controllerIndex} (Role: {controllerRole}) - Description: {description}, Battery Level: {formattedBatteryLevel}%", 
+                    $"Controller {controllerIndex} (Role: {Enum.GetName(typeof (DeviceRoll), controllerRole)} - " +
+                    $"Serial Number: {serialNumber}, " +
+                    $"Battery Level: {formattedBatteryLevel}%", 
                     MockConsole.LogLevel.Verbose);
 
-                //App.UpdateDevices("Controller", controllerRole, $"Battery Level: {formattedBatteryLevel}%");
+                SessionController.vrHeadset?.GetStatusManager().UpdateController(
+                    serialNumber, controllerRole, "tracking", DeviceStatus.Connected);
+
+                SessionController.vrHeadset?.GetStatusManager().UpdateController(
+                    serialNumber, controllerRole, "battery", formattedBatteryLevel);
             }
             else
             {
+                //TODO check that this actually means the controller is lost/look into pose
+                SessionController.vrHeadset?.GetStatusManager().UpdateController(
+                    serialNumber, controllerRole, "tracking", DeviceStatus.Lost);
+
                 // Handle the case when battery level retrieval fails
-                //TODO send this information to the nuc?
                 MockConsole.WriteLine(
                     $"Failed to get the battery level for controller {controllerIndex}. Error: {error}", 
                     MockConsole.LogLevel.Verbose);
             }
         }
+
+        //TODO add in the base station tracking function below
 
         #endregion
 
