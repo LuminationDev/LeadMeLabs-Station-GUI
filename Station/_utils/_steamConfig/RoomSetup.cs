@@ -51,8 +51,16 @@ namespace Station
             float[][][] newCollisionBounds = DefaultValues.GetCollisionBounds();
             float[] newPlayArea = DefaultValues.GetPlayArea();
 
-            chaperoneInfo.universes[0].collision_bounds = newCollisionBounds;
-            chaperoneInfo.universes[0].play_area = newPlayArea;
+            // Find the most recent universe (last in the .vrchap file)
+            int mostRecent = chaperoneInfo.universes.Length - 1;
+            if(chaperoneInfo.universes[mostRecent] == null)
+            {
+                Logger.WriteLog($"SaveRoomSetup - Most recent universe [{mostRecent}], cannot be found.", MockConsole.LogLevel.Error);
+                return $"Saving file error.";
+            }
+
+            chaperoneInfo.universes[mostRecent].collision_bounds = newCollisionBounds;
+            chaperoneInfo.universes[mostRecent].play_area = newPlayArea;
 
             // Serialize the modified object back to JSON
             try
