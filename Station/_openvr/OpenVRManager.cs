@@ -135,13 +135,13 @@ namespace Station
         {
             if (SessionController.vrHeadset == null) return false;
 
-            MockConsole.WriteLine($"WaitForOpenVR - Checking SteamVR. Vive status: {Enum.GetName(typeof(HMDStatus), SessionController.vrHeadset.GetConnectionStatus())} " +
+            MockConsole.WriteLine($"WaitForOpenVR - Checking SteamVR. Vive status: {Enum.GetName(typeof(DeviceStatus), SessionController.vrHeadset.GetHeadsetManagementSoftwareStatus())} " +
                 $"- OpenVR status: {Manager.openVRManager?.InitialiseOpenVR() ?? false}", MockConsole.LogLevel.Normal);
 
             //If Vive is connect but OpenVR is not/cannot be initialised, restart SteamVR and check again.
-            if (SessionController.vrHeadset.GetConnectionStatus() == HMDStatus.Connected && (!Manager.openVRManager?.InitialiseOpenVR() ?? true))
+            if (SessionController.vrHeadset.GetHeadsetManagementSoftwareStatus() == DeviceStatus.Connected && (!Manager.openVRManager?.InitialiseOpenVR() ?? true))
             {
-                Logger.WriteLog($"OpenVRManager.WaitForOpenVR - Vive status: {SessionController.vrHeadset.GetConnectionStatus()}, " +
+                Logger.WriteLog($"OpenVRManager.WaitForOpenVR - Vive status: {SessionController.vrHeadset.GetHeadsetManagementSoftwareStatus()}, " +
                     $"OpenVR connection not established - restarting SteamVR", MockConsole.LogLevel.Normal);
 
                 //Send message to the tablet (Updating what is happening)
@@ -158,7 +158,7 @@ namespace Station
                 bool steamvr = await MonitorLoop(() => Process.GetProcessesByName("vrmonitor").Length == 0);
                 if (!steamvr) return false;
 
-                Logger.WriteLog($"OpenVRManager.WaitForOpenVR - Vive status: {SessionController.vrHeadset.GetConnectionStatus()}, " +
+                Logger.WriteLog($"OpenVRManager.WaitForOpenVR - Vive status: {SessionController.vrHeadset.GetHeadsetManagementSoftwareStatus()}, " +
                     $"SteamVR restarted successfully", MockConsole.LogLevel.Normal);
 
                 //Send message to the tablet (Updating what is happening)
@@ -167,7 +167,7 @@ namespace Station
                 bool openvr = await MonitorLoop(() => !Manager.openVRManager?.InitialiseOpenVR() ?? true);
                 if (!openvr) return false;
 
-                Logger.WriteLog($"OpenVRManager.WaitForOpenVR - Vive status: {SessionController.vrHeadset.GetConnectionStatus()}, " +
+                Logger.WriteLog($"OpenVRManager.WaitForOpenVR - Vive status: {SessionController.vrHeadset.GetHeadsetManagementSoftwareStatus()}, " +
                     $"OpenVR connection established", MockConsole.LogLevel.Normal);
             }
 
@@ -429,11 +429,6 @@ namespace Station
             {
                 CheckBoundary();
             }
-            else
-            {
-                //TODO this makes a call to the nuc? (Headset is lost and therefore controllers are lost)
-                //App.UpdateDevices("Controller", "both", "Not Connected");
-            }
         }
 
         /// <summary>
@@ -459,6 +454,9 @@ namespace Station
                     case ETrackedDeviceClass.Controller:
                         controllerCount++;
                         GetControllerInfo(deviceIndex);
+                        break;
+                    case ETrackedDeviceClass.TrackingReference:
+                        GetBaseStationInfo(deviceIndex);
                         break;
                 }
             }
@@ -521,7 +519,7 @@ namespace Station
             {
                 return;
             }
-
+            
             // Get the device pose information
             TrackedDevicePose_t[] poses = new TrackedDevicePose_t[OpenVR.k_unMaxTrackedDeviceCount];
             ETrackingUniverseOrigin trackingOrigin = ETrackingUniverseOrigin.TrackingUniverseStanding;
@@ -549,17 +547,34 @@ namespace Station
                 _tracking)
             {
                 _tracking = false;
-                //TODO send this information to the nuc?
-                SessionController.vrHeadset?.SetOpenVRStatus(HMDStatus.Lost);
+                SessionController.vrHeadset?.GetStatusManager().UpdateHeadset(VrManager.OpenVR, DeviceStatus.Lost);
                 MockConsole.WriteLine("Headset lost", MockConsole.LogLevel.Normal);
             }
             else if (headsetPosition != new Vector3(0, 0, 0) && headsetOrientation != new Quaternion(1, 0, 0, 0) &&
-                     !_tracking)
+                !_tracking)
             {
                 _tracking = true;
-                //TODO send this information to the nuc?
-                SessionController.vrHeadset?.SetOpenVRStatus(HMDStatus.Connected);
+                SessionController.vrHeadset?.GetStatusManager().UpdateHeadset(VrManager.OpenVR, DeviceStatus.Connected);
                 MockConsole.WriteLine("Headset found", MockConsole.LogLevel.Normal);
+            }
+            
+            //Collect the headset model - only do this if it hasn't been set already.
+            if (MainWindow.headsetDescription != null && (SessionController.vrHeadset?.GetStatusManager().HeadsetDescription.Equals("") ?? true))
+            {
+                var error = ETrackedPropertyError.TrackedProp_Success;
+                var renderModelName = new StringBuilder();
+                _ovrSystem.GetStringTrackedDeviceProperty(headsetIndex,
+                    ETrackedDeviceProperty.Prop_ModelNumber_String,
+                    renderModelName, OpenVR.k_unMaxPropertyStringSize, ref error);
+
+                MockConsole.WriteLine($"Headset description: {renderModelName}",
+                    MockConsole.LogLevel.Verbose);
+
+                if (error == ETrackedPropertyError.TrackedProp_Success)
+                {
+                    SessionController.vrHeadset?.GetStatusManager().SetHeadsetDescription(renderModelName.ToString());
+                    UIUpdater.UpdateOpenVRStatus("headsetDescription", renderModelName.ToString());
+                }
             }
         }
         #endregion
@@ -578,48 +593,65 @@ namespace Station
                 return;
             }
 
-            // Create a StringBuilder to hold the controller description
-            StringBuilder descriptionBuilder = new StringBuilder(256); // You can adjust the buffer size as needed
+            // Track any error messages
+            ETrackedPropertyError error = ETrackedPropertyError.TrackedProp_Success;
 
             // Get the controller role (left or right)
             ETrackedControllerRole role = _ovrSystem.GetControllerRoleForTrackedDeviceIndex(controllerIndex);
+            
+            // Get the controller serial number
+            var serialNumber = GetSerialNumber(controllerIndex);
 
-            // Get the controller description
-            ETrackedPropertyError error = ETrackedPropertyError.TrackedProp_Success;
-            _ovrSystem.GetStringTrackedDeviceProperty(controllerIndex,
-                ETrackedDeviceProperty.Prop_RenderModelName_String, descriptionBuilder,
-                (uint)descriptionBuilder.Capacity, ref error);
-            string description = descriptionBuilder.ToString();
+            //Check the pose of the controller
+            SessionController.vrHeadset?.GetStatusManager().UpdateController(
+                serialNumber, null, "tracking", IsDeviceConnected(controllerIndex) ? DeviceStatus.Connected : DeviceStatus.Lost);
+            
+            if (role == ETrackedControllerRole.Invalid) return;
+            
+            DeviceRole controllerRole = role == ETrackedControllerRole.LeftHand ? DeviceRole.Left : DeviceRole.Right;
 
             // Get the controller battery percentage as a float value
             float batteryLevel = _ovrSystem.GetFloatTrackedDeviceProperty(controllerIndex,
                 ETrackedDeviceProperty.Prop_DeviceBatteryPercentage_Float, ref error);
 
-            // Check if the battery percentage is valid (error is TrackedProp_Success)
-            if (error == ETrackedPropertyError.TrackedProp_Success)
+            // Check if the battery percentage is valid (error == TrackedProp_Success)
+            if (error == ETrackedPropertyError.TrackedProp_Success) //does this mean the controller is lost?
             {
-                // Do something with the controller information
-                string controllerRole = role == ETrackedControllerRole.LeftHand ? "Left" : "Right";
                 int formattedBatteryLevel = (int)(batteryLevel * 100);
-                //TODO send this information to the nuc?
-                MockConsole.WriteLine(
-                    $"Controller {controllerIndex} (Role: {controllerRole}) - Description: {description}, Battery Level: {formattedBatteryLevel}%", 
-                    MockConsole.LogLevel.Verbose);
 
-                //App.UpdateDevices("Controller", controllerRole, $"Battery Level: {formattedBatteryLevel}%");
+                MockConsole.WriteLine(
+                    $"Controller {controllerIndex} (Role: {Enum.GetName(typeof (DeviceRole), controllerRole)} - " +
+                    $"Serial Number: {serialNumber}, " +
+                    $"Battery Level: {formattedBatteryLevel}%", 
+                    MockConsole.LogLevel.Verbose);
+                
+                SessionController.vrHeadset?.GetStatusManager().UpdateController(
+                    serialNumber, controllerRole, "battery", formattedBatteryLevel);
             }
             else
             {
                 // Handle the case when battery level retrieval fails
-                //TODO send this information to the nuc?
                 MockConsole.WriteLine(
                     $"Failed to get the battery level for controller {controllerIndex}. Error: {error}", 
                     MockConsole.LogLevel.Verbose);
             }
         }
-
         #endregion
+        
+        #region Base Station Information
+        private void GetBaseStationInfo(uint baseStationIndex)
+        {
+            if (_ovrSystem == null)
+            {
+                return;
+            }
 
+            var serialNumber = GetSerialNumber(baseStationIndex);
+            var isConnected = IsDeviceConnected(baseStationIndex);
+            SessionController.vrHeadset?.GetStatusManager().UpdateBaseStation(serialNumber, "tracking", isConnected ? DeviceStatus.Connected : DeviceStatus.Lost);
+        }
+        #endregion
+        
         #region Helpers
         /// <summary>
         /// Retrieves a string property associated with a VR application using its application key.
@@ -636,6 +668,72 @@ namespace Station
             EVRApplicationError error = EVRApplicationError.None; // Additional parameter for error handling
             OpenVR.Applications.GetApplicationPropertyString(pchKey, property, sb, (uint)sb.Capacity, ref error);
             return error == EVRApplicationError.None ? sb.ToString() : "Unknown";
+        }
+
+        /// <summary>
+        /// Retrieve the serial number (alpha-numeric) of a currently connected device.
+        /// </summary>
+        /// <param name="deviceIndex">A uint of the device's index retrieved from OpenVR</param>
+        /// <returns>A string of the devices serial number</returns>
+        private string GetSerialNumber(uint deviceIndex)
+        {
+            if (_ovrSystem == null)
+            {
+                return "Unknown";
+            }
+            
+            StringBuilder serialNumberBuilder = new StringBuilder(256);
+
+            ETrackedPropertyError error = ETrackedPropertyError.TrackedProp_Success;
+            _ovrSystem.GetStringTrackedDeviceProperty(deviceIndex,
+                ETrackedDeviceProperty.Prop_SerialNumber_String, serialNumberBuilder,
+                (uint)serialNumberBuilder.Capacity, ref error);
+            string serialNumber = serialNumberBuilder.ToString();
+
+            if (error == ETrackedPropertyError.TrackedProp_Success)
+            {
+                return serialNumber;
+            }
+            
+            return "Unknown";
+        }
+
+        /// <summary>
+        /// Check the OVRSystem for a devices current pose and determine if that device is connected
+        /// to the system at the moment.
+        /// </summary>
+        /// <param name="deviceIndex">A uint of the device's index retrieved from OpenVR</param>
+        /// <returns>A bool of if the device is currently connected.</returns>
+        private bool IsDeviceConnected(uint deviceIndex)
+        {
+            if (_ovrSystem == null)
+            {
+                return false;
+            }
+            
+            // Get the device pose information
+            TrackedDevicePose_t[] poses = new TrackedDevicePose_t[OpenVR.k_unMaxTrackedDeviceCount];
+            ETrackingUniverseOrigin trackingOrigin = ETrackingUniverseOrigin.TrackingUniverseStanding;
+
+            _ovrSystem.GetDeviceToAbsoluteTrackingPose(trackingOrigin, 0, poses);
+
+            // Extract the headset's position and orientation (All 0's means it has lost tracking)
+            HmdMatrix34_t poseMatrix = poses[deviceIndex].mDeviceToAbsoluteTracking;
+            Vector3 headsetPosition = new Vector3(poseMatrix.m3, poseMatrix.m7, poseMatrix.m11);
+
+            Quaternion headsetOrientation = new Quaternion(
+                poseMatrix.m0, poseMatrix.m1, poseMatrix.m2, -poseMatrix.m3
+            );
+
+            // Check if the headset pose is valid and being tracked
+            string output = $"bDeviceIsConnected: {poses[deviceIndex].bDeviceIsConnected}\n" +
+                            $"bPoseIsValid: {poses[deviceIndex].bPoseIsValid}\n" +
+                            $"trackingStatus: {poses[deviceIndex].eTrackingResult}\n" +
+                            $"Device Position: {headsetPosition}\n" +
+                            $"Device Orientation: {headsetOrientation}";
+            
+            MockConsole.WriteLine(output, MockConsole.LogLevel.Verbose);
+            return poses[deviceIndex].bDeviceIsConnected;
         }
         #endregion
         #endregion

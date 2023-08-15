@@ -206,6 +206,9 @@ namespace Station
                     attempts++;
                 }
 
+                //Reset the VR device statuses
+                SessionController.vrHeadset.GetStatusManager().ResetStatuses();
+
                 await SessionController.PutTaskDelay(5000);
 
                 SessionController.PassStationMessage("MessageToAndroid,SetValue:session:Restarted");

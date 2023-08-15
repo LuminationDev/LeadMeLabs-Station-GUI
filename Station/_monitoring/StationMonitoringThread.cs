@@ -76,6 +76,7 @@ namespace Station
             if(Manager.openVRManager?.InitialiseOpenVR() ?? false)
             {
                 Manager.openVRManager?.QueryCurrentApplication();
+                Manager.openVRManager?.PerformDeviceChecks();
             }
         }
 

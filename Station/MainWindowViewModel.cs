@@ -23,6 +23,7 @@ namespace Station
             StopStationCommand = new RelayCommand(() => Manager.StopProgram());
             ChangeLogLevelCommand = new RelayCommand(() => MockConsole.changeLogLevel());
             StopCurrentProcess = new RelayCommand(() => WrapperManager.StopAProcess());
+            ResetSteamVRProcess = new RelayCommand(() => _ = WrapperManager.RestartVRProcesses());
 
             NotifyIconOpenCommand = new RelayCommand(() => { WindowState = WindowState.Normal; });
             NotifyIconExitCommand = new RelayCommand(() => { Application.Current.Shutdown(); });
@@ -39,6 +40,7 @@ namespace Station
         public ICommand StopStationCommand { get; }
         public ICommand ChangeLogLevelCommand { get; }
         public ICommand StopCurrentProcess { get; }
+        public ICommand ResetSteamVRProcess { get; }
 
         public WindowState WindowState
         {
