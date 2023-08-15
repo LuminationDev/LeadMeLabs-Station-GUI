@@ -187,7 +187,6 @@ namespace Station
                 UIUpdater.UpdateOpenVRStatus("baseStationAmount", baseStations.Count.ToString());
             }
 
-            //TODO check that this is working properly when Tablet is setup.
             //Send a message to the NUC if necessary
             if (shouldUpdate)
             {
@@ -201,8 +200,9 @@ namespace Station
                 }
                 UIUpdater.UpdateOpenVRStatus("baseStationActive", active.ToString());
                 
-                MockConsole.WriteLine($"DeviceStatus:BaseStation:{propertyName}:{value}", MockConsole.LogLevel.Debug);
-                //Manager.SendResponse("Android", "Station", $"DeviceStatus:BaseStation:{propertyName}:{value}");
+                //Send the active and total base station amounts instead of individual base station updates.
+                MockConsole.WriteLine($"DeviceStatus:BaseStation:{active}:{baseStations.Count}", MockConsole.LogLevel.Debug);
+                Manager.SendResponse("Android", "Station", $"DeviceStatus:BaseStation:{active}:{baseStations.Count}");
             }
         }
 
