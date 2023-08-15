@@ -1,8 +1,9 @@
 ﻿using System;
+using System.Windows;
 
 namespace Station
 {
-    public enum DeviceRoll
+    public enum DeviceRole
     {
         Left,
         Right
@@ -11,14 +12,15 @@ namespace Station
     public class VrController
     {
         private readonly string serialNumber;
-        private readonly DeviceRoll roll;
-        public int Battery { set; get; }
-        public DeviceStatus Tracking { set; get; }
+        
+        public DeviceRole? Role { private set; get; }
+        public int Battery { private set; get; } = 0;
+        public DeviceStatus Tracking { private set; get; } = DeviceStatus.Lost;
 
-        public VrController(string serialNumber, DeviceRoll roll) 
+        public VrController(string serialNumber, DeviceRole? role) 
         { 
             this.serialNumber = serialNumber;
-            this.roll = roll;
+            this.Role = role;
         }
 
         /// <summary>
@@ -36,11 +38,14 @@ namespace Station
                 case "battery":
                     if (value is int batteryValue)
                     {
-                        shouldUpdate = Battery == batteryValue;
+                        shouldUpdate = Battery != batteryValue;
 
                         Battery = batteryValue;
-                        MockConsole.WriteLine($"VrController {serialNumber} battery updated to {Battery}%",
-                            MockConsole.LogLevel.Debug);
+                        MockConsole.WriteLine($"VrController {serialNumber} battery updated to {Battery}% from {batteryValue}%",
+                            MockConsole.LogLevel.Verbose);
+                        
+                        UIUpdater.UpdateOpenVRStatus(Role == DeviceRole.Left ? "leftControllerBattery" : "rightControllerBattery", 
+                            Battery.ToString() ?? "0");
                     }
                     else
                     {
@@ -52,11 +57,22 @@ namespace Station
                 case "tracking":
                     if (value is DeviceStatus trackingValue)
                     {
-                        shouldUpdate = Tracking == trackingValue;
+                        shouldUpdate = Tracking != trackingValue;
 
                         Tracking = trackingValue;
-                        MockConsole.WriteLine($"VrController {serialNumber} tracking updated to {Tracking}", 
-                            MockConsole.LogLevel.Debug);
+                        MockConsole.WriteLine($"VrController {serialNumber} tracking updated to {Tracking} from {trackingValue}", 
+                            MockConsole.LogLevel.Verbose);
+                        
+                        UIUpdater.UpdateOpenVRStatus(Role == DeviceRole.Left ? "leftControllerConnection" : "rightControllerConnection", 
+                            Enum.GetName(typeof(DeviceStatus), Tracking) ?? "Lost");
+
+                        // Set the battery to 0 if it has lost connection
+                        if (Tracking == DeviceStatus.Lost)
+                        {
+                            Battery = 0;
+                            UIUpdater.UpdateOpenVRStatus(Role == DeviceRole.Left ? "leftControllerBattery" : "rightControllerBattery", 
+                                Battery.ToString() ?? "0");
+                        }
                     }
                     else
                     {

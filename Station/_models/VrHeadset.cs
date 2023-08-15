@@ -17,7 +17,7 @@ namespace Station
 
     public interface VrHeadset
     {
-        VrStatus GetStatusManager();
+        Statuses GetStatusManager();
 
         DeviceStatus GetHeadsetManagementSoftwareStatus();
 

@@ -10,6 +10,7 @@ namespace Station
     {
         public static Thread? monitoringThread;
         public static bool steamError = false;
+        public static bool monitoring = false;
 
         private static System.Timers.Timer? timer;
         private static bool processesAreResponding = true;
@@ -30,6 +31,7 @@ namespace Station
         /// </summary>
         public static void InitializeMonitoring(string type)
         {
+            monitoring = true;
             monitoringThread = new Thread(() => {
                 InitializeRespondingCheck(type);
             });
@@ -42,6 +44,7 @@ namespace Station
         /// </summary>
         public static void StopMonitoring()
         {
+            monitoring = false;
             monitoringThread?.Interrupt();
             timer?.Stop();
         }
@@ -115,10 +118,10 @@ namespace Station
         /// </summary>
         private static void OpenVRCheck()
         {
-            if (Manager.openVRManager?.InitialiseOpenVR() ?? false)
-            {
-                Manager.openVRManager.PerformDeviceChecks();
-            }
+            // if (Manager.openVRManager?.InitialiseOpenVR() ?? false)
+            // {
+            //     Manager.openVRManager.PerformDeviceChecks();
+            // }
         }
 
         /// <summary>

@@ -13,19 +13,19 @@ namespace Station
 {
     public class VivePro1 : VrHeadset
     {
-        public VrStatus VrStatus { private set; get; }
+        private Statuses Statuses { get; }
 
         private Timer? timer;
         private static bool minimising = false;
 
         public VivePro1()
         {
-            VrStatus = new VrStatus();
+            Statuses = new Statuses();
         }
 
-        public VrStatus GetStatusManager()
+        public Statuses GetStatusManager()
         {
-            return VrStatus;
+            return Statuses;
         }
 
         /// <summary>
@@ -35,7 +35,7 @@ namespace Station
         /// <returns></returns>
         public DeviceStatus GetHeadsetManagementSoftwareStatus()
         {
-            return VrStatus.SoftwareStatus;
+            return Statuses.SoftwareStatus;
         }
 
         /// <summary>
@@ -153,18 +153,18 @@ namespace Station
                 if (current.Contains("Terminated"))
                 {
                     enumerator.Dispose();
-                    VrStatus.UpdateHeadset(VrManager.Software, DeviceStatus.Lost);
+                    Statuses.UpdateHeadset(VrManager.Software, DeviceStatus.Lost);
                 }
 
                 if (current.Contains("Connection Status set to"))
                 {
-                    if (VrStatus.SoftwareStatus == DeviceStatus.Connected && current.Contains("CONNECTION_STATUS_SCANNING"))
+                    if (Statuses.SoftwareStatus == DeviceStatus.Connected && current.Contains("CONNECTION_STATUS_SCANNING"))
                     {
-                        VrStatus.UpdateHeadset(VrManager.Software, DeviceStatus.Lost);
+                        Statuses.UpdateHeadset(VrManager.Software, DeviceStatus.Lost);
                     }
-                    else if (current.Contains("CONNECTION_STATUS_CONNECTED") && VrStatus.SoftwareStatus == DeviceStatus.Lost)
+                    else if (current.Contains("CONNECTION_STATUS_CONNECTED") && Statuses.SoftwareStatus == DeviceStatus.Lost)
                     {
-                        VrStatus.UpdateHeadset(VrManager.Software, DeviceStatus.Connected);
+                        Statuses.UpdateHeadset(VrManager.Software, DeviceStatus.Connected);
                     }
                     enumerator.Dispose();
                 }

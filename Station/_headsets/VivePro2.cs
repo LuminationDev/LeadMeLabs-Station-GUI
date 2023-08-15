@@ -8,19 +8,19 @@ namespace Station
 {
     public class VivePro2 : VrHeadset
     {
-        public VrStatus VrStatus { private set; get; }
+        private Statuses Statuses { get; }
 
         private Timer? timer;
         private static bool minimising = false;
 
         public VivePro2() 
         {
-            VrStatus = new VrStatus();
+            Statuses = new Statuses();
         }
 
-        public VrStatus GetStatusManager()
+        public Statuses GetStatusManager()
         {
-            return VrStatus;
+            return Statuses;
         }
 
         /// <summary>
@@ -30,7 +30,7 @@ namespace Station
         /// <returns></returns>
         public DeviceStatus GetHeadsetManagementSoftwareStatus()
         {
-            return VrStatus.SoftwareStatus;
+            return Statuses.SoftwareStatus;
         }
 
         /// <summary>
@@ -143,15 +143,15 @@ namespace Station
                 {
                     if (process.MainWindowTitle.Equals("VIVE Console"))
                     {
-                        VrStatus.UpdateHeadset(VrManager.Software, DeviceStatus.Lost);
+                        Statuses.UpdateHeadset(VrManager.Software, DeviceStatus.Lost);
                     }
                 }
             }
             if (viveStatusMonitor.Length > 0)
             {
-                VrStatus.UpdateHeadset(VrManager.Software, DeviceStatus.Connected);
+                Statuses.UpdateHeadset(VrManager.Software, DeviceStatus.Connected);
             }
-            VrStatus.UpdateHeadset(VrManager.Software, DeviceStatus.Lost);
+            Statuses.UpdateHeadset(VrManager.Software, DeviceStatus.Lost);
         }
 
         /// <summary>

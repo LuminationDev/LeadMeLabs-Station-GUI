@@ -5,7 +5,7 @@ namespace Station
     public class VrBaseStation
     {
         private readonly string serialNumber;
-        public DeviceStatus Tracking { set; get; }
+        public DeviceStatus Tracking { private set; get; } = DeviceStatus.Lost;
 
         public VrBaseStation(string serialNumber)
         {
@@ -27,10 +27,10 @@ namespace Station
                 case "tracking":
                     if (value is DeviceStatus trackingValue)
                     {
-                        shouldUpdate = Tracking == trackingValue;
+                        shouldUpdate = Tracking != trackingValue;
 
                         Tracking = trackingValue;
-                        MockConsole.WriteLine($"VrBaseStation {serialNumber} tracking updated to {Tracking}", MockConsole.LogLevel.Debug);
+                        MockConsole.WriteLine($"VrBaseStation {serialNumber} tracking updated to {Tracking}", MockConsole.LogLevel.Verbose);
                     }
                     else
                     {
