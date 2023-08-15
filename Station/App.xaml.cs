@@ -1,7 +1,15 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Runtime.InteropServices;
 using System.Windows;
 using Sentry;
+using Silk.NET.Core;
+using Silk.NET.Core.Contexts;
+using Silk.NET.Core.Native;
+using Silk.NET.OpenXR;
+using Action = System.Action;
 using Application = System.Windows.Application;
+using Session = Silk.NET.OpenXR.Session;
 
 namespace Station
 {
@@ -10,27 +18,130 @@ namespace Station
     /// </summary>
     public partial class App : Application
     {
+        private List<string> Extensions = new List<string>();
+        public Instance instance;
+        public ulong system_id = 0;
+        protected internal static Result CheckResult(Result result, string forFunction)
+        {
+            if ((int)result < 0)
+            {
+                return result;
+                // Window.GenerateGenericError(null, 
+                //     $"Only SteamVR is supported as an OpenXR runtime. Make sure it is set & running:\nSteamVR Settings > Show Advanced Settings > Developer > Set SteamVR as OpenXR Runtime\n\nAlso verify the correct High-Speed GPU is running this program.\n\nCode: {result} ({result:X}) in " + forFunction + "\n\nStack Trace: " + (new StackTrace()).ToString(),
+                //     "OpenXR Error: is SteamVR set as the OpenXR runtime? Correct GPU?");
+            }
+
+            return result;
+        }
         private void Application_Startup(object sender, StartupEventArgs e)
         {
-            if (e.Args.Length > 0 && e.Args[0].Trim().ToLower() == "writeversion")
+            unsafe
             {
-                Updater.GenerateVersion();
-                Environment.Exit(1);
-                return;
-            }
-            SteamConfig.VerifySteamConfig();
+                if (e.Args.Length > 0 && e.Args[0].Trim().ToLower() == "writeversion")
+                {
+                    Updater.GenerateVersion();
+                    Environment.Exit(1);
+                    return;
+                }
 
-            MainWindow mainWindow = new();
-            mainWindow.Show();
+                // Environment.SetEnvironmentVariable("XR_RUNTIME_JSON", "C:/Program Files (x86)/Steam/steamapps/common/SteamVR/steamxr_win64.json");
+                Silk.NET.OpenXR.Instance ins = new Instance();
+                // var api = Silk.NET.OpenXR.XR.GetApi();
+                var api = new XR(XR.CreateDefaultContext(new MyOpenXRLibraryNameContainer().GetLibraryNames()));
+                InstanceCreateInfo instanceCreateInfo;
 
-            AppDomain currentDomain = AppDomain.CurrentDomain;
-            currentDomain.UnhandledException += UnhandledExceptionHandler;
-            currentDomain.ProcessExit += ProcessExitHandler;
+                var appInfo = new ApplicationInfo()
+                {
+                    ApiVersion = new Version64(1, 0, 9)
+                };
+                Span<byte> appName = new Span<byte>(appInfo.ApplicationName, 128);
+                Span<byte> engName = new Span<byte>(appInfo.EngineName, 128);
+                SilkMarshal.StringIntoSpan(System.AppDomain.CurrentDomain.FriendlyName, appName);
+                SilkMarshal.StringIntoSpan("", engName);
+                // Extensions.Add("XR_KHR_vulkan_enable");
+                // Extensions.Add("XR_EXT_hp_mixed_reality_controller");
+                // Extensions.Add("XR_HTC_vive_cosmos_controller_interaction");
+                // Extensions.Add("XR_MSFT_hand_interaction");
+                // Extensions.Add("XR_EXT_samsung_odyssey_controller");
+                // Extensions.Add("XR_HTC_vive_focus3_controller_interaction");
+                // Extensions.Add("XR_HTC_hand_interaction");
+                var requestedExtensions = SilkMarshal.StringArrayToPtr(Extensions);
+                instanceCreateInfo = new InstanceCreateInfo
+                (
+                    applicationInfo: appInfo,
+                    enabledExtensionCount: (uint)Extensions.Count,
+                    enabledExtensionNames: (byte**)requestedExtensions
+                );
+                Result result = api.CreateInstance(in instanceCreateInfo, ref instance);
+                InstanceProperties properties = new();
+                Result result2 = api.GetInstanceProperties(instance, ref properties);
+                var runtimeName = SilkMarshal.PtrToString((nint)properties.RuntimeName);
+                var runtimeVersion = ((Version)(Version64)properties.RuntimeVersion).ToString(3);
+                var getInfo = new SystemGetInfo(formFactor: FormFactor.HeadMountedDisplay);
+                Result result3 = api.GetSystem(instance, in getInfo, ref system_id);
+                Session session;
+                SessionCreateInfo session_create_info = new SessionCreateInfo() {
+                    Type = StructureType.SessionCreateInfo,
+                    SystemId = system_id
+                };
+                Result result4 = api.CreateSession(instance, session_create_info, &session);
+                //
+                // Extensions.Clear();
+                // //Extensions.Add("XR_KHR_vulkan_enable2");
+                // Extensions.Add("XR_KHR_vulkan_enable");
+                // Extensions.Add("XR_EXT_hp_mixed_reality_controller");
+                // Extensions.Add("XR_HTC_vive_cosmos_controller_interaction");
+                // Extensions.Add("XR_MSFT_hand_interaction");
+                // Extensions.Add("XR_EXT_samsung_odyssey_controller");
+                // Extensions.Add("XR_HTC_vive_focus3_controller_interaction");
+                // Extensions.Add("XR_HTC_hand_interaction");
+                //
+                uint propCount = 0;
+                // api.EnumerateInstanceExtensionProperties((byte*)null, 0, &propCount, null);
+                //
+                // ExtensionProperties[] props = new ExtensionProperties[propCount];
+                // for (int i = 0; i < props.Length; i++) props[i].Type = StructureType.ExtensionProperties;
+                //
+                // fixed (ExtensionProperties* pptr = &props[0])
+                //     api.EnumerateInstanceExtensionProperties((byte*)null, propCount, ref propCount, pptr);
+                //
+                // List<string> AvailableExtensions = new List<string>();
+                // for (int i = 0; i < props.Length; i++)
+                // {
+                //     fixed (void* nptr = props[i].ExtensionName)
+                //         AvailableExtensions.Add(Marshal.PtrToStringAnsi(new System.IntPtr(nptr)));
+                // }
+                //
+                // for (int i=0; i<Extensions.Count; i++)
+                // {
+                //     if (AvailableExtensions.Contains(Extensions[i]) == false)
+                //     {
+                //         Extensions.RemoveAt(i);
+                //         i--;
+                //     }
+                // }
+                //
+                // InstanceCreateInfo instanceCreateInfo;
+                //
+                // var appInfo = new ApplicationInfo()
+                // {
+                //     ApiVersion = new Version64(1, 0, 9)
+                // };
+                // Silk.NET.OpenXR.Action a = new Silk.NET.OpenXR.Action();
+                SteamConfig.VerifySteamConfig();
+
+                MainWindow mainWindow = new();
+                mainWindow.Show();
+
+                AppDomain currentDomain = AppDomain.CurrentDomain;
+                currentDomain.UnhandledException += UnhandledExceptionHandler;
+                currentDomain.ProcessExit += ProcessExitHandler;
             
-            InitSentry();
-            CheckStorage();
+                InitSentry();
+                CheckStorage();
 
-            Manager.StartProgram();
+                Manager.StartProgram();
+            }
         }
 
         /// <summary>
