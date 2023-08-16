@@ -187,6 +187,9 @@ namespace Station
             Process.Start(new ProcessStartInfo(url) {UseShellExecute = true});
         }
 
+        /// <summary>
+        /// Abort a previously lodged Shutdown or Restart command.
+        /// </summary>
         public static string? CancelShutdown()
         {
             string? output = ExecuteStationCommand("shutdown /a");
@@ -196,6 +199,12 @@ namespace Station
         public static string? ShutdownStation(int time)
         {
             string? output = ExecuteStationCommand("shutdown /s /t " + time);
+            return output;
+        }
+
+        public static string? RestartStation(int time)
+        {
+            string? output = ExecuteStationCommand("shutdown /r /t " + time);
             return output;
         }
 

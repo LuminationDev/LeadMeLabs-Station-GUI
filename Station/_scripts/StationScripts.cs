@@ -45,48 +45,25 @@ namespace Station
                     }
                 }
             }
-            else if (additionalData == "StartVR")
+            else if (additionalData.Equals("StartVR"))
             {
                 //startVRSession();
             }
-            else if (additionalData == "RestartVR")
+            else if (additionalData.Equals("RestartVR"))
             {
                 restartVRSession();
             }
-            else if (additionalData == "EndVR")
+            else if (additionalData.Equals("EndVR"))
             {
                 endVRSession();
             }
+            else if (additionalData.Equals("Restart"))
+            {
+                ShutdownOrRestartCommand(source, "restart");
+            }
             else if (additionalData.Equals("Shutdown"))
             {
-                int cancelTime = 10000; // give the user 10 seconds to cancel the shutdown
-                int actualCancelTime = 15; // time before the computer actually shuts down
-                if (Helper.GetStationMode().Equals(Helper.STATION_MODE_APPLIANCE))
-                {
-                    cancelTime = 0;
-                    actualCancelTime = 0;
-                }
-                CommandLine.ShutdownStation(actualCancelTime);
-                tokenSource = new CancellationTokenSource();
-                var timer = new System.Timers.Timer(cancelTime);
-
-                void timerElapsed(object? obj, ElapsedEventArgs args)
-                {
-                    if (tokenSource is not null)
-                    {
-                        if (!tokenSource.IsCancellationRequested)
-                        {
-                            endVRSession();
-                            Manager.SendResponse(source, "Station", "SetValue:status:Off");
-                            Manager.SendResponse(source, "Station", "SetValue:gameName:");
-                            Manager.SendResponse(source, "Station", "SetValue:gameId:");
-                        }
-                    }
-                }
-
-                timer.Elapsed += timerElapsed;
-                timer.Enabled = true;
-                timer.AutoReset = false;
+                ShutdownOrRestartCommand(source, "shutdown");
             }
             else if (additionalData.Equals("CancelShutdown"))
             {
@@ -125,6 +102,50 @@ namespace Station
             {
                 Logger.WriteLog("Processing...", MockConsole.LogLevel.Verbose);
             }
+        }
+
+        /// <summary>
+        /// Depending on the received command, shutdown or restart the Station.
+        /// </summary>
+        private static void ShutdownOrRestartCommand(string source, string type)
+        {
+            int cancelTime = 10000; // give the user 10 seconds to cancel the shutdown
+            int actualCancelTime = 15; // time before the computer actually shuts down
+            if (Helper.GetStationMode().Equals(Helper.STATION_MODE_APPLIANCE))
+            {
+                cancelTime = 0;
+                actualCancelTime = 0;
+            }
+
+            if(type.Equals("shutdown"))
+            {
+                CommandLine.ShutdownStation(actualCancelTime);
+            }
+            else if (type.Equals("restart"))
+            {
+                CommandLine.RestartStation(actualCancelTime);
+            }
+
+            tokenSource = new CancellationTokenSource();
+            var timer = new System.Timers.Timer(cancelTime);
+
+            void timerElapsed(object? obj, ElapsedEventArgs args)
+            {
+                if (tokenSource is not null)
+                {
+                    if (!tokenSource.IsCancellationRequested)
+                    {
+                        endVRSession();
+                        Manager.SendResponse(source, "Station", "SetValue:status:Off");
+                        Manager.SendResponse(source, "Station", "SetValue:gameName:");
+                        Manager.SendResponse(source, "Station", "SetValue:gameId:");
+                    }
+                }
+            }
+
+            timer.Elapsed += timerElapsed;
+            timer.Enabled = true;
+            timer.AutoReset = false;
         }
 
         /// <summary>
