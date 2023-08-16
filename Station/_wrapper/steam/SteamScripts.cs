@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -29,6 +30,73 @@ namespace Station
 
         private static string availableGames = "";
         private static bool refreshing = false; //keep track of if the station is currently refreshing the steam list
+
+        private static int restartAttempts = 0; //Track how many times SteamVR has failed in a Station session
+
+        /// <summary>
+        /// If the vrmonitor process is running but OpenVR has not established a connection, check Steam's vrserver logs
+        /// to see if the '[Steam] Steam SHUTDOWN' entry is present.
+        /// </summary>
+        public static void CheckForSteamLogError()
+        {
+            try
+            {
+                string filePath = "C:/Program Files (x86)/Steam/logs/vrserver.txt";
+                ReverseLineReader reverseLineReader = new ReverseLineReader(filePath, Encoding.UTF8);
+                IEnumerator<string> enumerator = reverseLineReader.GetEnumerator();
+                do
+                {
+                    string current = enumerator.Current;
+                    if (current == null)
+                    {
+                        continue;
+                    }
+                    if (current.Contains("[Steam] Steam SHUTDOWN"))
+                    {
+                        //Double check that the vrmonitor program is still running in case it picked up the end of a session/restart vr session.
+                        Task.Delay(3000).Wait(); //vrserver takes 2.8 seconds to fully shut down
+                        if (Process.GetProcessesByName("vrmonitor").Length == 0)
+                        {
+                            enumerator.Dispose();
+                            break;
+                        }
+
+                        restartAttempts++;
+
+                        //Send a message to the tablet advising the Station be restarted.
+                        if(restartAttempts > 2)
+                        {
+                            Logger.WriteLog("CheckForSteamLogError - SteamVR Error: restarts failed, sending message to tablet.", MockConsole.LogLevel.Normal);
+                            Manager.SendResponse("Android", "Station", "SteamVRError");
+                            break;
+                        }
+
+                        Logger.WriteLog("CheckForSteamLogError - SteamVR Error: restarting SteamVR", MockConsole.LogLevel.Normal);
+
+                        //Kill SteamVR
+                        CommandLine.QueryVRProcesses(new List<string> { "vrmonitor" }, true);
+
+                        Task.Delay(2000).Wait();
+
+                        //Relaunch SteamVR
+                        SteamWrapper.LauncherSteamVR();
+
+                        enumerator.Dispose();
+                    }
+
+                    //Steam always separates a new vrserver session from older ones using the following string
+                    if (current.Contains("================================================================================================"))
+                    {
+                        restartAttempts = 0;
+                        MockConsole.WriteLine("SteamVR awaiting headset connection", MockConsole.LogLevel.Verbose);
+                        enumerator.Dispose();
+                    }
+                } while (enumerator.MoveNext());
+            } catch (Exception e)
+            {
+                MockConsole.WriteLine($"CheckForSteamLogError - Reading vrserver file failed: {e}", MockConsole.LogLevel.Normal);
+            }
+        }
 
         /// <summary>
         /// Run a basic Steam Command query to check if the Steam Guard has been configured or not. Afterwards restart

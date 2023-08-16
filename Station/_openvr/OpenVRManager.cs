@@ -29,7 +29,8 @@ namespace Station
         public OpenVRSystem? OpenVrSystem;
         
         private readonly string _steamManifest = @"C:\Program Files (x86)\Steam\config\steamapps.vrmanifest";
-        private readonly string _customManifest = Path.GetFullPath(Path.Combine(CommandLine.stationLocation, @"..", "customapps.vrmanifest"));
+        //Load the local appData/Roaming folder path
+        private readonly string _customManifest = Path.GetFullPath(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "leadme_apps", "customapps.vrmanifest"));
 
         //Read this when launching an experience to know if it is VR (missing means it is standard)
         private static Dictionary<string, string>? _vrApplicationDictionary;
