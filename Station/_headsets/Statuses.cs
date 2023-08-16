@@ -113,7 +113,7 @@ namespace Station
                 if (temp == null)
                 {
                     //Error has occurred
-                    Logger.WriteLog($"VrStatus.UpdateController - A Controller entry is invalid {serialNumber}",
+                    Logger.WriteLog($"VrStatus.UpdateController - A Controller entry is invalid removing {serialNumber}",
                         MockConsole.LogLevel.Error);
 
                     //Clear the invalid entry
@@ -168,7 +168,7 @@ namespace Station
                 if (temp == null)
                 {
                     //Error has occurred
-                    Logger.WriteLog($"VrStatus.UpdateBaseStation - A Base Station entry is invalid {serialNumber}",
+                    Logger.WriteLog($"VrStatus.UpdateBaseStation - A Base Station entry is invalid removing {serialNumber}",
                         MockConsole.LogLevel.Error);
 
                     //Clear the invalid entry
@@ -187,6 +187,7 @@ namespace Station
                 UIUpdater.UpdateOpenVRStatus("baseStationAmount", baseStations.Count.ToString());
             }
 
+            //TODO check that this is working properly when Tablet is setup.
             //Send a message to the NUC if necessary
             if (shouldUpdate)
             {
@@ -217,6 +218,9 @@ namespace Station
             UIUpdater.UpdateOpenVRStatus("headsetDescription", HeadsetDescription);
             UIUpdater.UpdateOpenVRStatus("headsetConnection", Enum.GetName(typeof(DeviceStatus), OpenVRStatus));
 
+            //Update the tablet
+            Manager.SendResponse("Android", "Station", $"DeviceStatus:Headset:tracking:{DeviceStatus.Lost.ToString()}");
+
             //Reset controllers
             foreach (var vrController in controllers)
             {
@@ -227,6 +231,9 @@ namespace Station
                 
                 UIUpdater.UpdateOpenVRStatus($"{role}ControllerBattery", "0");
                 UIUpdater.UpdateOpenVRStatus($"{role}ControllerConnection", Enum.GetName(typeof(DeviceStatus), DeviceStatus.Lost));
+
+                //Update the tablet
+                Manager.SendResponse("Android", "Station", $"DeviceStatus:Controller:{vrController.Value.Role.ToString()}:tracking:{DeviceStatus.Lost.ToString()}");
             }
 
             //Reset base stations
@@ -236,7 +243,7 @@ namespace Station
             }
             UIUpdater.UpdateOpenVRStatus("baseStationActive", "0");
 
-            //TODO send message to the Tablet?
+            //TODO send message to the Tablet for base stations
         }
     }
 }
