@@ -37,13 +37,18 @@ namespace Station
             MockConsole.WriteLine(log, logLevel);
         }
 
+        public static string GetCurrentLogFilePath()
+        {
+            return filePath + DateTime.Now.ToString("yyyy_MM_dd") + "_log.txt";
+        }
+
         /// <summary>
         /// Processes the log queue by writing the log messages to a log file.
         /// </summary>
         [MethodImpl(MethodImplOptions.Synchronized)]
         public static void WorkQueue()
         {
-            string logFilePath = filePath + DateTime.Now.ToString("yyyy_MM_dd") + "_log.txt";
+            string logFilePath = GetCurrentLogFilePath();
             if (Directory.Exists(Path.GetDirectoryName(logFilePath)))
             {
                 using (StreamWriter w = File.AppendText(logFilePath))

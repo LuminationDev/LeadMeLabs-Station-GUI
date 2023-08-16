@@ -4,6 +4,8 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
@@ -683,6 +685,26 @@ namespace Station
             }
 
             return 9999;
+        }
+
+        public static async Task UploadLogFile()
+        {
+            string accessToken = await RemoteAccess.GetAccessToken();
+            if (String.IsNullOrEmpty(accessToken))
+            {
+                return;
+            }
+
+            var fileStream = File.OpenRead(Logger.GetCurrentLogFilePath());
+
+            using var httpClient = new HttpClient();
+            httpClient.DefaultRequestHeaders.Add("Authorization", $"Bearer {accessToken}");
+            var content = new StreamContent(fileStream);
+            content.Headers.ContentType = new MediaTypeHeaderValue("text/plain");
+            var response = await httpClient.PostAsync(
+                "https://us-central1-leadme-labs.cloudfunctions.net/uploadFile",
+                content
+            );
         }
 
         [DllImport("user32.dll")]
