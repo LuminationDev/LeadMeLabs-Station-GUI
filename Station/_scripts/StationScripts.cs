@@ -100,6 +100,9 @@ namespace Station
             else if (additionalData.StartsWith("IdentifyStation"))
             {
                 OverlayManager.OverlayThread();
+            } else if (additionalData.StartsWith("UploadLogFile"))
+            {
+                CommandLine.UploadLogFile();
             }
             else
             {

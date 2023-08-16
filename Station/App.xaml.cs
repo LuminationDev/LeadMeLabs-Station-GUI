@@ -26,7 +26,6 @@ namespace Station
             AppDomain currentDomain = AppDomain.CurrentDomain;
             currentDomain.UnhandledException += UnhandledExceptionHandler;
             currentDomain.ProcessExit += ProcessExitHandler;
-            
             InitSentry();
             CheckStorage();
 
