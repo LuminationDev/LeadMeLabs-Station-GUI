@@ -113,7 +113,7 @@ namespace Station
                 if (temp == null)
                 {
                     //Error has occurred
-                    Logger.WriteLog($"VrStatus.UpdateController - A Controller entry is invalid {serialNumber}",
+                    Logger.WriteLog($"VrStatus.UpdateController - A Controller entry is invalid removing {serialNumber}",
                         MockConsole.LogLevel.Error);
 
                     //Clear the invalid entry
@@ -168,7 +168,7 @@ namespace Station
                 if (temp == null)
                 {
                     //Error has occurred
-                    Logger.WriteLog($"VrStatus.UpdateBaseStation - A Base Station entry is invalid {serialNumber}",
+                    Logger.WriteLog($"VrStatus.UpdateBaseStation - A Base Station entry is invalid removing {serialNumber}",
                         MockConsole.LogLevel.Error);
 
                     //Clear the invalid entry
@@ -187,6 +187,7 @@ namespace Station
                 UIUpdater.UpdateOpenVRStatus("baseStationAmount", baseStations.Count.ToString());
             }
 
+            //TODO check that this is working properly when Tablet is setup.
             //Send a message to the NUC if necessary
             if (shouldUpdate)
             {

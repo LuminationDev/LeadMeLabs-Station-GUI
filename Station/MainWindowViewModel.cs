@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -23,7 +24,7 @@ namespace Station
             StopStationCommand = new RelayCommand(() => Manager.StopProgram());
             ChangeLogLevelCommand = new RelayCommand(() => MockConsole.changeLogLevel());
             StopCurrentProcess = new RelayCommand(() => WrapperManager.StopAProcess());
-            ResetSteamVRProcess = new RelayCommand(() => _ = WrapperManager.RestartVRProcesses());
+            ResetSteamVRProcess = new RelayCommand(() => new Task(() => _ = WrapperManager.RestartVRProcesses()).Start());
 
             NotifyIconOpenCommand = new RelayCommand(() => { WindowState = WindowState.Normal; });
             NotifyIconExitCommand = new RelayCommand(() => { Application.Current.Shutdown(); });
