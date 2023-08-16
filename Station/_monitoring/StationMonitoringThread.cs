@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Diagnostics;
 using System.Threading;
+using System.Threading.Tasks;
 using Sentry;
 
 namespace Station
@@ -57,7 +58,7 @@ namespace Station
                 return;
             }
 
-            OpenVRCheck();
+            new Task(() => OpenVRCheck()).Start(); //Perform as separate task in case SteamVR is restarting.
             SetVolCheck();
             TemperatureCheck();
 
@@ -72,11 +73,15 @@ namespace Station
         {
             //Make sure that the vrmonitor (SteamVR) process is running
             if (Process.GetProcessesByName("vrmonitor").Length == 0) return;
-            
-            if(Manager.openVRManager?.InitialiseOpenVR() ?? false)
+
+            //Attempt to contact OpenVR, if this fails check the logs for errors
+            if (Manager.openVRManager?.InitialiseOpenVR() ?? false)
             {
                 Manager.openVRManager?.QueryCurrentApplication();
                 Manager.openVRManager?.PerformDeviceChecks();
+            } else
+            {
+                SteamScripts.CheckForSteamLogError();
             }
         }
 
