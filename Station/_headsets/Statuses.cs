@@ -218,6 +218,9 @@ namespace Station
             UIUpdater.UpdateOpenVRStatus("headsetDescription", HeadsetDescription);
             UIUpdater.UpdateOpenVRStatus("headsetConnection", Enum.GetName(typeof(DeviceStatus), OpenVRStatus));
 
+            //Update the tablet
+            Manager.SendResponse("Android", "Station", $"DeviceStatus:Headset:tracking:{DeviceStatus.Lost.ToString()}");
+
             //Reset controllers
             foreach (var vrController in controllers)
             {
@@ -228,6 +231,9 @@ namespace Station
                 
                 UIUpdater.UpdateOpenVRStatus($"{role}ControllerBattery", "0");
                 UIUpdater.UpdateOpenVRStatus($"{role}ControllerConnection", Enum.GetName(typeof(DeviceStatus), DeviceStatus.Lost));
+
+                //Update the tablet
+                Manager.SendResponse("Android", "Station", $"DeviceStatus:Controller:{vrController.Value.Role.ToString()}:tracking:{DeviceStatus.Lost.ToString()}");
             }
 
             //Reset base stations
@@ -237,7 +243,7 @@ namespace Station
             }
             UIUpdater.UpdateOpenVRStatus("baseStationActive", "0");
 
-            //TODO send message to the Tablet?
+            //TODO send message to the Tablet for base stations
         }
     }
 }
