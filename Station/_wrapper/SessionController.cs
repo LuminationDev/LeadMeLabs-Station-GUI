@@ -58,8 +58,6 @@ namespace Station
             switch (experienceType)
             {
                 case "Custom":
-                    MockConsole.WriteLine("startVRSession not implemented for type: Custom.", MockConsole.LogLevel.Error);
-                    break;
                 case "Steam":
                     vrHeadset?.StartVrSession();
                     break;

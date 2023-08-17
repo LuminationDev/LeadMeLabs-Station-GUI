@@ -17,6 +17,8 @@ namespace Station
         public int Battery { private set; get; } = 0;
         public DeviceStatus Tracking { private set; get; } = DeviceStatus.Lost;
 
+        private int controllerCount = 0;
+
         public VrController(string serialNumber, DeviceRole? role) 
         { 
             this.serialNumber = serialNumber;
@@ -87,7 +89,16 @@ namespace Station
                     break;
             }
 
-            return shouldUpdate;
+            _ = shouldUpdate == false ? controllerCount++ : controllerCount = 0;
+
+            //Override the shouldUpdate variable if too much time has passed
+            if (controllerCount > (Statuses.pollLimit * 2)) // limit * number of properties that are updated
+            {
+                controllerCount = 0;
+                shouldUpdate = true;
+            }
+
+            return shouldUpdate; 
         }
     }
 }

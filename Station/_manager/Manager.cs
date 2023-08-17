@@ -289,7 +289,7 @@ namespace Station
         public static void RunScript(string data)
         {
             ScriptThread script = new(data);
-            Thread scriptThread = new(script.run);
+            Thread scriptThread = new(script.Run);
             scriptThread.Start();
         }
 

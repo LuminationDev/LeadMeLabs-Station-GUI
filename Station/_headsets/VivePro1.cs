@@ -142,7 +142,6 @@ namespace Station
                 .First();
             ReverseLineReader reverseLineReader = new ReverseLineReader(file.FullName, Encoding.Unicode);
             IEnumerator<string> enumerator = reverseLineReader.GetEnumerator();
-            MockConsole.WriteLine(enumerator.Current, MockConsole.LogLevel.Verbose);
             do
             {
                 string current = enumerator.Current;
@@ -153,7 +152,7 @@ namespace Station
                 if (current.Contains("Terminated"))
                 {
                     enumerator.Dispose();
-                    Statuses.UpdateHeadset(VrManager.Software, DeviceStatus.Lost);
+                    Statuses.UpdateHeadset(VrManager.Software, DeviceStatus.Terminated);
                 }
 
                 if (current.Contains("Connection Status set to"))
@@ -162,7 +161,7 @@ namespace Station
                     {
                         Statuses.UpdateHeadset(VrManager.Software, DeviceStatus.Lost);
                     }
-                    else if (current.Contains("CONNECTION_STATUS_CONNECTED") && Statuses.SoftwareStatus == DeviceStatus.Lost)
+                    else if (Statuses.SoftwareStatus == DeviceStatus.Lost && current.Contains("CONNECTION_STATUS_CONNECTED"))
                     {
                         Statuses.UpdateHeadset(VrManager.Software, DeviceStatus.Connected);
                     }

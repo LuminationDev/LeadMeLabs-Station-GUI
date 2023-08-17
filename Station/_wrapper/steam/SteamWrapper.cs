@@ -112,12 +112,12 @@ namespace Station
             if (!SessionController.vrHeadset.WaitForConnection(wrapperType)) return;
 
             //If headset management software is open (with headset connected) and OpenVrSystem cannot initialise then restart SteamVR
-            if (!OpenVRManager.WaitForOpenVR().Result) return;            
+            if (!OpenVRManager.WaitForOpenVR().Result) return;
 
             Task.Factory.StartNew(() =>
             {
                 //Attempt to start the process using OpenVR
-                if (OpenVRManager.LaunchApplication(experience.Name))
+                if (OpenVRManager.LaunchApplication(experience.ID))
                 {
                     Logger.WriteLog($"SteamWrapper.WrapProcess: Launching {experience.Name} via OpenVR", MockConsole.LogLevel.Verbose);
                     return;
