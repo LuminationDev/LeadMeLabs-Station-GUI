@@ -290,14 +290,29 @@ namespace Station
                             output += " Application ID (App ID): " + pchKey.Replace("steam.app.", "");
                         }
 
-                        Logger.WriteLog(output, MockConsole.LogLevel.Verbose);
+                        //Logger.WriteLog(output, MockConsole.LogLevel.Verbose);
 
                         vrApplicationCount++;
 
-                        //If an application is in the dictionary it is therefore a VR experience
-                        if (!_vrApplicationDictionary?.ContainsKey(applicationName) ?? false)
+                        //Get the application ID
+                        string appID;
+                        if(pchKey.Contains("steam.app"))
                         {
-                            _vrApplicationDictionary?.Add(applicationName, pchKey);
+                            appID = pchKey.Replace("steam.app.", "");
+                        } 
+                        else if (pchKey.Contains("custom.app"))
+                        {
+                            appID = pchKey.Replace("custom.app.", "");
+                        } 
+                        else
+                        {
+                            continue;
+                        }
+
+                        //If an application is in the dictionary it is therefore a VR experience
+                        if (!_vrApplicationDictionary?.ContainsKey(appID) ?? false)
+                        {
+                            _vrApplicationDictionary?.Add(appID, pchKey);
                         }
                     }
                 }
@@ -314,13 +329,13 @@ namespace Station
         /// Attempt to find the experience name in the ApplicationDictionary, if present this means the experience is
         /// VR, if not then it must be a regular experience.
         /// </summary>
-        /// <param name="experienceName">A string of the experience to load</param>
+        /// <param name="appID">A string of the experience's application ID to load</param>
         /// <returns>A bool if the experience is VR</returns>
-        public static bool LaunchApplication(string experienceName)
+        public static bool LaunchApplication(string appID)
         {
             if (_vrApplicationDictionary == null) return false;
 
-            _vrApplicationDictionary.TryGetValue(experienceName.Replace("\"", ""), out var pchKey);
+            _vrApplicationDictionary.TryGetValue(appID, out var pchKey);
             if(pchKey == null) return false;
             
             EVRApplicationError error = OpenVR.Applications.LaunchApplication(pchKey);
@@ -542,7 +557,7 @@ namespace Station
                             $"Headset Position: {headsetPosition}\n" +
                             $"Headset Orientation: {headsetOrientation}";
 
-            Logger.WriteLog(output, MockConsole.LogLevel.Verbose);
+            //Logger.WriteLog(output, MockConsole.LogLevel.Verbose);
 
             if (headsetPosition == new Vector3(0, 0, 0) && headsetOrientation == new Quaternion(1, 0, 0, 0) &&
                 _tracking)

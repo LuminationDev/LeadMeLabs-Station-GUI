@@ -130,7 +130,7 @@ namespace Station
                 return;
             }
 
-            if (experience.Name == null)
+            if (experience.Name == null || experience.ID == null)
             {
                 SessionController.PassStationMessage("CustomWrapper.WrapProcess - Experience name cannot be null.");
                 return;
@@ -145,17 +145,20 @@ namespace Station
 
             lastExperience = experience;
 
+            //Begin monitoring the different processes
+            WrapperMonitoringThread.InitializeMonitoring(wrapperType);
+
             //Wait for the Headset's connection method to respond
             if (!SessionController.vrHeadset.WaitForConnection(wrapperType)) return;
 
             //If headset management software is open (with headset connected) and OpenVrSystem cannot initialise then restart SteamVR
             if (!OpenVRManager.WaitForOpenVR().Result) return;
 
-            MockConsole.WriteLine($"Launching process: {experience.Name}", MockConsole.LogLevel.Normal);
+            MockConsole.WriteLine($"Launching process: {experience.Name} - {experience.ID}", MockConsole.LogLevel.Normal);
             Task.Factory.StartNew(() =>
             {
                 //Attempt to start the process using OpenVR
-                if (OpenVRManager.LaunchApplication(experience.Name))
+                if (OpenVRManager.LaunchApplication(experience.ID))
                 {
                     Logger.WriteLog($"CustomWrapper.WrapProcess: Launching {experience.Name} via OpenVR", MockConsole.LogLevel.Verbose);
                     return;

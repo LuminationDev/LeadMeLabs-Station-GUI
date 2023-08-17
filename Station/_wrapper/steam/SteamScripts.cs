@@ -76,7 +76,7 @@ namespace Station
                         //Kill SteamVR
                         CommandLine.QueryVRProcesses(new List<string> { "vrmonitor" }, true);
 
-                        Task.Delay(2000).Wait();
+                        Task.Delay(5000).Wait();
 
                         //Relaunch SteamVR
                         SteamWrapper.LauncherSteamVR();

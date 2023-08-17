@@ -74,7 +74,7 @@ namespace Station
 
                 activelyMonitoring = true;
 
-                if (SessionController.vrHeadset.GetHeadsetManagementSoftwareStatus() == DeviceStatus.Lost)
+                if (SessionController.vrHeadset.GetHeadsetManagementSoftwareStatus() == DeviceStatus.Terminated)
                 {
                     SessionController.StartVRSession(type);
                     SessionController.PassStationMessage($"ApplicationUpdate,Starting VR Session...");

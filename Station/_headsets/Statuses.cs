@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Runtime.CompilerServices;
 
 namespace Station
 {
@@ -22,15 +21,26 @@ namespace Station
         //Base Station models stored by serial number
         private Dictionary<string, VrBaseStation> baseStations = new();
 
-        /// <summary>
-        /// External software that is required to link the headset to SteamVR
-        /// </summary>
-        public DeviceStatus SoftwareStatus { private set; get; } = DeviceStatus.Lost; //(Vive Pro (X) - Determined by Vive Logs)
+        //If the status for a device has not been set through after (pollLimit) is reached
+        //resend the statuses for that device to make sure everything is up to date.
+        //Controllers are tracked within their class as they have multiple properties updating
+        //with 2 different controllers being connected.
+        public static int pollLimit = 15;
+        private int headsetCount = 0;
+        private int baseStationCount = 0;
 
         /// <summary>
-        /// OpenVR's wrapper around SteamVR.
+        /// External software that is required to link the headset to SteamVR
+        ///     Vive Pro 1 - Determined by Vive Logs
+        ///     Vive Pro 2 - Determined by Vive Console
         /// </summary>
-        public DeviceStatus OpenVRStatus { private set; get; } = DeviceStatus.Lost; //Determined by OpenVR (should override viveStatus?)
+        public DeviceStatus SoftwareStatus { private set; get; } = DeviceStatus.Lost;
+
+        /// <summary>
+        /// OpenVR's wrapper around SteamVR. Overrides SoftwareStatus if the WrapperMonitoringThread is not 
+        /// initialised.
+        /// </summary>
+        public DeviceStatus OpenVRStatus { private set; get; } = DeviceStatus.Lost;
 
         /// <summary>
         /// Set the model name of the headset.
@@ -68,7 +78,7 @@ namespace Station
                 OpenVRStatus = status;
             }
 
-            //If just one of the trackers is lost and the Wrapper is actively monitoring the
+            //If just one of the headset statuses is set to lost and the Wrapper is actively monitoring the
             //third party software status then the headset is considered lost.
             if (WrapperMonitoringThread.monitoring)
             {
@@ -82,15 +92,18 @@ namespace Station
                 status = DeviceStatus.Lost;
             }
 
-            //TODO check that this is working properly when Tablet is setup.
             //Send a message to the NUC if necessary
-            if (shouldUpdate)
+            if (shouldUpdate || headsetCount > pollLimit)
             {
+                headsetCount = 0;
                 string connection = Enum.GetName(typeof(DeviceStatus), status);
                 UIUpdater.UpdateOpenVRStatus("headsetConnection", connection);
 
                 MockConsole.WriteLine($"DeviceStatus:Headset:tracking:{connection}", MockConsole.LogLevel.Debug);
                 Manager.SendResponse("Android", "Station", $"DeviceStatus:Headset:tracking:{connection}");
+            } else
+            {
+                headsetCount++;
             }
         }
 
@@ -125,6 +138,23 @@ namespace Station
             }
             else if (role != null)
             {
+                bool duplicate = false;
+
+                //Invalidate the controllers dictionary if there are multiple of the same role. (i.e two lefts or two rights)
+                foreach (var vrController in controllers)
+                {
+                    if(vrController.Value.Role == role)
+                    {
+                        duplicate = true;
+                        vrController.Value.UpdateProperty("tracking", DeviceStatus.Lost);
+                        vrController.Value.UpdateProperty("battery", 0);
+                        Manager.SendResponse("Android", "Station", $"DeviceStatus:Controller:{vrController.Value.Role.ToString()}:tracking:{DeviceStatus.Lost}");
+                        MockConsole.WriteLine($"Duplicate controller - Role: {Enum.GetName(typeof(DeviceRole), role)}. Reseting dictionary.", MockConsole.LogLevel.Normal);
+                        controllers = new();
+                    }
+                }
+                if (duplicate) return;
+
                 //Add a new controller entry
                 MockConsole.WriteLine($"Found a new controller: {serialNumber} - Role: {Enum.GetName(typeof(DeviceRole), role)}", MockConsole.LogLevel.Normal);
                 VrController temp = new VrController(serialNumber, role);
@@ -138,9 +168,8 @@ namespace Station
                 return;
             }
             
-            //TODO check that this is working properly when Tablet is setup.
             //Send a message to the NUC if necessary
-            if (shouldUpdate)
+            if (shouldUpdate) //limit * property values update * number of controllers
             {
                 controllers.TryGetValue(serialNumber, out var current);
                 if (current == null) return;
@@ -187,10 +216,10 @@ namespace Station
                 UIUpdater.UpdateOpenVRStatus("baseStationAmount", baseStations.Count.ToString());
             }
 
-            //TODO check that this is working properly when Tablet is setup.
             //Send a message to the NUC if necessary
-            if (shouldUpdate)
+            if (shouldUpdate || baseStationCount > (pollLimit * baseStations.Count))
             {
+                baseStationCount = 0;
                 int active = 0;
                 foreach (var vrBaseStation in baseStations)
                 {
@@ -204,6 +233,9 @@ namespace Station
                 //Send the active and total base station amounts instead of individual base station updates.
                 MockConsole.WriteLine($"DeviceStatus:BaseStation:{active}:{baseStations.Count}", MockConsole.LogLevel.Debug);
                 Manager.SendResponse("Android", "Station", $"DeviceStatus:BaseStation:{active}:{baseStations.Count}");
+            } else
+            {
+                baseStationCount++;
             }
         }
 
@@ -242,8 +274,35 @@ namespace Station
                 vrBaseStation.Value.UpdateProperty("tracking", DeviceStatus.Lost);
             }
             UIUpdater.UpdateOpenVRStatus("baseStationActive", "0");
+            Manager.SendResponse("Android", "Station", $"DeviceStatus:BaseStation:0:{baseStations.Count}");
+        }
 
-            //TODO send message to the Tablet for base stations
+        /// <summary>
+        /// Re-send the current statuses of all VR devices. This is used when a tablet is connecting/reconnecting to the NUC.
+        /// </summary>
+        public void QueryStatues()
+        {
+            //Headset
+            Manager.SendResponse("Android", "Station", $"DeviceStatus:Headset:tracking:{OpenVRStatus.ToString()}");
+
+            //Controllers
+            foreach (var vrController in controllers)
+            {
+                //Update the tablet
+                Manager.SendResponse("Android", "Station", $"DeviceStatus:Controller:{vrController.Value.Role.ToString()}:tracking:{vrController.Value.Tracking.ToString()}");
+                Manager.SendResponse("Android", "Station", $"DeviceStatus:Controller:{vrController.Value.Role.ToString()}:battery:{vrController.Value.Battery}");
+            }
+
+            //Base stations
+            int active = 0;
+            foreach (var vrBaseStation in baseStations)
+            {
+                if (vrBaseStation.Value.Tracking == DeviceStatus.Connected)
+                {
+                    active++;
+                }
+            }
+            Manager.SendResponse("Android", "Station", $"DeviceStatus:BaseStation:{active}:{baseStations.Count}");
         }
     }
 }
