@@ -12,11 +12,13 @@ namespace Station
     public class SteamConfig
     {
         private static string steamId = "";
-        private static readonly string location = Environment.GetEnvironmentVariable("LabLocation", EnvironmentVariableTarget.Process) ?? "Unknown";
-        private static readonly string stationId = Environment.GetEnvironmentVariable("StationId", EnvironmentVariableTarget.Process) ?? "Unknown";
+        private static string location = Environment.GetEnvironmentVariable("LabLocation", EnvironmentVariableTarget.Process) ?? "Unknown";
+        private static string stationId = Environment.GetEnvironmentVariable("StationId", EnvironmentVariableTarget.Process) ?? "Unknown";
 
         public static void VerifySteamConfig(bool initialCall = false)
         {
+            location = Environment.GetEnvironmentVariable("LabLocation", EnvironmentVariableTarget.Process) ?? "Unknown";
+            stationId = Environment.GetEnvironmentVariable("StationId", EnvironmentVariableTarget.Process) ?? "Unknown";
             GetSteamId();
             UpdateSteamVRSettings();
             VerifySteamLoginUserConfig();
