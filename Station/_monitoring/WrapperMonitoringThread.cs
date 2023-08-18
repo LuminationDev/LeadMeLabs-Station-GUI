@@ -87,41 +87,24 @@ namespace Station
         /// </summary>
         private static void CallCustomCheck(Object? source, System.Timers.ElapsedEventArgs e)
         {
-            ViveCheck();
             SteamCheck();
-            OpenVRCheck();
 
             Logger.WorkQueue();
         }
 
         private static void CallSteamCheck(Object? source, System.Timers.ElapsedEventArgs e)
         {
-            MockConsole.WriteLine("About to check Vive status", MockConsole.LogLevel.Verbose);
-            ViveCheck();
             MockConsole.WriteLine("Checked Vive status", MockConsole.LogLevel.Verbose);
             SteamCheck();
-            OpenVRCheck();
 
             Logger.WorkQueue();
         }
 
         private static void CallViveCheck(Object? source, System.Timers.ElapsedEventArgs e)
         {
-            ViveCheck();
+
 
             Logger.WorkQueue();
-        }
-
-        /// <summary>
-        /// Perform a check on the Headset, Controllers and Boundary of the connected VR headset through
-        /// the OpenVR manager.
-        /// </summary>
-        private static void OpenVRCheck()
-        {
-            // if (Manager.openVRManager?.InitialiseOpenVR() ?? false)
-            // {
-            //     Manager.openVRManager.PerformDeviceChecks();
-            // }
         }
 
         /// <summary>
@@ -206,14 +189,6 @@ namespace Station
                     }
                 }
             }
-        }
-
-        private static void ViveCheck()
-        {
-            if (SessionController.vrHeadset == null) return;
-
-            SessionController.vrHeadset.MonitorVrConnection();
-            Logger.WriteLog("ViveStatus: " + Enum.GetName(typeof(DeviceStatus), SessionController.vrHeadset.GetHeadsetManagementSoftwareStatus()), MockConsole.LogLevel.Debug);
         }
     }
 }

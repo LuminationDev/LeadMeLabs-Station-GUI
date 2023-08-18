@@ -152,16 +152,16 @@ namespace Station
                 if (current.Contains("Terminated"))
                 {
                     enumerator.Dispose();
-                    Statuses.UpdateHeadset(VrManager.Software, DeviceStatus.Terminated);
+                    Statuses.UpdateHeadset(VrManager.Software, DeviceStatus.Off);
                 }
 
                 if (current.Contains("Connection Status set to"))
                 {
-                    if (Statuses.SoftwareStatus == DeviceStatus.Connected && current.Contains("CONNECTION_STATUS_SCANNING"))
+                    if ((Statuses.SoftwareStatus == DeviceStatus.Connected || Statuses.SoftwareStatus == DeviceStatus.Off) && current.Contains("CONNECTION_STATUS_SCANNING"))
                     {
                         Statuses.UpdateHeadset(VrManager.Software, DeviceStatus.Lost);
                     }
-                    else if (Statuses.SoftwareStatus == DeviceStatus.Lost && current.Contains("CONNECTION_STATUS_CONNECTED"))
+                    else if ((Statuses.SoftwareStatus == DeviceStatus.Lost || Statuses.SoftwareStatus == DeviceStatus.Off) && current.Contains("CONNECTION_STATUS_CONNECTED"))
                     {
                         Statuses.UpdateHeadset(VrManager.Software, DeviceStatus.Connected);
                     }

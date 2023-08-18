@@ -66,11 +66,13 @@ namespace Station
         }
 
         /// <summary>
-        /// Checks if OpenVR has been initialised, if not attempt to initialise it and query if there are any running
-        /// application.
+        /// Checks the third party headset management software and if OpenVR has been initialised, 
+        /// if not attempt to initialise it and query if there are any running application.
         /// </summary>
         private static void OpenVRCheck()
         {
+            ExternalSoftwareCheck();
+
             //Make sure that the vrmonitor (SteamVR) process is running
             if (Process.GetProcessesByName("vrmonitor").Length == 0) return;
 
@@ -83,6 +85,17 @@ namespace Station
             {
                 SteamScripts.CheckForSteamLogError();
             }
+        }
+
+        /// <summary>
+        /// Check the third party headset management software for the current connection.
+        /// </summary>
+        private static void ExternalSoftwareCheck()
+        {
+            if (SessionController.vrHeadset == null) return;
+
+            SessionController.vrHeadset.MonitorVrConnection();
+            MockConsole.WriteLine("VR SoftwareStatus: " + Enum.GetName(typeof(DeviceStatus), SessionController.vrHeadset.GetHeadsetManagementSoftwareStatus()), MockConsole.LogLevel.Debug);
         }
 
         /// <summary>
