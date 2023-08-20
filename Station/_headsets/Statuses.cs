@@ -34,13 +34,13 @@ namespace Station
         ///     Vive Pro 1 - Determined by Vive Logs
         ///     Vive Pro 2 - Determined by Vive Console
         /// </summary>
-        public DeviceStatus SoftwareStatus { private set; get; } = DeviceStatus.Lost;
+        public DeviceStatus SoftwareStatus { private set; get; } = DeviceStatus.Off;
 
         /// <summary>
         /// OpenVR's wrapper around SteamVR. Overrides SoftwareStatus if the WrapperMonitoringThread is not 
         /// initialised.
         /// </summary>
-        public DeviceStatus OpenVRStatus { private set; get; } = DeviceStatus.Lost;
+        public DeviceStatus OpenVRStatus { private set; get; } = DeviceStatus.Off;
 
         /// <summary>
         /// Set the model name of the headset.
@@ -80,17 +80,7 @@ namespace Station
 
             //If just one of the headset statuses is set to lost and the Wrapper is actively monitoring the
             //third party software status then the headset is considered lost.
-            if (WrapperMonitoringThread.monitoring)
-            {
-                if (SoftwareStatus == DeviceStatus.Lost || OpenVRStatus == DeviceStatus.Lost)
-                {
-                    status = DeviceStatus.Lost;
-                }
-            }
-            else if (OpenVRStatus == DeviceStatus.Lost)
-            {
-                status = DeviceStatus.Lost;
-            }
+            
 
             //Send a message to the NUC if necessary
             if (shouldUpdate || headsetCount > pollLimit)
@@ -99,8 +89,8 @@ namespace Station
                 string connection = Enum.GetName(typeof(DeviceStatus), status);
                 UIUpdater.UpdateOpenVRStatus("headsetConnection", connection);
 
-                MockConsole.WriteLine($"DeviceStatus:Headset:tracking:{connection}", MockConsole.LogLevel.Debug);
-                Manager.SendResponse("Android", "Station", $"DeviceStatus:Headset:tracking:{connection}");
+                MockConsole.WriteLine($"DeviceStatus:Headset:tracking:{manager.ToString()}:{connection}", MockConsole.LogLevel.Debug);
+                Manager.SendResponse("Android", "Station", $"DeviceStatus:Headset:{manager.ToString()}:tracking:{connection}");
             } else
             {
                 headsetCount++;
@@ -283,7 +273,8 @@ namespace Station
         public void QueryStatues()
         {
             //Headset
-            Manager.SendResponse("Android", "Station", $"DeviceStatus:Headset:tracking:{OpenVRStatus.ToString()}");
+            Manager.SendResponse("Android", "Station", $"DeviceStatus:Headset:OpenVR:tracking:{OpenVRStatus.ToString()}");
+            Manager.SendResponse("Android", "Station", $"DeviceStatus:Headset:Vive:tracking:{SoftwareStatus.ToString()}");
 
             //Controllers
             foreach (var vrController in controllers)

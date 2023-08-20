@@ -12,7 +12,7 @@ namespace Station
     {
         Connected, //Vive & OpenVR connection
         Lost, //Vive or OpenVR not tracking
-        Terminated //No Vive connection
+        Off //No Vive connection
     }
 
     public interface VrHeadset
