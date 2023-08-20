@@ -18,6 +18,7 @@ namespace Station
                 Environment.Exit(1);
                 return;
             }
+            Logger.WriteLog("Updated to OpenVR Version", MockConsole.LogLevel.Error);
             SteamConfig.VerifySteamConfig();
 
             MainWindow mainWindow = new();
