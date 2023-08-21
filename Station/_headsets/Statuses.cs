@@ -60,7 +60,7 @@ namespace Station
         public void UpdateHeadset(VrManager manager, DeviceStatus status)
         {
             MockConsole.WriteLine($"Updating Headset:{Enum.GetName(typeof(VrManager), manager)}:{Enum.GetName(typeof(DeviceStatus), status)}", 
-                MockConsole.LogLevel.Normal);
+                MockConsole.LogLevel.Debug);
 
             //Determine if the model should update and have the value sent to the NUC
             bool shouldUpdate = false;
@@ -236,26 +236,28 @@ namespace Station
         {
             //Reset headset
             HeadsetDescription = "";
-            OpenVRStatus = DeviceStatus.Lost;
+            SoftwareStatus = DeviceStatus.Off;
+            OpenVRStatus = DeviceStatus.Off;
             UIUpdater.UpdateOpenVRStatus("headsetDescription", HeadsetDescription);
             UIUpdater.UpdateOpenVRStatus("headsetConnection", Enum.GetName(typeof(DeviceStatus), OpenVRStatus));
 
             //Update the tablet
-            Manager.SendResponse("Android", "Station", $"DeviceStatus:Headset:tracking:{DeviceStatus.Lost.ToString()}");
+            Manager.SendResponse("Android", "Station", $"DeviceStatus:Headset:OpenVR:tracking:{DeviceStatus.Off.ToString()}");
+            Manager.SendResponse("Android", "Station", $"DeviceStatus:Headset:Vive:tracking:{DeviceStatus.Off.ToString()}");
 
             //Reset controllers
             foreach (var vrController in controllers)
             {
                 vrController.Value.UpdateProperty("battery", 0);
-                vrController.Value.UpdateProperty("tracking", DeviceStatus.Lost);
+                vrController.Value.UpdateProperty("tracking", DeviceStatus.Off);
 
                 string role = vrController.Value.Role == DeviceRole.Left ? "left" : "right";
                 
                 UIUpdater.UpdateOpenVRStatus($"{role}ControllerBattery", "0");
-                UIUpdater.UpdateOpenVRStatus($"{role}ControllerConnection", Enum.GetName(typeof(DeviceStatus), DeviceStatus.Lost));
+                UIUpdater.UpdateOpenVRStatus($"{role}ControllerConnection", Enum.GetName(typeof(DeviceStatus), DeviceStatus.Off));
 
                 //Update the tablet
-                Manager.SendResponse("Android", "Station", $"DeviceStatus:Controller:{vrController.Value.Role.ToString()}:tracking:{DeviceStatus.Lost.ToString()}");
+                Manager.SendResponse("Android", "Station", $"DeviceStatus:Controller:{vrController.Value.Role.ToString()}:tracking:{DeviceStatus.Off.ToString()}");
             }
 
             //Reset base stations

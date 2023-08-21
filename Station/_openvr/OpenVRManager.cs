@@ -163,10 +163,14 @@ namespace Station
                     $"SteamVR restarted successfully", MockConsole.LogLevel.Normal);
 
                 //Send message to the tablet (Updating what is happening)
-                SessionController.PassStationMessage($"ApplicationUpdate,Connecting OpenVR...");
+                SessionController.PassStationMessage($"ApplicationUpdate,Connecting SteamVR...");
 
                 bool openvr = await MonitorLoop(() => !Manager.openVRManager?.InitialiseOpenVR() ?? true);
-                if (!openvr) return false;
+                if (!openvr)
+                {
+                    SessionController.PassStationMessage($"ApplicationUpdate,SteamVR Error...");
+                    return false;
+                }
 
                 Logger.WriteLog($"OpenVRManager.WaitForOpenVR - Vive status: {SessionController.vrHeadset.GetHeadsetManagementSoftwareStatus()}, " +
                     $"OpenVR connection established", MockConsole.LogLevel.Normal);
