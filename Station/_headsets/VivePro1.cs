@@ -153,6 +153,7 @@ namespace Station
                 {
                     enumerator.Dispose();
                     Statuses.UpdateHeadset(VrManager.Software, DeviceStatus.Off);
+                    return;
                 }
 
                 if (current.Contains("Connection Status set to"))

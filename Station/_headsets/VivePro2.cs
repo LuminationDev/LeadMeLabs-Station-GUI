@@ -144,14 +144,17 @@ namespace Station
                     if (process.MainWindowTitle.Equals("VIVE Console"))
                     {
                         Statuses.UpdateHeadset(VrManager.Software, DeviceStatus.Lost);
+                        return;
                     }
                 }
             }
             if (viveStatusMonitor.Length > 0)
             {
                 Statuses.UpdateHeadset(VrManager.Software, DeviceStatus.Connected);
+                return;
             }
             Statuses.UpdateHeadset(VrManager.Software, DeviceStatus.Lost);
+            return;
         }
 
         /// <summary>
