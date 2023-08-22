@@ -34,10 +34,12 @@ namespace Station
 
         //Read this when launching an experience to know if it is VR (missing means it is standard)
         private static Dictionary<string, string>? _vrApplicationDictionary;
-        private static bool _initialising = false;
+        private bool _initialising = false;
         private CVRSystem? _ovrSystem;
         private bool _tracking;
         private uint _processId;
+        private bool _quiting = false;
+        private bool _deviceCheckInitialised = false;
 
         /// <summary>
         /// Create/instantiate the VRApplicationDictionary and load in the steam/custom vrmanifests
@@ -84,6 +86,7 @@ namespace Station
             }
 
             _ovrSystem = OpenVrSystem.OVRSystem;
+            _quiting = false;
             Logger.WriteLog("OpenVRSystem.OVRSystem has been initialised.", MockConsole.LogLevel.Debug);
             
             try
@@ -220,8 +223,7 @@ namespace Station
         {
             VREvent_t vrEvent = new VREvent_t();
 
-            bool quiting = false;
-            while (!quiting)
+            while (!_quiting)
             {
                 if (_ovrSystem == null || !_ovrSystem.PollNextEvent(ref vrEvent,
                         (uint)System.Runtime.InteropServices.Marshal.SizeOf(typeof(VREvent_t)))) continue;
@@ -234,10 +236,11 @@ namespace Station
                     case EVREventType.VREvent_RestartRequested:
                         //TODO send a message to the nuc?/Handle restart?
                         //IDEA: SteamVR is in the _steamManifest, check if launching it closes the current steamvr program and opens a new one? Essentially a restart
+                        Logger.WriteLog("OpenVRManager.OnVREvent - SteamVR requires a restart", MockConsole.LogLevel.Normal);
                         break;
 
                     case EVREventType.VREvent_Quit:
-                        quiting = true;
+                        _quiting = true;
                         Logger.WriteLog("SteamVR quitting", MockConsole.LogLevel.Normal);
                         _ovrSystem.AcknowledgeQuit_Exiting();
                         OpenVrSystem?.Shutdown();
@@ -437,18 +440,30 @@ namespace Station
 
         #region OpenVR Devices
         /// <summary>
+        /// Start a new task containing a loop tied to the OnVREvent quiting variable, only if the loop is not already running. 
         /// Check the connected VR devices, if _tracking is enabled then check if the boundary is configured.
         /// </summary>
-        public void PerformDeviceChecks()
+        public void StartDeviceChecks()
         {
-            //Run through all connected devices
-            CheckDevices();
+            if (_deviceCheckInitialised) return; //Do not double up on the check loop
+            _deviceCheckInitialised = true;
+            
+            new Task(async () => {
+                while (!_quiting)
+                {
+                    //Run through all connected devices
+                    CheckDevices();
 
-            // Boundary && Controller Information (only check if the headset is connected and tracking)
-            if (_tracking)
-            {
-                CheckBoundary();
-            }
+                    // Boundary && Controller Information (only check if the headset is connected and tracking)
+                    if (_tracking) {
+                        CheckBoundary();
+                    };
+                    
+                    //Minor delay - Test wait times
+                    await Task.Delay(1000);
+                }
+                _deviceCheckInitialised = false;
+            }).Start();
         }
 
         /// <summary>

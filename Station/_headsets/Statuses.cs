@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Station
 {
@@ -14,33 +15,77 @@ namespace Station
     /// </summary>
     public class Statuses
     {
-        public string HeadsetDescription { private set; get; } = "";
+        public string HeadsetDescription { private set; get; } = "Unknown";
 
         //Controller models stored by serial number
-        private Dictionary<string, VrController> controllers = new();
+        public static Dictionary<string, VrController> controllers = new();
         //Base Station models stored by serial number
-        private Dictionary<string, VrBaseStation> baseStations = new();
+        public static Dictionary<string, VrBaseStation> baseStations = new();
 
-        //If the status for a device has not been set through after (pollLimit) is reached
-        //resend the statuses for that device to make sure everything is up to date.
-        //Controllers are tracked within their class as they have multiple properties updating
-        //with 2 different controllers being connected.
-        public static int pollLimit = 15;
-        private int headsetCount = 0;
-        private int baseStationCount = 0;
-
+        #region Observers
         /// <summary>
         /// External software that is required to link the headset to SteamVR
         ///     Vive Pro 1 - Determined by Vive Logs
         ///     Vive Pro 2 - Determined by Vive Console
         /// </summary>
-        public DeviceStatus SoftwareStatus { private set; get; } = DeviceStatus.Off;
+        private DeviceStatus _softwareStatus = DeviceStatus.Off;
+        public DeviceStatus SoftwareStatus
+        {
+            private set
+            {
+                if (_softwareStatus == value) return;
+
+                OnSoftwareTrackingChanged(value.ToString());
+                _softwareStatus = value;
+            }
+            get
+            {
+                return _softwareStatus;
+            }
+        }
+
+        public event EventHandler<GenericEventArgs<string>>? SoftwareTrackingChanged;
+        protected virtual void OnSoftwareTrackingChanged(string newValue)
+        {
+            MockConsole.WriteLine($"DeviceStatus:Headset:tracking:Vive:{newValue}", MockConsole.LogLevel.Debug);
+            string message = $"Headset:Vive:tracking:{newValue}";
+            SoftwareTrackingChanged?.Invoke(this, new GenericEventArgs<string>(message));
+        }
 
         /// <summary>
-        /// OpenVR's wrapper around SteamVR. Overrides SoftwareStatus if the WrapperMonitoringThread is not 
-        /// initialised.
+        /// OpenVR's wrapper around SteamVR for tracking the headset.
         /// </summary>
-        public DeviceStatus OpenVRStatus { private set; get; } = DeviceStatus.Off;
+        private DeviceStatus _openVRStatus = DeviceStatus.Off;
+        public DeviceStatus OpenVRStatus
+        {
+            private set
+            {
+                if (_openVRStatus == value) return;
+
+                OnOpenVRTrackingChanged(value.ToString());
+                _openVRStatus = value;
+                UIUpdater.UpdateOpenVRStatus("headsetConnection", Enum.GetName(typeof(DeviceStatus), value));
+            }
+            get
+            {
+                return _openVRStatus;
+            }
+        }
+
+        public event EventHandler<GenericEventArgs<string>>? OpenVRTrackingChanged;
+        protected virtual void OnOpenVRTrackingChanged(string newValue)
+        {
+            MockConsole.WriteLine($"DeviceStatus:Headset:tracking:OpenVR:{newValue}", MockConsole.LogLevel.Debug);
+            string message = $"Headset:OpenVR:tracking:{newValue}";
+            OpenVRTrackingChanged?.Invoke(this, new GenericEventArgs<string>(message));
+        }
+        #endregion
+
+        public Statuses()
+        {
+            SoftwareTrackingChanged += HandleValueChanged;
+            OpenVRTrackingChanged += HandleValueChanged;
+        }
 
         /// <summary>
         /// Set the model name of the headset.
@@ -49,6 +94,18 @@ namespace Station
         public void SetHeadsetDescription(string description)
         {
             HeadsetDescription = description;
+        }
+
+        /// <summary>
+        /// Event handler method called when the value changes.
+        /// </summary>
+        /// <typeparam name="T">The type of the value that changed.</typeparam>
+        /// <param name="sender">The object that triggered the event.</param>
+        /// <param name="e">Event arguments containing information about the value change.</param>
+        public void HandleValueChanged(object? sender, GenericEventArgs<string> e)
+        {
+            // Code to execute when the value changes.
+            Manager.SendResponse("Android", "Station", $"DeviceStatus:{e.Data}");
         }
 
         /// <summary>
@@ -62,38 +119,13 @@ namespace Station
             MockConsole.WriteLine($"Updating Headset:{Enum.GetName(typeof(VrManager), manager)}:{Enum.GetName(typeof(DeviceStatus), status)}", 
                 MockConsole.LogLevel.Debug);
 
-            //Determine if the model should update and have the value sent to the NUC
-            bool shouldUpdate = false;
-
             if (manager == VrManager.Software)
             {
-                shouldUpdate = SoftwareStatus != status;
                 SoftwareStatus = status;
             }
             else if (manager == VrManager.OpenVR)
             {
-                MockConsole.WriteLine($"OpenVR {OpenVRStatus} - Status {status}", MockConsole.LogLevel.Normal);
-                
-                shouldUpdate = OpenVRStatus != status;
                 OpenVRStatus = status;
-            }
-
-            //If just one of the headset statuses is set to lost and the Wrapper is actively monitoring the
-            //third party software status then the headset is considered lost.
-            
-
-            //Send a message to the NUC if necessary
-            if (shouldUpdate || headsetCount > pollLimit)
-            {
-                headsetCount = 0;
-                string connection = Enum.GetName(typeof(DeviceStatus), status);
-                UIUpdater.UpdateOpenVRStatus("headsetConnection", connection);
-
-                MockConsole.WriteLine($"DeviceStatus:Headset:tracking:{manager.ToString()}:{connection}", MockConsole.LogLevel.Debug);
-                Manager.SendResponse("Android", "Station", $"DeviceStatus:Headset:{manager.ToString()}:tracking:{connection}");
-            } else
-            {
-                headsetCount++;
             }
         }
 
@@ -106,66 +138,51 @@ namespace Station
         /// <param name="value"></param>
         public void UpdateController(string serialNumber, DeviceRole? role, string propertyName, object value)
         {
-            //Determine if the model should update and have the value sent to the NUC
-            bool shouldUpdate;
-
             //Check if the entry exists
             if (controllers.ContainsKey(serialNumber))
             {
-                controllers.TryGetValue(serialNumber, out var temp);
-                if (temp == null)
+                if (controllers.TryGetValue(serialNumber, out var temp) && temp != null)
                 {
-                    //Error has occurred
+                    temp.UpdateProperty(propertyName, value);
+                }
+                else
+                {
                     Logger.WriteLog($"VrStatus.UpdateController - A Controller entry is invalid removing {serialNumber}",
                         MockConsole.LogLevel.Error);
 
-                    //Clear the invalid entry
                     controllers.Remove(serialNumber);
-                    return;
                 }
-
-                shouldUpdate = temp.UpdateProperty(propertyName, value);
             }
             else if (role != null)
             {
-                bool duplicate = false;
+                bool duplicate = controllers.Any(vrController => vrController.Value.Role == role);
 
                 //Invalidate the controllers dictionary if there are multiple of the same role. (i.e two lefts or two rights)
-                foreach (var vrController in controllers)
+                if (duplicate)
                 {
-                    if(vrController.Value.Role == role)
+                    foreach (var vrController in controllers)
                     {
-                        duplicate = true;
-                        vrController.Value.UpdateProperty("tracking", DeviceStatus.Lost);
-                        vrController.Value.UpdateProperty("battery", 0);
-                        Manager.SendResponse("Android", "Station", $"DeviceStatus:Controller:{vrController.Value.Role.ToString()}:tracking:{DeviceStatus.Lost}");
-                        MockConsole.WriteLine($"Duplicate controller - Role: {Enum.GetName(typeof(DeviceRole), role)}. Reseting dictionary.", MockConsole.LogLevel.Normal);
-                        controllers = new();
+                        if (vrController.Value.Role == role)
+                        {
+                            vrController.Value.UpdateProperty("battery", 0);
+                            vrController.Value.UpdateProperty("tracking", DeviceStatus.Lost);
+                            MockConsole.WriteLine($"Duplicate controller - Role: {Enum.GetName(typeof(DeviceRole), role)}. Reseting dictionary.", MockConsole.LogLevel.Normal);
+                        }
                     }
+                    controllers.Clear();
+                    return;
                 }
-                if (duplicate) return;
 
                 //Add a new controller entry
                 MockConsole.WriteLine($"Found a new controller: {serialNumber} - Role: {Enum.GetName(typeof(DeviceRole), role)}", MockConsole.LogLevel.Normal);
-                VrController temp = new VrController(serialNumber, role);
-                shouldUpdate = temp.UpdateProperty(propertyName, value);
+                VrController temp = new VrController(serialNumber, (DeviceRole)role);
+                temp.UpdateProperty(propertyName, value);
                 controllers.Add(serialNumber, temp);
             }
             else
             {
                 //If there is no entry and no role then do not add the controller yet
                 MockConsole.WriteLine($"Found a new controller: {serialNumber} - Role invalid: {role}, not adding.", MockConsole.LogLevel.Normal);
-                return;
-            }
-            
-            //Send a message to the NUC if necessary
-            if (shouldUpdate) //limit * property values update * number of controllers
-            {
-                controllers.TryGetValue(serialNumber, out var current);
-                if (current == null) return;
-                
-                MockConsole.WriteLine($"DeviceStatus:Controller:{current.Role.ToString()}:{propertyName}:{value}", MockConsole.LogLevel.Debug);
-                Manager.SendResponse("Android", "Station", $"DeviceStatus:Controller:{current.Role.ToString()}:{propertyName}:{value}");
             }
         }
 
@@ -177,55 +194,29 @@ namespace Station
         /// <param name="value"></param>
         public void UpdateBaseStation(string serialNumber, string propertyName, object value)
         {
-            //Determine if the model should update and have the value sent to the NUC
-            bool shouldUpdate;
-
             //Check if the entry exists
             if (baseStations.ContainsKey(serialNumber))
             {
-                baseStations.TryGetValue(serialNumber, out var temp);
-                if (temp == null)
+                if (baseStations.TryGetValue(serialNumber, out var temp) && temp != null)
                 {
-                    //Error has occurred
+                    temp.UpdateProperty(propertyName, value);
+                }
+                else
+                {
                     Logger.WriteLog($"VrStatus.UpdateBaseStation - A Base Station entry is invalid removing {serialNumber}",
                         MockConsole.LogLevel.Error);
 
-                    //Clear the invalid entry
                     baseStations.Remove(serialNumber);
-                    return;
                 }
-                shouldUpdate = temp.UpdateProperty(propertyName, value);
             }
             else
             {
                 //Add a new base station entry
                 MockConsole.WriteLine($"Found a new base station: {serialNumber}", MockConsole.LogLevel.Normal);
                 VrBaseStation temp = new VrBaseStation(serialNumber);
-                shouldUpdate = temp.UpdateProperty(propertyName, value);
+                temp.UpdateProperty(propertyName, value);
                 baseStations.Add(serialNumber, temp);
                 UIUpdater.UpdateOpenVRStatus("baseStationAmount", baseStations.Count.ToString());
-            }
-
-            //Send a message to the NUC if necessary
-            if (shouldUpdate || baseStationCount > (pollLimit * baseStations.Count))
-            {
-                baseStationCount = 0;
-                int active = 0;
-                foreach (var vrBaseStation in baseStations)
-                {
-                    if (vrBaseStation.Value.Tracking == DeviceStatus.Connected)
-                    {
-                        active++;
-                    }
-                }
-                UIUpdater.UpdateOpenVRStatus("baseStationActive", active.ToString());
-                
-                //Send the active and total base station amounts instead of individual base station updates.
-                MockConsole.WriteLine($"DeviceStatus:BaseStation:{active}:{baseStations.Count}", MockConsole.LogLevel.Debug);
-                Manager.SendResponse("Android", "Station", $"DeviceStatus:BaseStation:{active}:{baseStations.Count}");
-            } else
-            {
-                baseStationCount++;
             }
         }
 
@@ -235,38 +226,23 @@ namespace Station
         public void ResetStatuses()
         {
             //Reset headset
-            HeadsetDescription = "";
+            HeadsetDescription = "Unknown";
             SoftwareStatus = DeviceStatus.Off;
             OpenVRStatus = DeviceStatus.Off;
             UIUpdater.UpdateOpenVRStatus("headsetDescription", HeadsetDescription);
-            UIUpdater.UpdateOpenVRStatus("headsetConnection", Enum.GetName(typeof(DeviceStatus), OpenVRStatus));
-
-            //Update the tablet
-            Manager.SendResponse("Android", "Station", $"DeviceStatus:Headset:OpenVR:tracking:{DeviceStatus.Off.ToString()}");
-            Manager.SendResponse("Android", "Station", $"DeviceStatus:Headset:Vive:tracking:{DeviceStatus.Off.ToString()}");
 
             //Reset controllers
             foreach (var vrController in controllers)
             {
                 vrController.Value.UpdateProperty("battery", 0);
                 vrController.Value.UpdateProperty("tracking", DeviceStatus.Off);
-
-                string role = vrController.Value.Role == DeviceRole.Left ? "left" : "right";
-                
-                UIUpdater.UpdateOpenVRStatus($"{role}ControllerBattery", "0");
-                UIUpdater.UpdateOpenVRStatus($"{role}ControllerConnection", Enum.GetName(typeof(DeviceStatus), DeviceStatus.Off));
-
-                //Update the tablet
-                Manager.SendResponse("Android", "Station", $"DeviceStatus:Controller:{vrController.Value.Role.ToString()}:tracking:{DeviceStatus.Off.ToString()}");
             }
 
             //Reset base stations
             foreach (var vrBaseStation in baseStations)
             {
-                vrBaseStation.Value.UpdateProperty("tracking", DeviceStatus.Lost);
+                vrBaseStation.Value.UpdateProperty("tracking", DeviceStatus.Off);
             }
-            UIUpdater.UpdateOpenVRStatus("baseStationActive", "0");
-            Manager.SendResponse("Android", "Station", $"DeviceStatus:BaseStation:0:{baseStations.Count}");
         }
 
         /// <summary>
