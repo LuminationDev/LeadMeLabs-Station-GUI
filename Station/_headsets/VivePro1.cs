@@ -37,6 +37,15 @@ namespace Station
         {
             return Statuses.SoftwareStatus;
         }
+        
+        /// <summary>
+        /// Return the process name of the headset management software
+        /// </summary>
+        /// <returns></returns>
+        public string GetHeadsetManagementProcessName()
+        {
+            return "HtcConnectionUtility";
+        }
 
         /// <summary>
         /// Collect the connection status of the headset from the headset's specific management software. In this case it

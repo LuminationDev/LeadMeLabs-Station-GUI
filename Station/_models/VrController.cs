@@ -10,18 +10,91 @@ namespace Station
 
     public class VrController
     {
+        //The role is set at creation and will not change.
+        public DeviceRole Role { get; }
         private readonly string serialNumber;
-        
-        public DeviceRole? Role { private set; get; }
-        public int Battery { private set; get; } = 0;
-        public DeviceStatus Tracking { private set; get; } = DeviceStatus.Lost;
 
-        private int controllerCount = 0;
+        #region Observers
+        //Tracking status observer
+        private DeviceStatus _tracking = DeviceStatus.Off;
+        public DeviceStatus Tracking
+        {
+            private set
+            {
+                if (_tracking == value) return;
 
-        public VrController(string serialNumber, DeviceRole? role) 
+                OnTrackingChanged(value.ToString());
+                MockConsole.WriteLine($"VrController {serialNumber} tracking updated to {value} from {_tracking}",
+                            MockConsole.LogLevel.Verbose);
+
+                UIUpdater.UpdateOpenVRStatus(Role == DeviceRole.Left ? "leftControllerConnection" : "rightControllerConnection",
+                    Enum.GetName(typeof(DeviceStatus), value) ?? "Lost");
+
+                // Set the battery to 0 if it has lost connection
+                if (value == DeviceStatus.Lost)
+                {
+                    Battery = 0;
+                    UIUpdater.UpdateOpenVRStatus(Role == DeviceRole.Left ? "leftControllerBattery" : "rightControllerBattery",
+                        Battery.ToString() ?? "0");
+                }
+
+                _tracking = value;
+            }
+            get
+            {
+                return _tracking;
+            }
+        }
+
+        public event EventHandler<GenericEventArgs<string>>? TrackingChanged;
+        protected virtual void OnTrackingChanged(string newValue)
+        {
+            string message = $"Controller:{Role}:tracking:{newValue}";
+            TrackingChanged?.Invoke(this, new GenericEventArgs<string>(message));
+        }
+
+        //Battery level observer
+        private int _battery = 0;
+        public int Battery
+        {
+            private set
+            {
+                if (_battery == value) return;
+
+                OnBatteryChanged(value.ToString());
+                MockConsole.WriteLine($"VrController {serialNumber} battery updated to {value}% from {_battery}%",
+                            MockConsole.LogLevel.Verbose);
+
+                UIUpdater.UpdateOpenVRStatus(Role == DeviceRole.Left ? "leftControllerBattery" : "rightControllerBattery",
+                    value.ToString() ?? "0");
+
+                _battery = value;
+            }
+            get
+            {
+                return _battery;
+            }
+        }
+
+        public event EventHandler<GenericEventArgs<string>>? BatteryChanged;
+        protected virtual void OnBatteryChanged(string newValue)
+        {
+            string message = $"Controller:{Role}:battery:{newValue}";
+            BatteryChanged?.Invoke(this, new GenericEventArgs<string>(message));
+        }
+        #endregion
+
+        public VrController(string serialNumber, DeviceRole role) 
         { 
             this.serialNumber = serialNumber;
             this.Role = role;
+
+            //Implement Observer Pattern
+            if (SessionController.vrHeadset != null)
+            {
+                BatteryChanged += SessionController.vrHeadset.GetStatusManager().HandleValueChanged;
+                TrackingChanged += SessionController.vrHeadset.GetStatusManager().HandleValueChanged;
+            }
         }
 
         /// <summary>
@@ -30,74 +103,45 @@ namespace Station
         /// <param name="propertyName">The name of the property to update. Accepted values: "battery", "tracking".</param>
         /// <param name="value">The value to set for the specified property.</param>
         /// <returns>A bool representing if the Station send an update, this should only be true if values changed.</returns>
-        public bool UpdateProperty(string propertyName, object value)
+        public void UpdateProperty(string propertyName, object value)
         {
-            bool shouldUpdate = false;
-
             switch (propertyName.ToLower())
             {
                 case "battery":
-                    if (value is int batteryValue)
-                    {
-                        shouldUpdate = Battery != batteryValue;
-
-                        Battery = batteryValue;
-                        MockConsole.WriteLine($"VrController {serialNumber} battery updated to {Battery}% from {batteryValue}%",
-                            MockConsole.LogLevel.Verbose);
-                        
-                        UIUpdater.UpdateOpenVRStatus(Role == DeviceRole.Left ? "leftControllerBattery" : "rightControllerBattery", 
-                            Battery.ToString() ?? "0");
-                    }
-                    else
-                    {
-                        MockConsole.WriteLine($"VrController.UpdateProperty - Invalid battery value: {value}",
-                           MockConsole.LogLevel.Error);
-                    }
+                    UpdateProperty(value, (int newValue) => Battery = newValue,
+                        "Invalid battery value");
                     break;
 
                 case "tracking":
-                    if (value is DeviceStatus trackingValue)
-                    {
-                        shouldUpdate = Tracking != trackingValue;
-
-                        Tracking = trackingValue;
-                        MockConsole.WriteLine($"VrController {serialNumber} tracking updated to {Tracking} from {trackingValue}", 
-                            MockConsole.LogLevel.Verbose);
-                        
-                        UIUpdater.UpdateOpenVRStatus(Role == DeviceRole.Left ? "leftControllerConnection" : "rightControllerConnection", 
-                            Enum.GetName(typeof(DeviceStatus), Tracking) ?? "Lost");
-
-                        // Set the battery to 0 if it has lost connection
-                        if (Tracking == DeviceStatus.Lost)
-                        {
-                            Battery = 0;
-                            UIUpdater.UpdateOpenVRStatus(Role == DeviceRole.Left ? "leftControllerBattery" : "rightControllerBattery", 
-                                Battery.ToString() ?? "0");
-                        }
-                    }
-                    else
-                    {
-                        MockConsole.WriteLine($"VrController.UpdateProperty - Invalid tracking value: {value}",
-                            MockConsole.LogLevel.Error);
-                    }
+                    UpdateProperty(value, (DeviceStatus newValue) => Tracking = newValue,
+                        "Invalid tracking value");
                     break;
 
                 default:
                     MockConsole.WriteLine($"VrController.UpdateProperty - Invalid property name: {propertyName}",
-                            MockConsole.LogLevel.Error);
+                        MockConsole.LogLevel.Error);
                     break;
             }
+        }
 
-            _ = shouldUpdate == false ? controllerCount++ : controllerCount = 0;
-
-            //Override the shouldUpdate variable if too much time has passed
-            if (controllerCount > (Statuses.pollLimit * 2)) // limit * number of properties that are updated
+        /// <summary>
+        /// Updates a property with a new value of a specified type and handles errors if the value is of an invalid type.
+        /// </summary>
+        /// <typeparam name="T">The type of the property to update.</typeparam>
+        /// <param name="newValue">The new value to assign to the property.</param>
+        /// <param name="updateAction">The action to perform to update the property with the new value.</param>
+        /// <param name="errorMsg">The error message to display if the new value is of an invalid type.</param>
+        private void UpdateProperty<T>(object newValue, Action<T> updateAction, string errorMsg)
+        {
+            if (newValue is T typedValue)
             {
-                controllerCount = 0;
-                shouldUpdate = true;
+                updateAction(typedValue);
             }
-
-            return shouldUpdate; 
+            else
+            {
+                MockConsole.WriteLine($"VrController.UpdateProperty - {errorMsg}: {newValue}",
+                    MockConsole.LogLevel.Error);
+            }
         }
     }
 }

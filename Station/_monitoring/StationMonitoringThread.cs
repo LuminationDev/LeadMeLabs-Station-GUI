@@ -8,8 +8,8 @@ namespace Station
 {
     public class StationMonitoringThread
     {
-        public static Thread? monitoringThread;
-        public static DateTime latestHighTemperatureWarning = DateTime.Now;
+        private static Thread? monitoringThread;
+        private static DateTime latestHighTemperatureWarning = DateTime.Now;
 
         private static System.Timers.Timer? timer;
         private static Process[]? setVolErrors;
@@ -73,15 +73,16 @@ namespace Station
         {
             ExternalSoftwareCheck();
 
-            //Make sure that the vrmonitor (SteamVR) process is running
+            //An early exit if the vrmonitor (SteamVR) process is not currently running
             if (Process.GetProcessesByName("vrmonitor").Length == 0) return;
 
             //Attempt to contact OpenVR, if this fails check the logs for errors
             if (Manager.openVRManager?.InitialiseOpenVR() ?? false)
             {
                 Manager.openVRManager?.QueryCurrentApplication();
-                Manager.openVRManager?.PerformDeviceChecks();
-            } else
+                Manager.openVRManager?.StartDeviceChecks(); //Start a loop instead of continuously checking
+            } 
+            else
             {
                 SteamScripts.CheckForSteamLogError();
             }
@@ -94,6 +95,9 @@ namespace Station
         {
             if (SessionController.vrHeadset == null) return;
 
+            //An early exit if the monitoring process is not currently running.
+            if (Process.GetProcessesByName(SessionController.vrHeadset.GetHeadsetManagementProcessName()).Length == 0) return;
+            
             SessionController.vrHeadset.MonitorVrConnection();
             MockConsole.WriteLine("VR SoftwareStatus: " + Enum.GetName(typeof(DeviceStatus), SessionController.vrHeadset.GetHeadsetManagementSoftwareStatus()), MockConsole.LogLevel.Debug);
         }

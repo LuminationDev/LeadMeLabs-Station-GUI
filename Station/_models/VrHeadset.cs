@@ -20,6 +20,8 @@ namespace Station
         Statuses GetStatusManager();
 
         DeviceStatus GetHeadsetManagementSoftwareStatus();
+        
+        string GetHeadsetManagementProcessName();
 
         bool WaitForConnection(string wrapperType);
 
