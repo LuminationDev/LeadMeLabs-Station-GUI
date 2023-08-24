@@ -578,15 +578,13 @@ namespace Station
 
             //Logger.WriteLog(output, MockConsole.LogLevel.Verbose);
 
-            if (headsetPosition == new Vector3(0, 0, 0) && headsetOrientation == new Quaternion(1, 0, 0, 0) &&
-                _tracking)
+            if (headsetPosition == new Vector3(0, 0, 0) && headsetOrientation == new Quaternion(1, 0, 0, 0))
             {
                 _tracking = false;
                 SessionController.vrHeadset?.GetStatusManager().UpdateHeadset(VrManager.OpenVR, DeviceStatus.Lost);
                 MockConsole.WriteLine("Headset lost", MockConsole.LogLevel.Normal);
             }
-            else if (headsetPosition != new Vector3(0, 0, 0) && headsetOrientation != new Quaternion(1, 0, 0, 0) &&
-                !_tracking)
+            else if (headsetPosition != new Vector3(0, 0, 0) && headsetOrientation != new Quaternion(1, 0, 0, 0))
             {
                 _tracking = true;
                 SessionController.vrHeadset?.GetStatusManager().UpdateHeadset(VrManager.OpenVR, DeviceStatus.Connected);
@@ -594,7 +592,10 @@ namespace Station
             }
             
             //Collect the headset model - only do this if it hasn't been set already.
-            if (MainWindow.headsetDescription != null && (SessionController.vrHeadset?.GetStatusManager().HeadsetDescription.Equals("") ?? true))
+            if (MainWindow.headsetDescription != null && 
+                ((SessionController.vrHeadset?.GetStatusManager().HeadsetDescription.Equals("") ?? true) || 
+                (SessionController.vrHeadset?.GetStatusManager().HeadsetDescription.Equals("Unknown") ?? true))
+            )
             {
                 var error = ETrackedPropertyError.TrackedProp_Success;
                 var renderModelName = new StringBuilder();

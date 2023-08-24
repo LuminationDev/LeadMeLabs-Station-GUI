@@ -17,8 +17,8 @@ namespace Station
             Environment.GetEnvironmentVariable("SteamUserName", EnvironmentVariableTarget.Process) + " " + 
             Environment.GetEnvironmentVariable("SteamPassword", EnvironmentVariableTarget.Process) + " steam://rungameid/";
         public static string? experienceName = null;
-        public static string? installDir = null;
-        public static Experience lastExperience;
+        private static string? installDir = null;
+        private static Experience lastExperience;
 
         /// <summary>
         /// Track if an experience is being launched.
