@@ -60,6 +60,7 @@ namespace Station
         {
             private set
             {
+                MockConsole.WriteLine($"New connection: {value}", MockConsole.LogLevel.Normal);
                 if (_openVRStatus == value) return;
 
                 OnOpenVRTrackingChanged(value.ToString());
@@ -121,17 +122,42 @@ namespace Station
 
             if (manager == VrManager.Software)
             {
+                SendLostMessage(SoftwareStatus == DeviceStatus.Connected, status);
                 SoftwareStatus = status;
             }
             else if (manager == VrManager.OpenVR)
             {
+                SendLostMessage(OpenVRStatus == DeviceStatus.Connected, status);
                 OpenVRStatus = status;
             }
+            
+            SendReadyMessage();
+        }
 
+        /// <summary>
+        /// Send a message to the tablet stating the headset is ready if both the SoftwareStatus and the OpenVRStatus
+        /// are 'Connected'
+        /// </summary>
+        private void SendReadyMessage()
+        {
             //If the headset is connected and no experience is currently running tell the tablet the Station is ready to go
-            if (SoftwareStatus == DeviceStatus.Connected && OpenVRStatus == DeviceStatus.Connected && WrapperManager.CurrentWrapper?.GetLastExperience() != null)
+            if (SoftwareStatus == DeviceStatus.Connected && OpenVRStatus == DeviceStatus.Connected)
             {
-                ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage($"SoftwareState,Ready to go"), TimeSpan.FromSeconds(2));
+                ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage($"SoftwareState,Ready to go"), TimeSpan.FromSeconds(0));
+            }
+        }
+        
+        /// <summary>
+        /// Send a message to the tablet stating the headset has been lost if the SoftwareStatus or the OpenVRStatus
+        /// are 'Lost' or 'Off'.
+        /// </summary>
+        private void SendLostMessage(bool oldConnectionStatus, DeviceStatus newConnectionStatus)
+        {
+            if (oldConnectionStatus && newConnectionStatus is DeviceStatus.Lost or DeviceStatus.Off)
+            {
+                ScheduledTaskQueue.EnqueueTask(
+                    () => SessionController.PassStationMessage($"SoftwareState,Lost headset connection"),
+                    TimeSpan.FromSeconds(0));
             }
         }
 

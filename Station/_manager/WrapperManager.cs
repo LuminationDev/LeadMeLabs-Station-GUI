@@ -216,7 +216,7 @@ namespace Station
                 SessionController.PassStationMessage("MessageToAndroid,SetValue:session:Restarted");
                 SessionController.PassStationMessage("Processing,false");
 
-                ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage($"SoftwareState,Starting VR processes"), TimeSpan.FromSeconds(2));
+                ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage($"SoftwareState,Starting VR processes"), TimeSpan.FromSeconds(0));
                 SessionController.vrHeadset.StartVrSession();
                 WaitForVRProcesses();
             }
@@ -251,7 +251,13 @@ namespace Station
 
             string message = count <= 60 ? "Awaiting headset connection..." : error;
 
-            ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage($"SoftwareState,{message}"), TimeSpan.FromSeconds(1));
+            //Only send the message if the headset is not yet connected
+            if (SessionController.vrHeadset?.GetStatusManager().SoftwareStatus != DeviceStatus.Connected ||
+                SessionController.vrHeadset?.GetStatusManager().OpenVRStatus != DeviceStatus.Connected)
+            {
+                ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage($"SoftwareState,{message}"),
+                    TimeSpan.FromSeconds(1));
+            }
         }
 
         /// <summary>

@@ -29,8 +29,6 @@ namespace Station
         public event EventHandler<GenericEventArgs<string>>? TrackingChanged;
         protected virtual void OnTrackingChanged(string newValue)
         {
-            
-            
             //Get the current active base stations
             int active =
                 Statuses.baseStations.Count(vrBaseStation => vrBaseStation.Value.Tracking == DeviceStatus.Connected);
