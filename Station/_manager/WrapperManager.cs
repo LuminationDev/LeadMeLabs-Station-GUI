@@ -233,18 +233,10 @@ namespace Station
             {
                 Task.Delay(3000).Wait();
                 count++;
-            } while ((Process.GetProcessesByName("vrmonitor").Length == 0 || Process.GetProcessesByName(SessionController.vrHeadset?.GetHeadsetManagementProcessName()).Length == 0) && count <= 60);
+            } while ((Process.GetProcessesByName(SessionController.vrHeadset?.GetHeadsetManagementProcessName()).Length == 0) && count <= 60);
 
             string error = "";
-            if (Process.GetProcessesByName("vrmonitor").Length == 0 && Process.GetProcessesByName(SessionController.vrHeadset?.GetHeadsetManagementProcessName()).Length == 0)
-            {
-                error = "Error: VR software could not open";
-            }
-            else if (Process.GetProcessesByName("vrmonitor").Length == 0)
-            {
-                error = "Error: SteamVR could not open";
-            }
-            else if (Process.GetProcessesByName(SessionController.vrHeadset?.GetHeadsetManagementProcessName()).Length == 0)
+            if (Process.GetProcessesByName(SessionController.vrHeadset?.GetHeadsetManagementProcessName()).Length == 0)
             {
                 error = "Error: Vive could not open";
             }
