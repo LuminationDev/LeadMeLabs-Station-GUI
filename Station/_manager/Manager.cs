@@ -97,7 +97,7 @@ namespace Station
 
                 //Call as a new task to stop UI and server start up from hanging whilst reading the files
                 new Thread(() => SteamConfig.VerifySteamConfig(true)).Start();
-                new Thread(() => Initilisation()).Start();
+                new Thread(() => Initialisation()).Start();
             } else
             {
                 App.SetWindowTitle("Station - Failed to load ENV variables.");
@@ -108,7 +108,7 @@ namespace Station
         /// <summary>
         /// Initialise the necessary classes for the software to run.
         /// </summary>
-        private static void Initilisation()
+        private static void Initialisation()
         {
             ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage($"SoftwareState,Initialising configuration"), TimeSpan.FromSeconds(2));
 
