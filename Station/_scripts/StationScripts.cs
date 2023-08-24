@@ -24,7 +24,7 @@ namespace Station
         /// </summary>
         /// <param name="command">A string containing the necessary information to run a specific command</param>
         /// <returns>A string representing the outcome of the action.</returns>
-        public static void execute(string source, string additionalData)
+        public static void Execute(string source, string additionalData)
         {
             if (additionalData.StartsWith("URL"))
             {
@@ -51,11 +51,11 @@ namespace Station
             }
             else if (additionalData.Equals("RestartVR"))
             {
-                restartVRSession();
+                RestartVRSession();
             }
             else if (additionalData.Equals("EndVR"))
             {
-                endVRSession();
+                EndVRSession();
             }
             else if (additionalData.Equals("Restart"))
             {
@@ -89,7 +89,7 @@ namespace Station
         /// the necessary programs for a new VR session.
         /// </summary>
         /// <returns></returns>
-        public static void restartVRSession()
+        public static void RestartVRSession()
         {
             Manager.SendResponse("Android", "Station", "SetValue:status:On");
             if (!processing)
@@ -131,16 +131,16 @@ namespace Station
 
             void timerElapsed(object? obj, ElapsedEventArgs args)
             {
-                if (tokenSource is not null)
-                {
-                    if (!tokenSource.IsCancellationRequested)
-                    {
-                        endVRSession();
-                        Manager.SendResponse(source, "Station", "SetValue:status:Off");
-                        Manager.SendResponse(source, "Station", "SetValue:gameName:");
-                        Manager.SendResponse(source, "Station", "SetValue:gameId:");
-                    }
-                }
+                if (tokenSource is null) return;
+                if (tokenSource.IsCancellationRequested) return;
+
+                EndVRSession();
+
+                //Shut down the server first, so the NUC cannot send off any more Pings
+                Manager.StopServer();
+                Manager.SendResponse(source, "Station", "SetValue:status:Off");
+                Manager.SendResponse(source, "Station", "SetValue:gameName:");
+                Manager.SendResponse(source, "Station", "SetValue:gameId:");
             }
 
             timer.Elapsed += timerElapsed;
@@ -151,7 +151,7 @@ namespace Station
         /// <summary>
         /// Stop all processes that are associated with a VR session.
         /// </summary>
-        public static void endVRSession()
+        public static void EndVRSession()
         {
             Manager.SendResponse("Android", "Station", "SetValue:status:On");
             Manager.wrapperManager?.ActionHandler("Session", "Stop");
