@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
@@ -34,6 +35,7 @@ namespace Station
         {
             StartPipeServer();
             SessionController.SetupHeadsetType();
+            ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage($"SoftwareState,Loading experiences"), TimeSpan.FromSeconds(2));
             Task.Factory.StartNew(() => CollectAllApplications());
         }
 
@@ -214,8 +216,42 @@ namespace Station
                 SessionController.PassStationMessage("MessageToAndroid,SetValue:session:Restarted");
                 SessionController.PassStationMessage("Processing,false");
 
+                ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage($"SoftwareState,Starting VR processes"), TimeSpan.FromSeconds(2));
                 SessionController.vrHeadset.StartVrSession();
+                WaitForVRProcesses();
             }
+        }
+
+        /// <summary>
+        /// Wait for SteamVR and the External headset software to be open, bail out after 3 minutes. Send the outcome 
+        /// to the tablet.
+        /// </summary>
+        private static void WaitForVRProcesses()
+        {
+            int count = 0;
+            do
+            {
+                Task.Delay(3000).Wait();
+                count++;
+            } while ((Process.GetProcessesByName("vrmonitor").Length == 0 || Process.GetProcessesByName(SessionController.vrHeadset?.GetHeadsetManagementProcessName()).Length == 0) && count <= 60);
+
+            string error = "";
+            if (Process.GetProcessesByName("vrmonitor").Length == 0 && Process.GetProcessesByName(SessionController.vrHeadset?.GetHeadsetManagementProcessName()).Length == 0)
+            {
+                error = "Error: VR software could not open";
+            }
+            else if (Process.GetProcessesByName("vrmonitor").Length == 0)
+            {
+                error = "Error: SteamVR could not open";
+            }
+            else if (Process.GetProcessesByName(SessionController.vrHeadset?.GetHeadsetManagementProcessName()).Length == 0)
+            {
+                error = "Error: Vive could not open";
+            }
+
+            string message = count <= 60 ? "Awaiting headset connection..." : error;
+
+            ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage($"SoftwareState,{message}"), TimeSpan.FromSeconds(1));
         }
 
         /// <summary>

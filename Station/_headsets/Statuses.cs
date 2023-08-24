@@ -127,6 +127,12 @@ namespace Station
             {
                 OpenVRStatus = status;
             }
+
+            //If the headset is connected and no experience is currently running tell the tablet the Station is ready to go
+            if (SoftwareStatus == DeviceStatus.Connected && OpenVRStatus == DeviceStatus.Connected && WrapperManager.CurrentWrapper?.GetLastExperience() != null)
+            {
+                ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage($"SoftwareState,Ready to go"), TimeSpan.FromSeconds(2));
+            }
         }
 
         /// <summary>

@@ -149,7 +149,7 @@ namespace Station
                     $"OpenVR connection not established - restarting SteamVR", MockConsole.LogLevel.Normal);
 
                 //Send message to the tablet (Updating what is happening)
-                SessionController.PassStationMessage($"ApplicationUpdate,Restarting SteamVR...");
+                ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage($"SoftwareState,Restarting SteamVR"), TimeSpan.FromSeconds(1));
 
                 //Kill SteamVR
                 CommandLine.QueryVRProcesses(new List<string> { "vrmonitor" }, true);
@@ -166,12 +166,12 @@ namespace Station
                     $"SteamVR restarted successfully", MockConsole.LogLevel.Normal);
 
                 //Send message to the tablet (Updating what is happening)
-                SessionController.PassStationMessage($"ApplicationUpdate,Connecting SteamVR...");
+                ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage($"SoftwareState,Connecting SteamVR"), TimeSpan.FromSeconds(1));
 
                 bool openvr = await MonitorLoop(() => !Manager.openVRManager?.InitialiseOpenVR() ?? true);
                 if (!openvr)
                 {
-                    SessionController.PassStationMessage($"ApplicationUpdate,SteamVR Error...");
+                    ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage($"SoftwareState,SteamVR Error"), TimeSpan.FromSeconds(1));
                     return false;
                 }
 
@@ -447,7 +447,7 @@ namespace Station
         {
             if (_deviceCheckInitialised) return; //Do not double up on the check loop
             _deviceCheckInitialised = true;
-            
+
             new Task(async () => {
                 while (!_quiting)
                 {
