@@ -183,7 +183,7 @@ namespace Station
         public async void RestartVive() //TODO this is not called anywhere yet
         {
             CommandLine.QueryVRProcesses(new List<string> { "LhStatusMonitor", "WaveConsole" }, true);
-            SessionController.PassStationMessage($"ApplicationUpdate,Restarting Vive...");
+            ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage($"SoftwareState,Restarting Vive"), TimeSpan.FromSeconds(1));
 
             await Task.Delay(5000);
 
@@ -207,11 +207,11 @@ namespace Station
             // Connection bailed out, send a failure message
             if (monitorAttempts == attemptLimit)
             {
-                SessionController.PassStationMessage($"ApplicationUpdate,Vive Error");
+                ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage($"SoftwareState,Vive Error"), TimeSpan.FromSeconds(1));
                 return;
             }
 
-            SessionController.PassStationMessage($"ApplicationUpdate,Vive Restarted");
+            ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage($"SoftwareState,Vive Restarted"), TimeSpan.FromSeconds(1));
         }
     }
 }

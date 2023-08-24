@@ -77,15 +77,13 @@ namespace Station
                 if (SessionController.vrHeadset.GetHeadsetManagementSoftwareStatus() == DeviceStatus.Off)
                 {
                     SessionController.StartVRSession(type);
-                    SessionController.PassStationMessage($"ApplicationUpdate,Starting VR Session...");
-
+                    ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage($"SoftwareState,Starting VR Session"), TimeSpan.FromSeconds(1));
                     await Task.Delay(5000);
                 }
                 else if (!sent)
                 {
                     sent = true;
-
-                    SessionController.PassStationMessage($"ApplicationUpdate,Awaiting headset connection...");
+                    ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage($"SoftwareState,Awaiting headset connection..."), TimeSpan.FromSeconds(1));
                     await Task.Delay(2000);
                 }
                 else //Message has already been sent to the NUC, block so it does not take up too much processing power

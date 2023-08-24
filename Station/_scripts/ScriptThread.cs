@@ -68,6 +68,7 @@ namespace Station
             if (additionalData.Equals("Connect"))
             {
                 Manager.SendResponse(source, "Station", "SetValue:status:On");
+                Manager.SendResponse(source, "Station", $"SetValue:state:{SessionController.currentState}");
                 Manager.SendResponse(source, "Station", "SetValue:gameName:");
                 Manager.SendResponse("Android", "Station", "SetValue:gameId:");
                 Manager.SendResponse(source, "Station", "SetValue:volume:" + CommandLine.GetVolume());

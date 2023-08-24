@@ -86,48 +86,57 @@ namespace Station
                 return;
             }
 
+            //Cannot be any higher - encryption key does not exist before the DotEnv.Load()
+            ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage($"SoftwareState,Launching Software"), TimeSpan.FromSeconds(0));
+
             //Load the environment files, do not continue if file is incomplete
             if (result)
             {
                 App.SetWindowTitle($"Station({Environment.GetEnvironmentVariable("StationId", EnvironmentVariableTarget.Process)}) -- {localEndPoint.Address} -- {macAddress} -- {versionNumber}");
                 MockConsole.WriteLine("ENV variables loaded", MockConsole.LogLevel.Error);
 
-                new Thread(() =>
-                {
-                    //Call in new thread to stop UI from hanging whilst reading the files
-                    SteamConfig.VerifySteamConfig(true);
-
-                    // Schedule the function to run after a 5-minute delay (300,000 milliseconds)
-                    variableCheck = new Timer(OnTimerCallback, null, 300000, Timeout.Infinite);
-
-                    if (!Helper.GetStationMode().Equals(Helper.STATION_MODE_APPLIANCE))
-                    {
-                        openVRManager = new OpenVRManager();
-                        wrapperManager = new WrapperManager();
-
-                        //Launch the custom wrapper application here
-                        wrapperManager.Startup();
-
-                        //Use to monitor SetVol and restart application
-                        StationMonitoringThread.initializeMonitoring();
-                    }
-
-                    StartServer();
-
-                    if (Environment.GetEnvironmentVariable("NucAddress", EnvironmentVariableTarget.Process) != null)
-                    {
-                        Logger.WriteLog($"Expected NUC address: {Environment.GetEnvironmentVariable("NucAddress", EnvironmentVariableTarget.Process)}", MockConsole.LogLevel.Normal);
-                        SetRemoteEndPoint();
-                        if (!Helper.GetStationMode().Equals(Helper.STATION_MODE_APPLIANCE))
-                        {
-                            InitialStartUp();
-                        }
-                    }
-                }).Start();
+                //Call as a new task to stop UI and server start up from hanging whilst reading the files
+                new Thread(() => SteamConfig.VerifySteamConfig(true)).Start();
+                new Thread(() => Initialisation()).Start();
             } else
             {
                 App.SetWindowTitle("Station - Failed to load ENV variables.");
                 MockConsole.WriteLine("Failed loading ENV variables", MockConsole.LogLevel.Error);
+            }
+        }
+
+        /// <summary>
+        /// Initialise the necessary classes for the software to run.
+        /// </summary>
+        private static void Initialisation()
+        {
+            ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage($"SoftwareState,Initialising configuration"), TimeSpan.FromSeconds(2));
+
+            // Schedule the function to run after a 5-minute delay (300,000 milliseconds)
+            variableCheck = new Timer(OnTimerCallback, null, 300000, Timeout.Infinite);
+
+            if (!Helper.GetStationMode().Equals(Helper.STATION_MODE_APPLIANCE))
+            {
+                openVRManager = new OpenVRManager();
+                wrapperManager = new WrapperManager();
+
+                //Launch the custom wrapper application here
+                wrapperManager.Startup();
+
+                //Use to monitor SetVol and restart application
+                StationMonitoringThread.initializeMonitoring();
+            }
+
+            StartServer();
+
+            if (Environment.GetEnvironmentVariable("NucAddress", EnvironmentVariableTarget.Process) != null)
+            {
+                Logger.WriteLog($"Expected NUC address: {Environment.GetEnvironmentVariable("NucAddress", EnvironmentVariableTarget.Process)}", MockConsole.LogLevel.Normal);
+                SetRemoteEndPoint();
+                if (!Helper.GetStationMode().Equals(Helper.STATION_MODE_APPLIANCE))
+                {
+                    InitialStartUp();
+                }
             }
         }
 
