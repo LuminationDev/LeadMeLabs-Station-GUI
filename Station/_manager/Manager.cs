@@ -74,7 +74,7 @@ namespace Station
             }
             catch (Exception ex)
             {
-                Logger.WriteLog(ex, MockConsole.LogLevel.Error);
+                Logger.WriteLog($"DotEnv Error: {ex}", MockConsole.LogLevel.Error);
             }
 
             //Even if DotEnv fails, still load up the server details to show the details to the user.
@@ -86,23 +86,25 @@ namespace Station
                 return;
             }
 
-            //Cannot be any higher - encryption key does not exist before the DotEnv.Load()
-            ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage($"SoftwareState,Launching Software"), TimeSpan.FromSeconds(0));
-
-            //Load the environment files, do not continue if file is incomplete
-            if (result)
-            {
-                App.SetWindowTitle($"Station({Environment.GetEnvironmentVariable("StationId", EnvironmentVariableTarget.Process)}) -- {localEndPoint.Address} -- {macAddress} -- {versionNumber}");
-                MockConsole.WriteLine("ENV variables loaded", MockConsole.LogLevel.Error);
-
-                //Call as a new task to stop UI and server start up from hanging whilst reading the files
-                new Thread(() => SteamConfig.VerifySteamConfig(true)).Start();
-                new Thread(() => Initialisation()).Start();
-            } else
+            //Do not continue if environment variable file is incomplete
+            if (!result)
             {
                 App.SetWindowTitle("Station - Failed to load ENV variables.");
                 MockConsole.WriteLine("Failed loading ENV variables", MockConsole.LogLevel.Error);
+                return;
             }
+
+            StartServer();
+
+            //Cannot be any higher - encryption key does not exist before the DotEnv.Load()
+            ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage($"SoftwareState,Launching Software"), TimeSpan.FromSeconds(0));
+
+            App.SetWindowTitle($"Station({Environment.GetEnvironmentVariable("StationId", EnvironmentVariableTarget.Process)}) -- {localEndPoint.Address} -- {macAddress} -- {versionNumber}");
+            MockConsole.WriteLine("ENV variables loaded", MockConsole.LogLevel.Error);
+
+            //Call as a new task to stop UI and server start up from hanging whilst reading the files
+            new Thread(() => SteamConfig.VerifySteamConfig(true)).Start();
+            new Thread(() => Initialisation()).Start();
         }
 
         /// <summary>
@@ -126,8 +128,6 @@ namespace Station
                 //Use to monitor SetVol and restart application
                 StationMonitoringThread.initializeMonitoring();
             }
-
-            StartServer();
 
             if (Environment.GetEnvironmentVariable("NucAddress", EnvironmentVariableTarget.Process) != null)
             {

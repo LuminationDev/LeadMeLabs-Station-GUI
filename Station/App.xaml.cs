@@ -61,7 +61,7 @@ namespace Station
         static void UnhandledExceptionHandler(object sender, UnhandledExceptionEventArgs args)
         {
             Exception e = (Exception)args.ExceptionObject;
-            Logger.WriteLog("UnhandledExceptionHandler caught : " + e.Message, MockConsole.LogLevel.Error);
+            Logger.WriteLog("UnhandledExceptionHandler caught: " + e.Message, MockConsole.LogLevel.Error);
             Logger.WriteLog($"Runtime terminating: {args.IsTerminating}", MockConsole.LogLevel.Error);
             Logger.WorkQueue();
             Manager.SendResponse("Android", "Station", "SetValue:status:Off");
