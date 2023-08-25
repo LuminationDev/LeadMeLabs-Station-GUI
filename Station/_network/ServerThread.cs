@@ -51,7 +51,7 @@ namespace Station
                     Logger.WriteLog("Waiting for a connection on: " + Manager.localEndPoint.Address + ":" + Manager.localEndPoint.Port, MockConsole.LogLevel.Debug, false);
                     TcpClient clientConnection = await server.AcceptTcpClientAsync();
 
-                    //Start new thread so the server can continue straight away
+                    //Start new Task so the server loop can continue straight away
                     _ = Task.Run(() => HandleConnectionAsync(clientConnection));
                 }
             }
@@ -91,47 +91,46 @@ namespace Station
                 NetworkStream stream = clientConnection.GetStream();
 
                 // Read the incoming data into a MemoryStream so we can re-read it at anytime
-                using (MemoryStream memoryStream = new())
-                {
-                    await stream.CopyToAsync(memoryStream);
+                using MemoryStream memoryStream = new();
+                await stream.CopyToAsync(memoryStream);
 
-                    // Dispose of the original network stream.
-                    stream.Close();
-                    stream.Dispose();
+                // Dispose of the original network stream.
+                stream.Close();
+                stream.Dispose();
+
+                // Reset the position of the MemoryStream to the beginning
+                memoryStream.Position = 0;
+
+                //Read the header to determine the incoming data
+                byte[] headerLengthBytes = new byte[4];
+                await memoryStream.ReadAsync(headerLengthBytes, 0, headerLengthBytes.Length);
+                int headerLength = BitConverter.ToInt32(headerLengthBytes, 0);
+
+                MockConsole.WriteLine($"Header length: {headerLength}", MockConsole.LogLevel.Debug);
+
+                //No header means that an older tablet version has connected and is sending a message
+                if (headerLength > 4)
+                {
+                    MockConsole.WriteLine($"NUC version 1 connecting.", MockConsole.LogLevel.Debug);
 
                     // Reset the position of the MemoryStream to the beginning
                     memoryStream.Position = 0;
+                    StringMessageReceived(clientConnection, endPoint, memoryStream);
+                }
+                else
+                {
+                    // Read the header message type
+                    byte[] headerMessageTypeBytes = new byte[headerLength];
+                    await memoryStream.ReadAsync(headerMessageTypeBytes, 0, headerLength);
+                    string headerMessageType = Encoding.UTF8.GetString(headerMessageTypeBytes);
 
-                    //Read the header to determine the incoming data
-                    byte[] headerLengthBytes = new byte[4];
-                    await memoryStream.ReadAsync(headerLengthBytes, 0, headerLengthBytes.Length);
-                    int headerLength = BitConverter.ToInt32(headerLengthBytes, 0);
-
-                    MockConsole.WriteLine($"Header length: {headerLength}", MockConsole.LogLevel.Debug);
-
-                    //No header means that an older tablet version has connected and is sending a message
-                    if (headerLength > 4)
+                    if (headerMessageType.Equals("text"))
                     {
-                        MockConsole.WriteLine($"NUC version 1 connecting.", MockConsole.LogLevel.Debug);
-
-                        // Reset the position of the MemoryStream to the beginning
-                        memoryStream.Position = 0;
                         StringMessageReceived(clientConnection, endPoint, memoryStream);
-                    } else
+                    }
+                    else
                     {
-                        // Read the header message type
-                        byte[] headerMessageTypeBytes = new byte[headerLength];
-                        await memoryStream.ReadAsync(headerMessageTypeBytes, 0, headerLength);
-                        string headerMessageType = Encoding.UTF8.GetString(headerMessageTypeBytes);
-
-                        if (headerMessageType.Equals("text"))
-                        {
-                            StringMessageReceived(clientConnection, endPoint, memoryStream);
-                        }
-                        else
-                        {
-                            Logger.WriteLog($"Unknown header connection attempt: {headerMessageType}", MockConsole.LogLevel.Error);
-                        }
+                        Logger.WriteLog($"Unknown header connection attempt: {headerMessageType}", MockConsole.LogLevel.Error);
                     }
                 }
             }

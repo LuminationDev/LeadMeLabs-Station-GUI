@@ -38,7 +38,7 @@ namespace Station
             switch (actionNamespace)
             {
                 case "CommandLine":
-                    StationScripts.execute(source, additionalData);
+                    StationScripts.Execute(source, additionalData);
                     break;
 
                 case "Station":
