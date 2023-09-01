@@ -57,8 +57,8 @@ namespace Station
         /// Create a new TcpClient with the details collected from the initial server thread.
         /// Sends a message to the android server with details about certain outputs or machine
         /// states.
-        /// </summery>
-        public void send(bool writeToLog = true)
+        /// </summary>
+        public void Send(bool writeToLog = true)
         {
             try
             {
@@ -72,9 +72,8 @@ namespace Station
                 if (!task.Result)
                 {
                     tokenSource.Cancel();
-                    Console.WriteLine("Socket timeout: " + Manager.remoteEndPoint.Address);
                     if (NotifyIconWrapper.Instance != null) NotifyIconWrapper.Instance.ChangeIcon("offline");
-                    throw new SocketException();
+                    throw new Exception($"Socket timeout trying to contact: {Manager.remoteEndPoint.Address}");
                 } else
                 {
                     if (NotifyIconWrapper.Instance != null) NotifyIconWrapper.Instance.ChangeIcon("online");
@@ -136,7 +135,7 @@ namespace Station
                 client?.Dispose();
                 client?.Close();
 
-                Logger.WriteLog($"Unexpected exception : {e}", MockConsole.LogLevel.Error);
+                Logger.WriteLog($"Unexpected exception : {e.Message}", MockConsole.LogLevel.Error);
             }
         }
     }

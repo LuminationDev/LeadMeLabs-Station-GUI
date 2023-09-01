@@ -92,20 +92,11 @@ namespace Station
         /// <returns>A string representing the output or error from the command prompt.</returns>
         private static string? outcome(Process temp)
         {
-            string output = "";
-            string error = "";
+            string? output = "";
+            string? error = "";
 
-            temp.OutputDataReceived += new DataReceivedEventHandler((s, e) =>
-                {
-                    output += e.Data + "\n";
-                }
-            );
-
-            temp.ErrorDataReceived += new DataReceivedEventHandler((s, e) =>
-                {
-                    error += e.Data + "\n";
-                }
-            );
+            temp.OutputDataReceived += (s, e) => { output += e.Data + "\n"; };
+            temp.ErrorDataReceived += (s, e) => { error += e.Data + "\n"; };
 
             temp.BeginOutputReadLine();
             temp.BeginErrorReadLine();
@@ -117,10 +108,8 @@ namespace Station
             {
                 return output;
             }
-            else
-            {
-                return error;
-            }
+
+            return error;
         }
 
         /// <summary>
