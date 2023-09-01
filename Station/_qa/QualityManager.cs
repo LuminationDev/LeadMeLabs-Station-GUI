@@ -6,6 +6,7 @@ public class QualityManager
     private readonly NetworkChecks _networkChecks = new();
     private readonly WindowChecks _windowChecks = new();
     private readonly SoftwareChecks _softwareChecks = new();
+    private readonly ConfigChecks _configChecks = new();
 
     //TODO Add the QaCheck class in to handle the results
     public void DetermineCheck(string type)
@@ -22,6 +23,10 @@ public class QualityManager
             
             case "Software":
                 _softwareChecks.GetSoftwareInformation();
+                break;
+            
+            case "Config":
+                _configChecks.GetLocalConfigurationDetails();
                 break;
         }
     }
