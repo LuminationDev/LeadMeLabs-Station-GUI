@@ -61,11 +61,11 @@ namespace Station
         /// <summary>
         /// Starts the server running on the local machine
         /// </summary>
-        public async static void StartProgram()
+        public static async void StartProgram()
         {
             MockConsole.ClearConsole();
             MockConsole.WriteLine("Loading ENV variables", MockConsole.LogLevel.Error);
-
+            
             //Check if the Encryption key and env variables are set correctly before starting anything else
             bool result = false;
             try
@@ -85,7 +85,7 @@ namespace Station
                 Logger.WriteLog("Server details were not collected.", MockConsole.LogLevel.Error);
                 return;
             }
-
+            
             //Do not continue if environment variable file is incomplete
             if (!result)
             {
@@ -95,16 +95,16 @@ namespace Station
             }
 
             StartServer();
-
+            
             //Cannot be any higher - encryption key does not exist before the DotEnv.Load()
             ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage($"SoftwareState,Launching Software"), TimeSpan.FromSeconds(0));
 
             App.SetWindowTitle($"Station({Environment.GetEnvironmentVariable("StationId", EnvironmentVariableTarget.Process)}) -- {localEndPoint.Address} -- {macAddress} -- {versionNumber}");
             MockConsole.WriteLine("ENV variables loaded", MockConsole.LogLevel.Error);
-
+            
             //Call as a new task to stop UI and server start up from hanging whilst reading the files
             new Thread(() => SteamConfig.VerifySteamConfig(true)).Start();
-            new Thread(() => Initialisation()).Start();
+            new Thread(Initialisation).Start();
         }
 
         /// <summary>
@@ -143,7 +143,7 @@ namespace Station
         /// <summary>
         /// Re-check any variables that may have changed in the first 5 minutes of operation.
         /// </summary>
-        public static void OnTimerCallback(object? state)
+        private static void OnTimerCallback(object? state)
         {
             try
             {
@@ -168,7 +168,7 @@ namespace Station
         /// <summary>
         /// Stop and dispose of the variable timer and all resources associated with it.
         /// </summary>
-        public static void StopVariableTimer()
+        private static void StopVariableTimer()
         {
             if(variableCheck != null)
             {
@@ -203,7 +203,7 @@ namespace Station
             StartProgram();
         }
 
-        public static void StartServer()
+        private static void StartServer()
         {
             server = new ServerThread();
             serverThread = new Thread(async () => await server.RunAsync());
@@ -220,7 +220,7 @@ namespace Station
         /// <summary>
         /// On start up or NUC address change send the status, steam list and the current volume to the NUC.
         /// </summary>
-        public static void InitialStartUp()
+        private static void InitialStartUp()
         {
             Manager.SendResponse("NUC", "Station", "SetValue:status:On");
             Manager.SendResponse("NUC", "Station", "SetValue:gameName:");
@@ -232,7 +232,7 @@ namespace Station
         /// Collect the necessary system details for starting the service. Including the IP address, mac address
         /// and the current version number.
         /// </summary>
-        public static bool SetupServerDetails()
+        private static bool SetupServerDetails()
         {
             try
             {
@@ -286,7 +286,7 @@ namespace Station
             return ip;
         }
 
-        public static void SetRemoteEndPoint()
+        private static void SetRemoteEndPoint()
         {
             remoteEndPoint = new IPEndPoint(IPAddress.Parse((ReadOnlySpan<char>)Environment.GetEnvironmentVariable("NucAddress", EnvironmentVariableTarget.Process)), NUCPort);
         }
@@ -317,9 +317,13 @@ namespace Station
             Logger.WriteLog("Sending: " + response, MockConsole.LogLevel.Normal, writeToLog);
 
             string? key = Environment.GetEnvironmentVariable("AppKey", EnvironmentVariableTarget.Process);
-            if (key is null) throw new Exception("Encryption key not set");
+            if (key is null) {
+                Logger.WriteLog("Encryption key not set", MockConsole.LogLevel.Normal);
+                return;
+            }
+            
             SocketClient client = new(EncryptionHelper.Encrypt(response, key));
-            client.send(writeToLog);
+            client.Send(writeToLog);
         }
     }
 }

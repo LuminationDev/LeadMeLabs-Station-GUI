@@ -56,6 +56,10 @@ namespace Station
                 case "LogFiles":
                     HandleLogFiles(additionalData);
                     break;
+                
+                case "QualityAssurance":
+                    HandleQualityAssurance(additionalData);
+                    break;
 
                 default:
                     break;
@@ -177,6 +181,23 @@ namespace Station
             {
                 string[] split = additionalData.Split(":", 2);
                 Logger.LogRequest(int.Parse(split[1]));
+            }
+        }
+        
+        /// <summary>
+        /// Run the requested software check
+        /// </summary>
+        private async void HandleQualityAssurance(string additionalData)
+        {
+            //TODO add qa check messages here (put the return ip address as additionalData for the response)
+            string[] split = additionalData.Split(":");
+            if (split.Length > 1)
+            {
+                MockConsole.WriteLine($"QA Check type: {split[0]}. Return IP: {split[1]}", MockConsole.LogLevel.Normal);
+            }
+            else
+            {
+                MockConsole.WriteLine($"Unknown QA request {this.additionalData}", MockConsole.LogLevel.Normal);
             }
         }
     }

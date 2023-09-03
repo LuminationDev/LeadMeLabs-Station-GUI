@@ -204,8 +204,7 @@ namespace Station
         {
             //Check if SteamCMD has been initialised
             string filePath = CommandLine.stationLocation + @"\external\steamcmd\steamerrorreporter.exe";
-
-            //TODO automate this?
+            
             if(!File.Exists(filePath))
             {
                 Logger.WriteLog($"SteamCMD not initialised yet. Initialising now.", MockConsole.LogLevel.Error);
