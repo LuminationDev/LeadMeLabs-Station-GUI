@@ -33,11 +33,11 @@ namespace Station
             }
         }
 
-        public static void GetSteamId()
+        public static string GetSteamId()
         {
             if (steamId.Length > 0)
             {
-                return;
+                return "";
             }
             string fileLocation = "C:\\Program Files (x86)\\Steam\\config\\config.vdf";
             if (!File.Exists(fileLocation))
@@ -45,7 +45,7 @@ namespace Station
                 Logger.WriteLog(
                     "Could not get steamid " +
                     location, MockConsole.LogLevel.Error);
-                return;
+                return "";
             }
 
             string? username = Environment.GetEnvironmentVariable("SteamUserName", EnvironmentVariableTarget.Process);
@@ -54,7 +54,7 @@ namespace Station
                 Logger.WriteLog(
                     "Could not get SteamUserName from environment variables " +
                     location, MockConsole.LogLevel.Error);
-                return;
+                return "";
             }
 
             username = username.ToLower();
@@ -81,7 +81,7 @@ namespace Station
                     Logger.WriteLog(
                     "Could not get steamId: " +
                     location, MockConsole.LogLevel.Error);
-                    return;
+                    return "";
                 }
 
                 steamId = (long.Parse(steamCommId) - steamComm).ToString();
@@ -90,6 +90,8 @@ namespace Station
             {
                 SentrySdk.CaptureException(e);
             }
+
+            return steamId;
         }
 
         private static void VerifySteamHideNotificationConfig()
