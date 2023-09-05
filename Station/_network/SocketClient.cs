@@ -58,15 +58,18 @@ namespace Station
         /// Sends a message to the android server with details about certain outputs or machine
         /// states.
         /// </summary>
-        public void Send(bool writeToLog = true)
+        public void Send(bool writeToLog = true, IPAddress? address = null, int? destPort = null)
         {
+            address ??= Manager.remoteEndPoint.Address;
+            int port = destPort ?? Manager.remoteEndPoint.Port; //ConnectAsync does not like int?
+            
             try
             {
                 // Create a TCP client and connect via the supplied endpoint.
                 client = new TcpClient();
                 CancellationTokenSource tokenSource = new CancellationTokenSource();
                 CancellationToken token = tokenSource.Token;
-                ValueTask connect = client.ConnectAsync(Manager.remoteEndPoint.Address, Manager.remoteEndPoint.Port, token);
+                ValueTask connect = client.ConnectAsync(address, port, token);
                 Task<bool> task = TimeoutAfter(connect, timeOut);
 
                 if (!task.Result)

@@ -54,7 +54,7 @@ namespace Station
         /// </summary>
         public static OpenVRManager? openVRManager;
 
-        private static string? macAddress = null;
+        public static string? macAddress = null;
         private static string? versionNumber = null;
         private static Timer? variableCheck;
 
