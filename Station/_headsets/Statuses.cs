@@ -155,8 +155,11 @@ namespace Station
         {
             if (oldConnectionStatus && newConnectionStatus is DeviceStatus.Lost or DeviceStatus.Off)
             {
+                string? message = WrapperManager.CurrentWrapper?.GetCurrentExperienceName() == null ? 
+                    "Awaiting headset connection..." : "Lost headset connection";
+                
                 ScheduledTaskQueue.EnqueueTask(
-                    () => SessionController.PassStationMessage($"SoftwareState,Lost headset connection"),
+                    () => SessionController.PassStationMessage($"SoftwareState,{message}"),
                     TimeSpan.FromSeconds(0));
             }
         }
