@@ -1,4 +1,5 @@
 ﻿using System;
+using Newtonsoft.Json;
 
 namespace Station._qa.checks;
 
@@ -11,9 +12,36 @@ public class ConfigInfo
     public string? NucIpAddress { get; set; }
 }
 
+public class StationDetails
+{
+    public string? name { get; set; }
+    public string? id { get; set; }
+    public string? room { get; set; }
+    public string? labLocation { get; set; }
+    public string? ipAddress { get; set; }
+    public string? macAddress { get; set; }
+    public string? nucIpAddress { get; set; }
+}
+
 public class ConfigChecks
 {
-    public ConfigInfo? GetLocalConfigurationDetails()
+    public string? GetLocalStationDetails()
+    {
+        StationDetails stationDetails = new StationDetails
+        {
+            name = $"Station {GetStationId()}",
+            id = GetStationId(),
+            room = GetStationRoom(),
+            labLocation = GetLabLocation(),
+            ipAddress = Manager.localEndPoint.Address.ToString(),
+            macAddress = Manager.macAddress,
+            nucIpAddress = GetExpectedNucAddress()
+        };
+        
+        return JsonConvert.SerializeObject(stationDetails);
+    }
+    
+    public string? GetLocalConfigurationDetails()
     {
         ConfigInfo configInfo = new ConfigInfo
         {
@@ -24,7 +52,7 @@ public class ConfigChecks
             NucIpAddress = GetExpectedNucAddress()
         };
         
-        return configInfo;
+        return configInfo.ToString();
     }
 
     /// <summary>
@@ -34,6 +62,15 @@ public class ConfigChecks
     private string GetSelectedHeadset()
     {
         return Environment.GetEnvironmentVariable("HeadsetType", EnvironmentVariableTarget.Process) ?? "Not set";
+    }
+    
+    /// <summary>
+    /// Return the room the Station belongs to, only load using the EnvironmentVariableTarget.Process, to disregard any saved
+    /// local ENVs.
+    /// </summary>
+    private string GetStationRoom()
+    {
+        return Environment.GetEnvironmentVariable("room", EnvironmentVariableTarget.Process) ?? "Not set";
     }
 
     /// <summary>

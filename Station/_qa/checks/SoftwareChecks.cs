@@ -15,7 +15,7 @@ public class SoftwareInfo
 
 public class SoftwareChecks
 {
-    public SoftwareInfo? GetSoftwareInformation()
+    public string? GetSoftwareInformation()
     {
         SoftwareInfo softwareInfo = new SoftwareInfo
         {
@@ -26,7 +26,7 @@ public class SoftwareChecks
             SteamCmdStatus = IsSteamCmdConfigured()
         };
 
-        return softwareInfo;
+        return softwareInfo.ToString();
     }
 
     /// <summary>

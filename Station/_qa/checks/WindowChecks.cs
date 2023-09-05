@@ -20,7 +20,7 @@ public class WindowsInfo
 
 public class WindowChecks
 {
-    public WindowsInfo? GetLocalOsSettings()
+    public string? GetLocalOsSettings()
     {
         WindowsInfo windowInfo = new WindowsInfo
         {
@@ -33,7 +33,7 @@ public class WindowChecks
             Firewall = FirewallManagement.IsProgramAllowedThroughFirewall() ?? "Unknown"
         };
         
-        return windowInfo;
+        return windowInfo.ToString();
     }
     
     /// <summary>

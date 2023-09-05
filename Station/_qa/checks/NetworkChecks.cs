@@ -15,7 +15,7 @@ public class NetworkInfo
 
 public class NetworkChecks
 {
-    public NetworkInfo? GetNetworkInterfaceByIpAddress(string ipAddressString)
+    public string? GetNetworkInterfaceByIpAddress(string ipAddressString)
     {
         IPAddress ipAddress = IPAddress.Parse(ipAddressString);
         
@@ -45,7 +45,7 @@ public class NetworkChecks
                             : null
                     };
                     
-                    return networkInfo;
+                    return networkInfo.ToString();
                 }
             }
         }

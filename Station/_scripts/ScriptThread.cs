@@ -1,4 +1,7 @@
+using System;
+using System.Net;
 using System.Threading.Tasks;
+using LeadMeLabsLibrary;
 
 namespace Station
 {
@@ -57,7 +60,7 @@ namespace Station
                     HandleLogFiles(additionalData);
                     break;
                 
-                case "QualityAssurance":
+                case "QA":
                     HandleQualityAssurance(additionalData);
                     break;
 
@@ -173,7 +176,7 @@ namespace Station
         }
 
         /// <summary>
-        /// The NUC has requested that the log files be transfered over the network.
+        /// The NUC has requested that the log files be transferred over the network.
         /// </summary>
         private void HandleLogFiles(string additionalData)
         {
@@ -190,10 +193,27 @@ namespace Station
         private async void HandleQualityAssurance(string additionalData)
         {
             //TODO add qa check messages here (put the return ip address as additionalData for the response)
+            //Request:IP
             string[] split = additionalData.Split(":");
-            if (split.Length > 1)
+            if (split.Length > 2)
             {
+                MockConsole.WriteLine($"MESSAGE: {additionalData}", MockConsole.LogLevel.Normal);
                 MockConsole.WriteLine($"QA Check type: {split[0]}. Return IP: {split[1]}", MockConsole.LogLevel.Normal);
+
+                string? response = new QualityManager().DetermineCheck(split[0]);
+                if (response == null)
+                {
+                    return;
+                }
+                
+                string? key = Environment.GetEnvironmentVariable("AppKey", EnvironmentVariableTarget.Process);
+                if (key is null) {
+                    Logger.WriteLog("Encryption key not set", MockConsole.LogLevel.Normal);
+                    return;
+                }
+                
+                SocketClient client = new(EncryptionHelper.Encrypt($"{split[0]}:{response}", key));
+                client.Send(false, IPAddress.Parse(split[1]), int.Parse(split[2]));
             }
             else
             {

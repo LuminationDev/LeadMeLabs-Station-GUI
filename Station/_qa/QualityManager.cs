@@ -9,25 +9,37 @@ public class QualityManager
     private readonly ConfigChecks _configChecks = new();
 
     //TODO Add the QaCheck class in to handle the results
-    public void DetermineCheck(string type)
+    public string? DetermineCheck(string type)
     {
+        string? message = null;
+        
         switch (type)
         {
             case "Network":
-                _networkChecks.GetNetworkInterfaceByIpAddress(Manager.localEndPoint.Address.ToString());
+                message = _networkChecks.GetNetworkInterfaceByIpAddress(Manager.localEndPoint.Address.ToString());
                 break;
             
             case "Windows":
-                _windowChecks.GetLocalOsSettings();
+                message = _windowChecks.GetLocalOsSettings();
                 break;
             
             case "Software":
-                _softwareChecks.GetSoftwareInformation();
+                message = _softwareChecks.GetSoftwareInformation();
                 break;
             
             case "Config":
-                _configChecks.GetLocalConfigurationDetails();
+                message = _configChecks.GetLocalConfigurationDetails();
+                break;
+            
+            case "StationDetails":
+                message = _configChecks.GetLocalStationDetails();
+                break;
+            
+            default:
+                MockConsole.WriteLine($"Unknown type, QualityManager - DetermineCheck(): {type}.", MockConsole.LogLevel.Normal);
                 break;
         }
+
+        return message;
     }
 }
