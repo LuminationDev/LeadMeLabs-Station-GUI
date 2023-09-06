@@ -33,7 +33,7 @@ public class WindowChecks
             Firewall = FirewallManagement.IsProgramAllowedThroughFirewall() ?? "Unknown"
         };
         
-        return windowInfo.ToString();
+        return JsonConvert.SerializeObject(windowInfo);
     }
     
     /// <summary>
