@@ -1,5 +1,6 @@
 ﻿using System.Net;
 using System.Net.NetworkInformation;
+using Newtonsoft.Json;
 
 namespace Station._qa.checks;
 
@@ -7,7 +8,7 @@ public class NetworkInfo
 {
     public string? NetworkInterfaceName { get; set; }
     public string? Description { get; set; }
-    public PhysicalAddress? MacAddress { get; set; }
+    public string? MacAddress { get; set; }
     public string? DefaultGateway { get; set; }
     public string? DnsServer { get; set; }
     public string? AltDnsServer { get; set; }
@@ -33,7 +34,7 @@ public class NetworkChecks
                     {
                         NetworkInterfaceName = networkInterface.Name,
                         Description = networkInterface.Description,
-                        MacAddress = networkInterface.GetPhysicalAddress(),
+                        MacAddress = Manager.macAddress,
                         DefaultGateway = ipProperties.GatewayAddresses.Count > 0
                             ? ipProperties.GatewayAddresses[0].Address.ToString()
                             : null,
@@ -45,7 +46,7 @@ public class NetworkChecks
                             : null
                     };
                     
-                    return networkInfo.ToString();
+                    return JsonConvert.SerializeObject(networkInfo);
                 }
             }
         }

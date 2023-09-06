@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Diagnostics;
 using System.IO;
+using Newtonsoft.Json;
 
 namespace Station._qa.checks;
 
@@ -26,7 +27,7 @@ public class SoftwareChecks
             SteamCmdStatus = IsSteamCmdConfigured()
         };
 
-        return softwareInfo.ToString();
+        return JsonConvert.SerializeObject(softwareInfo);
     }
 
     /// <summary>

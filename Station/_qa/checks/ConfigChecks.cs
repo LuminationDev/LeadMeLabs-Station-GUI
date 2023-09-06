@@ -52,7 +52,7 @@ public class ConfigChecks
             NucIpAddress = GetExpectedNucAddress()
         };
         
-        return configInfo.ToString();
+        return JsonConvert.SerializeObject(configInfo);
     }
 
     /// <summary>

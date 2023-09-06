@@ -129,7 +129,7 @@ namespace Station
                 processesAreResponding = processesAreAllResponding;
                 if (!processesAreAllResponding)
                 {
-                    SessionController.PassStationMessage("MessageToAndroid,SetValue:status:Not Responding");
+                    SessionController.PassStationMessage("MessageToAndroid,SetValue:state:Not Responding");
                 }
                 else
                 {

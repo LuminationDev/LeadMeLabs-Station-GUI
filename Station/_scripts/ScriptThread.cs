@@ -63,9 +63,6 @@ namespace Station
                 case "QA":
                     HandleQualityAssurance(additionalData);
                     break;
-
-                default:
-                    break;
             }
         }
 
@@ -188,18 +185,14 @@ namespace Station
         }
         
         /// <summary>
-        /// Run the requested software check
+        /// Run the requested software check.
         /// </summary>
         private async void HandleQualityAssurance(string additionalData)
         {
-            //TODO add qa check messages here (put the return ip address as additionalData for the response)
-            //Request:IP
+            //Request:ReturnAddress
             string[] split = additionalData.Split(":");
             if (split.Length > 2)
             {
-                MockConsole.WriteLine($"MESSAGE: {additionalData}", MockConsole.LogLevel.Normal);
-                MockConsole.WriteLine($"QA Check type: {split[0]}. Return IP: {split[1]}", MockConsole.LogLevel.Normal);
-
                 string? response = new QualityManager().DetermineCheck(split[0]);
                 if (response == null)
                 {
