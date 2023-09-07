@@ -39,8 +39,7 @@ public class QualityManager
                 message = _networkChecks.GetNetworkInterfaceByIpAddress(Manager.localEndPoint.Address.ToString()) + "::::";
                 message += _windowChecks.GetLocalOsSettings() + "::::";
                 message += _softwareChecks.GetSoftwareInformation() + "::::";
-                message += _configChecks.GetLocalConfigurationDetails() + "::::";
-                message += _configChecks.GetLocalStationDetails();
+                message += _configChecks.GetLocalConfigurationDetails();
                 break;
             
             default:
