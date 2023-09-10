@@ -295,6 +295,8 @@ namespace Station
             {
                 currentProcess.Kill(true);
             }
+
+            experienceName = null; //Reset for correct headset state
             WrapperMonitoringThread.StopMonitoring();
             ViveScripts.StopMonitoring();
             SteamScripts.popupDetect = false;

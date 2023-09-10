@@ -322,15 +322,18 @@ namespace Station
                 currentProcess.Kill(true);
                 WrapperMonitoringThread.StopMonitoring();
             }
+            lastExperience.Name = null; //Reset for correct headset state
         }
 
         public void RestartCurrentExperience()
         {
+            //Create a temp as the StopCurrenProcess alters the current experience
+            Experience temp = lastExperience;
             if (currentProcess != null && !lastExperience.IsNull())
             {
                 StopCurrentProcess();
                 Task.Delay(3000).Wait();
-                WrapProcess(lastExperience);
+                WrapProcess(temp);
             }
         }
     }

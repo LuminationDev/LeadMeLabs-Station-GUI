@@ -582,13 +582,13 @@ namespace Station
             {
                 _tracking = false;
                 SessionController.vrHeadset?.GetStatusManager().UpdateHeadset(VrManager.OpenVR, DeviceStatus.Lost);
-                MockConsole.WriteLine("Headset lost", MockConsole.LogLevel.Normal);
+                MockConsole.WriteLine("Headset lost", MockConsole.LogLevel.Debug);
             }
             else if (headsetPosition != new Vector3(0, 0, 0) && headsetOrientation != new Quaternion(1, 0, 0, 0))
             {
                 _tracking = true;
                 SessionController.vrHeadset?.GetStatusManager().UpdateHeadset(VrManager.OpenVR, DeviceStatus.Connected);
-                MockConsole.WriteLine("Headset found", MockConsole.LogLevel.Normal);
+                MockConsole.WriteLine("Headset found", MockConsole.LogLevel.Debug);
             }
             
             //Collect the headset model - only do this if it hasn't been set already.
