@@ -298,6 +298,7 @@ namespace Station
             Task.Factory.StartNew(() =>
             {
                 currentProcess?.WaitForExit();
+                lastExperience.Name = null; //Reset for correct headset state
                 Trace.WriteLine("The current process has just exited.");
                 SessionController.PassStationMessage($"ApplicationClosed");
                 UIUpdater.ResetUIDisplay();
@@ -322,15 +323,18 @@ namespace Station
                 currentProcess.Kill(true);
                 WrapperMonitoringThread.StopMonitoring();
             }
+            lastExperience.Name = null; //Reset for correct headset state
         }
 
         public void RestartCurrentExperience()
         {
+            //Create a temp as the StopCurrenProcess alters the current experience
+            Experience temp = lastExperience;
             if (currentProcess != null && !lastExperience.IsNull())
             {
                 StopCurrentProcess();
                 Task.Delay(3000).Wait();
-                WrapProcess(lastExperience);
+                WrapProcess(temp);
             }
         }
     }

@@ -278,6 +278,7 @@ namespace Station
             Task.Factory.StartNew(() =>
             {
                 currentProcess?.WaitForExit();
+                experienceName = null; //Reset for correct headset state
                 SteamScripts.popupDetect = false;
                 SessionController.PassStationMessage($"ApplicationClosed");
                 UIUpdater.ResetUIDisplay();
@@ -295,6 +296,8 @@ namespace Station
             {
                 currentProcess.Kill(true);
             }
+
+            experienceName = null; //Reset for correct headset state
             WrapperMonitoringThread.StopMonitoring();
             ViveScripts.StopMonitoring();
             SteamScripts.popupDetect = false;
