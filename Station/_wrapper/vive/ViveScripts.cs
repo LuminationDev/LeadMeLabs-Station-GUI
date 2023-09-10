@@ -1,4 +1,4 @@
-﻿using leadme_api;
+﻿using System;
 using System.Threading.Tasks;
 
 namespace Station
@@ -28,34 +28,62 @@ namespace Station
         }
 
         /// <summary>
+        /// Wait for Vive to be open and connected before going any further with the launcher sequence.
+        /// </summary>
+        /// <returns></returns>
+        public static async Task<bool> WaitForVive(string wrapperType)
+        {
+            if (SessionController.vrHeadset == null) return false;
+
+            //Wait for the Vive Check
+            Logger.WriteLog("WaitForVive - Attempting to launch an application, vive status is: " +
+                Enum.GetName(typeof(DeviceStatus), SessionController.vrHeadset.GetHeadsetManagementSoftwareStatus()), MockConsole.LogLevel.Normal);
+            if (WrapperManager.CurrentWrapper?.GetLaunchingExperience() ?? false)
+            {
+                SessionController.PassStationMessage("MessageToAndroid,AlreadyLaunchingGame");
+                return false;
+            }
+            WrapperManager.CurrentWrapper?.SetLaunchingExperience(true);
+
+            if (!await ViveCheck(wrapperType))
+            {
+                WrapperManager.CurrentWrapper?.SetLaunchingExperience(false);
+                return false;
+            }
+
+            return true;
+        }
+
+        /// <summary>
         /// Run a while loop to track if the Vive program is up and running.
         /// </summary>
         /// <returns></returns>
-        public static async Task<bool> ViveCheck(string type)
+        private static async Task<bool> ViveCheck(string type)
         {
+            if (SessionController.vrHeadset == null) return false;
+
             //Determine if the awaiting headset connection has already been sent.
             bool sent = false;
             int count = 0;
 
-            MockConsole.WriteLine("About to launch a steam app, vive status is: " + WrapperMonitoringThread.viveStatus, MockConsole.LogLevel.Normal);
-            while (!WrapperMonitoringThread.viveStatus.Contains("CONNECTED"))
+            MockConsole.WriteLine("ViveCheck - About to launch a steam app, vive status is: " + 
+                Enum.GetName(typeof(DeviceStatus), SessionController.vrHeadset.GetHeadsetManagementSoftwareStatus()), MockConsole.LogLevel.Normal);
+            while (SessionController.vrHeadset.GetHeadsetManagementSoftwareStatus() != DeviceStatus.Connected)
             {
                 MockConsole.WriteLine("Vive check looping", MockConsole.LogLevel.Debug);
 
                 activelyMonitoring = true;
 
-                if (WrapperMonitoringThread.viveStatus.Contains("Terminated"))
+                if (SessionController.vrHeadset.GetHeadsetManagementSoftwareStatus() == DeviceStatus.Off)
                 {
                     SessionController.StartVRSession(type);
-                    SessionController.PassStationMessage($"ApplicationUpdate,Starting VR Session...");
-
+                    ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage($"SoftwareState,Starting VR Session"), TimeSpan.FromSeconds(1));
                     await Task.Delay(5000);
                 }
                 else if (!sent)
                 {
                     sent = true;
-
-                    SessionController.PassStationMessage($"ApplicationUpdate,Awaiting headset connection...");
+                    ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage($"SoftwareState,Awaiting headset connection..."), TimeSpan.FromSeconds(1));
                     await Task.Delay(2000);
                 }
                 else //Message has already been sent to the NUC, block so it does not take up too much processing power

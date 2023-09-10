@@ -2,7 +2,6 @@
 
 namespace Station
 {
-    //TODO improve efficiency for logging
     public static class MockConsole
     {
         private static MainWindowViewModel? _viewModel;

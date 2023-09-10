@@ -10,7 +10,7 @@ namespace Station
     {
         public static Thread? monitoringThread;
         public static bool steamError = false;
-        public static string viveStatus = "";
+        public static bool monitoring = false;
 
         private static System.Timers.Timer? timer;
         private static bool processesAreResponding = true;
@@ -29,10 +29,11 @@ namespace Station
         /// <summary>
         /// Start a new thread with the supplied monitor check type.
         /// </summary>
-        public static void initializeMonitoring(string type)
+        public static void InitializeMonitoring(string type)
         {
+            monitoring = true;
             monitoringThread = new Thread(() => {
-                initializeRespondingCheck(type);
+                InitializeRespondingCheck(type);
             });
 
             monitoringThread.Start();
@@ -41,8 +42,9 @@ namespace Station
         /// <summary>
         /// Stop the current monitor thread.
         /// </summary>
-        public static void stopMonitoring()
+        public static void StopMonitoring()
         {
+            monitoring = false;
             monitoringThread?.Interrupt();
             timer?.Stop();
         }
@@ -51,7 +53,7 @@ namespace Station
         /// Start checking that VR applications and current Steam app are responding
         /// Will check every 5 seconds
         /// </summary>
-        private static void initializeRespondingCheck(string type)
+        private static void InitializeRespondingCheck(string type)
         {
             timer = new System.Timers.Timer(3000);
             timer.AutoReset = true;
@@ -59,15 +61,15 @@ namespace Station
             switch (type)
             {
                 case "Custom":
-                    timer.Elapsed += callCustomCheck;
+                    timer.Elapsed += CallCustomCheck;
                     break;
 
                 case "Steam":
-                    timer.Elapsed += callSteamCheck;
+                    timer.Elapsed += CallSteamCheck;
                     break;
 
                 case "Vive":
-                    timer.Elapsed += callViveCheck;
+                    timer.Elapsed += CallViveCheck;
                     break;
 
                 default:
@@ -83,27 +85,24 @@ namespace Station
         /// If they are not sends a messages to the Station application that there 
         /// are tasks that aren't responding.
         /// </summary>
-        private static void callCustomCheck(Object? source, System.Timers.ElapsedEventArgs e)
+        private static void CallCustomCheck(Object? source, System.Timers.ElapsedEventArgs e)
         {
-            ViveCheck();
             SteamCheck();
 
             Logger.WorkQueue();
         }
 
-        private static void callSteamCheck(Object? source, System.Timers.ElapsedEventArgs e)
+        private static void CallSteamCheck(Object? source, System.Timers.ElapsedEventArgs e)
         {
-            MockConsole.WriteLine("About to check Vive status", MockConsole.LogLevel.Verbose);
-            ViveCheck();
             MockConsole.WriteLine("Checked Vive status", MockConsole.LogLevel.Verbose);
             SteamCheck();
 
             Logger.WorkQueue();
         }
 
-        private static void callViveCheck(Object? source, System.Timers.ElapsedEventArgs e)
+        private static void CallViveCheck(Object? source, System.Timers.ElapsedEventArgs e)
         {
-            ViveCheck();
+
 
             Logger.WorkQueue();
         }
@@ -122,15 +121,15 @@ namespace Station
             bool processesAreAllResponding = CommandLine.CheckThatAllProcessesAreResponding(processes);
             bool allProcessesAreRunning = processes.Count >= steamProcesses.Count;
 
-            Console.WriteLine("Just checked that all processes are responding. Result: {0}", processesAreAllResponding);
-            Console.WriteLine("Just checked that all processes are running. Result: {0}", allProcessesAreRunning);
+            MockConsole.WriteLine($"Just checked that all processes are responding. Result: {processesAreAllResponding}", MockConsole.LogLevel.Verbose);
+            MockConsole.WriteLine($"Just checked that all processes are running. Result: {allProcessesAreRunning}", MockConsole.LogLevel.Verbose);
 
             if (processesAreAllResponding != processesAreResponding)
             {
                 processesAreResponding = processesAreAllResponding;
                 if (!processesAreAllResponding)
                 {
-                    SessionController.PassStationMessage("MessageToAndroid,SetValue:status:Not Responding");
+                    SessionController.PassStationMessage("MessageToAndroid,SetValue:state:Not Responding");
                 }
                 else
                 {
@@ -190,14 +189,6 @@ namespace Station
                     }
                 }
             }
-        }
-
-        private static void ViveCheck()
-        {
-            if (SessionController.vrHeadset == null) return;
-
-            viveStatus = SessionController.vrHeadset.MonitorVrConnection(currentViveStatus: viveStatus);
-            Logger.WriteLog("ViveStatus: " + viveStatus, MockConsole.LogLevel.Debug);
         }
     }
 }

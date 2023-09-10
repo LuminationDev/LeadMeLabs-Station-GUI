@@ -4,6 +4,8 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
@@ -90,20 +92,11 @@ namespace Station
         /// <returns>A string representing the output or error from the command prompt.</returns>
         private static string? outcome(Process temp)
         {
-            string output = "";
-            string error = "";
+            string? output = "";
+            string? error = "";
 
-            temp.OutputDataReceived += new DataReceivedEventHandler((s, e) =>
-                {
-                    output += e.Data + "\n";
-                }
-            );
-
-            temp.ErrorDataReceived += new DataReceivedEventHandler((s, e) =>
-                {
-                    error += e.Data + "\n";
-                }
-            );
+            temp.OutputDataReceived += (s, e) => { output += e.Data + "\n"; };
+            temp.ErrorDataReceived += (s, e) => { error += e.Data + "\n"; };
 
             temp.BeginOutputReadLine();
             temp.BeginErrorReadLine();
@@ -115,10 +108,8 @@ namespace Station
             {
                 return output;
             }
-            else
-            {
-                return error;
-            }
+
+            return error;
         }
 
         /// <summary>
@@ -187,6 +178,9 @@ namespace Station
             Process.Start(new ProcessStartInfo(url) {UseShellExecute = true});
         }
 
+        /// <summary>
+        /// Abort a previously lodged Shutdown or Restart command.
+        /// </summary>
         public static string? CancelShutdown()
         {
             string? output = ExecuteStationCommand("shutdown /a");
@@ -196,6 +190,12 @@ namespace Station
         public static string? ShutdownStation(int time)
         {
             string? output = ExecuteStationCommand("shutdown /s /t " + time);
+            return output;
+        }
+
+        public static string? RestartStation(int time)
+        {
+            string? output = ExecuteStationCommand("shutdown /r /t " + time);
             return output;
         }
 
@@ -683,6 +683,26 @@ namespace Station
             }
 
             return 9999;
+        }
+
+        public static async Task UploadLogFile()
+        {
+            string accessToken = await RemoteAccess.GetAccessToken();
+            if (String.IsNullOrEmpty(accessToken))
+            {
+                return;
+            }
+
+            var fileStream = File.OpenRead(Logger.GetCurrentLogFilePath());
+
+            using var httpClient = new HttpClient();
+            httpClient.DefaultRequestHeaders.Add("Authorization", $"Bearer {accessToken}");
+            var content = new StreamContent(fileStream);
+            content.Headers.ContentType = new MediaTypeHeaderValue("text/plain");
+            var response = await httpClient.PostAsync(
+                "https://us-central1-leadme-labs.cloudfunctions.net/uploadFile",
+                content
+            );
         }
 
         [DllImport("user32.dll")]

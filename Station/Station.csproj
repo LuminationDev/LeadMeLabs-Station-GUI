@@ -62,6 +62,9 @@
     <Content Include="assets\refresh.ico">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
+    <Content Include="openvr_api.dll">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
     <Content Include="_batch\LeadMeLabs-SoftwareChecker.deps.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
@@ -85,6 +88,14 @@
     </Content>
     <Content Include="_logs\.gitkeep">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <None Remove="assets\openvr_offline.ico" />
+    <Content Include="assets\openvr_offline.ico">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <None Remove="assets\openvr_online.ico" />
+    <Content Include="assets\openvr_online.ico">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
 

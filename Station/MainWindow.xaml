@@ -73,6 +73,12 @@
     </Window.Resources>
 
     <Grid>
+        	<Grid.ColumnDefinitions>
+            <ColumnDefinition Width="125"/>
+            <ColumnDefinition Width="635"/>
+            <ColumnDefinition Width="125"/>
+        </Grid.ColumnDefinitions>
+        
         <local:NotifyIconWrapper NotifyRequest="{Binding NotifyRequest}">
             <bh:Interaction.Triggers>
                 <bh:EventTrigger EventName="OpenSelected">
@@ -84,112 +90,274 @@
             </bh:Interaction.Triggers>
         </local:NotifyIconWrapper>
 
-        <Button 
-            Style="{StaticResource MainButton}" 
-            Content="Start" 
-            Margin="10" 
-            Command="{Binding StartStationCommand}"
-            ToolTip="Start the Station application."/>
+        <Grid Grid.Column="0">
+            <Button 
+                Style="{StaticResource MainButton}" 
+                Content="Start" 
+                Margin="10" 
+                Command="{Binding StartStationCommand}"
+                ToolTip="Start the Station application."/>
         
-        <Button 
-            Style="{StaticResource MainButton}"
-            Content="Restart" 
-            Margin="10,45,0,0" 
-            Command="{Binding RestartStationCommand}"
-            ToolTip="Stop and then start the Station application."/>
-        
-        <Button 
-            Style="{StaticResource MainButton}"
-            Content="Stop" 
-            Margin="10,80,0,0"
-            Command="{Binding StopStationCommand}"
-            ToolTip="Stop the entire Station applicaiton, including server etc.."/>
-        
-        <Button 
-            Style="{StaticResource MainButton}"
-            x:Name="LoggingLevel" 
-            Content="Logging: Normal"
-            Margin="10,135,0,0"
-            Command="{Binding ChangeLogLevelCommand}"
-            ToolTip="Display different amounts of information in the console window."/>
-
-
-        <StackPanel 
-            Width="125"
-            Background="#424242" 
-            HorizontalAlignment="Left" 
-            VerticalAlignment="Bottom">
-
-            <Label 
-                Name="ProcessLabel"
-                FontFamily="Fonts/#Poppins-Medium"
-                Content="Process:" 
-                Foreground="#828282" 
-                Height="25" 
-                Margin="5,5,10,0"/>
-
-            <Label 
-                x:Name="ProcessConsole"
-                FontFamily="Fonts/#Poppins-Medium"
-                Content="No active process..."
-                Foreground="#a8a8a8"
-                Height="25" 
-                Margin="5,5,10,0"/>
-
-            <Label 
-                x:Name="StatusLabel"
-                FontFamily="Fonts/#Poppins-Medium"
-                Content="Status:" 
-                Foreground="#828282" 
-                Height="25" 
-                Margin="5,5,10,0"/>
-
-            <Label 
-                x:Name="StatusConsole"
-                FontFamily="Fonts/#Poppins-Medium"
-                Content="Waiting..."
-                Foreground="#a8a8a8"
-                Height="25" 
-                Margin="5,5,10,0"/>
-
             <Button 
                 Style="{StaticResource MainButton}"
-                Command="{Binding StopCurrentProcess}"
+                Content="Restart" 
+                Margin="10,45,0,0" 
+                Command="{Binding RestartStationCommand}"
+                ToolTip="Stop and then start the Station application."/>
+        
+            <Button 
+                Style="{StaticResource MainButton}"
                 Content="Stop" 
-                Margin="10,10,10,10" 
-                Width="50" 
-                Height="25" 
-                HorizontalAlignment="Right" 
-                VerticalAlignment="Bottom"
-                ToolTip="Stop the current application the Station has opened."/>
-        </StackPanel>
+                Margin="10,80,0,0"
+                Command="{Binding StopStationCommand}"
+                ToolTip="Stop the entire Station application, including server etc.."/>
+        
+            <Button 
+                Style="{StaticResource MainButton}"
+                x:Name="LoggingLevel" 
+                Content="Logging: Normal"
+                Margin="10,135,0,0"
+                Command="{Binding ChangeLogLevelCommand}"
+                ToolTip="Display different amounts of information in the console window."/>
 
-        <ScrollViewer 
-            x:Name="ConsoleScroll" 
-            Cursor="Hand" 
-            Margin="125,0,0,0" 
-            Background="Black" 
-            HorizontalAlignment="Stretch" 
-            VerticalAlignment="Stretch">
+
+            <StackPanel 
+                Width="125"
+                Background="#424242" 
+                HorizontalAlignment="Left" 
+                VerticalAlignment="Bottom">
+
+                <Label
+                    FontFamily="Fonts/#Poppins-Medium"
+                    Content="Process:" 
+                    Foreground="#828282" 
+                    Height="25" 
+                    Margin="5,0,10,0"/>
+
+                <Label 
+                    x:Name="ProcessConsole"
+                    FontFamily="Fonts/#Poppins-Medium"
+                    Content="No active process..."
+                    Foreground="#a8a8a8"
+                    Height="25" 
+                    Margin="5,0,10,0"/>
+
+                <Label
+                    FontFamily="Fonts/#Poppins-Medium"
+                    Content="Status:" 
+                    Foreground="#828282" 
+                    Height="25" 
+                    Margin="5,0,10,0"/>
+
+                <Label 
+                    x:Name="StatusConsole"
+                    FontFamily="Fonts/#Poppins-Medium"
+                    Content="Waiting..."
+                    Foreground="#a8a8a8"
+                    Height="25" 
+                    Margin="5,0,10,0"/>
+
+                <Button 
+                    Style="{StaticResource MainButton}"
+                    Command="{Binding StopCurrentProcess}"
+                    Content="Stop" 
+                    Margin="10,5,10,10" 
+                    Width="50" 
+                    Height="20" 
+                    HorizontalAlignment="Right" 
+                    VerticalAlignment="Bottom"
+                    ToolTip="Stop the current application the Station has opened."/>
+            </StackPanel>
+        </Grid>
+
+        <Grid Grid.Column="1">
+            <ScrollViewer 
+                x:Name="ConsoleScroll" 
+                Cursor="Hand" 
+                Margin="0" 
+                Background="Black" 
+                HorizontalAlignment="Stretch" 
+                VerticalAlignment="Stretch">
             
-            <TextBox
-                x:Name="ConsoleWindow"
-                Margin="5"
-                IsReadOnly="true"
-                Foreground="LightGreen"
-                Background="Black"
-                BorderThickness="0"
-                HorizontalAlignment="Stretch"
-                VerticalAlignment="Stretch"
-                TextWrapping="Wrap"
-                Text="{Binding ConsoleText}">
-                <bh:Interaction.Triggers>
-                    <bh:EventTrigger EventName="TextChanged">
-                        <bh:CallMethodAction MethodName="ScrollToEnd" TargetObject="{Binding ElementName=ConsoleScroll}"/>
-                    </bh:EventTrigger>
-                </bh:Interaction.Triggers>
-            </TextBox>
-        </ScrollViewer>
+                <TextBox
+                    x:Name="ConsoleWindow"
+                    Margin="5"
+                    IsReadOnly="true"
+                    Foreground="LightGreen"
+                    Background="Black"
+                    BorderThickness="0"
+                    HorizontalAlignment="Stretch"
+                    VerticalAlignment="Stretch"
+                    TextWrapping="Wrap"
+                    Text="{Binding ConsoleText}">
+                    <bh:Interaction.Triggers>
+                        <bh:EventTrigger EventName="TextChanged">
+                            <bh:CallMethodAction MethodName="ScrollToEnd" TargetObject="{Binding ElementName=ConsoleScroll}"/>
+                        </bh:EventTrigger>
+                    </bh:Interaction.Triggers>
+                </TextBox>
+            </ScrollViewer>
+        </Grid>
+
+        <Grid Grid.Column="2">
+            <StackPanel
+                Width="125"
+                Background="#424242" 
+                HorizontalAlignment="Right"
+                VerticalAlignment="Stretch">
+
+                <WrapPanel 
+                    Height="30"
+                    Margin="5,0,0,0">
+                    
+                    <Label 
+                        Width="100"
+                        FontFamily="Fonts/#Poppins-Medium"
+                        Content="OpenVR" 
+                        Foreground="#828282"/>
+
+                    <Image 
+                        x:Name="OpenVrConnection" 
+                        ToolTip="OpenVR Offline" 
+                        Margin="0,0,0,3" 
+                        Source="../assets/openvr_offline.ico"
+                        Width="20"/>
+                </WrapPanel>
+                
+                <Button
+                    Style="{StaticResource MainButton}"
+                    Command="{Binding ResetSteamVRProcess}"
+                    Content="Reset"
+                    Margin="10,0,10,0"
+                    Width="50"
+                    Height="20"
+                    ToolTip="Reset SteamVR."/>
+                
+                <WrapPanel 
+                    Height="25" 
+                    Margin="5,20,0,0">
+                    
+                    <Label
+                        Width="100"
+                        FontFamily="Fonts/#Poppins-Medium"
+                        Content="Headset:" 
+                        Foreground="#828282"/>
+
+                    <Image 
+                        x:Name="HeadsetConnection" 
+                        ToolTip="OpenVR Offline" 
+                        Margin="0,0,0,3" 
+                        Source="../assets/openvr_offline.ico" 
+                        Width="20"/>
+                </WrapPanel>
+
+                <Label 
+                    x:Name="HeadsetDescription"
+                    FontFamily="Fonts/#Poppins-Medium"
+                    Content="Unknown"
+                    Foreground="#a8a8a8"
+                    Height="25" 
+                    Margin="5,0,10,0"/>
+                
+                <WrapPanel 
+                    Height="25" 
+                    Margin="5,20,0,0">
+                    
+                    <Label
+                        Width="100"
+                        FontFamily="Fonts/#Poppins-Medium"
+                        Content="Left Controller:" 
+                        Foreground="#828282"/>
+
+                    <Image 
+                        x:Name="LeftControllerConnection" 
+                        ToolTip="Left Controller Lost" 
+                        Margin="0,0,0,3" 
+                        Source="../assets/openvr_offline.ico" 
+                        Width="20"/>
+                </WrapPanel>
+
+                <WrapPanel>
+                    <Label
+                        FontFamily="Fonts/#Poppins-Medium"
+                        Content="Battery   -"
+                        Foreground="#a8a8a8"
+                        Height="25" 
+                        Margin="5,0,0,0"/>
+
+                    <Label 
+                        x:Name="LeftControllerBattery"
+                        FontFamily="Fonts/#Poppins-Medium"
+                        Content="0%"
+                        Foreground="#a8a8a8"
+                        Height="25" 
+                        Margin="0,0,10,0"/>
+                </WrapPanel>
+                
+                <WrapPanel 
+                    Height="25" 
+                    Margin="5,20,0,0">
+                    
+                    <Label
+                        Width="100"
+                        FontFamily="Fonts/#Poppins-Medium"
+                        Content="Right Controller:" 
+                        Foreground="#828282"/>
+
+                    <Image 
+                        x:Name="RightControllerConnection" 
+                        ToolTip="Right Controller Lost" 
+                        Margin="0,0,0,3" 
+                        Source="../assets/openvr_offline.ico" 
+                        Width="20"/>
+                </WrapPanel>
+
+                <WrapPanel>
+                    <Label
+                        FontFamily="Fonts/#Poppins-Medium"
+                        Content="Battery   -"
+                        Foreground="#a8a8a8"
+                        Height="25" 
+                        Margin="5,0,0,0"/>
+
+                    <Label 
+                        x:Name="RightControllerBattery"
+                        FontFamily="Fonts/#Poppins-Medium"
+                        Content="0%"
+                        Foreground="#a8a8a8"
+                        Height="25" 
+                        Margin="0,0,10,0"/>
+                </WrapPanel>
+
+                <Label
+                    FontFamily="Fonts/#Poppins-Medium"
+                    Content="Base Stations:" 
+                    Foreground="#828282" 
+                    Height="25" 
+                    Margin="5,20,10,0"/>
+
+                <WrapPanel 
+                    Height="25" 
+                    Margin="5,0,10,0">
+                    <Label 
+                        x:Name="BaseStationActive"
+                        FontFamily="Fonts/#Poppins-Medium"
+                        Content="0"
+                        Foreground="#a8a8a8"/>
+                    
+                    <Label
+                        FontFamily="Fonts/#Poppins-Medium"
+                        Content="/"
+                        Foreground="#a8a8a8"/>
+                    
+                    <Label 
+                        x:Name="BaseStationAmount"
+                        FontFamily="Fonts/#Poppins-Medium"
+                        Content="0"
+                        Foreground="#a8a8a8"/>
+                </WrapPanel>
+            </StackPanel>
+        </Grid>
     </Grid>
     
     <bh:Interaction.Triggers>

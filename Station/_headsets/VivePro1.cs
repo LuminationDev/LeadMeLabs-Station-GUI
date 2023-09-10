@@ -13,8 +13,51 @@ namespace Station
 {
     public class VivePro1 : VrHeadset
     {
+        private Statuses Statuses { get; }
+
         private Timer? timer;
         private static bool minimising = false;
+
+        public VivePro1()
+        {
+            Statuses = new Statuses();
+        }
+
+        public Statuses GetStatusManager()
+        {
+            return Statuses;
+        }
+
+        /// <summary>
+        /// If the headset is managed by more than just OpenVR return the management software connection
+        /// status. In this case it is managed by Vive Wireless.
+        /// </summary>
+        /// <returns></returns>
+        public DeviceStatus GetHeadsetManagementSoftwareStatus()
+        {
+            return Statuses.SoftwareStatus;
+        }
+        
+        /// <summary>
+        /// Return the process name of the headset management software
+        /// </summary>
+        /// <returns></returns>
+        public string GetHeadsetManagementProcessName()
+        {
+            return "HtcConnectionUtility";
+        }
+
+        /// <summary>
+        /// Collect the connection status of the headset from the headset's specific management software. In this case it
+        /// is Vive Wireless.
+        /// </summary>
+        /// <param name="wrapperType">A string of the Wrapper type that is being launched, required if the process
+        /// needs to restart/start the VR session.</param>
+        /// <returns>A bool representing the connection status.</returns>
+        public bool WaitForConnection(string wrapperType)
+        {
+            return ViveScripts.WaitForVive(wrapperType).Result;
+        }
 
         public List<string> GetProcessesToQuery()
         {
@@ -100,7 +143,7 @@ namespace Station
             }
         }
 
-        public string MonitorVrConnection(string currentViveStatus)
+        public void MonitorVrConnection()
         {
             var directory = new DirectoryInfo(@"C:\ProgramData\VIVE Wireless\ConnectionUtility\Log");
             var file = directory.GetFiles()
@@ -108,7 +151,6 @@ namespace Station
                 .First();
             ReverseLineReader reverseLineReader = new ReverseLineReader(file.FullName, Encoding.Unicode);
             IEnumerator<string> enumerator = reverseLineReader.GetEnumerator();
-            Console.WriteLine(enumerator.Current);
             do
             {
                 string current = enumerator.Current;
@@ -119,28 +161,23 @@ namespace Station
                 if (current.Contains("Terminated"))
                 {
                     enumerator.Dispose();
-                    return "Terminated";
+                    Statuses.UpdateHeadset(VrManager.Software, DeviceStatus.Off);
+                    return;
                 }
 
                 if (current.Contains("Connection Status set to"))
                 {
-                    string previousViveStatus = (string)currentViveStatus.Clone();
-                    if (previousViveStatus.Contains("CONNECTION_STATUS_CONNECTED") &&
-                        current.Contains("CONNECTION_STATUS_SCANNING"))
+                    if ((Statuses.SoftwareStatus == DeviceStatus.Connected || Statuses.SoftwareStatus == DeviceStatus.Off) && current.Contains("CONNECTION_STATUS_SCANNING"))
                     {
-                        SessionController.PassStationMessage("MessageToAndroid,LostHeadset");
+                        Statuses.UpdateHeadset(VrManager.Software, DeviceStatus.Lost);
                     }
-                    else if (current.Contains("CONNECTION_STATUS_CONNECTED") &&
-                        previousViveStatus.Contains("CONNECTION_STATUS_SCANNING"))
+                    else if ((Statuses.SoftwareStatus == DeviceStatus.Lost || Statuses.SoftwareStatus == DeviceStatus.Off) && current.Contains("CONNECTION_STATUS_CONNECTED"))
                     {
-                        SessionController.PassStationMessage("MessageToAndroid,FoundHeadset");
+                        Statuses.UpdateHeadset(VrManager.Software, DeviceStatus.Connected);
                     }
                     enumerator.Dispose();
-                    return current;
                 }
             } while (enumerator.MoveNext());
-
-            return currentViveStatus;
         }
 
         /// <summary>
@@ -149,7 +186,7 @@ namespace Station
         public async void StopProcessesBeforeLaunch()
         {
             CommandLine.QueryVRProcesses(new List<string> { "vrmonitor" }, true);
-
+            
             await Task.Delay(3000);
         }
     }

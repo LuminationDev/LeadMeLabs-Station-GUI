@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
@@ -12,9 +13,9 @@ namespace Station
     public class WrapperManager
     {
         //Store each wrapper class
-        private readonly Wrapper customWrapper = new CustomWrapper();
-        private readonly Wrapper steamWrapper = new SteamWrapper();
-        private readonly Wrapper viveWrapper = new ViveWrapper();
+        private static readonly Wrapper customWrapper = new CustomWrapper();
+        private static readonly Wrapper steamWrapper = new SteamWrapper();
+        private static readonly Wrapper viveWrapper = new ViveWrapper();
 
         //Used for multiple 'internal' applications, operations are separate from the other wrapper classes
         private readonly InternalWrapper internalWrapper = new();
@@ -34,6 +35,7 @@ namespace Station
         {
             StartPipeServer();
             SessionController.SetupHeadsetType();
+            ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage($"SoftwareState,Loading experiences"), TimeSpan.FromSeconds(2));
             Task.Factory.StartNew(() => CollectAllApplications());
         }
 
@@ -56,7 +58,6 @@ namespace Station
             ParentPipeServer.Run(LogHandler, ExternalActionHandler);
         }
 
-        //TODO currently this is not closing anywhere
         /// <summary>
         /// Close a currently open pipe server.
         /// </summary>
@@ -207,12 +208,47 @@ namespace Station
                     attempts++;
                 }
 
+                //Reset the VR device statuses
+                SessionController.vrHeadset.GetStatusManager().ResetStatuses();
+
                 await SessionController.PutTaskDelay(5000);
 
                 SessionController.PassStationMessage("MessageToAndroid,SetValue:session:Restarted");
                 SessionController.PassStationMessage("Processing,false");
 
+                ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage($"SoftwareState,Starting VR processes"), TimeSpan.FromSeconds(0));
                 SessionController.vrHeadset.StartVrSession();
+                WaitForVRProcesses();
+            }
+        }
+
+        /// <summary>
+        /// Wait for SteamVR and the External headset software to be open, bail out after 3 minutes. Send the outcome 
+        /// to the tablet.
+        /// </summary>
+        private static void WaitForVRProcesses()
+        {
+            int count = 0;
+            do
+            {
+                Task.Delay(3000).Wait();
+                count++;
+            } while ((Process.GetProcessesByName(SessionController.vrHeadset?.GetHeadsetManagementProcessName()).Length == 0) && count <= 60);
+
+            string error = "";
+            if (Process.GetProcessesByName(SessionController.vrHeadset?.GetHeadsetManagementProcessName()).Length == 0)
+            {
+                error = "Error: Vive could not open";
+            }
+
+            string message = count <= 60 ? "Awaiting headset connection..." : error;
+
+            //Only send the message if the headset is not yet connected
+            if (SessionController.vrHeadset?.GetStatusManager().SoftwareStatus != DeviceStatus.Connected ||
+                SessionController.vrHeadset?.GetStatusManager().OpenVRStatus != DeviceStatus.Connected)
+            {
+                ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage($"SoftwareState,{message}"),
+                    TimeSpan.FromSeconds(1));
             }
         }
 
@@ -320,16 +356,9 @@ namespace Station
             //Stop any current processes before trying to launch a new one
             CurrentWrapper.StopCurrentProcess();
 
-            //Stop any accessory processes before opening a new process
-            if(SessionController.vrHeadset != null)
-            {
-                SessionController.vrHeadset.StopProcessesBeforeLaunch();
-            }
-
             UIUpdater.UpdateProcess("Launching");
             UIUpdater.UpdateStatus("Loading...");
 
-            //TODO clean this up so we dont have to rely on appID or name
             //Determine what is need to launch the process(appID - Steam or name - Custom)
             //Pass in the launcher parameters if there are any
             Task.Factory.StartNew(() =>
@@ -355,7 +384,7 @@ namespace Station
         /// </summary>
         /// <param name="type">A string representing the type of wrapper to create.</param>
         /// <returns></returns>
-        private void LoadWrapper(string type)
+        public static void LoadWrapper(string type)
         {
             switch (type)
             {
@@ -428,10 +457,9 @@ namespace Station
                 return;
             }
 
-            //TODO this is being called from somewhere else?
             UIUpdater.ResetUIDisplay();
             CurrentWrapper.StopCurrentProcess();
-            WrapperMonitoringThread.stopMonitoring();
+            WrapperMonitoringThread.StopMonitoring();
         }
 
         /// <summary>

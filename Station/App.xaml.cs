@@ -18,6 +18,7 @@ namespace Station
                 Environment.Exit(1);
                 return;
             }
+            Logger.WriteLog("Updated to OpenVR Version", MockConsole.LogLevel.Error);
             SteamConfig.VerifySteamConfig();
 
             MainWindow mainWindow = new();
@@ -26,7 +27,6 @@ namespace Station
             AppDomain currentDomain = AppDomain.CurrentDomain;
             currentDomain.UnhandledException += UnhandledExceptionHandler;
             currentDomain.ProcessExit += ProcessExitHandler;
-            
             InitSentry();
             CheckStorage();
 
@@ -61,7 +61,7 @@ namespace Station
         static void UnhandledExceptionHandler(object sender, UnhandledExceptionEventArgs args)
         {
             Exception e = (Exception)args.ExceptionObject;
-            Logger.WriteLog("UnhandledExceptionHandler caught : " + e.Message, MockConsole.LogLevel.Error);
+            Logger.WriteLog("UnhandledExceptionHandler caught: " + e.Message, MockConsole.LogLevel.Error);
             Logger.WriteLog($"Runtime terminating: {args.IsTerminating}", MockConsole.LogLevel.Error);
             Logger.WorkQueue();
             Manager.SendResponse("Android", "Station", "SetValue:status:Off");
@@ -76,6 +76,12 @@ namespace Station
             Manager.SendResponse("Android", "Station", "SetValue:status:Off");
             Manager.SendResponse("Android", "Station", "SetValue:gameName:");
             Manager.SendResponse("Android", "Station", "SetValue:gameId:");
+
+            //Shut down the pipe server if running
+            WrapperManager.ClosePipeServer();
+
+            //Shut down any OpenVR systems
+            Manager.openVRManager?.OpenVrSystem?.Shutdown();
         }
 
         public static void InitSentry()

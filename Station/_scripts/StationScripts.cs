@@ -24,7 +24,7 @@ namespace Station
         /// </summary>
         /// <param name="command">A string containing the necessary information to run a specific command</param>
         /// <returns>A string representing the outcome of the action.</returns>
-        public static void execute(string source, string additionalData)
+        public static void Execute(string source, string additionalData)
         {
             if (additionalData.StartsWith("URL"))
             {
@@ -45,48 +45,25 @@ namespace Station
                     }
                 }
             }
-            else if (additionalData == "StartVR")
+            else if (additionalData.Equals("StartVR"))
             {
                 //startVRSession();
             }
-            else if (additionalData == "RestartVR")
+            else if (additionalData.Equals("RestartVR"))
             {
-                restartVRSession();
+                RestartVRSession();
             }
-            else if (additionalData == "EndVR")
+            else if (additionalData.Equals("EndVR"))
             {
-                endVRSession();
+                EndVRSession();
+            }
+            else if (additionalData.Equals("Restart"))
+            {
+                ShutdownOrRestartCommand(source, "restart");
             }
             else if (additionalData.Equals("Shutdown"))
             {
-                int cancelTime = 10000; // give the user 10 seconds to cancel the shutdown
-                int actualCancelTime = 15; // time before the computer actually shuts down
-                if (Helper.GetStationMode().Equals(Helper.STATION_MODE_APPLIANCE))
-                {
-                    cancelTime = 0;
-                    actualCancelTime = 0;
-                }
-                CommandLine.ShutdownStation(actualCancelTime);
-                tokenSource = new CancellationTokenSource();
-                var timer = new System.Timers.Timer(cancelTime);
-
-                void timerElapsed(object? obj, ElapsedEventArgs args)
-                {
-                    if (tokenSource is not null)
-                    {
-                        if (!tokenSource.IsCancellationRequested)
-                        {
-                            endVRSession();
-                            Manager.SendResponse(source, "Station", "SetValue:status:Off");
-                            Manager.SendResponse(source, "Station", "SetValue:gameName:");
-                            Manager.SendResponse(source, "Station", "SetValue:gameId:");
-                        }
-                    }
-                }
-
-                timer.Elapsed += timerElapsed;
-                timer.Enabled = true;
-                timer.AutoReset = false;
+                ShutdownOrRestartCommand(source, "shutdown");
             }
             else if (additionalData.Equals("CancelShutdown"))
             {
@@ -100,6 +77,9 @@ namespace Station
             else if (additionalData.StartsWith("IdentifyStation"))
             {
                 OverlayManager.OverlayThread();
+            } else if (additionalData.StartsWith("UploadLogFile"))
+            {
+                CommandLine.UploadLogFile();
             }
             else
             {
@@ -112,7 +92,7 @@ namespace Station
         /// the necessary programs for a new VR session.
         /// </summary>
         /// <returns></returns>
-        public static void restartVRSession()
+        public static void RestartVRSession()
         {
             Manager.SendResponse("Android", "Station", "SetValue:status:On");
             if (!processing)
@@ -128,9 +108,53 @@ namespace Station
         }
 
         /// <summary>
+        /// Depending on the received command, shutdown or restart the Station.
+        /// </summary>
+        private static void ShutdownOrRestartCommand(string source, string type)
+        {
+            int cancelTime = 10000; // give the user 10 seconds to cancel the shutdown
+            int actualCancelTime = 15; // time before the computer actually shuts down
+            if (Helper.GetStationMode().Equals(Helper.STATION_MODE_APPLIANCE))
+            {
+                cancelTime = 0;
+                actualCancelTime = 0;
+            }
+
+            if(type.Equals("shutdown"))
+            {
+                CommandLine.ShutdownStation(actualCancelTime);
+            }
+            else if (type.Equals("restart"))
+            {
+                CommandLine.RestartStation(actualCancelTime);
+            }
+
+            tokenSource = new CancellationTokenSource();
+            var timer = new System.Timers.Timer(cancelTime);
+
+            void timerElapsed(object? obj, ElapsedEventArgs args)
+            {
+                if (tokenSource is null) return;
+                if (tokenSource.IsCancellationRequested) return;
+
+                EndVRSession();
+
+                //Shut down the server first, so the NUC cannot send off any more Pings
+                Manager.StopServer();
+                Manager.SendResponse(source, "Station", "SetValue:status:Off");
+                Manager.SendResponse(source, "Station", "SetValue:gameName:");
+                Manager.SendResponse(source, "Station", "SetValue:gameId:");
+            }
+
+            timer.Elapsed += timerElapsed;
+            timer.Enabled = true;
+            timer.AutoReset = false;
+        }
+
+        /// <summary>
         /// Stop all processes that are associated with a VR session.
         /// </summary>
-        public static void endVRSession()
+        public static void EndVRSession()
         {
             Manager.SendResponse("Android", "Station", "SetValue:status:On");
             Manager.wrapperManager?.ActionHandler("Session", "Stop");

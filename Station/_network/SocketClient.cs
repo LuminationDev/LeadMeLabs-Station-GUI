@@ -57,24 +57,26 @@ namespace Station
         /// Create a new TcpClient with the details collected from the initial server thread.
         /// Sends a message to the android server with details about certain outputs or machine
         /// states.
-        /// </summery>
-        public void send(bool writeToLog = true)
+        /// </summary>
+        public void Send(bool writeToLog = true, IPAddress? address = null, int? destPort = null)
         {
+            address ??= Manager.remoteEndPoint.Address;
+            int port = destPort ?? Manager.remoteEndPoint.Port; //ConnectAsync does not like int?
+            
             try
             {
                 // Create a TCP client and connect via the supplied endpoint.
                 client = new TcpClient();
                 CancellationTokenSource tokenSource = new CancellationTokenSource();
                 CancellationToken token = tokenSource.Token;
-                ValueTask connect = client.ConnectAsync(Manager.remoteEndPoint.Address, Manager.remoteEndPoint.Port, token);
+                ValueTask connect = client.ConnectAsync(address, port, token);
                 Task<bool> task = TimeoutAfter(connect, timeOut);
 
                 if (!task.Result)
                 {
                     tokenSource.Cancel();
-                    Console.WriteLine("Socket timeout: " + Manager.remoteEndPoint.Address);
                     if (NotifyIconWrapper.Instance != null) NotifyIconWrapper.Instance.ChangeIcon("offline");
-                    throw new SocketException();
+                    throw new Exception($"Socket timeout trying to contact: {Manager.remoteEndPoint.Address}");
                 } else
                 {
                     if (NotifyIconWrapper.Instance != null) NotifyIconWrapper.Instance.ChangeIcon("online");
@@ -136,7 +138,7 @@ namespace Station
                 client?.Dispose();
                 client?.Close();
 
-                Logger.WriteLog($"Unexpected exception : {e}", MockConsole.LogLevel.Error);
+                Logger.WriteLog($"Unexpected exception : {e.Message}", MockConsole.LogLevel.Error);
             }
         }
     }

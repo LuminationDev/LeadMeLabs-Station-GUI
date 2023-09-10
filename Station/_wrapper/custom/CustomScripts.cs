@@ -43,7 +43,8 @@ namespace Station
 
             List<string> apps = new List<string>();
 
-            string manifestPath = Path.GetFullPath(Path.Combine(CommandLine.stationLocation, @"..", "manifest.json"));
+            //Load the local appData/Roaming folder path
+            string manifestPath = Path.GetFullPath(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "leadme_apps", "manifest.json"));
 
             if(!File.Exists(manifestPath))
             {

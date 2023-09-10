@@ -1,6 +1,7 @@
-using System.Collections.Generic;
-using System.IO;
+using System;
+using System.Net;
 using System.Threading.Tasks;
+using LeadMeLabsLibrary;
 
 namespace Station
 {
@@ -26,116 +27,190 @@ namespace Station
         /// Determines what to do with the data that was supplied at creation. Executes a script depending
         /// on what the data message contains. Once an action has been taken, a response is sent back.
         /// </summary>
-        public async void run()
+        public void Run()
         {
             //Based on the data, build/run a script and then send the output back to the client
             //Everything below is just for testing - definitely going to need something better to determine in the future
             if (actionNamespace == "Connection")
             {
-                if (additionalData == "Connect")
-                {
-                    Manager.SendResponse(source, "Station", "SetValue:status:On");
-                    Manager.SendResponse(source, "Station", "SetValue:gameName:");
-                    Manager.SendResponse("Android", "Station", "SetValue:gameId:");
-                    Manager.SendResponse(source, "Station", "SetValue:volume:" + CommandLine.GetVolume());
-                }
+                HandleConnection(additionalData);
             }
 
             if (additionalData == null) return;
-            if (actionNamespace == "CommandLine")
+
+            switch (actionNamespace)
             {
-                StationScripts.execute(source, additionalData);
+                case "CommandLine":
+                    StationScripts.Execute(source, additionalData);
+                    break;
+
+                case "Station":
+                    HandleStation(additionalData);
+                    break;
+
+                case "HandleExecutable":
+                    HandleExecutable(additionalData);
+                    break;
+
+                case "Experience":
+                    HandleExperience(additionalData);
+                    break;
+
+                case "LogFiles":
+                    HandleLogFiles(additionalData);
+                    break;
+                
+                case "QA":
+                    HandleQualityAssurance(additionalData);
+                    break;
             }
+        }
 
-            if (actionNamespace == "Station")
+        private void HandleConnection(string? additionalData)
+        {
+            if (additionalData == null) return;
+            if (additionalData.Equals("Connect"))
             {
-                if (additionalData.StartsWith("GetValue"))
-                {
-                    string key = additionalData.Split(":", 2)[1];
-                    if (key == "installedApplications")
-                    {
-                        Logger.WriteLog("Collecting station experiences", MockConsole.LogLevel.Normal);
-                        Manager.wrapperManager?.ActionHandler("CollectApplications");
-                    }
-                    if (key == "volume")
-                    {
-                        Manager.SendResponse(source, "Station", "SetValue:" + key + ":" + CommandLine.GetVolume());
-                    }
-                }
-                if (additionalData.StartsWith("SetValue"))
-                {
-                    string[] keyValue = additionalData.Split(":", 3);
-                    string key = keyValue[1];
-                    string? value = keyValue[2];
-                    if (key == "volume")
-                    {
-                        CommandLine.SetVolume(value);
-                    }
-                    if (key == "steamCMD")
-                    {
-                        SteamScripts.ConfigureSteamCommand(value);
-                    }
-                }
+                Manager.SendResponse(source, "Station", "SetValue:status:On");
+                Manager.SendResponse(source, "Station", $"SetValue:state:{SessionController.currentState}");
+                Manager.SendResponse(source, "Station", "SetValue:gameName:");
+                Manager.SendResponse("Android", "Station", "SetValue:gameId:");
+                Manager.SendResponse(source, "Station", "SetValue:volume:" + CommandLine.GetVolume());
             }
+        }
 
-            if (actionNamespace == "HandleExecutable")
+        private void HandleStation(string additionalData)
+        {
+            if (additionalData.StartsWith("GetValue"))
             {
-                string[] split = additionalData.Split(":", 2);
-                string action = split[0];
-                string path = split[1];
-                if (action.Equals("start"))
+                string key = additionalData.Split(":", 2)[1];
+                if (key == "installedApplications")
                 {
-                    Manager.wrapperManager?.ActionHandler("Internal", $"Start:{path}");
-                }
-
-                if (action.Equals("stop"))
-                {
-                    Manager.wrapperManager?.ActionHandler("Internal", $"Stop:{path}");
-                }
-            }
-
-            if (actionNamespace == "Experience")
-            {
-                if (additionalData.StartsWith("Refresh"))
-                {
+                    Logger.WriteLog("Collecting station experiences", MockConsole.LogLevel.Normal);
                     Manager.wrapperManager?.ActionHandler("CollectApplications");
                 }
-
-                if (additionalData.StartsWith("Restart"))
+                if (key == "volume")
                 {
-                    Manager.wrapperManager?.ActionHandler("Restart");
+                    Manager.SendResponse(source, "Station", "SetValue:" + key + ":" + CommandLine.GetVolume());
                 }
-
-                if (additionalData.StartsWith("Thumbnails"))
+                if (key == "devices")
                 {
-                    string[] split = additionalData.Split(":", 2);
-                    Manager.wrapperManager?.ActionHandler("CollectHeaderImages", split[1]);
-                }
-
-                if (additionalData.StartsWith("Launch"))
-                {
-                    string id = additionalData.Split(":")[1]; // todo - tidy this up
-                    Manager.wrapperManager?.ActionHandler("Stop");
-
-                    await Task.Delay(2000);
-
-                    Manager.wrapperManager?.ActionHandler("Start", id);
-                }
-
-                if (additionalData.StartsWith("PassToExperience"))
-                {
-                    string[] split = additionalData.Split(":", 2);
-                    Manager.wrapperManager?.ActionHandler("Message", split[1]);
+                    //When a tablet connects/reconnects to the NUC, send through the current VR device statuses.
+                    SessionController.vrHeadset?.GetStatusManager().QueryStatues();
                 }
             }
-
-            if (actionNamespace == "LogFiles")
+            if (additionalData.StartsWith("SetValue"))
             {
-                if (additionalData.StartsWith("Request"))
+                string[] keyValue = additionalData.Split(":", 3);
+                string key = keyValue[1];
+                string? value = keyValue[2];
+                if (key == "volume")
                 {
-                    string[] split = additionalData.Split(":", 2);
-                    Logger.LogRequest(int.Parse(split[1]));
+                    CommandLine.SetVolume(value);
                 }
+                if (key == "steamCMD")
+                {
+                    SteamScripts.ConfigureSteamCommand(value);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Launch an internal executable.
+        /// </summary>
+        private void HandleExecutable(string additionalData)
+        {
+            string[] split = additionalData.Split(":", 2);
+            string action = split[0];
+            string path = split[1];
+            if (action.Equals("start"))
+            {
+                Manager.wrapperManager?.ActionHandler("Internal", $"Start:{path}");
+            }
+
+            if (action.Equals("stop"))
+            {
+                Manager.wrapperManager?.ActionHandler("Internal", $"Stop:{path}");
+            }
+        }
+
+        /// <summary>
+        /// Utilises the pipe server to send the incoming message into an active experience.
+        /// </summary>
+        private async void HandleExperience(string additionalData)
+        {
+            if (additionalData.StartsWith("Refresh"))
+            {
+                Manager.wrapperManager?.ActionHandler("CollectApplications");
+            }
+
+            if (additionalData.StartsWith("Restart"))
+            {
+                Manager.wrapperManager?.ActionHandler("Restart");
+            }
+
+            if (additionalData.StartsWith("Thumbnails"))
+            {
+                string[] split = additionalData.Split(":", 2);
+                Manager.wrapperManager?.ActionHandler("CollectHeaderImages", split[1]);
+            }
+
+            if (additionalData.StartsWith("Launch"))
+            {
+                string id = additionalData.Split(":")[1]; // todo - tidy this up
+                Manager.wrapperManager?.ActionHandler("Stop");
+
+                await Task.Delay(2000);
+
+                Manager.wrapperManager?.ActionHandler("Start", id);
+            }
+
+            if (additionalData.StartsWith("PassToExperience"))
+            {
+                string[] split = additionalData.Split(":", 2);
+                Manager.wrapperManager?.ActionHandler("Message", split[1]);
+            }
+        }
+
+        /// <summary>
+        /// The NUC has requested that the log files be transferred over the network.
+        /// </summary>
+        private void HandleLogFiles(string additionalData)
+        {
+            if (additionalData.StartsWith("Request"))
+            {
+                string[] split = additionalData.Split(":", 2);
+                Logger.LogRequest(int.Parse(split[1]));
+            }
+        }
+        
+        /// <summary>
+        /// Run the requested software check.
+        /// </summary>
+        private async void HandleQualityAssurance(string additionalData)
+        {
+            //Request:ReturnAddress
+            string[] split = additionalData.Split(":");
+            if (split.Length > 2)
+            {
+                string? response = new QualityManager().DetermineCheck(split[0]);
+                if (response == null)
+                {
+                    return;
+                }
+                
+                string? key = Environment.GetEnvironmentVariable("AppKey", EnvironmentVariableTarget.Process);
+                if (key is null) {
+                    Logger.WriteLog("Encryption key not set", MockConsole.LogLevel.Normal);
+                    return;
+                }
+                
+                SocketClient client = new(EncryptionHelper.Encrypt($"{split[0]}:{response}", key));
+                client.Send(false, IPAddress.Parse(split[1]), int.Parse(split[2]));
+            }
+            else
+            {
+                MockConsole.WriteLine($"Unknown QA request {this.additionalData}", MockConsole.LogLevel.Normal);
             }
         }
     }

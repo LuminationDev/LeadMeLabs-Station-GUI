@@ -4,18 +4,23 @@ using System.Collections.Generic;
 using System.IO;
 using System.Net.Http;
 using System.Text;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace Station
 {
     public class SteamConfig
     {
         private static string steamId = "";
-        private static readonly string location = Environment.GetEnvironmentVariable("LabLocation", EnvironmentVariableTarget.Process) ?? "Unknown";
-        private static readonly string stationId = Environment.GetEnvironmentVariable("StationId", EnvironmentVariableTarget.Process) ?? "Unknown";
+        private static string location = Environment.GetEnvironmentVariable("LabLocation", EnvironmentVariableTarget.Process) ?? "Unknown";
+        private static string stationId = Environment.GetEnvironmentVariable("StationId", EnvironmentVariableTarget.Process) ?? "Unknown";
 
         public static void VerifySteamConfig(bool initialCall = false)
         {
+            location = Environment.GetEnvironmentVariable("LabLocation", EnvironmentVariableTarget.Process) ?? "Unknown";
+            stationId = Environment.GetEnvironmentVariable("StationId", EnvironmentVariableTarget.Process) ?? "Unknown";
             GetSteamId();
+            UpdateSteamVRSettings();
             VerifySteamLoginUserConfig();
             VerifySteamDefaultPageConfig();
             // VerifySteamHideNotificationConfig();
@@ -28,11 +33,11 @@ namespace Station
             }
         }
 
-        public static void GetSteamId()
+        public static string GetSteamId()
         {
             if (steamId.Length > 0)
             {
-                return;
+                return "";
             }
             string fileLocation = "C:\\Program Files (x86)\\Steam\\config\\config.vdf";
             if (!File.Exists(fileLocation))
@@ -40,7 +45,7 @@ namespace Station
                 Logger.WriteLog(
                     "Could not get steamid " +
                     location, MockConsole.LogLevel.Error);
-                return;
+                return "";
             }
 
             string? username = Environment.GetEnvironmentVariable("SteamUserName", EnvironmentVariableTarget.Process);
@@ -49,7 +54,7 @@ namespace Station
                 Logger.WriteLog(
                     "Could not get SteamUserName from environment variables " +
                     location, MockConsole.LogLevel.Error);
-                return;
+                return "";
             }
 
             username = username.ToLower();
@@ -76,7 +81,7 @@ namespace Station
                     Logger.WriteLog(
                     "Could not get steamId: " +
                     location, MockConsole.LogLevel.Error);
-                    return;
+                    return "";
                 }
 
                 steamId = (long.Parse(steamCommId) - steamComm).ToString();
@@ -85,6 +90,8 @@ namespace Station
             {
                 SentrySdk.CaptureException(e);
             }
+
+            return steamId;
         }
 
         private static void VerifySteamHideNotificationConfig()
@@ -385,6 +392,44 @@ namespace Station
                         $"https://leadme-labs-default-rtdb.asia-southeast1.firebasedatabase.app/lab_experience_playtime/{location}/{stationId}.json",
                         objData
                     );
+                }
+            }
+            catch (Exception e)
+            {
+                SentrySdk.CaptureException(e);
+            }
+        }
+        
+        private static void UpdateSteamVRSettings()
+        {
+            string fileLocation = "C:\\Program Files (x86)\\Steam\\config\\steamvr.vrsettings";
+            if (!File.Exists(fileLocation))
+            {
+                Logger.WriteLog(
+                    "Could not update SteamVR settings: " +
+                    location, MockConsole.LogLevel.Error);
+                return;
+            }
+
+            try
+            {
+                string lines = File.ReadAllText(fileLocation);
+                JObject json = (JObject) JsonConvert.DeserializeObject(lines);
+
+                json.TryAdd("steamvr", new JObject());
+                json.TryAdd("power", new JObject());
+                json.TryAdd("dashboard", new JObject());
+                json.TryAdd("userinterface", new JObject());
+                json["steamvr"]["enableHomeApp"] = false;
+                json["power"]["turnOffScreensTimeout"] = 1800;
+                json["power"]["turnOffControllersTimeout"] = 0;
+                json["power"]["pauseCompositorOnStandby"] = false;
+                json["dashboard"]["enableDashboard"] = false;
+                json["userinterface"]["StatusAlwaysOnTop"] = false;
+                string? text = JsonConvert.SerializeObject(json);
+                if (text != null)
+                {
+                    File.WriteAllText(fileLocation, text);
                 }
             }
             catch (Exception e)

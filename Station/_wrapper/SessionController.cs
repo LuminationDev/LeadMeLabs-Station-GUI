@@ -27,6 +27,11 @@ namespace Station
         public static string? experienceType = null;
 
         /// <summary>
+        /// Track the current state of the Station software.
+        /// </summary>
+        public static string currentState = "";
+
+        /// <summary>
         /// Read the store headset type from the config.env file and create an instance that 
         /// can be accessed from this class.
         /// </summary>
@@ -58,8 +63,6 @@ namespace Station
             switch (experienceType)
             {
                 case "Custom":
-                    MockConsole.WriteLine("startVRSession not implemented for type: Custom.", MockConsole.LogLevel.Error);
-                    break;
                 case "Steam":
                     vrHeadset?.StartVrSession();
                     break;
@@ -76,6 +79,7 @@ namespace Station
         /// </summary>
         public static void RestartVRSession()
         {
+            ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage($"SoftwareState,Shutting down VR processes"), TimeSpan.FromSeconds(1));
             _ = WrapperManager.RestartVRProcesses();
 
             if (experienceType == null)
@@ -171,6 +175,11 @@ namespace Station
                             Manager.SendResponse("Android", "Station", "SetValue:gameId:");
                             Manager.SendResponse("Android", "Station", "SetValue:gameType:");
                         }
+                        break;
+
+                    case "SoftwareState":
+                        currentState = tokens[1];
+                        Manager.SendResponse("Android", "Station", $"SetValue:state:{tokens[1]}");
                         break;
 
                     case "ApplicationList":

@@ -17,12 +17,33 @@ namespace Station
             Environment.GetEnvironmentVariable("SteamUserName", EnvironmentVariableTarget.Process) + " " + 
             Environment.GetEnvironmentVariable("SteamPassword", EnvironmentVariableTarget.Process) + " steam://rungameid/";
         public static string? experienceName = null;
-        public static string? installDir = null;
+        private static string? installDir = null;
+        private static Experience lastExperience;
 
         /// <summary>
         /// Track if an experience is being launched.
         /// </summary>
         public static bool launchingExperience = false;
+
+        public Experience? GetLastExperience()
+        {
+            return lastExperience;
+        }
+        
+        public void SetLastExperience(Experience experience)
+        {
+            lastExperience = experience;
+        }
+
+        public bool GetLaunchingExperience()
+        {
+            return launchingExperience;
+        }
+
+        public void SetLaunchingExperience(bool isLaunching)
+        {
+            launchingExperience = isLaunching;
+        }
 
         public string? GetCurrentExperienceName()
         {
@@ -44,6 +65,17 @@ namespace Station
             throw new NotImplementedException();
         }
 
+
+        public void SetCurrentProcess(Process process)
+        {
+            if (currentProcess != null)
+            {
+                currentProcess.Kill(true);
+            }
+            currentProcess = process;
+            ListenForClose();
+        }
+
         public void WrapProcess(Experience experience)
         {
             if (experience.ID == null)
@@ -52,7 +84,13 @@ namespace Station
                 return;
             };
 
-            SteamScripts.lastApp = experience;
+            if (SessionController.vrHeadset == null)
+            {
+                SessionController.PassStationMessage("No VR headset set.");
+                return;
+            }
+
+            lastExperience = experience;
             GetGameProcessDetails();
 
             if(experienceName == null || installDir == null)
@@ -68,27 +106,29 @@ namespace Station
             SessionController.StartVRSession(wrapperType);
 
             //Begin monitoring the different processes
-            WrapperMonitoringThread.initializeMonitoring(wrapperType);
+            WrapperMonitoringThread.InitializeMonitoring(wrapperType);
 
-            //Wait for Vive to start
-            if (!WaitForVive().Result) return;
+            //Wait for the Headset's connection method to respond
+            if (!SessionController.vrHeadset.WaitForConnection(wrapperType)) return;
+
+            //If headset management software is open (with headset connected) and OpenVrSystem cannot initialise then restart SteamVR
+            if (!OpenVRManager.WaitForOpenVR().Result) return;
 
             Task.Factory.StartNew(() =>
             {
-                currentProcess = new Process();
-                currentProcess.StartInfo.FileName = SessionController.steam;
-                currentProcess.StartInfo.Arguments = launch_params + experience.ID;
-
-                //Add any extra launch parameters
-                if (experience.Parameters != null)
+                //Attempt to start the process using OpenVR
+                if (OpenVRManager.LaunchApplication(experience.ID))
                 {
-                    //Include a space before added more
-                    currentProcess.StartInfo.Arguments += $" {experience.Parameters}";
+                    Logger.WriteLog($"SteamWrapper.WrapProcess: Launching {experience.Name} via OpenVR", MockConsole.LogLevel.Verbose);
+                    return;
                 }
 
-                currentProcess.Start();
-
-                FindCurrentProcess();
+                //Fall back to the alternate if OpenVR launch fails or is not a registered VR experience in the vrmanifest
+                //Stop any accessory processes before opening a new process
+                SessionController.vrHeadset.StopProcessesBeforeLaunch();
+              
+                Logger.WriteLog($"SteamWrapper.WrapProcess - Using AlternateLaunchProcess", MockConsole.LogLevel.Normal);
+                AlternateLaunchProcess(experience);
             });
         }
 
@@ -98,10 +138,10 @@ namespace Station
         /// </summary>
         private void GetGameProcessDetails()
         {
-            string fileLocation = "S:\\SteamLibrary\\steamapps\\appmanifest_" + SteamScripts.lastApp.ID + ".acf";
+            string fileLocation = "S:\\SteamLibrary\\steamapps\\appmanifest_" + lastExperience.ID + ".acf";
             if (!File.Exists(fileLocation))
             {
-                fileLocation = "C:\\Program Files (x86)\\Steam\\steamapps\\appmanifest_" + SteamScripts.lastApp.ID + ".acf";
+                fileLocation = "C:\\Program Files (x86)\\Steam\\steamapps\\appmanifest_" + lastExperience.ID + ".acf";
                 if (!File.Exists(fileLocation))
                 {
                     launchingExperience = false;
@@ -135,28 +175,30 @@ namespace Station
             Logger.WriteLog($"Steam experience install directory: {installDir}", MockConsole.LogLevel.Normal);
         }
 
+        #region Alternate Launch Process
         /// <summary>
-        /// Wait for Vive to be open and connected before going any further with the launcher sequence.
+        /// Launches an alternate process for the given experience by executing a specified executable (e.g., Steam) with parameters.
+        /// Starts a new process using the provided executable path (e.g., SessionController.steam) and the experience's launch parameters.
+        /// If any additional experience parameters are available, they are appended to the launch arguments.
+        /// After starting the process, searches for the newly launched process and tracks it.
         /// </summary>
-        /// <returns></returns>
-        private async Task<bool> WaitForVive()
+        /// <param name="experience">The experience object representing the application to launch.</param>
+        private void AlternateLaunchProcess(Experience experience)
         {
-            //Wait for the Vive Check
-            Logger.WriteLog("About to launch a steam app, vive status is: " + WrapperMonitoringThread.viveStatus, MockConsole.LogLevel.Normal);
-            if (launchingExperience)
-            {
-                SessionController.PassStationMessage("MessageToAndroid,AlreadyLaunchingGame");
-                return false;
-            }
-            launchingExperience = true;
+            currentProcess = new Process();
+            currentProcess.StartInfo.FileName = SessionController.steam;
+            currentProcess.StartInfo.Arguments = launch_params + experience.ID;
 
-            if (!await ViveScripts.ViveCheck(wrapperType))
+            //Add any extra launch parameters
+            if (experience.Parameters != null)
             {
-                launchingExperience = false;
-                return false;
+                //Include a space before added more
+                currentProcess.StartInfo.Arguments += $" {experience.Parameters}";
             }
 
-            return true;
+            currentProcess.Start();
+
+            FindCurrentProcess();
         }
 
         /// <summary>
@@ -184,12 +226,12 @@ namespace Station
                 SteamScripts.popupDetect = false;
                 ListenForClose();
                 WindowManager.MaximizeProcess(child); //Maximise the process experience
-                SessionController.PassStationMessage($"ApplicationUpdate,{experienceName}/{SteamScripts.lastApp.ID}/Steam");
+                SessionController.PassStationMessage($"ApplicationUpdate,{experienceName}/{lastExperience.ID}/Steam");
             } else
             {
-                Logger.WriteLog("Game launch failure: " + SteamScripts.lastApp.Name, MockConsole.LogLevel.Normal);
+                Logger.WriteLog("Game launch failure: " + lastExperience.Name, MockConsole.LogLevel.Normal);
                 UIUpdater.ResetUIDisplay();
-                SessionController.PassStationMessage($"MessageToAndroid,GameLaunchFailed:{SteamScripts.lastApp.Name}");
+                SessionController.PassStationMessage($"MessageToAndroid,GameLaunchFailed:{lastExperience.Name}");
             }
         }
 
@@ -229,6 +271,7 @@ namespace Station
             }
             return null;
         }
+        #endregion
 
         public void ListenForClose()
         {
@@ -252,7 +295,7 @@ namespace Station
             {
                 currentProcess.Kill(true);
             }
-            WrapperMonitoringThread.stopMonitoring();
+            WrapperMonitoringThread.StopMonitoring();
             ViveScripts.StopMonitoring();
             SteamScripts.popupDetect = false;
         }
@@ -263,7 +306,7 @@ namespace Station
             {
                 StopCurrentProcess();
                 Task.Delay(3000).Wait();
-                WrapProcess(SteamScripts.lastApp);
+                WrapProcess(lastExperience);
             }
             SteamScripts.popupDetect = false;
         }
@@ -304,6 +347,17 @@ namespace Station
                 timer.AutoReset = true;
                 timer.Enabled = true;
             }).Start();
+        }
+
+        /// <summary>
+        /// Launch SteamVR as a process, SteamVR's appID is (250820)
+        /// </summary>
+        public static void LauncherSteamVR()
+        {
+            currentProcess = new Process();
+            currentProcess.StartInfo.FileName = SessionController.steam;
+            currentProcess.StartInfo.Arguments = launch_params + 250820;
+            currentProcess.Start();
         }
     }
 }

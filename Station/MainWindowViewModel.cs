@@ -1,4 +1,6 @@
-﻿using System.ComponentModel;
+﻿using System;
+using System.ComponentModel;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -16,13 +18,13 @@ namespace Station
         {
             LoadedCommand = new RelayCommand(Loaded);
             ClosingCommand = new RelayCommand<CancelEventArgs>(Closing);
-            //NotifyCommand = new RelayCommand(() => Notify("Hello world!")); //How to use the notify function
 
             StartStationCommand = new RelayCommand(() => Manager.StartProgram());
             RestartStationCommand = new RelayCommand(() => Manager.RestartProgram());
             StopStationCommand = new RelayCommand(() => Manager.StopProgram());
             ChangeLogLevelCommand = new RelayCommand(() => MockConsole.changeLogLevel());
             StopCurrentProcess = new RelayCommand(() => WrapperManager.StopAProcess());
+            ResetSteamVRProcess = new RelayCommand(() => RestartVR());
 
             NotifyIconOpenCommand = new RelayCommand(() => { WindowState = WindowState.Normal; });
             NotifyIconExitCommand = new RelayCommand(() => { Application.Current.Shutdown(); });
@@ -39,6 +41,7 @@ namespace Station
         public ICommand StopStationCommand { get; }
         public ICommand ChangeLogLevelCommand { get; }
         public ICommand StopCurrentProcess { get; }
+        public ICommand ResetSteamVRProcess { get; }
 
         public WindowState WindowState
         {
@@ -63,14 +66,13 @@ namespace Station
             set => SetProperty(ref _notifyRequest, value);
         }
 
-        private void Notify(string message)
+        private void RestartVR()
         {
-            NotifyRequest = new NotifyIconWrapper.NotifyRequestRecord
+            new Task(() =>
             {
-                Title = "Notify",
-                Text = message,
-                Duration = 1000
-            };
+                ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage($"SoftwareState,Shutting down VR processes"), TimeSpan.FromSeconds(1));
+                _ = WrapperManager.RestartVRProcesses();
+            }).Start();
         }
 
         /// <summary>
@@ -92,7 +94,7 @@ namespace Station
         /// <summary>
         /// Used for binding the MainWindow Mockconsole
         /// </summary>
-        private string _consoleText;
+        private string _consoleText = "";
 
         public string ConsoleText
         {

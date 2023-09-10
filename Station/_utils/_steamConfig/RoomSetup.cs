@@ -10,6 +10,11 @@ namespace Station
         private static readonly string defaultFilePath = CommandLine.stationLocation + @"\_config\chaperone_info.vrchap";
         private static readonly string steamVRFilePath = @"C:\Program Files (x86)\Steam\config\chaperone_info.vrchap";
 
+        public static string GetSteamVRPath()
+        {
+            return steamVRFilePath;
+        }
+
         /// <summary>
         /// The SteamVR room setup has just been completed, input the default collision_bounds and play_area. Afterwards
         /// save the file for future comparison and loading. 
@@ -24,9 +29,18 @@ namespace Station
             }
 
             string jsonContent = File.ReadAllText(steamVRFilePath);
+            ChaperoneInfo? chaperoneInfo = null;
 
-            // Deserialize the JSON string
-            var chaperoneInfo = JsonConvert.DeserializeObject<ChaperoneInfo>(jsonContent);
+            // Attempt to deserialize the JSON string
+            try
+            {
+                chaperoneInfo = JsonConvert.DeserializeObject<ChaperoneInfo>(jsonContent);
+            }
+            catch (Exception ex)
+            {
+                Logger.WriteLog($"SaveRoomSetup - Unable to DeserializeObject chaperone_info.vrchap. {ex}", MockConsole.LogLevel.Error);
+            }
+
             if(chaperoneInfo == null)
             {
                 Logger.WriteLog($"SaveRoomSetup - Unable to DeserializeObject chaperone_info.vrchap at {steamVRFilePath}", MockConsole.LogLevel.Error);
@@ -37,8 +51,16 @@ namespace Station
             float[][][] newCollisionBounds = DefaultValues.GetCollisionBounds();
             float[] newPlayArea = DefaultValues.GetPlayArea();
 
-            chaperoneInfo.universes[0].collision_bounds = newCollisionBounds;
-            chaperoneInfo.universes[0].play_area = newPlayArea;
+            // Find the most recent universe (last in the .vrchap file)
+            int mostRecent = chaperoneInfo.universes.Length - 1;
+            if(chaperoneInfo.universes[mostRecent] == null)
+            {
+                Logger.WriteLog($"SaveRoomSetup - Most recent universe [{mostRecent}], cannot be found.", MockConsole.LogLevel.Error);
+                return $"Saving file error.";
+            }
+
+            chaperoneInfo.universes[mostRecent].collision_bounds = newCollisionBounds;
+            chaperoneInfo.universes[mostRecent].play_area = newPlayArea;
 
             // Serialize the modified object back to JSON
             try

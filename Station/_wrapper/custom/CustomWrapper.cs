@@ -12,8 +12,33 @@ namespace Station
     {
         public static string wrapperType = "Custom";
         private static Process? currentProcess;
-        private static Experience lastExperience;
+        public static Experience lastExperience;
 
+        // <summary>
+        /// Track if an experience is being launched.
+        /// </summary>
+        public static bool launchingExperience = false;
+
+        public Experience? GetLastExperience()
+        {
+            return lastExperience;
+        }
+
+        public void SetLastExperience(Experience experience)
+        {
+            lastExperience = experience;
+        }
+
+        public bool GetLaunchingExperience()
+        {
+            return launchingExperience;
+        }
+
+        public void SetLaunchingExperience(bool isLaunching)
+        {
+            launchingExperience = isLaunching;
+        }
+        
         public string? GetCurrentExperienceName()
         {
             return lastExperience.Name;
@@ -81,6 +106,16 @@ namespace Station
             });
         }
 
+        public void SetCurrentProcess(Process process)
+        {
+            if (currentProcess != null)
+            {
+                currentProcess.Kill(true);
+            }
+            currentProcess = process;
+            ListenForClose();
+        }
+
         public void WrapProcess(Experience experience)
         {
             if(CommandLine.stationLocation == null)
@@ -89,49 +124,103 @@ namespace Station
                 return;
             }
 
+            if (SessionController.vrHeadset == null)
+            {
+                SessionController.PassStationMessage("No VR headset set.");
+                return;
+            }
+
+            if (experience.Name == null || experience.ID == null)
+            {
+                SessionController.PassStationMessage("CustomWrapper.WrapProcess - Experience name cannot be null.");
+                return;
+            }
+
             //Close any open custom processes before opening the next one
-            if(currentProcess != null)
+            if (currentProcess != null)
             {
                 MockConsole.WriteLine($"Closing existing process: {lastExperience.Name}", MockConsole.LogLevel.Normal);
                 currentProcess.Kill(true);
             }
 
+            lastExperience = experience;
 
-            MockConsole.WriteLine($"Launching process: {experience.Name}", MockConsole.LogLevel.Normal);
+            //Begin monitoring the different processes
+            WrapperMonitoringThread.InitializeMonitoring(wrapperType);
+
+            //Wait for the Headset's connection method to respond
+            if (!SessionController.vrHeadset.WaitForConnection(wrapperType)) return;
+
+            //If headset management software is open (with headset connected) and OpenVrSystem cannot initialise then restart SteamVR
+            if (!OpenVRManager.WaitForOpenVR().Result) return;
+
+            MockConsole.WriteLine($"Launching process: {experience.Name} - {experience.ID}", MockConsole.LogLevel.Normal);
             Task.Factory.StartNew(() =>
             {
-                string filePath;
-
-                //The existance of an Alternate path means the experience has been imported through the launcher application
-                if (experience.AltPath != null)
+                //Attempt to start the process using OpenVR
+                if (OpenVRManager.LaunchApplication(experience.ID))
                 {
-                    filePath = experience.AltPath;
-                }
-                else
-                {
-                    //TODO Currently the exe and folder need to be the same name
-                    filePath = Path.GetFullPath(Path.Combine(CommandLine.stationLocation, @"..\..", $"leadme_apps\\{experience.Name}\\{experience.Name}.exe"));
-                }
-
-                if(!File.Exists(filePath)) {
-                    SessionController.PassStationMessage($"StationError,File not found:{filePath}");
+                    Logger.WriteLog($"CustomWrapper.WrapProcess: Launching {experience.Name} via OpenVR", MockConsole.LogLevel.Verbose);
                     return;
                 }
 
-                lastExperience = experience;
-
-                currentProcess = new Process();
-                currentProcess.StartInfo.FileName = filePath;
-
-                if (experience.Parameters != null)
-                {
-                    currentProcess.StartInfo.Arguments = experience.Parameters;
-                }
-
-                currentProcess.Start();
-
-                FindCurrentProcess();
+                //Stop any accessory processes before opening a new process
+                SessionController.vrHeadset.StopProcessesBeforeLaunch();
+                
+                //Fall back to the alternate if it fails or is not a registered VR experience in the vrmanifest
+                Logger.WriteLog($"CustomWrapper.WrapProcess - Using AlternateLaunchProcess", MockConsole.LogLevel.Normal);
+                AlternateLaunchProcess(experience);
             });                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                
+        }
+
+        #region Alternate Launch Process
+        /// <summary>
+        /// Launches an alternate process for the given experience if the primary launch process fails.
+        /// If the specified station location is unavailable, an error message is sent through the session controller.
+        /// If an alternate path for the experience is available, launches the process from that path.
+        /// Otherwise, constructs the path using the station location and the experience's name, then launches the process.
+        /// If the process executable is not found, an error message is sent through the session controller.
+        /// Sets the lastExperience to the given experience and starts the process with any specified parameters.
+        /// Finally, searches for the newly launched process and tracks it.
+        /// </summary>
+        /// <param name="experience">The experience object representing the application to launch.</param>
+        private void AlternateLaunchProcess(Experience experience)
+        {
+            if (CommandLine.stationLocation == null)
+            {
+                SessionController.PassStationMessage("Cannot find working directory");
+                return;
+            }
+
+            string filePath;
+
+            //The existance of an Alternate path means the experience has been imported through the launcher application
+            if (experience.AltPath != null)
+            {
+                filePath = experience.AltPath;
+            }
+            else
+            {
+                filePath = Path.GetFullPath(Path.Combine(CommandLine.stationLocation, @"..\..", $"leadme_apps\\{experience.Name}\\{experience.Name}.exe"));
+            }
+
+            if (!File.Exists(filePath))
+            {
+                SessionController.PassStationMessage($"StationError,File not found:{filePath}");
+                return;
+            }
+
+            currentProcess = new Process();
+            currentProcess.StartInfo.FileName = filePath;
+
+            if (experience.Parameters != null)
+            {
+                currentProcess.StartInfo.Arguments = experience.Parameters;
+            }
+
+            currentProcess.Start();
+
+            FindCurrentProcess();
         }
 
         /// <summary>
@@ -151,6 +240,7 @@ namespace Station
                 child = GetExperienceProcess();
             }
             currentProcess = child;
+            launchingExperience = false;
 
             if (child != null && currentProcess != null && lastExperience.ExeName != null)
             {
@@ -198,6 +288,7 @@ namespace Station
 
             return null;
         }
+        #endregion
 
         /// <summary>
         /// Being a new thread with the purpose of detecting if the current process has been exited.
@@ -229,7 +320,7 @@ namespace Station
             if (currentProcess != null)
             {
                 currentProcess.Kill(true);
-                WrapperMonitoringThread.stopMonitoring();
+                WrapperMonitoringThread.StopMonitoring();
             }
         }
 

@@ -49,19 +49,23 @@ namespace Station
         /// </summary>
         public static WrapperManager? wrapperManager;
 
-        private static string? macAddress = null;
-        private static string? versionNumber = null;
+        /// <summary>
+        /// Access the non-static classes of the openvr manager
+        /// </summary>
+        public static OpenVRManager? openVRManager;
 
+        public static string? macAddress = null;
+        private static string? versionNumber = null;
         private static Timer? variableCheck;
 
         /// <summary>
         /// Starts the server running on the local machine
         /// </summary>
-        public async static void StartProgram()
+        public static async void StartProgram()
         {
             MockConsole.ClearConsole();
             MockConsole.WriteLine("Loading ENV variables", MockConsole.LogLevel.Error);
-
+            
             //Check if the Encryption key and env variables are set correctly before starting anything else
             bool result = false;
             try
@@ -70,7 +74,7 @@ namespace Station
             }
             catch (Exception ex)
             {
-                Logger.WriteLog(ex, MockConsole.LogLevel.Error);
+                Logger.WriteLog($"DotEnv Error: {ex}", MockConsole.LogLevel.Error);
             }
 
             //Even if DotEnv fails, still load up the server details to show the details to the user.
@@ -81,55 +85,65 @@ namespace Station
                 Logger.WriteLog("Server details were not collected.", MockConsole.LogLevel.Error);
                 return;
             }
-
-            //Load the environment files, do not continue if file is incomplete
-            if (result)
-            {
-                App.SetWindowTitle($"Station({Environment.GetEnvironmentVariable("StationId", EnvironmentVariableTarget.Process)}) -- {localEndPoint.Address} -- {macAddress} -- {versionNumber}");
-                MockConsole.WriteLine("ENV variables loaded", MockConsole.LogLevel.Error);
-
-                new Thread(() =>
-                {
-                    //Call in new thread to stop UI from hanging whilst reading the files
-                    SteamConfig.VerifySteamConfig(true);
-
-                    // Schedule the function to run after a 5-minute delay (300,000 milliseconds)
-                    variableCheck = new Timer(OnTimerCallback, null, 300000, Timeout.Infinite);
-
-                    if (!Helper.GetStationMode().Equals(Helper.STATION_MODE_APPLIANCE))
-                    {
-                        wrapperManager = new WrapperManager();
-
-                        //Launch the custom wrapper application here
-                        wrapperManager.Startup();
-
-                        //Use to monitor SetVol and restart application
-                        StationMonitoringThread.initializeMonitoring();
-                    }
-
-                    StartServer();
-
-                    if (Environment.GetEnvironmentVariable("NucAddress", EnvironmentVariableTarget.Process) != null)
-                    {
-                        Logger.WriteLog($"Expected NUC address: {Environment.GetEnvironmentVariable("NucAddress", EnvironmentVariableTarget.Process)}", MockConsole.LogLevel.Normal);
-                        SetRemoteEndPoint();
-                        if (!Helper.GetStationMode().Equals(Helper.STATION_MODE_APPLIANCE))
-                        {
-                            InitialStartUp();
-                        }
-                    }
-                }).Start();
-            } else
+            
+            //Do not continue if environment variable file is incomplete
+            if (!result)
             {
                 App.SetWindowTitle("Station - Failed to load ENV variables.");
                 MockConsole.WriteLine("Failed loading ENV variables", MockConsole.LogLevel.Error);
+                return;
+            }
+
+            StartServer();
+            
+            //Cannot be any higher - encryption key does not exist before the DotEnv.Load()
+            ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage($"SoftwareState,Launching Software"), TimeSpan.FromSeconds(0));
+
+            App.SetWindowTitle($"Station({Environment.GetEnvironmentVariable("StationId", EnvironmentVariableTarget.Process)}) -- {localEndPoint.Address} -- {macAddress} -- {versionNumber}");
+            MockConsole.WriteLine("ENV variables loaded", MockConsole.LogLevel.Error);
+            
+            //Call as a new task to stop UI and server start up from hanging whilst reading the files
+            new Thread(() => SteamConfig.VerifySteamConfig(true)).Start();
+            new Thread(Initialisation).Start();
+        }
+
+        /// <summary>
+        /// Initialise the necessary classes for the software to run.
+        /// </summary>
+        private static void Initialisation()
+        {
+            ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage($"SoftwareState,Initialising configuration"), TimeSpan.FromSeconds(2));
+
+            // Schedule the function to run after a 5-minute delay (300,000 milliseconds)
+            variableCheck = new Timer(OnTimerCallback, null, 300000, Timeout.Infinite);
+
+            if (!Helper.GetStationMode().Equals(Helper.STATION_MODE_APPLIANCE))
+            {
+                openVRManager = new OpenVRManager();
+                wrapperManager = new WrapperManager();
+
+                //Launch the custom wrapper application here
+                wrapperManager.Startup();
+
+                //Use to monitor SetVol and restart application
+                StationMonitoringThread.initializeMonitoring();
+            }
+
+            if (Environment.GetEnvironmentVariable("NucAddress", EnvironmentVariableTarget.Process) != null)
+            {
+                Logger.WriteLog($"Expected NUC address: {Environment.GetEnvironmentVariable("NucAddress", EnvironmentVariableTarget.Process)}", MockConsole.LogLevel.Normal);
+                SetRemoteEndPoint();
+                if (!Helper.GetStationMode().Equals(Helper.STATION_MODE_APPLIANCE))
+                {
+                    InitialStartUp();
+                }
             }
         }
 
         /// <summary>
         /// Re-check any variables that may have changed in the first 5 minutes of operation.
         /// </summary>
-        public static void OnTimerCallback(object? state)
+        private static void OnTimerCallback(object? state)
         {
             try
             {
@@ -154,7 +168,7 @@ namespace Station
         /// <summary>
         /// Stop and dispose of the variable timer and all resources associated with it.
         /// </summary>
-        public static void StopVariableTimer()
+        private static void StopVariableTimer()
         {
             if(variableCheck != null)
             {
@@ -171,7 +185,7 @@ namespace Station
             new Thread(() =>
             {
                 StopVariableTimer();
-                StationMonitoringThread.stopMonitoring();
+                StationMonitoringThread.StopMonitoring();
                 StopServer();
                 wrapperManager?.ShutDownWrapper();
                 Logger.WriteLog("Station stopped", MockConsole.LogLevel.Normal);
@@ -189,7 +203,7 @@ namespace Station
             StartProgram();
         }
 
-        public static void StartServer()
+        private static void StartServer()
         {
             server = new ServerThread();
             serverThread = new Thread(async () => await server.RunAsync());
@@ -206,7 +220,7 @@ namespace Station
         /// <summary>
         /// On start up or NUC address change send the status, steam list and the current volume to the NUC.
         /// </summary>
-        public static void InitialStartUp()
+        private static void InitialStartUp()
         {
             Manager.SendResponse("NUC", "Station", "SetValue:status:On");
             Manager.SendResponse("NUC", "Station", "SetValue:gameName:");
@@ -218,7 +232,7 @@ namespace Station
         /// Collect the necessary system details for starting the service. Including the IP address, mac address
         /// and the current version number.
         /// </summary>
-        public static bool SetupServerDetails()
+        private static bool SetupServerDetails()
         {
             try
             {
@@ -272,7 +286,7 @@ namespace Station
             return ip;
         }
 
-        public static void SetRemoteEndPoint()
+        private static void SetRemoteEndPoint()
         {
             remoteEndPoint = new IPEndPoint(IPAddress.Parse((ReadOnlySpan<char>)Environment.GetEnvironmentVariable("NucAddress", EnvironmentVariableTarget.Process)), NUCPort);
         }
@@ -284,7 +298,7 @@ namespace Station
         public static void RunScript(string data)
         {
             ScriptThread script = new(data);
-            Thread scriptThread = new(script.run);
+            Thread scriptThread = new(script.Run);
             scriptThread.Start();
         }
 
@@ -303,9 +317,13 @@ namespace Station
             Logger.WriteLog("Sending: " + response, MockConsole.LogLevel.Normal, writeToLog);
 
             string? key = Environment.GetEnvironmentVariable("AppKey", EnvironmentVariableTarget.Process);
-            if (key is null) throw new Exception("Encryption key not set");
+            if (key is null) {
+                Logger.WriteLog("Encryption key not set", MockConsole.LogLevel.Normal);
+                return;
+            }
+            
             SocketClient client = new(EncryptionHelper.Encrypt(response, key));
-            client.send(writeToLog);
+            client.Send(writeToLog);
         }
     }
 }
