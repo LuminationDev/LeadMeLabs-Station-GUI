@@ -278,6 +278,7 @@ namespace Station
             Task.Factory.StartNew(() =>
             {
                 currentProcess?.WaitForExit();
+                experienceName = null; //Reset for correct headset state
                 SteamScripts.popupDetect = false;
                 SessionController.PassStationMessage($"ApplicationClosed");
                 UIUpdater.ResetUIDisplay();

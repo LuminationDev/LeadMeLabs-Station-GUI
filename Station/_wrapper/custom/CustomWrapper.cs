@@ -298,6 +298,7 @@ namespace Station
             Task.Factory.StartNew(() =>
             {
                 currentProcess?.WaitForExit();
+                lastExperience.Name = null; //Reset for correct headset state
                 Trace.WriteLine("The current process has just exited.");
                 SessionController.PassStationMessage($"ApplicationClosed");
                 UIUpdater.ResetUIDisplay();
