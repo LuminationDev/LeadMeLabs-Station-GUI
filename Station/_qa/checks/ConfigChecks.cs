@@ -5,10 +5,12 @@ namespace Station._qa.checks;
 
 public class ConfigInfo
 {
+    public string? Name { get; set; }
+    public string? StationId { get; set; }
+    public string? Room { get; set; }
     public string? SelectedHeadset { get; set; }
     public string? SteamDetailsPresent { get; set; }
     public string? LabLocation { get; set; }
-    public string? StationId { get; set; }
     public string? NucIpAddress { get; set; }
 }
 
@@ -25,6 +27,9 @@ public class StationDetails
 
 public class ConfigChecks
 {
+    /**
+     * Used to compare against the saved values in the station_list.json
+     */
     public string? GetLocalStationDetails()
     {
         StationDetails stationDetails = new StationDetails
@@ -41,14 +46,19 @@ public class ConfigChecks
         return JsonConvert.SerializeObject(stationDetails);
     }
     
+    /**
+     * Used for information reference in the QA tool
+     */
     public string? GetLocalConfigurationDetails()
     {
         ConfigInfo configInfo = new ConfigInfo
         {
+            Name = $"Station {GetStationId()}",
+            StationId = GetStationId(),
+            Room = GetStationRoom(),
             SelectedHeadset = GetSelectedHeadset(),
             SteamDetailsPresent = AreSteamDetailsPresent(),
             LabLocation = GetLabLocation(),
-            StationId = GetStationId(),
             NucIpAddress = GetExpectedNucAddress()
         };
         
