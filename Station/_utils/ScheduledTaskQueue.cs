@@ -43,7 +43,7 @@ namespace Station
             if (!isProcessing)
             {
                 isProcessing = true;
-                Task.Run(() => ProcessQueue()); // Start the processing as a new task
+                Task.Run(ProcessQueue); // Start the processing as a new task
             }
         }
 
@@ -51,12 +51,10 @@ namespace Station
         {
             while (taskQueue.Count > 0)
             {
-                var scheduledTask = taskQueue.Peek();
+                var scheduledTask = taskQueue.Dequeue();
                 var delay = scheduledTask.Delay;
 
                 await Task.Delay(delay);
-
-                taskQueue.Dequeue();
                 await scheduledTask.TaskAction.Invoke(); // Execute the task without waiting
             }
 
