@@ -18,7 +18,7 @@ namespace Station
     /// </summary>
     static class ScheduledTaskQueue
     {
-        private static Queue<ScheduledTask> taskQueue = new Queue<ScheduledTask>();
+        private static readonly Queue<ScheduledTask> TaskQueue = new Queue<ScheduledTask>();
         private static bool isProcessing = false;
 
         /// <summary>
@@ -31,32 +31,26 @@ namespace Station
         {
             var scheduledTask = new ScheduledTask
             {
-                TaskAction = () =>
-                {
-                    return Task.Run(taskAction);
-                },
+                TaskAction = () => Task.Run(taskAction),
                 Delay = delay
             };
 
-            taskQueue.Enqueue(scheduledTask);
+            TaskQueue.Enqueue(scheduledTask);
 
-            if (!isProcessing)
-            {
-                isProcessing = true;
-                Task.Run(() => ProcessQueue()); // Start the processing as a new task
-            }
+            if (isProcessing) return;
+            
+            isProcessing = true;
+            Task.Run(ProcessQueue); // Start the processing as a new task
         }
 
         private static async Task ProcessQueue()
         {
-            while (taskQueue.Count > 0)
+            while (TaskQueue.Count > 0)
             {
-                var scheduledTask = taskQueue.Peek();
+                var scheduledTask = TaskQueue.Dequeue();
                 var delay = scheduledTask.Delay;
 
                 await Task.Delay(delay);
-
-                taskQueue.Dequeue();
                 await scheduledTask.TaskAction.Invoke(); // Execute the task without waiting
             }
 

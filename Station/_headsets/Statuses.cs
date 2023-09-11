@@ -60,7 +60,7 @@ namespace Station
         {
             private set
             {
-                MockConsole.WriteLine($"New connection: {value}", MockConsole.LogLevel.Normal);
+                MockConsole.WriteLine($"New connection: {value}", MockConsole.LogLevel.Verbose);
                 if (_openVRStatus == value) return;
 
                 OnOpenVRTrackingChanged(value.ToString());
