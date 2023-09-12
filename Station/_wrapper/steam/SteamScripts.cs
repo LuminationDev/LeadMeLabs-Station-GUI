@@ -275,7 +275,10 @@ namespace Station
                     {
                         if (!blacklistedGames.Contains(ID) && (approvedGames.Count == 0 || approvedGames.Contains(ID))) // if count is zero then all games are approved
                         {
-                            string name = filter[1].Replace("\\", "").Trim();
+                            filter.RemoveAt(0);
+                            filter.RemoveAt(filter.Count - 1); // remove file location
+                            filter.RemoveAt(filter.Count - 1); // remove drive name
+                            string name = string.Join(":", filter.ToArray()).Replace("\\", "").Trim();
                             if (name.Contains("appid_")) // as a backup if steamcmd doesn't load the game name, we get it from the acf file
                             {
                                 AcfReader acfReader = new AcfReader(ID);
