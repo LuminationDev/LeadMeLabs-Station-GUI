@@ -6,8 +6,6 @@ namespace Station._qa.checks;
 
 public class NetworkInfo
 {
-    public string? NetworkInterfaceName { get; set; }
-    public string? Description { get; set; }
     public string? MacAddress { get; set; }
     public string? DefaultGateway { get; set; }
     public string? DnsServer { get; set; }
@@ -32,8 +30,6 @@ public class NetworkChecks
                 {
                     NetworkInfo networkInfo = new NetworkInfo
                     {
-                        NetworkInterfaceName = networkInterface.Name,
-                        Description = networkInterface.Description,
                         MacAddress = Manager.macAddress,
                         DefaultGateway = ipProperties.GatewayAddresses.Count > 0
                             ? ipProperties.GatewayAddresses[0].Address.ToString()

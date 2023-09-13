@@ -16,19 +16,19 @@ public class QualityManager
         switch (type)
         {
             case "StationNetwork":
-                message = _networkChecks.GetNetworkInterfaceByIpAddress(Manager.localEndPoint.Address.ToString());
+                message = "Network::::" + _networkChecks.GetNetworkInterfaceByIpAddress(Manager.localEndPoint.Address.ToString());
                 break;
             
             case "StationWindows":
-                message = _windowChecks.GetLocalOsSettings();
+                message = "Windows::::" + _windowChecks.GetLocalOsSettings();
                 break;
             
             case "StationSoftware":
-                message = _softwareChecks.GetSoftwareInformation();
+                message = "Software::::" + _softwareChecks.GetSoftwareInformation();
                 break;
             
             case "StationConfig":
-                message = _configChecks.GetLocalConfigurationDetails();
+                message = "Config::::" + _configChecks.GetLocalConfigurationDetails();
                 break;
             
             case "StationDetails":
