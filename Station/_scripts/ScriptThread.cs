@@ -189,6 +189,24 @@ namespace Station
         /// </summary>
         private async void HandleQualityAssurance(string additionalData)
         {
+            if (this.additionalData.StartsWith("RunAuto"))
+            {
+                string returnAddress = this.additionalData.Split(":", 2)[1];
+                QualityManager qualityManager = new QualityManager();
+                string result = qualityManager.DetermineCheck("StationNetwork");
+                Manager.SendResponse("NUC", "QA", returnAddress + ":" + result);
+                result = qualityManager.DetermineCheck("StationWindows");
+                Manager.SendResponse("NUC", "QA", returnAddress + ":" + result);
+                result = qualityManager.DetermineCheck("StationSoftware");
+                Manager.SendResponse("NUC", "QA", returnAddress + ":" + result);
+                result = qualityManager.DetermineCheck("StationConfig");
+                Manager.SendResponse("NUC", "QA", returnAddress + ":" + result);
+                result = qualityManager.DetermineCheck("StationDetails");
+                Manager.SendResponse("NUC", "QA", returnAddress + ":" + result);
+                result = qualityManager.DetermineCheck("StationAll");
+                Manager.SendResponse("NUC", "QA", returnAddress + ":" + result);
+                return;
+            }
             //Request:ReturnAddress
             string[] split = additionalData.Split(":");
             if (split.Length > 2)
