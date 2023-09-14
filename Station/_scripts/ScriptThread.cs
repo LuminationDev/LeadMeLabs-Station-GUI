@@ -209,9 +209,6 @@ namespace Station
                 
                 result = qualityManager.DetermineCheck("StationDetails");
                 Manager.SendResponse("NUC", "QA", returnAddress + ":" + result);
-                
-                result = qualityManager.DetermineCheck("StationAll");
-                Manager.SendResponse("NUC", "QA", returnAddress + ":" + result);
 
                 result = JsonConvert.SerializeObject(qualityManager._steamConfigChecks.RunQa());
                 Manager.SendResponse("NUC", "QA", returnAddress + ":" + "SteamConfigChecks:::" + result);
