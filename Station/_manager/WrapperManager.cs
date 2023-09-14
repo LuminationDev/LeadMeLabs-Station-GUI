@@ -13,9 +13,9 @@ namespace Station
     public class WrapperManager
     {
         //Store each wrapper class
-        private static readonly Wrapper customWrapper = new CustomWrapper();
-        private static readonly Wrapper steamWrapper = new SteamWrapper();
-        private static readonly Wrapper viveWrapper = new ViveWrapper();
+        private static readonly CustomWrapper customWrapper = new CustomWrapper();
+        private static readonly SteamWrapper steamWrapper = new SteamWrapper();
+        private static readonly ViveWrapper viveWrapper = new ViveWrapper();
 
         //Used for multiple 'internal' applications, operations are separate from the other wrapper classes
         private readonly InternalWrapper internalWrapper = new();
@@ -130,17 +130,16 @@ namespace Station
         /// Cycle through the different wrappers and collect all the applications installed. Do
         /// not attempt to collect if already part way through.
         /// </summary>
-        private void CollectAllApplications()
+        public static List<string> CollectAllApplications()
         {
+            List<string> applications = new();
             if (alreadyCollecting)
             {
                 SessionController.PassStationMessage("Already collecting applications");
-                return;
+                return applications;
             }
 
             alreadyCollecting = true;
-
-            List<string> applications = new();
 
             List<string>? customApplications = customWrapper.CollectApplications();
             if (customApplications != null)
@@ -167,6 +166,7 @@ namespace Station
             alreadyCollecting = false;
 
             _ = RestartVRProcesses();
+            return applications;
         }
 
         /// <summary>
@@ -328,7 +328,7 @@ namespace Station
         /// Explored the loaded application list to find the type and name associated with the supplied proccessID.
         /// Create a wrapper and encapsulate the requested process for further use.
         /// </summary>
-        private void StartAProcess(string appID)
+        public static void StartAProcess(string appID)
         {
             //Get the type from the application dictionary
             //entry [application type, application name, application launch parameters]

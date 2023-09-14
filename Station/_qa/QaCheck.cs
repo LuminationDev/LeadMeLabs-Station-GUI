@@ -1,9 +1,15 @@
-﻿namespace Station._qa;
+﻿using System.Runtime.Serialization;
+using Newtonsoft.Json;
+
+namespace Station._qa;
 
 public class QaCheck
 {
-    private bool? _passedCheck = null;
+    [JsonProperty]
+    private string? _passedStatus = null;
+    [JsonProperty]
     private string? _message = null;
+    [JsonProperty]
     private string _checkId;
 
     public QaCheck(string checkId)
@@ -13,22 +19,30 @@ public class QaCheck
 
     public void SetFailed(string message)
     {
-        this._passedCheck = false;
+        this._passedStatus = "failed";
+        this._message = message;
+    }
+    
+    public void SetWarning(string message)
+    {
+        this._passedStatus = "warning";
+        this._message = message;
+    }
+    
+    public void SetNeedsConfirmation(string message)
+    {
+        this._passedStatus = "needs_confirmation";
         this._message = message;
     }
 
     public void SetPassed(string? message)
     {
-        if (!string.IsNullOrEmpty(message))
-        {
-            this._message = message;
-        }
-
-        this._passedCheck = true;
+        this._message = message;
+        this._passedStatus = "passed";
     }
 
     public bool GetPassedCheck()
     {
-        return _passedCheck ?? false;
+        return _passedStatus != null && _passedStatus.Equals("passed");
     }
 }

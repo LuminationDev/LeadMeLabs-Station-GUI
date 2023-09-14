@@ -3,9 +3,9 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 
-namespace Station._qa
+namespace Station._qa.checks
 {
-    public class SteamQa
+    public class SteamConfigChecks
     {
         private string? _steamId = null;
         private List<QaCheck> _qaChecks = new();

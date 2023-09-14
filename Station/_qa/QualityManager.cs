@@ -3,10 +3,11 @@ namespace Station;
 
 public class QualityManager
 {
-    private readonly NetworkChecks _networkChecks = new();
-    private readonly WindowChecks _windowChecks = new();
-    private readonly SoftwareChecks _softwareChecks = new();
-    private readonly ConfigChecks _configChecks = new();
+    public readonly NetworkChecks _networkChecks = new();
+    public readonly WindowChecks _windowChecks = new();
+    public readonly SoftwareChecks _softwareChecks = new();
+    public readonly ConfigChecks _configChecks = new();
+    public readonly SteamConfigChecks _steamConfigChecks = new();
 
     //TODO Add the QaCheck class in to handle the results
     public string? DetermineCheck(string type)
@@ -20,11 +21,7 @@ public class QualityManager
                 break;
             
             case "StationWindows":
-                message = _windowChecks.GetLocalOsSettings();
-                break;
-            
-            case "StationSoftware":
-                message = _softwareChecks.GetSoftwareInformation();
+                // message = _windowChecks.GetLocalOsSettings();
                 break;
             
             case "StationConfig":
@@ -37,8 +34,7 @@ public class QualityManager
             
             case "StationAll":
                 message = _networkChecks.GetNetworkInterfaceByIpAddress(Manager.localEndPoint.Address.ToString()) + "::::";
-                message += _windowChecks.GetLocalOsSettings() + "::::";
-                message += _softwareChecks.GetSoftwareInformation() + "::::";
+                // message += _windowChecks.GetLocalOsSettings() + "::::";
                 message += _configChecks.GetLocalConfigurationDetails();
                 break;
             

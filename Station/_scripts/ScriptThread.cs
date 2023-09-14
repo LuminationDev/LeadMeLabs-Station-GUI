@@ -2,6 +2,7 @@ using System;
 using System.Net;
 using System.Threading.Tasks;
 using LeadMeLabsLibrary;
+using Newtonsoft.Json;
 
 namespace Station
 {
@@ -193,18 +194,27 @@ namespace Station
             {
                 string returnAddress = this.additionalData.Split(":", 2)[1];
                 QualityManager qualityManager = new QualityManager();
+                
                 string result = qualityManager.DetermineCheck("StationNetwork");
                 Manager.SendResponse("NUC", "QA", returnAddress + ":" + result);
-                result = qualityManager.DetermineCheck("StationWindows");
-                Manager.SendResponse("NUC", "QA", returnAddress + ":" + result);
-                result = qualityManager.DetermineCheck("StationSoftware");
-                Manager.SendResponse("NUC", "QA", returnAddress + ":" + result);
+                
+                result = JsonConvert.SerializeObject(qualityManager._windowChecks.RunQa());
+                Manager.SendResponse("NUC", "QA", returnAddress + ":" + "WindowChecks:::" + result);
+                
+                result = JsonConvert.SerializeObject(qualityManager._softwareChecks.RunQa());
+                Manager.SendResponse("NUC", "QA",  returnAddress + ":" + "SoftwareChecks:::" + result);
+                
                 result = qualityManager.DetermineCheck("StationConfig");
                 Manager.SendResponse("NUC", "QA", returnAddress + ":" + result);
+                
                 result = qualityManager.DetermineCheck("StationDetails");
                 Manager.SendResponse("NUC", "QA", returnAddress + ":" + result);
+                
                 result = qualityManager.DetermineCheck("StationAll");
                 Manager.SendResponse("NUC", "QA", returnAddress + ":" + result);
+
+                result = JsonConvert.SerializeObject(qualityManager._steamConfigChecks.RunQa());
+                Manager.SendResponse("NUC", "QA", returnAddress + ":" + "SteamConfigChecks:::" + result);
                 return;
             }
             //Request:ReturnAddress
