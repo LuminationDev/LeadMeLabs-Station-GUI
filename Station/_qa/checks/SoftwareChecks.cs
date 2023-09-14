@@ -1,33 +1,22 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using Newtonsoft.Json;
 
 namespace Station._qa.checks;
 
-public class SoftwareInfo
-{
-    public string? TaskScheduler { get; set; }
-    public string? SetVolExe { get; set; }
-    public string? SteamCmdExe { get; set; }
-    public string? SteamCmdInitialised { get; set; }
-    public string? SteamCmdStatus { get; set; }
-}
-
 public class SoftwareChecks
 {
-    public string? GetSoftwareInformation()
+    private List<QaCheck> _qaChecks = new();
+    public List<QaCheck> RunQa()
     {
-        SoftwareInfo softwareInfo = new SoftwareInfo
-        {
-            TaskScheduler = CheckTaskSchedulerItem(), //Move to LeadMeLibrary
-            SetVolExe = IsSetVolPresent(),
-            SteamCmdExe = IsSteamCmdPresent(),
-            SteamCmdInitialised = IsSteamCmdInitialised(),
-            SteamCmdStatus = IsSteamCmdConfigured()
-        };
+        var TaskScheduler = CheckTaskSchedulerItem(); // todo
+        _qaChecks.Add(IsSetVolPresent());
+        _qaChecks.Add(IsSteamCmdPresent());
+        _qaChecks.Add(IsSteamCmdInitialised());
+        _qaChecks.Add(IsSteamCmdConfigured());
 
-        return JsonConvert.SerializeObject(softwareInfo);
+        return _qaChecks;
     }
 
     /// <summary>
@@ -67,42 +56,67 @@ public class SoftwareChecks
     /// <summary>
     /// Check if SetVol is present within the Stations' external folder.
     /// </summary>
-    private string IsSetVolPresent()
+    private QaCheck IsSetVolPresent()
     {
+        QaCheck qaCheck = new QaCheck("setvol_installed");
         string filePath = CommandLine.stationLocation + @"\external\SetVol\SetVol.exe";
-        return "SetVol " + (File.Exists(filePath) ? "present" : "missing");
+        if (File.Exists(filePath))
+        {
+            qaCheck.SetPassed(null);
+        }
+        else
+        {
+            qaCheck.SetFailed("Could not find SetVol at location: " + filePath);
+        }
+
+        return qaCheck;
     }
     
     /// <summary>
     /// Check if SteamCMD is present within the Stations' external folder.
     /// </summary>
-    private string IsSteamCmdPresent()
+    private QaCheck IsSteamCmdPresent()
     {
+        QaCheck qaCheck = new QaCheck("steamcmd_installed");
         string filePath = CommandLine.stationLocation + @"\external\steamcmd\steamcmd.exe";
-        return "SteamCMD " + (File.Exists(filePath) ? "present" : "missing");
+        if (File.Exists(filePath))
+        {
+            qaCheck.SetPassed(null);
+        }
+        else
+        {
+            qaCheck.SetFailed("Could not find SteamCMD at location: " + filePath);
+        }
+
+        return qaCheck;
     }
     
     /// <summary>
     /// Check if SteamCMD has been initialised.
     /// </summary>
-    private string IsSteamCmdInitialised()
+    private QaCheck IsSteamCmdInitialised()
     {
-        //Check if SteamCMD has been initialised
+        QaCheck qaCheck = new QaCheck("steamcmd_initialised");
         string filePath = CommandLine.stationLocation + @"\external\steamcmd\steamerrorreporter.exe";
             
         if(!File.Exists(filePath))
         {
-            return "Not Initialised";
+            qaCheck.SetFailed("SteamCMD was not initialised at location: " + filePath);
         }
-        
-        return "Initialised";
+        else
+        {
+            qaCheck.SetPassed(null);
+        }
+
+        return qaCheck;
     }
 
     /// <summary>
     /// Check if the Steam guard has been entered (or disabled) and that the local details are correct.
     /// </summary>
-    private string IsSteamCmdConfigured()
+    private QaCheck IsSteamCmdConfigured()
     {
+        QaCheck qaCheck = new QaCheck("steamcmd_configured");
         string loginDetails = Environment.GetEnvironmentVariable("SteamUserName", EnvironmentVariableTarget.Process) + " " + 
                               Environment.GetEnvironmentVariable("SteamPassword", EnvironmentVariableTarget.Process);
         string loginUser = $"+login {loginDetails}";
@@ -137,28 +151,28 @@ public class SoftwareChecks
         
         if (output == null)
         {
-            response = error;
+            qaCheck.SetFailed("No output from SteamCMD");
         }
         else if (output.Contains("Steam Guard code:"))
         {
-            response = "Steam guard code required";
+            qaCheck.SetFailed("Steam Guard code has not been set for SteamCMD");
         }
         else if (output.Contains("FAILED (Invalid Login Auth Code)"))
         {
-            response = "Invalid steam guard code";
+            qaCheck.SetFailed("Steam Guard code that was provided was invalid");
         }
         else if (output.Contains("Invalid Password"))
         {
-            response = "Invalid password or username";
+            qaCheck.SetFailed("Invalid password or username");
         }
         else if (output.Contains("OK"))
         {
-            response = "Configured";
+            qaCheck.SetPassed(null);
         }
 
         //Manually kill the process or it will stay on the guard code input 
         cmd.Kill(true);
 
-        return response;
+        return qaCheck;
     }
 }

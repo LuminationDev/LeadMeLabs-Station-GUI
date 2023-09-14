@@ -37,7 +37,7 @@ namespace Station
         {
             if (steamId.Length > 0)
             {
-                return "";
+                return steamId;
             }
             string fileLocation = "C:\\Program Files (x86)\\Steam\\config\\config.vdf";
             if (!File.Exists(fileLocation))

@@ -1,53 +1,42 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Management;
 using System.Net.Http;
-using LeadMeLabsLibrary;
 using Microsoft.Win32;
 using Newtonsoft.Json;
 
 namespace Station._qa.checks;
 
-public class WindowsInfo
-{
-    public string? MagicPacket { get; set; }
-    public string? AmdInstalled { get; set; }
-    public string? OpensslEnv { get; set; }
-    public string? WallPaper { get; set; }
-    public string? TimeZone { get; set; }
-    public string? SystemTime { get; set; }
-    public string? Firewall { get; set; }
-}
-
 public class WindowChecks
 {
-    public string? GetLocalOsSettings()
+    private List<QaCheck> _qaChecks = new();
+    public List<QaCheck> RunQa()
     {
-        WindowsInfo windowInfo = new WindowsInfo
-        {
-            MagicPacket = QueryNetworkAdapter(), //Move to LeadMeLibrary
-            AmdInstalled = IsAmdInstalled(),
-            OpensslEnv = CheckEnvAsync(),
-            WallPaper = CheckWallpaper(), //Move to LeadMeLibrary
-            TimeZone = CheckTimezone(), //Move to LeadMeLibrary
-            SystemTime = CheckTimeAndDate(), //Move to LeadMeLibrary
-            Firewall = FirewallManagement.IsProgramAllowedThroughFirewall() ?? "Unknown"
-        };
-        
-        return JsonConvert.SerializeObject(windowInfo);
+        _qaChecks.Add(IsWakeOnMagicPacketEnabled());
+        _qaChecks.Add(IsAmdInstalled());
+        _qaChecks.Add(CheckEnvAsync());
+        _qaChecks.Add(CheckWallpaper());
+        _qaChecks.Add(CheckTimezone());
+        _qaChecks.Add(CheckTimeAndDate());
+        // todo - firewall management program through firewall from library
+
+        return _qaChecks;
     }
     
     /// <summary>
     /// Query the main network adapter (this should only be one, however test this)
     /// </summary>
-    private string QueryNetworkAdapter()
+    private QaCheck IsWakeOnMagicPacketEnabled()
     {
+        QaCheck qaCheck = new QaCheck("magic_packet_enabled");
         const string powershellCommand = "Get-NetAdapterAdvancedProperty -Name '*' -RegistryKeyword '*WakeOnMagicPacket' | Select-Object -Property Name, DisplayName, DisplayValue";
 
         string? output = CommandLine.RunProgramWithOutput("powershell.exe", $"-NoProfile -ExecutionPolicy unrestricted -Command \"{powershellCommand}\"");
 
         if (output == null)
         {
-            return "Display value not found.";
+            qaCheck.SetFailed("Couldn't find any value for wake on magic packet");
+            return qaCheck;
         }
         
         string[] lines = output.Split('\n');
@@ -56,18 +45,29 @@ public class WindowChecks
             if (line.Contains("Wake on Magic Packet"))
             {
                 string[] split = line.Split("Wake on Magic Packet");
-                return split[0].Trim() + ":Wake on Magic Packet:" + split[1].Trim();
+                if (split[1].Contains("Enabled"))
+                {
+                    qaCheck.SetPassed(null);
+                }
+                else
+                {
+                    qaCheck.SetFailed("Value for wake on magic packet was not enabled. Value: " + split[1]);
+                }
+
+                return qaCheck;
             }
         }
         
-        return "Display value not found.";
+        qaCheck.SetFailed("Couldn't find any value for wake on magic packet");
+        return qaCheck;
     }
     
     /// <summary>
     /// Checks if AMD Adrenalin is installed on the system.
     /// </summary>
-    private string IsAmdInstalled()
+    private QaCheck IsAmdInstalled()
     {
+        QaCheck qaCheck = new QaCheck("amd_installed");
         const string adrenalinSearchKey = @"SOFTWARE\AMD";
         const string adrenalinValueName = "DisplayName";
         const string adrenalinValueExpected = "AMD Radeon Software";
@@ -87,7 +87,8 @@ public class WindowChecks
                                 object value = subKey.GetValue(adrenalinValueName);
                                 if (value != null && value.ToString() == adrenalinValueExpected)
                                 {
-                                    return "Installed";
+                                    qaCheck.SetPassed(null);
+                                    return qaCheck;
                                 }
                             }
                         }
@@ -96,12 +97,14 @@ public class WindowChecks
             }
 
             Console.WriteLine("AMD Adrenalin is not installed.");
-            return "Not installed";
+            qaCheck.SetFailed("AMD Adrenalin is not installed.");
+            return qaCheck;
         }
         catch (Exception ex)
         {
             Console.WriteLine($"Error: {ex.Message}");
-            return $"Error: {ex.Message}";
+            qaCheck.SetFailed($"Error: {ex.Message}");
+            return qaCheck;
         }
     }
     
@@ -109,18 +112,29 @@ public class WindowChecks
     /// Check the System Variables for the OPENSSL_ia32cap entry, check if it is there and also what the value is currently
     /// set to.
     /// </summary>
-    private string CheckEnvAsync()
+    private QaCheck CheckEnvAsync()
     {
+        QaCheck qaCheck = new QaCheck("openssl_environment");
         string variableName = "OPENSSL_ia32cap";
         string? variableValue = Environment.GetEnvironmentVariable(variableName, EnvironmentVariableTarget.Machine);
-        return string.IsNullOrWhiteSpace(variableValue) ? "Undefined" : variableValue;
+        if (variableName != null && variableName.Equals("~0x20000000"))
+        {
+            qaCheck.SetPassed(null);
+        }
+        else
+        {
+            qaCheck.SetFailed("OPENSSL_ia32cap was not set or set to the wrong value. Value: " + variableValue);
+        }
+
+        return qaCheck;
     }
     
     /// <summary>
     /// Read the registry desktop entry to collect the name of the image used as the current wallpaper.
     /// </summary>
-    private string CheckWallpaper()
+    private QaCheck CheckWallpaper()
     {
+        QaCheck qaCheck = new QaCheck("wallpaper_is_set");
         try
         {
             ManagementScope scope = new ManagementScope(@"\\.\root\CIMv2");
@@ -134,34 +148,47 @@ public class WindowChecks
                     if (obj["Wallpaper"] != null)
                     {
                         string wallpaperPath = obj["Wallpaper"].ToString();
-                        return System.IO.Path.GetFileName(wallpaperPath) ?? "Unknown";
+                        // todo - what should it be set to based on the station id
+                        qaCheck.SetPassed("Wallpaper is set to: " + (System.IO.Path.GetFileName(wallpaperPath) ?? "Unknown"));
+                        return qaCheck;
                     }
                 }
             }
 
-            return "Unknown";
+            qaCheck.SetFailed("Could not find wallpaper");
         }
         catch (Exception ex)
         {
-            return $"Error: {ex.Message}";
+            qaCheck.SetFailed($"Error: {ex.Message}");
         }
+
+        return qaCheck;
     }
 
     /// <summary>
     /// Check the local computers currently set timezone.
     /// </summary>
-    private string CheckTimezone()
+    private QaCheck CheckTimezone()
     {
+        QaCheck qaCheck = new QaCheck("timezone_correct");
         TimeZoneInfo localTimeZone = TimeZoneInfo.Local;
-        return localTimeZone.DisplayName;
+        qaCheck.SetPassed("Timezone is set to: " + localTimeZone); // todo - need to find the correct timezone
+        return qaCheck;
     }
     
     /// <summary>
     /// Checks the accuracy of the system time and date by comparing it with an online NTP server.
     /// </summary>
     /// <returns>A message indicating whether the system time is accurate or inaccurate, or an error message in case of an error.</returns>
-    private string CheckTimeAndDate()
+    private QaCheck CheckTimeAndDate()
     {
+        QaCheck qaCheck = new QaCheck("correct_datetime");
+        if (!Network.CheckIfConnectedToInternet())
+        {
+            qaCheck.SetWarning("Unable to confirm datetime as not connected to internet");
+            return qaCheck;
+        }
+
         try
         {
             // Get the current system time in Unix timestamp
@@ -183,22 +210,32 @@ public class WindowChecks
                 long timeDifferenceMs = Math.Abs(localTime - onlineUnixTime);
 
                 // Define a threshold for acceptable time difference (e.g., 10 seconds)
-                long acceptableTimeDifferenceMs = 10000;
+                long acceptableTimeDifferenceMs = 5000;
 
                 Console.WriteLine(timeDifferenceMs);
                 
                 // Compare the time difference with the acceptable threshold
                 if (timeDifferenceMs <= acceptableTimeDifferenceMs)
                 {
-                    return "System time is accurate.";
+                    qaCheck.SetPassed(null);
                 }
 
-                return "System time is inaccurate.";
+                qaCheck.SetFailed($"Time did not match current world time. Local time is {UnixTimeStampToDateTime(localTime)} and online time is {UnixTimeStampToDateTime(onlineUnixTime)}");
             }
         }
         catch (Exception ex)
         {
-            return $"Error: {ex.Message}";
+            qaCheck.SetFailed($"Error: {ex.Message}");
         }
+
+        return qaCheck;
+    }
+    
+    private static DateTime UnixTimeStampToDateTime( double unixTimeStamp )
+    {
+        // Unix timestamp is seconds past epoch
+        DateTime dateTime = new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc);
+        dateTime = dateTime.AddMilliseconds(unixTimeStamp).ToLocalTime();
+        return dateTime;
     }
 }
