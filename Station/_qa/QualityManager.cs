@@ -1,13 +1,14 @@
-﻿using Station._qa.checks;
+﻿using Newtonsoft.Json;
+using Station._qa.checks;
 namespace Station;
 
 public class QualityManager
 {
-    public readonly NetworkChecks _networkChecks = new();
-    public readonly WindowChecks _windowChecks = new();
-    public readonly SoftwareChecks _softwareChecks = new();
-    public readonly ConfigChecks _configChecks = new();
-    public readonly SteamConfigChecks _steamConfigChecks = new();
+    public readonly NetworkChecks networkChecks = new();
+    public readonly WindowChecks windowChecks = new();
+    public readonly SoftwareChecks softwareChecks = new();
+    public readonly ConfigChecks configChecks = new();
+    public readonly SteamConfigChecks steamConfigChecks = new();
 
     //TODO Add the QaCheck class in to handle the results
     public string? DetermineCheck(string type)
@@ -17,11 +18,23 @@ public class QualityManager
         switch (type)
         {
             case "StationNetwork":
-                message = "Network::::" + _networkChecks.GetNetworkInterfaceByIpAddress(Manager.localEndPoint.Address.ToString());
+                message = "Network::::" + networkChecks.GetNetworkInterfaceByIpAddress(Manager.localEndPoint.Address.ToString());
+                break;
+            
+            case "StationWindows":
+                message = JsonConvert.SerializeObject(windowChecks.RunQa());
+                break;
+            
+            case "StationSoftware":
+                message = JsonConvert.SerializeObject(softwareChecks.RunQa());
+                break;
+            
+            case "StationConfig":
+                message = "Config::::" + configChecks.GetLocalStationDetails();
                 break;
             
             case "StationAll":
-                message = _networkChecks.GetNetworkInterfaceByIpAddress(Manager.localEndPoint.Address.ToString()) + "::::";
+                message = networkChecks.GetNetworkInterfaceByIpAddress(Manager.localEndPoint.Address.ToString()) + "::::";
                 // message += _windowChecks.GetLocalOsSettings() + "::::";
                 break;
             
