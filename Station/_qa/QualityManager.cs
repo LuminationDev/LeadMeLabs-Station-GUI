@@ -18,7 +18,7 @@ public class QualityManager
         switch (type)
         {
             case "StationNetwork":
-                message = "Network::::" + networkChecks.GetNetworkInterfaceByIpAddress(Manager.localEndPoint.Address.ToString());
+                message = JsonConvert.SerializeObject(networkChecks.GetNetworkInterfaceByIpAddress(Manager.localEndPoint.Address.ToString()));
                 break;
             
             case "StationWindows":
@@ -30,7 +30,7 @@ public class QualityManager
                 break;
             
             case "StationConfig":
-                message = "Config::::" + configChecks.GetLocalStationDetails();
+                message = JsonConvert.SerializeObject(configChecks.GetLocalStationDetails());
                 break;
             
             case "StationAll":
