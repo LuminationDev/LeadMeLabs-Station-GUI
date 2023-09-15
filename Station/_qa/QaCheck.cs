@@ -10,11 +10,11 @@ public class QaCheck
     [JsonProperty]
     private string? _message = null;
     [JsonProperty]
-    private string _checkId;
+    private string _id;
 
-    public QaCheck(string checkId)
+    public QaCheck(string id)
     {
-        this._checkId = checkId;
+        this._id = id;
     }
 
     public void SetFailed(string message)
