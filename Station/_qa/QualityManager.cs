@@ -20,26 +20,9 @@ public class QualityManager
                 message = "Network::::" + _networkChecks.GetNetworkInterfaceByIpAddress(Manager.localEndPoint.Address.ToString());
                 break;
             
-            case "StationWindows":
-                //message = "Windows::::" + _windowChecks.GetLocalOsSettings();
-                break;
-            
-            case "StationSoftware":
-                message = _softwareChecks.GetSoftwareInformation();
-                break;
-            
-            case "StationConfig":
-                message = "Config::::" + _configChecks.GetLocalConfigurationDetails();
-                break;
-            
-            case "StationDetails":
-                message = _configChecks.GetLocalStationDetails();
-                break;
-            
             case "StationAll":
                 message = _networkChecks.GetNetworkInterfaceByIpAddress(Manager.localEndPoint.Address.ToString()) + "::::";
                 // message += _windowChecks.GetLocalOsSettings() + "::::";
-                message += _configChecks.GetLocalConfigurationDetails();
                 break;
             
             default:
