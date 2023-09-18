@@ -219,8 +219,11 @@ public class WindowChecks
                 {
                     qaCheck.SetPassed(null);
                 }
-
-                qaCheck.SetFailed($"Time did not match current world time. Local time is {UnixTimeStampToDateTime(localTime)} and online time is {UnixTimeStampToDateTime(onlineUnixTime)}");
+                else
+                {
+                    qaCheck.SetFailed(
+                        $"Time did not match current world time. Local time is {UnixTimeStampToDateTime(localTime)} and online time is {UnixTimeStampToDateTime(onlineUnixTime)}");
+                }
             }
         }
         catch (Exception ex)
