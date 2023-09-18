@@ -188,7 +188,7 @@ namespace Station
         /// <summary>
         /// Run the requested software check.
         /// </summary>
-        private async void HandleQualityAssurance(string additionalData)
+        private void HandleQualityAssurance(string additionalData)
         {
             if (this.additionalData.StartsWith("RunAuto"))
             {
@@ -196,22 +196,23 @@ namespace Station
                 string returnAddress = this.additionalData.Split(":", 3)[2];
                 QualityManager qualityManager = new QualityManager();
                 
-                string result = JsonConvert.SerializeObject(qualityManager._windowChecks.RunQa());
+                string result = JsonConvert.SerializeObject(qualityManager.windowChecks.RunQa());
                 Manager.SendResponse("NUC", "QA", returnAddress + ":::ResponseId:::" + responseId + ":::StationChecks:::" + result);
                 
-                result = JsonConvert.SerializeObject(qualityManager._softwareChecks.RunQa());
+                result = JsonConvert.SerializeObject(qualityManager.softwareChecks.RunQa());
                 Manager.SendResponse("NUC", "QA",  returnAddress + ":::ResponseId:::" + responseId + ":::StationChecks:::" + result);
 
-                result = JsonConvert.SerializeObject(qualityManager._steamConfigChecks.RunQa());
+                result = JsonConvert.SerializeObject(qualityManager.steamConfigChecks.RunQa());
                 Manager.SendResponse("NUC", "QA", returnAddress + ":::ResponseId:::" + responseId + ":::StationChecks:::" + result);
                 
-                result = JsonConvert.SerializeObject(qualityManager._configChecks.GetLocalStationDetails());
+                result = JsonConvert.SerializeObject(qualityManager.configChecks.GetLocalStationDetails());
                 Manager.SendResponse("NUC", "QA", returnAddress + ":::ResponseId:::" + responseId + ":::StationDetails:::" + result);
                 
-                result = JsonConvert.SerializeObject(qualityManager._networkChecks.GetNetworkInterfaceByIpAddress(Manager.localEndPoint.Address.ToString()));
+                result = JsonConvert.SerializeObject(qualityManager.networkChecks.GetNetworkInterfaceByIpAddress(Manager.localEndPoint.Address.ToString()));
                 Manager.SendResponse("NUC", "QA", returnAddress + ":::ResponseId:::" + responseId + ":::StationDetails:::" + result);
                 return;
             }
+            
             //Request:ReturnAddress
             string[] split = additionalData.Split(":");
             if (split.Length > 2)
