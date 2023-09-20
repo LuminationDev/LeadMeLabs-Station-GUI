@@ -213,6 +213,27 @@ namespace Station
                 return;
             }
             
+            if (this.additionalData.StartsWith("RunGroup"))
+            {
+                string responseId = this.additionalData.Split(":", 4)[1]; // the ID that the NUC thinks the station should have
+                string returnAddress = this.additionalData.Split(":", 4)[2] + ":" + this.additionalData.Split(":", 4)[3];
+                string group = this.additionalData.Split(":", 5)[4];
+                QualityManager qualityManager = new QualityManager();
+
+                string result = "";
+                switch (group)
+                {
+                    case "station_connection_checks":
+                        result = JsonConvert.SerializeObject(qualityManager.windowChecks.RunQa());
+                        Manager.SendResponse("NUC", "QA", returnAddress + ":::ResponseId:::" + responseId + ":::StationChecks:::" + group + ":::" + result);
+                        return;
+                    case "steam_config_checks":
+                        result = JsonConvert.SerializeObject(qualityManager.steamConfigChecks.RunQa());
+                        Manager.SendResponse("NUC", "QA", returnAddress + ":::ResponseId:::" + responseId + ":::StationChecks:::" + group + ":::" + result);
+                        return;
+                }
+            }
+            
             //Request:ReturnAddress
             string[] split = additionalData.Split(":");
             if (split.Length > 2)
