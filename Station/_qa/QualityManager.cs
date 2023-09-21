@@ -9,6 +9,7 @@ public class QualityManager
     public readonly SoftwareChecks softwareChecks = new();
     public readonly ConfigChecks configChecks = new();
     public readonly SteamConfigChecks steamConfigChecks = new();
+    public readonly StationConnectionChecks stationConnectionChecks = new();
 
     //TODO Add the QaCheck class in to handle the results
     public string? DetermineCheck(string type)
