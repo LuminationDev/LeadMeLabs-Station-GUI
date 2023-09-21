@@ -224,7 +224,11 @@ namespace Station
                 switch (group)
                 {
                     case "station_connection_checks":
-                        result = JsonConvert.SerializeObject(qualityManager.windowChecks.RunQa());
+                        result = JsonConvert.SerializeObject(qualityManager.stationConnectionChecks.RunQa());
+                        Manager.SendResponse("NUC", "QA", returnAddress + ":::ResponseId:::" + responseId + ":::StationChecks:::" + group + ":::" + result);
+                        return;
+                    case "software_checks":
+                        result = JsonConvert.SerializeObject(qualityManager.softwareChecks.RunQa());
                         Manager.SendResponse("NUC", "QA", returnAddress + ":::ResponseId:::" + responseId + ":::StationChecks:::" + group + ":::" + result);
                         return;
                     case "steam_config_checks":
