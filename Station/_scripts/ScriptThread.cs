@@ -225,17 +225,21 @@ namespace Station
                 {
                     case "station_connection_checks":
                         result = JsonConvert.SerializeObject(qualityManager.stationConnectionChecks.RunQa());
-                        Manager.SendResponse("NUC", "QA", returnAddress + ":::ResponseId:::" + responseId + ":::StationChecks:::" + group + ":::" + result);
-                        return;
+                        break;
+                    case "windows_checks":
+                        result = JsonConvert.SerializeObject(qualityManager.windowChecks.RunQa());
+                        break;
                     case "software_checks":
                         result = JsonConvert.SerializeObject(qualityManager.softwareChecks.RunQa());
-                        Manager.SendResponse("NUC", "QA", returnAddress + ":::ResponseId:::" + responseId + ":::StationChecks:::" + group + ":::" + result);
-                        return;
+                        break;
                     case "steam_config_checks":
                         result = JsonConvert.SerializeObject(qualityManager.steamConfigChecks.RunQa());
-                        Manager.SendResponse("NUC", "QA", returnAddress + ":::ResponseId:::" + responseId + ":::StationChecks:::" + group + ":::" + result);
+                        break;
+                    default:
                         return;
                 }
+                
+                Manager.SendResponse("NUC", "QA", returnAddress + ":::ResponseId:::" + responseId + ":::StationChecks:::" + group + ":::" + result);
             }
             
             //Request:ReturnAddress
