@@ -57,7 +57,7 @@ namespace Station
             throw new NotImplementedException();
         }
 
-        public void WrapProcess(Experience experience)
+        public string WrapProcess(Experience experience)
         {
             Task.Factory.StartNew(() =>
             {
@@ -83,6 +83,7 @@ namespace Station
 
                 InternalProcesses.Add(experience.Name, currentProcess);
             });
+            return "launching";
         }
 
         public void ListenForClose()

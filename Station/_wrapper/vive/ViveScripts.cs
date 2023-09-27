@@ -78,6 +78,15 @@ namespace Station
                 {
                     SessionController.StartVRSession(type);
                     ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage($"SoftwareState,Starting VR Session"), TimeSpan.FromSeconds(1));
+                    if (count == 10) // (10 * 5000ms) this loop + 2000ms initial loop 
+                    {
+                        terminateMonitoring = true;
+                        SessionController.PassStationMessage("MessageToAndroid,HeadsetTimeout");
+                    }
+                    else
+                    {
+                        count++;
+                    }
                     await Task.Delay(5000);
                 }
                 else if (!sent)

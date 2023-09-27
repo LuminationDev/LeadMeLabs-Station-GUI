@@ -188,7 +188,7 @@ namespace Station
         /// <summary>
         /// Run the requested software check.
         /// </summary>
-        private void HandleQualityAssurance(string additionalData)
+        private async void HandleQualityAssurance(string additionalData)
         {
             if (this.additionalData.StartsWith("RunAuto"))
             {
@@ -236,6 +236,24 @@ namespace Station
                         Manager.SendResponse("NUC", "QA", returnAddress + ":::ResponseId:::" + responseId + ":::StationChecks:::" + group + ":::" + result);
                         return;
                 }
+            }
+
+            if (this.additionalData.StartsWith("LaunchExperience"))
+            {
+                string responseId = this.additionalData.Split(":", 4)[1]; // the ID that the NUC thinks the station should have
+                string returnAddress = this.additionalData.Split(":", 4)[2] + ":" + this.additionalData.Split(":", 4)[3];
+                string experienceId = this.additionalData.Split(":", 5)[4];
+                string response = await WrapperManager.StartAProcess(experienceId);
+                if (response.Equals("Launching"))
+                {
+                    Manager.SendResponse("NUC", "QA", returnAddress + ":::ResponseId:::" + responseId + ":::ExperienceLaunching:::" + experienceId + ":::launching");
+                }
+                else
+                {
+                    Manager.SendResponse("NUC", "QA", returnAddress + ":::ResponseId:::" + responseId + ":::ExperienceLaunching:::" + experienceId + ":::failed:::" + response);
+                }
+
+                return;
             }
             
             //Request:ReturnAddress

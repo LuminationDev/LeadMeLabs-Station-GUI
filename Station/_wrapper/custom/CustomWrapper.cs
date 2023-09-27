@@ -116,24 +116,24 @@ namespace Station
             ListenForClose();
         }
 
-        public void WrapProcess(Experience experience)
+        public string WrapProcess(Experience experience)
         {
             if(CommandLine.stationLocation == null)
             {
                 SessionController.PassStationMessage("Cannot find working directory");
-                return;
+                return "Cannot find working directory";
             }
 
             if (SessionController.vrHeadset == null)
             {
                 SessionController.PassStationMessage("No VR headset set.");
-                return;
+                return "No VR headset set.";
             }
 
             if (experience.Name == null || experience.ID == null)
             {
                 SessionController.PassStationMessage("CustomWrapper.WrapProcess - Experience name cannot be null.");
-                return;
+                return "CustomWrapper.WrapProcess - Experience name cannot be null.";
             }
 
             //Close any open custom processes before opening the next one
@@ -149,10 +149,10 @@ namespace Station
             WrapperMonitoringThread.InitializeMonitoring(wrapperType);
 
             //Wait for the Headset's connection method to respond
-            if (!SessionController.vrHeadset.WaitForConnection(wrapperType)) return;
+            if (!SessionController.vrHeadset.WaitForConnection(wrapperType)) return "Could not get headset connection";
 
             //If headset management software is open (with headset connected) and OpenVrSystem cannot initialise then restart SteamVR
-            if (!OpenVRManager.WaitForOpenVR().Result) return;
+            if (!OpenVRManager.WaitForOpenVR().Result) return "Could not connect to OpenVR";
 
             MockConsole.WriteLine($"Launching process: {experience.Name} - {experience.ID}", MockConsole.LogLevel.Normal);
             Task.Factory.StartNew(() =>
@@ -170,7 +170,8 @@ namespace Station
                 //Fall back to the alternate if it fails or is not a registered VR experience in the vrmanifest
                 Logger.WriteLog($"CustomWrapper.WrapProcess - Using AlternateLaunchProcess", MockConsole.LogLevel.Normal);
                 AlternateLaunchProcess(experience);
-            });                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                
+            });
+            return "launching";
         }
 
         #region Alternate Launch Process
@@ -248,6 +249,7 @@ namespace Station
                 UIUpdater.UpdateStatus("Running...");
                 WindowManager.MaximizeProcess(child); //Maximise the process experience
                 SessionController.PassStationMessage($"ApplicationUpdate,{lastExperience.Name}/{lastExperience.ID}/Custom");
+                Manager.SendResponse("NUC", "QA", "ExperienceLaunched:::" + lastExperience.ID);
                 MockConsole.WriteLine($"Application launching: {currentProcess?.MainWindowTitle}/{lastExperience.ID}", MockConsole.LogLevel.Normal);
 
                 ListenForClose();
@@ -257,6 +259,7 @@ namespace Station
                 StopCurrentProcess();
                 UIUpdater.ResetUIDisplay();
                 SessionController.PassStationMessage($"MessageToAndroid,GameLaunchFailed:{lastExperience.Name}");
+                Manager.SendResponse("NUC", "QA", "ExperienceLaunchFailed:::" + lastExperience.ID);
             }
         }
 
