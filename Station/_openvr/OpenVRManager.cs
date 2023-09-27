@@ -430,6 +430,7 @@ namespace Station
                 // Send a message to the NUC
                 SessionController.PassStationMessage(
                     $"ApplicationUpdate,{currentAppName}/{experienceId}/{currentAppType}");
+                Manager.SendResponse("NUC", "QA", "ExperienceLaunched:::" + experienceId);
 
                 // Update the Station UI
                 UIUpdater.UpdateProcess(targetProcess.MainWindowTitle);

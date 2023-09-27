@@ -98,7 +98,7 @@ namespace Station
         /// Start the supplied process and maintain a connection through the current process variable.
         /// </summary>
         /// <param name="experience">A custom struct that contains all the information of an experience.</param>
-        void WrapProcess(Experience experience);
+        string WrapProcess(Experience experience);
 
         /// <summary>
         /// Begin a new task with the purpose of detecting if the current process has been exited.

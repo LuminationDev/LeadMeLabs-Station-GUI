@@ -328,7 +328,7 @@ namespace Station
         /// Explored the loaded application list to find the type and name associated with the supplied proccessID.
         /// Create a wrapper and encapsulate the requested process for further use.
         /// </summary>
-        public static void StartAProcess(string appID)
+        public static async Task<string> StartAProcess(string appID)
         {
             //Get the type from the application dictionary
             //entry [application type, application name, application launch parameters]
@@ -336,13 +336,13 @@ namespace Station
             if (experience.IsNull())
             {
                 SessionController.PassStationMessage($"No application found: {appID}");
-                return;
+                return $"No application found: {appID}";
             }
 
             if(experience.Type == null)
             {
                 SessionController.PassStationMessage($"No wrapper associated with experience {appID}.");
-                return;
+                return $"No wrapper associated with experience {appID}.";
             }
 
             //Determine the wrapper to use
@@ -350,7 +350,7 @@ namespace Station
             if (CurrentWrapper == null)
             {
                 SessionController.PassStationMessage("No process wrapper created.");
-                return;
+                return "No process wrapper created.";
             }
 
             //Stop any current processes before trying to launch a new one
@@ -361,22 +361,24 @@ namespace Station
 
             //Determine what is need to launch the process(appID - Steam or name - Custom)
             //Pass in the launcher parameters if there are any
-            Task.Factory.StartNew(() =>
+            string response = await Task.Factory.StartNew(() =>
             {
                 switch (experience.Type)
                 {
                     case "Custom":
-                        CurrentWrapper.WrapProcess(experience);
+                        return CurrentWrapper.WrapProcess(experience);
                         break;
                     case "Steam":
-                        CurrentWrapper.WrapProcess(experience);
+                        return CurrentWrapper.WrapProcess(experience);
                         break;
                     case "Vive":
                         throw new NotImplementedException();
                     default:
+                        return "Could not find that experience or experience type";
                         break;
                 }
             });
+            return response;
         }
 
         /// <summary>

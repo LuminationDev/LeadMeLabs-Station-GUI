@@ -76,18 +76,18 @@ namespace Station
             ListenForClose();
         }
 
-        public void WrapProcess(Experience experience)
+        public string WrapProcess(Experience experience)
         {
             if (experience.ID == null)
             {
                 SessionController.PassStationMessage($"MessageToAndroid,GameLaunchFailed:Unknown experience");
-                return;
+                return $"MessageToAndroid,GameLaunchFailed:Unknown experience";
             };
 
             if (SessionController.vrHeadset == null)
             {
                 SessionController.PassStationMessage("No VR headset set.");
-                return;
+                return "No VR headset set.";
             }
 
             lastExperience = experience;
@@ -97,7 +97,7 @@ namespace Station
             {
                 SessionController.PassStationMessage($"MessageToAndroid,GameLaunchFailed:Fail to find experience");
                 Logger.WriteLog($"Unable to find Steam experience details (name & install directory) for: {experience.Name}", MockConsole.LogLevel.Normal);
-                return;
+                return $"Unable to find Steam experience details (name & install directory) for: {experience.Name}";
             }
 
             MockConsole.WriteLine($"Wrapping: {experienceName}", MockConsole.LogLevel.Debug);
@@ -109,10 +109,10 @@ namespace Station
             WrapperMonitoringThread.InitializeMonitoring(wrapperType);
 
             //Wait for the Headset's connection method to respond
-            if (!SessionController.vrHeadset.WaitForConnection(wrapperType)) return;
+            if (!SessionController.vrHeadset.WaitForConnection(wrapperType)) return "Could not connect to headset";
 
             //If headset management software is open (with headset connected) and OpenVrSystem cannot initialise then restart SteamVR
-            if (!OpenVRManager.WaitForOpenVR().Result) return;
+            if (!OpenVRManager.WaitForOpenVR().Result) return "Could not start OpenVR";
 
             Task.Factory.StartNew(() =>
             {
@@ -126,10 +126,11 @@ namespace Station
                 //Fall back to the alternate if OpenVR launch fails or is not a registered VR experience in the vrmanifest
                 //Stop any accessory processes before opening a new process
                 SessionController.vrHeadset.StopProcessesBeforeLaunch();
-              
+
                 Logger.WriteLog($"SteamWrapper.WrapProcess - Using AlternateLaunchProcess", MockConsole.LogLevel.Normal);
                 AlternateLaunchProcess(experience);
             });
+            return "launching";
         }
 
         /// <summary>
@@ -227,11 +228,13 @@ namespace Station
                 ListenForClose();
                 WindowManager.MaximizeProcess(child); //Maximise the process experience
                 SessionController.PassStationMessage($"ApplicationUpdate,{experienceName}/{lastExperience.ID}/Steam");
+                Manager.SendResponse("NUC", "QA", "ExperienceLaunched:::" + lastExperience.ID);
             } else
             {
                 Logger.WriteLog("Game launch failure: " + lastExperience.Name, MockConsole.LogLevel.Normal);
                 UIUpdater.ResetUIDisplay();
                 SessionController.PassStationMessage($"MessageToAndroid,GameLaunchFailed:{lastExperience.Name}");
+                Manager.SendResponse("NUC", "QA", "ExperienceLaunchFailed:::" + lastExperience.ID);
             }
         }
 
