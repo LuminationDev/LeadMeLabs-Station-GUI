@@ -218,7 +218,7 @@ namespace Station
 
                 ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage($"SoftwareState,Starting VR processes"), TimeSpan.FromSeconds(0));
                 SessionController.vrHeadset.StartVrSession();
-                // WaitForVRProcesses();
+                WaitForVRProcesses();
             }
         }
 
