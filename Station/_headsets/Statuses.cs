@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using Newtonsoft.Json.Linq;
 
 namespace Station
 {
@@ -10,7 +11,7 @@ namespace Station
     /// included are:
     /// Software Management Status - the software required to manage the headset outside of SteamVR.
     /// OpenVR Status - OpenVR's current status of the headset.
-    /// Controller Statuses - The roll of (left/right) and statues of connected controllers.
+    /// Controller Statuses - The roll of (left/right) and statuses of connected controllers.
     /// Base Stations - The number of and current status of the connected base stations.
     /// </summary>
     public class Statuses
@@ -283,7 +284,7 @@ namespace Station
         /// <summary>
         /// Re-send the current statuses of all VR devices. This is used when a tablet is connecting/reconnecting to the NUC.
         /// </summary>
-        public void QueryStatues()
+        public void QueryStatuses()
         {
             //Headset
             Manager.SendResponse("Android", "Station", $"DeviceStatus:Headset:OpenVR:tracking:{OpenVRStatus.ToString()}");
@@ -307,6 +308,36 @@ namespace Station
                 }
             }
             Manager.SendResponse("Android", "Station", $"DeviceStatus:BaseStation:{active}:{baseStations.Count}");
+        }
+
+        public JObject GetStatusesJson()
+        {
+            JObject vrStatuses = new JObject();
+            vrStatuses.Add("openVrStatus", OpenVRStatus.ToString());
+            vrStatuses.Add("headsetStatus", SoftwareStatus.ToString());
+            
+            // each controller
+            JArray controllersJArray = new JArray();
+            foreach (var vrController in controllers)
+            {
+                JObject controller = new JObject();
+                controller.Add("tracking", vrController.Value.Tracking.ToString());
+                controller.Add("battery", vrController.Value.Battery);
+                controllersJArray.Add(controller);
+            }
+            vrStatuses.Add("controllers", controllersJArray);
+            
+            int active = 0;
+            foreach (var vrBaseStation in baseStations)
+            {
+                if (vrBaseStation.Value.Tracking == DeviceStatus.Connected)
+                {
+                    active++;
+                }
+            }
+            vrStatuses.Add("connectedBaseStations", active);
+
+            return vrStatuses;
         }
     }
 }

@@ -3,6 +3,7 @@ using System.Net;
 using System.Threading.Tasks;
 using LeadMeLabsLibrary;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace Station
 {
@@ -97,7 +98,7 @@ namespace Station
                 if (key == "devices")
                 {
                     //When a tablet connects/reconnects to the NUC, send through the current VR device statuses.
-                    SessionController.vrHeadset?.GetStatusManager().QueryStatues();
+                    SessionController.vrHeadset?.GetStatusManager().QueryStatuses();
                 }
             }
             if (additionalData.StartsWith("SetValue"))
@@ -258,6 +259,19 @@ namespace Station
                 }
 
                 return;
+            }
+
+            if (this.additionalData.StartsWith("GetVrStatuses"))
+            {
+                string responseId = this.additionalData.Split(":", 4)[1]; // the ID that the NUC thinks the station should have
+                string returnAddress = this.additionalData.Split(":", 4)[2] + ":" + this.additionalData.Split(":", 4)[3];
+
+                if (SessionController.vrHeadset == null)
+                {
+                    Manager.SendResponse("NUC", "QA", returnAddress + ":::ResponseId:::" + responseId + ":::VrStatuses:::" + "none");
+                }
+                JObject statuses = SessionController.vrHeadset.GetStatusManager().GetStatusesJson();
+                Manager.SendResponse("NUC", "QA", returnAddress + ":::ResponseId:::" + responseId + ":::VrStatuses:::" + statuses.ToString());
             }
             
             //Request:ReturnAddress
