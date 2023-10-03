@@ -5,6 +5,7 @@ using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Timers;
+using Newtonsoft.Json.Linq;
 using Timer = System.Timers.Timer;
 
 namespace Station
@@ -228,13 +229,26 @@ namespace Station
                 ListenForClose();
                 WindowManager.MaximizeProcess(child); //Maximise the process experience
                 SessionController.PassStationMessage($"ApplicationUpdate,{experienceName}/{lastExperience.ID}/Steam");
-                Manager.SendResponse("NUC", "QA", "ExperienceLaunched:::" + lastExperience.ID);
+                
+                JObject response = new JObject();
+                response.Add("response", "ExperienceLaunched");
+                JObject responseData = new JObject();
+                responseData.Add("experienceId", lastExperience.ID);
+                response.Add("responseData", responseData);
+                
+                Manager.SendResponse("NUC", "QA", response.ToString());
             } else
             {
                 Logger.WriteLog("Game launch failure: " + lastExperience.Name, MockConsole.LogLevel.Normal);
                 UIUpdater.ResetUIDisplay();
                 SessionController.PassStationMessage($"MessageToAndroid,GameLaunchFailed:{lastExperience.Name}");
-                Manager.SendResponse("NUC", "QA", "ExperienceLaunchFailed:::" + lastExperience.ID);
+                JObject response = new JObject();
+                response.Add("response", "ExperienceLaunchedFailed");
+                JObject responseData = new JObject();
+                responseData.Add("experienceId", lastExperience.ID);
+                response.Add("responseData", responseData);
+                
+                Manager.SendResponse("NUC", "QA", response.ToString());
             }
         }
 

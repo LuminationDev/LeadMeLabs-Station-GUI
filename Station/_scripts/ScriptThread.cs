@@ -3,6 +3,7 @@ using System.Net;
 using System.Threading.Tasks;
 using LeadMeLabsLibrary;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace Station
 {
@@ -97,7 +98,7 @@ namespace Station
                 if (key == "devices")
                 {
                     //When a tablet connects/reconnects to the NUC, send through the current VR device statuses.
-                    SessionController.vrHeadset?.GetStatusManager().QueryStatues();
+                    SessionController.vrHeadset?.GetStatusManager().QueryStatuses();
                 }
             }
             if (additionalData.StartsWith("SetValue"))
@@ -190,34 +191,13 @@ namespace Station
         /// </summary>
         private async void HandleQualityAssurance(string additionalData)
         {
-            if (this.additionalData.StartsWith("RunAuto"))
-            {
-                string responseId = this.additionalData.Split(":", 3)[1]; // the ID that the NUC thinks the station should have
-                string returnAddress = this.additionalData.Split(":", 3)[2];
-                QualityManager qualityManager = new QualityManager();
-                
-                string result = JsonConvert.SerializeObject(qualityManager.windowChecks.RunQa());
-                Manager.SendResponse("NUC", "QA", returnAddress + ":::ResponseId:::" + responseId + ":::StationChecks:::" + result);
-                
-                result = JsonConvert.SerializeObject(qualityManager.softwareChecks.RunQa());
-                Manager.SendResponse("NUC", "QA",  returnAddress + ":::ResponseId:::" + responseId + ":::StationChecks:::" + result);
-
-                result = JsonConvert.SerializeObject(qualityManager.steamConfigChecks.RunQa());
-                Manager.SendResponse("NUC", "QA", returnAddress + ":::ResponseId:::" + responseId + ":::StationChecks:::" + result);
-                
-                result = JsonConvert.SerializeObject(qualityManager.configChecks.GetLocalStationDetails());
-                Manager.SendResponse("NUC", "QA", returnAddress + ":::ResponseId:::" + responseId + ":::StationDetails:::" + result);
-                
-                result = JsonConvert.SerializeObject(qualityManager.networkChecks.GetNetworkInterfaceByIpAddress(Manager.localEndPoint.Address.ToString()));
-                Manager.SendResponse("NUC", "QA", returnAddress + ":::ResponseId:::" + responseId + ":::StationDetails:::" + result);
-                return;
-            }
+            JObject requestData = JObject.Parse(this.additionalData);
+            var action = requestData.GetValue("action").ToString();
+            var actionData = (JObject) requestData.GetValue("actionData");
             
-            if (this.additionalData.StartsWith("RunGroup"))
+            if (action.Equals("RunGroup"))
             {
-                string responseId = this.additionalData.Split(":", 4)[1]; // the ID that the NUC thinks the station should have
-                string returnAddress = this.additionalData.Split(":", 4)[2] + ":" + this.additionalData.Split(":", 4)[3];
-                string group = this.additionalData.Split(":", 5)[4];
+                string group = actionData.GetValue("group").ToString();
                 QualityManager qualityManager = new QualityManager();
 
                 string result = "";
@@ -238,51 +218,69 @@ namespace Station
                     default:
                         return;
                 }
+
+                JObject response = new JObject();
+                response.Add("response", "RunGroup");
+                JObject responseData = new JObject();
+                responseData.Add("group", group);
+                responseData.Add("data", result);
+                response.Add("responseData", responseData);
                 
-                Manager.SendResponse("NUC", "QA", returnAddress + ":::ResponseId:::" + responseId + ":::StationChecks:::" + group + ":::" + result);
+                Manager.SendResponse("NUC", "QA", response.ToString());
             }
 
-            if (this.additionalData.StartsWith("LaunchExperience"))
+            if (action.Equals("LaunchExperience"))
             {
-                string responseId = this.additionalData.Split(":", 4)[1]; // the ID that the NUC thinks the station should have
-                string returnAddress = this.additionalData.Split(":", 4)[2] + ":" + this.additionalData.Split(":", 4)[3];
                 string experienceId = this.additionalData.Split(":", 5)[4];
-                string response = await WrapperManager.StartAProcess(experienceId);
-                if (response.Equals("Launching"))
-                {
-                    Manager.SendResponse("NUC", "QA", returnAddress + ":::ResponseId:::" + responseId + ":::ExperienceLaunching:::" + experienceId + ":::launching");
-                }
-                else
-                {
-                    Manager.SendResponse("NUC", "QA", returnAddress + ":::ResponseId:::" + responseId + ":::ExperienceLaunching:::" + experienceId + ":::failed:::" + response);
-                }
-
+                string experienceLaunchResponse = await WrapperManager.StartAProcess(experienceId);
+                
+                JObject response = new JObject();
+                response.Add("response", "ExperienceLaunchAttempt");
+                JObject responseData = new JObject();
+                responseData.Add("result", experienceLaunchResponse.Equals("Launching") ? "launching" : "failed");
+                responseData.Add("message", experienceLaunchResponse);
+                responseData.Add("experienceId", experienceId);
+                response.Add("responseData", responseData);
+                
+                Manager.SendResponse("NUC", "QA", response.ToString());
                 return;
             }
+
+            if (action.Equals("GetVrStatuses"))
+            {
+                JObject response = new JObject();
+                response.Add("response", "GetVrStatuses");
+                JObject responseData = new JObject();
+                response.Add("responseData", responseData);
+                responseData.Add("result",
+                    SessionController.vrHeadset == null
+                        ? null
+                        : SessionController.vrHeadset.GetStatusManager().GetStatusesJson());
+                Manager.SendResponse("NUC", "QA", response.ToString());
+            }
             
+            MockConsole.WriteLine($"Unknown QA request {this.additionalData}", MockConsole.LogLevel.Normal);
+
             //Request:ReturnAddress
-            string[] split = additionalData.Split(":");
-            if (split.Length > 2)
-            {
-                string? response = new QualityManager().DetermineCheck(split[0]);
-                if (response == null)
-                {
-                    return;
-                }
-                
-                string? key = Environment.GetEnvironmentVariable("AppKey", EnvironmentVariableTarget.Process);
-                if (key is null) {
-                    Logger.WriteLog("Encryption key not set", MockConsole.LogLevel.Normal);
-                    return;
-                }
-                
-                SocketClient client = new(EncryptionHelper.Encrypt($"{split[0]}:{response}", key));
-                client.Send(false, IPAddress.Parse(split[1]), int.Parse(split[2]));
-            }
-            else
-            {
-                MockConsole.WriteLine($"Unknown QA request {this.additionalData}", MockConsole.LogLevel.Normal);
-            }
+            // todo - we can probably remove this - just want to keep it for another week (29/09/2023)
+            // string[] split = additionalData.Split(":");
+            // if (split.Length > 2)
+            // {
+            //     string? response = new QualityManager().DetermineCheck(split[0]);
+            //     if (response == null)
+            //     {
+            //         return;
+            //     }
+            //     
+            //     string? key = Environment.GetEnvironmentVariable("AppKey", EnvironmentVariableTarget.Process);
+            //     if (key is null) {
+            //         Logger.WriteLog("Encryption key not set", MockConsole.LogLevel.Normal);
+            //         return;
+            //     }
+            //     
+            //     SocketClient client = new(EncryptionHelper.Encrypt($"{split[0]}:{response}", key));
+            //     client.Send(false, IPAddress.Parse(split[1]), int.Parse(split[2]));
+            // }
         }
     }
 }
