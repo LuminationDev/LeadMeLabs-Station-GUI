@@ -5,6 +5,7 @@ using System.IO;
 using System.Numerics;
 using System.Text;
 using System.Threading.Tasks;
+using Newtonsoft.Json.Linq;
 using Valve.VR;
 
 namespace Station
@@ -430,7 +431,14 @@ namespace Station
                 // Send a message to the NUC
                 SessionController.PassStationMessage(
                     $"ApplicationUpdate,{currentAppName}/{experienceId}/{currentAppType}");
-                Manager.SendResponse("NUC", "QA", "ExperienceLaunched:::" + experienceId);
+                
+                JObject response = new JObject();
+                response.Add("response", "ExperienceLaunched");
+                JObject responseData = new JObject();
+                responseData.Add("experienceId", experienceId);
+                response.Add("responseData", responseData);
+                
+                Manager.SendResponse("NUC", "QA", response.ToString());
 
                 // Update the Station UI
                 UIUpdater.UpdateProcess(targetProcess.MainWindowTitle);

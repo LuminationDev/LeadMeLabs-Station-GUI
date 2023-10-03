@@ -5,6 +5,7 @@ using System.IO;
 using System.Threading.Tasks;
 using LeadMeLabsLibrary;
 using leadme_api;
+using Newtonsoft.Json.Linq;
 
 namespace Station
 {
@@ -249,7 +250,14 @@ namespace Station
                 UIUpdater.UpdateStatus("Running...");
                 WindowManager.MaximizeProcess(child); //Maximise the process experience
                 SessionController.PassStationMessage($"ApplicationUpdate,{lastExperience.Name}/{lastExperience.ID}/Custom");
-                Manager.SendResponse("NUC", "QA", "ExperienceLaunched:::" + lastExperience.ID);
+                
+                JObject response = new JObject();
+                response.Add("response", "ExperienceLaunched");
+                JObject responseData = new JObject();
+                responseData.Add("experienceId", lastExperience.ID);
+                response.Add("responseData", responseData);
+                Manager.SendResponse("NUC", "QA", response.ToString());
+
                 MockConsole.WriteLine($"Application launching: {currentProcess?.MainWindowTitle}/{lastExperience.ID}", MockConsole.LogLevel.Normal);
 
                 ListenForClose();
@@ -259,7 +267,14 @@ namespace Station
                 StopCurrentProcess();
                 UIUpdater.ResetUIDisplay();
                 SessionController.PassStationMessage($"MessageToAndroid,GameLaunchFailed:{lastExperience.Name}");
-                Manager.SendResponse("NUC", "QA", "ExperienceLaunchFailed:::" + lastExperience.ID);
+                
+                JObject response = new JObject();
+                response.Add("response", "ExperienceLaunchFailed");
+                JObject responseData = new JObject();
+                responseData.Add("experienceId", lastExperience.ID);
+                response.Add("responseData", responseData);
+                
+                Manager.SendResponse("NUC", "QA", response.ToString());
             }
         }
 
