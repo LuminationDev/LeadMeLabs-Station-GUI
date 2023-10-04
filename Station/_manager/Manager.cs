@@ -307,11 +307,22 @@ namespace Station
         /// </summary>
         public static void SendResponse(string destination, string actionNamespace, string? additionalData, bool writeToLog = true)
         {
+            IPAddress? address = null;
+            int? port = null;
+            
             string source = "Station," + Environment.GetEnvironmentVariable("StationId", EnvironmentVariableTarget.Process);
             string response = source + ":" + destination + ":" + actionNamespace;
             if (additionalData != null)
             {
                 response = response + ":" + additionalData;
+            }
+            
+            if (destination.StartsWith("QA:"))
+            {
+                address = IPAddress.Parse(destination.Substring(3).Split(":")[0]);
+                port = Int32.Parse(destination.Substring(3).Split(":")[1]);
+                destination = "QA";
+                response = additionalData;
             }
 
             Logger.WriteLog("Sending: " + response, MockConsole.LogLevel.Normal, writeToLog);
@@ -323,7 +334,14 @@ namespace Station
             }
             
             SocketClient client = new(EncryptionHelper.Encrypt(response, key));
-            client.Send(writeToLog);
+            if (address != null && port != null)
+            {
+                client.Send(writeToLog, address, port);
+            }
+            else
+            {
+                client.Send(writeToLog);
+            }
         }
     }
 }

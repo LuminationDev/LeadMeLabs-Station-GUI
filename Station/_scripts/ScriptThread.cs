@@ -191,9 +191,26 @@ namespace Station
         /// </summary>
         private async void HandleQualityAssurance(string additionalData)
         {
-            JObject requestData = JObject.Parse(this.additionalData);
+            JObject requestData = JObject.Parse(additionalData);
             var action = requestData.GetValue("action").ToString();
             var actionData = (JObject) requestData.GetValue("actionData");
+
+            if (action.Equals("ConnectStation"))
+            {
+                JObject response = new JObject();
+                response.Add("response", "StationConnected");
+                JObject responseData = new JObject();
+                responseData.Add("ipAddress", SystemInformation.GetIPAddress().ToString());
+                responseData.Add("nucIpAddress", Environment.GetEnvironmentVariable("NucAddress", EnvironmentVariableTarget.Process) ?? "Not found");
+                responseData.Add("id", Environment.GetEnvironmentVariable("StationId", EnvironmentVariableTarget.Process) ?? "Not found");
+                responseData.Add("labLocation", Environment.GetEnvironmentVariable("LabLocation", EnvironmentVariableTarget.Process) ?? "Not found");
+                responseData.Add("room", Environment.GetEnvironmentVariable("room", EnvironmentVariableTarget.Process) ?? "Not found");
+                responseData.Add("macAddress", SystemInformation.GetMACAddress());
+                responseData.Add("expectedStationId", actionData.GetValue("expectedStationId"));
+                response.Add("responseData", responseData);
+                
+                Manager.SendResponse("QA:" + requestData.GetValue("qaToolAddress") , "QA", response.ToString());
+            }
             
             if (action.Equals("RunGroup"))
             {
