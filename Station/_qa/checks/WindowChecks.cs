@@ -26,6 +26,8 @@ public class WindowChecks
         _qaChecks.Add(IsNvidiaNotInstalled());
         _qaChecks.Add(IsAllowedThroughFirewall());
         _qaChecks.Add(IsLauncherAllowedThroughFirewall());
+        _qaChecks.Add(CanAccessStationHeroku());
+        _qaChecks.Add(CanAccessLauncherHeroku());
 
         return _qaChecks;
     }
@@ -443,5 +445,55 @@ public class WindowChecks
         DateTime dateTime = new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc);
         dateTime = dateTime.AddMilliseconds(unixTimeStamp).ToLocalTime();
         return dateTime;
+    }
+    
+    private QaCheck CanAccessStationHeroku()
+    {
+        QaCheck qaCheck = new QaCheck("can_access_station_hosting");
+        try
+        {
+            using var httpClient = new HttpClient();
+            httpClient.Timeout = TimeSpan.FromSeconds(10);
+            var response = httpClient.GetAsync("http://learninglablauncher.herokuapp.com/program-station-version").GetAwaiter().GetResult();
+            if (response.IsSuccessStatusCode)
+            {
+                qaCheck.SetPassed(null);
+            }
+            else
+            {
+                qaCheck.SetFailed("Accessing station heroku failed with status code: " + response.StatusCode);
+            }
+        }
+        catch (Exception e)
+        {
+            qaCheck.SetFailed("Accessing station heroku failed with exception: " + e.ToString());
+        }
+
+        return qaCheck;
+    }
+    
+    private QaCheck CanAccessLauncherHeroku()
+    {
+        QaCheck qaCheck = new QaCheck("can_access_nuc_hosting");
+        try
+        {
+            using var httpClient = new HttpClient();
+            httpClient.Timeout = TimeSpan.FromSeconds(10);
+            var response = httpClient.GetAsync("http://electronlauncher.herokuapp.com/static/electron-launcher/latest.yml").GetAwaiter().GetResult();
+            if (response.IsSuccessStatusCode)
+            {
+                qaCheck.SetPassed(null);
+            }
+            else
+            {
+                qaCheck.SetFailed("Accessing launcher heroku failed with status code: " + response.StatusCode);
+            }
+        }
+        catch (Exception e)
+        {
+            qaCheck.SetFailed("Accessing launcher heroku failed with exception: " + e.ToString());
+        }
+
+        return qaCheck;
     }
 }
