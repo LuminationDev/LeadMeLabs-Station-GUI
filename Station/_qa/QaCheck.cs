@@ -45,4 +45,9 @@ public class QaCheck
     {
         return _passedStatus != null && _passedStatus.Equals("passed");
     }
+    
+    public bool PassedStatusNotSet()
+    {
+        return _passedStatus == null;
+    }
 }

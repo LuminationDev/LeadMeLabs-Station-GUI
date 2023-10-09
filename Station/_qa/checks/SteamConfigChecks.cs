@@ -2,6 +2,8 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
+using LeadMeLabsLibrary;
 
 namespace Station._qa.checks
 {
@@ -26,11 +28,13 @@ namespace Station._qa.checks
                 _steamId = SteamConfig.GetSteamId();
             }
 
+            _qaChecks.Add(IsSteamPasswordComplexEnough());
             _qaChecks.Add(IsSteamInitialized());
             _qaChecks.Add(IsFriendsSettingsDisabled());
             _qaChecks.Add(IsDownloadRegionSetCorrectly());
             _qaChecks.Add(IsCloudEnabledOff());
             _qaChecks.Add(IsDefaultPageSetToLibrary());
+            _qaChecks.Add(IsSteamInstalledInTheCorrectLocation());
             _qaChecks.AddRange(IsLoginUsersCorrectlySet());
             _qaChecks.AddRange(IsSteamVrSettingsCorrectlySet());
             return _qaChecks;
@@ -54,9 +58,9 @@ namespace Station._qa.checks
         
         private QaCheck IsSteamPasswordSet()
         {
-            string? username = Environment.GetEnvironmentVariable("SteamPassword", EnvironmentVariableTarget.Process);
+            string? password = Environment.GetEnvironmentVariable("SteamPassword", EnvironmentVariableTarget.Process);
             QaCheck qaCheck = new QaCheck("steam_password");
-            if (string.IsNullOrEmpty(username))
+            if (string.IsNullOrEmpty(password))
             {
                 qaCheck.SetFailed("SteamPassword was null or empty");
             }
@@ -65,6 +69,25 @@ namespace Station._qa.checks
                 qaCheck.SetPassed(null);
             }
 
+            return qaCheck;
+        }
+        
+        private QaCheck IsSteamPasswordComplexEnough()
+        {
+            string? password = Environment.GetEnvironmentVariable("SteamPassword", EnvironmentVariableTarget.Process);
+            QaCheck qaCheck = new QaCheck("steam_password_complexity");
+
+            bool isPasswordValid = Helpers.DoesPasswordMeetRequirements(password);
+            if (isPasswordValid)
+            {
+                qaCheck.SetPassed(null);
+            }
+            else
+            {
+                List<string> passwordValidityMessages = Helpers.GetPasswordValidityMessages(password);
+                qaCheck.SetFailed(string.Join(';', passwordValidityMessages));
+            }
+            
             return qaCheck;
         }
 
@@ -86,6 +109,30 @@ namespace Station._qa.checks
             }
 
             return qaCheck;
+        }
+        
+        private QaCheck IsSteamInstalledInTheCorrectLocation()
+        {
+            QaCheck qaCheck = new QaCheck("steam_install_location");
+            const string powershellCommand = "Get-ItemProperty -Path HKCU:\\SOFTWARE\\Valve\\Steam -Name SteamPath | grep SteamPath";
+
+            string? output = CommandLine.RunProgramWithOutput("powershell.exe", $"-NoProfile -ExecutionPolicy unrestricted -Command \"{powershellCommand}\"");
+
+            if (string.IsNullOrWhiteSpace(output))
+            {
+                qaCheck.SetFailed("Could not find steam install location in registry");
+                return qaCheck;
+            }
+            if (output.Contains("SteamPath    : c:/program files (x86)/steam"))
+            {
+                qaCheck.SetPassed(null);
+                return qaCheck;
+            }
+            else
+            {
+                qaCheck.SetFailed("Steam install location is not correct. Installed at: " + output.Split("SteamPath")[1].Trim());
+                return qaCheck;
+            }
         }
 
         private QaCheck IsFriendsSettingsDisabled()
@@ -423,6 +470,7 @@ namespace Station._qa.checks
             QaCheck pauseCompositorSetToFalse = new QaCheck("pause_compositor_set_to_false");
             QaCheck steamVrDashboardDisabled = new QaCheck("steamvr_dashboard_disabled");
             QaCheck steamVrStatusNotOnTop = new QaCheck("steamvr_status_not_on_top");
+            QaCheck fenceCorrectColour = new QaCheck("fence_correct_colour");
             List<QaCheck> qaChecks;
             if (!IsSteamInitialized().GetPassedCheck())
             {
@@ -432,6 +480,7 @@ namespace Station._qa.checks
                 pauseCompositorSetToFalse.SetFailed(NotInitializedMessage);
                 steamVrDashboardDisabled.SetFailed(NotInitializedMessage);
                 steamVrStatusNotOnTop.SetFailed(NotInitializedMessage);
+                fenceCorrectColour.SetFailed(NotInitializedMessage);
                 qaChecks = new List<QaCheck> { homeAppDisabled, controllerTimeoutSetToZero, screenTimeoutSetTo1800, pauseCompositorSetToFalse, steamVrDashboardDisabled, steamVrStatusNotOnTop };
                 return qaChecks;
             }
@@ -454,6 +503,36 @@ namespace Station._qa.checks
                     
                     foreach (var line in lines)
                     {
+                        if (line.Contains("CollisionBoundsColorGammaA"))
+                        {
+                            if (!line.Contains("255"))
+                            {
+                                fenceCorrectColour.SetFailed("Fence colour is not red");
+                            }
+                        }
+                        if (line.Contains("CollisionBoundsColorGammaR"))
+                        {
+                            if (!line.Contains("255"))
+                            {
+                                fenceCorrectColour.SetFailed("Fence colour is not red");
+                            }
+                        }
+                        if (line.Contains("CollisionBoundsColorGammaG"))
+                        {
+                            if (!line.Contains("0"))
+                            {
+                                fenceCorrectColour.SetFailed("Fence colour is not red");
+                            }
+                        }
+                        if (line.Contains("CollisionBoundsColorGammaB"))
+                        {
+                            if (!line.Contains("0"))
+                            {
+                                fenceCorrectColour.SetFailed("Fence colour is not red");
+                            }
+                        }
+                        
+                        
                         if (line.Contains("enableHomeApp"))
                         {
                             if (line.Contains("false"))
@@ -526,6 +605,10 @@ namespace Station._qa.checks
                             }
                         }
                     }
+                    if (fenceCorrectColour.PassedStatusNotSet())
+                    {
+                        fenceCorrectColour.SetPassed(null);
+                    }
                 }
                 catch (Exception e)
                 {
@@ -541,11 +624,12 @@ namespace Station._qa.checks
                 pauseCompositorSetToFalse.SetFailed(message);
                 steamVrDashboardDisabled.SetFailed(message);
                 steamVrStatusNotOnTop.SetFailed(message);
-                qaChecks = new List<QaCheck> { homeAppDisabled, controllerTimeoutSetToZero, screenTimeoutSetTo1800, pauseCompositorSetToFalse, steamVrDashboardDisabled, steamVrStatusNotOnTop };
+                fenceCorrectColour.SetFailed(message);
+                qaChecks = new List<QaCheck> { homeAppDisabled, controllerTimeoutSetToZero, screenTimeoutSetTo1800, pauseCompositorSetToFalse, steamVrDashboardDisabled, steamVrStatusNotOnTop, fenceCorrectColour };
                 return qaChecks;
             }
 
-            qaChecks = new List<QaCheck> { homeAppDisabled, controllerTimeoutSetToZero, screenTimeoutSetTo1800, pauseCompositorSetToFalse, steamVrDashboardDisabled, steamVrStatusNotOnTop };
+            qaChecks = new List<QaCheck> { homeAppDisabled, controllerTimeoutSetToZero, screenTimeoutSetTo1800, pauseCompositorSetToFalse, steamVrDashboardDisabled, steamVrStatusNotOnTop, fenceCorrectColour };
             return qaChecks;
         }
     }

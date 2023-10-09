@@ -48,6 +48,7 @@ namespace Station
         /// The relative path of the steamCMD executable on the local machine.
         /// </summary>
         public static string steamCmd = @"\external\steamcmd\steamcmd.exe";
+        public static string steamCmdFolder = @"\external\steamcmd\";
 
         /// <summary>
         /// Track if SteamCMD is currently being configured with a Guard Key.

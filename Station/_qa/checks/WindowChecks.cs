@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Management;
 using System.Net.Http;
 using Microsoft.Win32;
 using Newtonsoft.Json;
+using LeadMeLabsLibrary;
 
 namespace Station._qa.checks;
 
@@ -18,9 +20,54 @@ public class WindowChecks
         _qaChecks.Add(CheckWallpaper());
         _qaChecks.Add(CheckTimezone());
         _qaChecks.Add(CheckTimeAndDate());
-        // todo - firewall management program through firewall from library
+        _qaChecks.Add(IsTaskSchedulerCreated());
+        _qaChecks.Add(IsOldTaskSchedulerNotPresent());
+        _qaChecks.Add(IsDriverEasyNotInstalled());
+        _qaChecks.Add(IsNvidiaNotInstalled());
+        _qaChecks.Add(IsAllowedThroughFirewall());
+        _qaChecks.Add(IsLauncherAllowedThroughFirewall());
 
         return _qaChecks;
+    }
+    
+    /// <summary>
+    /// Is program allowed through firewall
+    /// </summary>
+    private QaCheck IsAllowedThroughFirewall()
+    {
+        QaCheck qaCheck = new QaCheck("allowed_through_firewall");
+
+        string result = FirewallManagement.IsProgramAllowedThroughFirewall() ?? "Unknown";
+        if (result.Equals("Allowed"))
+        {
+            qaCheck.SetPassed(null);
+        }
+        else
+        {
+            qaCheck.SetFailed("Program not allowed through firewall");
+        }
+
+        return qaCheck;
+    }
+    
+    /// <summary>
+    /// Is launcher allowed through firewall
+    /// </summary>
+    private QaCheck IsLauncherAllowedThroughFirewall()
+    {
+        QaCheck qaCheck = new QaCheck("allowed_through_firewall");
+
+        string result = FirewallManagement.IsProgramAllowedThroughFirewall($"C:\\Users\\{Environment.GetEnvironmentVariable("UserDirectory")}\\AppData\\Local\\Programs\\LeadMe") ?? "Unknown";
+        if (result.Equals("Allowed"))
+        {
+            qaCheck.SetPassed(null);
+        }
+        else
+        {
+            qaCheck.SetFailed("Program not allowed through firewall");
+        }
+
+        return qaCheck;
     }
     
     /// <summary>
@@ -109,6 +156,70 @@ public class WindowChecks
     }
     
     /// <summary>
+    /// Checks that DriverEasy is not installed
+    /// </summary>
+    private QaCheck IsDriverEasyNotInstalled()
+    {
+        QaCheck qaCheck = new QaCheck("drivereasy_not_installed");
+        const string powershellCommand = "Get-ItemProperty -Path \"HKLM:\\Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\*\" | Where-Object { $_.DisplayName -Like \"*Driver Easy*\" }";
+
+        string? output = CommandLine.RunProgramWithOutput("powershell.exe", $"-NoProfile -ExecutionPolicy unrestricted -Command \"{powershellCommand}\"");
+
+        if (string.IsNullOrWhiteSpace(output))
+        {
+            qaCheck.SetPassed("Could not find DriverEasy");
+            return qaCheck;
+        }
+        
+        string[] lines = output.Split('\n');
+        foreach (string line in lines)
+        {
+            if (line.Contains("InstallLocation"))
+            {
+                string[] split = line.Split("InstallLocation");
+                qaCheck.SetFailed("Found DriverEasy at location: " + split[1]);
+
+                return qaCheck;
+            }
+        }
+        
+        qaCheck.SetFailed("Unknown failure");
+        return qaCheck;
+    }
+    
+    /// <summary>
+    /// Checks that NVIDIA is not installed
+    /// </summary>
+    private QaCheck IsNvidiaNotInstalled()
+    {
+        QaCheck qaCheck = new QaCheck("nvidia_not_installed");
+        const string powershellCommand = "Get-ItemProperty -Path \"HKLM:\\Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\*\" | Where-Object { $_.DisplayName -Like \"*NVIDIA*\" }";
+
+        string? output = CommandLine.RunProgramWithOutput("powershell.exe", $"-NoProfile -ExecutionPolicy unrestricted -Command \"{powershellCommand}\"");
+
+        if (string.IsNullOrWhiteSpace(output))
+        {
+            qaCheck.SetPassed("Could not find any NVIDIA programs");
+            return qaCheck;
+        }
+        
+        string[] lines = output.Split('\n');
+        foreach (string line in lines)
+        {
+            if (line.Contains("InstallLocation"))
+            {
+                string[] split = line.Split("InstallLocation");
+                qaCheck.SetFailed("Found NVIDIA program at location (there may be multiple programs installed): " + split[1]);
+
+                return qaCheck;
+            }
+        }
+        
+        qaCheck.SetFailed("Unknown failure");
+        return qaCheck;
+    }
+    
+    /// <summary>
     /// Check the System Variables for the OPENSSL_ia32cap entry, check if it is there and also what the value is currently
     /// set to.
     /// </summary>
@@ -147,9 +258,21 @@ public class WindowChecks
                 {
                     if (obj["Wallpaper"] != null)
                     {
-                        string wallpaperPath = obj["Wallpaper"].ToString();
+                        string wallpaperPath = System.IO.Path.GetFileName(obj["Wallpaper"].ToString());
+                        string wallpaperName = (System.IO.Path.GetFileName(wallpaperPath) ?? "Unknown");
                         // todo - what should it be set to based on the station id
-                        qaCheck.SetPassed("Wallpaper is set to: " + (System.IO.Path.GetFileName(wallpaperPath) ?? "Unknown"));
+                        if (wallpaperName.Contains(
+                                $"Station {Environment.GetEnvironmentVariable("StationId", EnvironmentVariableTarget.Process)}") ||
+                            wallpaperName.Contains(
+                                $"Station{Environment.GetEnvironmentVariable("StationId", EnvironmentVariableTarget.Process)}"))
+                        {
+                            qaCheck.SetPassed("Wallpaper is set to: " + wallpaperName);
+                        }
+                        else
+                        {
+                            qaCheck.SetWarning("Wallpaper is set to: " + wallpaperName);
+                        }
+                        
                         return qaCheck;
                     }
                 }
@@ -173,6 +296,86 @@ public class WindowChecks
         QaCheck qaCheck = new QaCheck("timezone_correct");
         TimeZoneInfo localTimeZone = TimeZoneInfo.Local;
         qaCheck.SetPassed("Timezone is set to: " + localTimeZone); // todo - need to find the correct timezone
+        return qaCheck;
+    }
+    
+    /// <summary>
+    /// Query the local computers Scheduled tasks looking for the Software_Checker, return it display name and the status
+    /// of Enabled or Disabled. If there is no task return Not found.
+    /// </summary>
+    private QaCheck IsTaskSchedulerCreated()
+    {
+        QaCheck qaCheck = new QaCheck("task_scheduler_created");
+        const string taskFolder = "LeadMe\\Software_Checker";
+        const string command = $"SCHTASKS /QUERY /TN \"{taskFolder}\" /fo LIST";
+
+        string? stdout = CommandLine.RunProgramWithOutput("cmd.exe", $"/C {command}");
+        if (string.IsNullOrWhiteSpace(stdout))
+        {
+            qaCheck.SetFailed("Could not find LeadMe\\Software_Checker");
+            return qaCheck;
+        }
+
+        string[] lines = stdout.Split('\n');
+        foreach (string line in lines)
+        {
+            if (line.Contains("TaskName:"))
+            {
+                if (!line.Contains("LeadMe\\Software_Checker"))
+                {
+                    qaCheck.SetFailed("Task is not named: LeadMe\\Software_Checker. Name is: " + line.Replace("TaskName:", "").Trim());
+                    return qaCheck;
+                }
+            }
+            else if (line.Contains("Status:"))
+            {
+                if (line.Contains("Disabled"))
+                {
+                    qaCheck.SetFailed("LeadMe\\Software_Checker is disabled");
+                    return qaCheck;
+                }
+            }
+        }
+        qaCheck.SetPassed(null);
+        return qaCheck;
+    }
+    
+    /// <summary>
+    /// Query the local computers Scheduled tasks looking for the Software_Checker, return it display name and the status
+    /// of Enabled or Disabled. If there is no task return Not found.
+    /// </summary>
+    private QaCheck IsOldTaskSchedulerNotPresent()
+    {
+        QaCheck qaCheck = new QaCheck("old_task_scheduler_not_existing");
+        const string taskFolder = "Station\\Station_Checker";
+        const string command = $"SCHTASKS /QUERY /TN \"{taskFolder}\" /fo LIST";
+
+        string? stdout = CommandLine.RunProgramWithOutput("cmd.exe", $"/C {command}");
+        if (string.IsNullOrWhiteSpace(stdout))
+        {
+            qaCheck.SetPassed("Could not find Station\\Station_Checker");
+            return qaCheck;
+        }
+
+        if (stdout.Contains("ERROR: The system cannot find the file specified."))
+        {
+            qaCheck.SetPassed("Could not find Station\\Station_Checker");
+            return qaCheck;
+        }
+
+        string[] lines = stdout.Split('\n');
+        foreach (string line in lines)
+        {
+            if (line.Contains("Status:"))
+            {
+                if (!line.Contains("Disabled"))
+                {
+                    qaCheck.SetFailed("Station\\Station_Checker is present and enabled");
+                    return qaCheck;
+                }
+            }
+        }
+        qaCheck.SetPassed(null);
         return qaCheck;
     }
     
