@@ -15,61 +15,14 @@ public class WindowChecks
     public List<QaCheck> RunQa()
     {
         _qaChecks.Add(IsWakeOnMagicPacketEnabled());
-        _qaChecks.Add(IsAmdInstalled());
         _qaChecks.Add(CheckEnvAsync());
         _qaChecks.Add(CheckWallpaper());
         _qaChecks.Add(CheckTimezone());
         _qaChecks.Add(CheckTimeAndDate());
         _qaChecks.Add(IsTaskSchedulerCreated());
         _qaChecks.Add(IsOldTaskSchedulerNotPresent());
-        _qaChecks.Add(IsDriverEasyNotInstalled());
-        _qaChecks.Add(IsNvidiaNotInstalled());
-        _qaChecks.Add(IsAllowedThroughFirewall());
-        _qaChecks.Add(IsLauncherAllowedThroughFirewall());
-        _qaChecks.Add(CanAccessStationHeroku());
-        _qaChecks.Add(CanAccessLauncherHeroku());
 
         return _qaChecks;
-    }
-    
-    /// <summary>
-    /// Is program allowed through firewall
-    /// </summary>
-    private QaCheck IsAllowedThroughFirewall()
-    {
-        QaCheck qaCheck = new QaCheck("allowed_through_firewall");
-
-        string result = FirewallManagement.IsProgramAllowedThroughFirewall() ?? "Unknown";
-        if (result.Equals("Allowed"))
-        {
-            qaCheck.SetPassed(null);
-        }
-        else
-        {
-            qaCheck.SetFailed("Program not allowed through firewall");
-        }
-
-        return qaCheck;
-    }
-    
-    /// <summary>
-    /// Is launcher allowed through firewall
-    /// </summary>
-    private QaCheck IsLauncherAllowedThroughFirewall()
-    {
-        QaCheck qaCheck = new QaCheck("allowed_through_firewall");
-
-        string result = FirewallManagement.IsProgramAllowedThroughFirewall($"C:\\Users\\{Environment.GetEnvironmentVariable("UserDirectory")}\\AppData\\Local\\Programs\\LeadMe") ?? "Unknown";
-        if (result.Equals("Allowed"))
-        {
-            qaCheck.SetPassed(null);
-        }
-        else
-        {
-            qaCheck.SetFailed("Program not allowed through firewall");
-        }
-
-        return qaCheck;
     }
     
     /// <summary>
@@ -108,116 +61,6 @@ public class WindowChecks
         }
         
         qaCheck.SetFailed("Couldn't find any value for wake on magic packet");
-        return qaCheck;
-    }
-    
-    /// <summary>
-    /// Checks if AMD Adrenalin is installed on the system.
-    /// </summary>
-    private QaCheck IsAmdInstalled()
-    {
-        QaCheck qaCheck = new QaCheck("amd_installed");
-        const string adrenalinSearchKey = @"SOFTWARE\AMD";
-        const string adrenalinValueName = "DisplayName";
-        const string adrenalinValueExpected = "AMD Radeon Software";
-
-        try
-        {
-            using (RegistryKey key = Registry.CurrentUser.OpenSubKey(adrenalinSearchKey))
-            {
-                if (key != null)
-                {
-                    foreach (string subKeyName in key.GetSubKeyNames())
-                    {
-                        using (RegistryKey subKey = key.OpenSubKey(subKeyName))
-                        {
-                            if (subKey != null)
-                            {
-                                object value = subKey.GetValue(adrenalinValueName);
-                                if (value != null && value.ToString() == adrenalinValueExpected)
-                                {
-                                    qaCheck.SetPassed(null);
-                                    return qaCheck;
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-
-            Console.WriteLine("AMD Adrenalin is not installed.");
-            qaCheck.SetFailed("AMD Adrenalin is not installed.");
-            return qaCheck;
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error: {ex.Message}");
-            qaCheck.SetFailed($"Error: {ex.Message}");
-            return qaCheck;
-        }
-    }
-    
-    /// <summary>
-    /// Checks that DriverEasy is not installed
-    /// </summary>
-    private QaCheck IsDriverEasyNotInstalled()
-    {
-        QaCheck qaCheck = new QaCheck("drivereasy_not_installed");
-        const string powershellCommand = "Get-ItemProperty -Path \"HKLM:\\Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\*\" | Where-Object { $_.DisplayName -Like \"*Driver Easy*\" }";
-
-        string? output = CommandLine.RunProgramWithOutput("powershell.exe", $"-NoProfile -ExecutionPolicy unrestricted -Command \"{powershellCommand}\"");
-
-        if (string.IsNullOrWhiteSpace(output))
-        {
-            qaCheck.SetPassed("Could not find DriverEasy");
-            return qaCheck;
-        }
-        
-        string[] lines = output.Split('\n');
-        foreach (string line in lines)
-        {
-            if (line.Contains("InstallLocation"))
-            {
-                string[] split = line.Split("InstallLocation");
-                qaCheck.SetFailed("Found DriverEasy at location: " + split[1]);
-
-                return qaCheck;
-            }
-        }
-        
-        qaCheck.SetFailed("Unknown failure");
-        return qaCheck;
-    }
-    
-    /// <summary>
-    /// Checks that NVIDIA is not installed
-    /// </summary>
-    private QaCheck IsNvidiaNotInstalled()
-    {
-        QaCheck qaCheck = new QaCheck("nvidia_not_installed");
-        const string powershellCommand = "Get-ItemProperty -Path \"HKLM:\\Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\*\" | Where-Object { $_.DisplayName -Like \"*NVIDIA*\" }";
-
-        string? output = CommandLine.RunProgramWithOutput("powershell.exe", $"-NoProfile -ExecutionPolicy unrestricted -Command \"{powershellCommand}\"");
-
-        if (string.IsNullOrWhiteSpace(output))
-        {
-            qaCheck.SetPassed("Could not find any NVIDIA programs");
-            return qaCheck;
-        }
-        
-        string[] lines = output.Split('\n');
-        foreach (string line in lines)
-        {
-            if (line.Contains("InstallLocation"))
-            {
-                string[] split = line.Split("InstallLocation");
-                qaCheck.SetFailed("Found NVIDIA program at location (there may be multiple programs installed): " + split[1]);
-
-                return qaCheck;
-            }
-        }
-        
-        qaCheck.SetFailed("Unknown failure");
         return qaCheck;
     }
     
@@ -445,55 +288,5 @@ public class WindowChecks
         DateTime dateTime = new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc);
         dateTime = dateTime.AddMilliseconds(unixTimeStamp).ToLocalTime();
         return dateTime;
-    }
-    
-    private QaCheck CanAccessStationHeroku()
-    {
-        QaCheck qaCheck = new QaCheck("can_access_station_hosting");
-        try
-        {
-            using var httpClient = new HttpClient();
-            httpClient.Timeout = TimeSpan.FromSeconds(10);
-            var response = httpClient.GetAsync("http://learninglablauncher.herokuapp.com/program-station-version").GetAwaiter().GetResult();
-            if (response.IsSuccessStatusCode)
-            {
-                qaCheck.SetPassed(null);
-            }
-            else
-            {
-                qaCheck.SetFailed("Accessing station heroku failed with status code: " + response.StatusCode);
-            }
-        }
-        catch (Exception e)
-        {
-            qaCheck.SetFailed("Accessing station heroku failed with exception: " + e.ToString());
-        }
-
-        return qaCheck;
-    }
-    
-    private QaCheck CanAccessLauncherHeroku()
-    {
-        QaCheck qaCheck = new QaCheck("can_access_nuc_hosting");
-        try
-        {
-            using var httpClient = new HttpClient();
-            httpClient.Timeout = TimeSpan.FromSeconds(10);
-            var response = httpClient.GetAsync("http://electronlauncher.herokuapp.com/static/electron-launcher/latest.yml").GetAwaiter().GetResult();
-            if (response.IsSuccessStatusCode)
-            {
-                qaCheck.SetPassed(null);
-            }
-            else
-            {
-                qaCheck.SetFailed("Accessing launcher heroku failed with status code: " + response.StatusCode);
-            }
-        }
-        catch (Exception e)
-        {
-            qaCheck.SetFailed("Accessing launcher heroku failed with exception: " + e.ToString());
-        }
-
-        return qaCheck;
     }
 }

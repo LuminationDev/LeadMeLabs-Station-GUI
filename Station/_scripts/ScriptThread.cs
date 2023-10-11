@@ -232,6 +232,9 @@ namespace Station
                     case "steam_config_checks":
                         result = JsonConvert.SerializeObject(qualityManager.steamConfigChecks.RunQa());
                         break;
+                    case "network_checks":
+                        result = JsonConvert.SerializeObject(qualityManager.networkChecks.RunQa());
+                        break;
                     default:
                         return;
                 }

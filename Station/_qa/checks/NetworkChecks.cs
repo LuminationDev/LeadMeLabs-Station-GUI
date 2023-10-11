@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Net;
+using System.Net.Http;
 using System.Net.NetworkInformation;
+using LeadMeLabsLibrary;
 
 namespace Station._qa.checks;
 
@@ -10,8 +12,102 @@ public class NetworkChecks
     private List<QaCheck> _qaChecks = new();
     public List<QaCheck> RunQa()
     {
+        _qaChecks.Add(IsAllowedThroughFirewall());
+        _qaChecks.Add(IsLauncherAllowedThroughFirewall());
+        _qaChecks.Add(CanAccessStationHeroku());
+        _qaChecks.Add(CanAccessLauncherHeroku());
         _qaChecks.AddRange(GetNetworkInterfaceChecks());
         return _qaChecks;
+    }
+    
+    /// <summary>
+    /// Is program allowed through firewall
+    /// </summary>
+    private QaCheck IsAllowedThroughFirewall()
+    {
+        QaCheck qaCheck = new QaCheck("allowed_through_firewall");
+
+        string result = FirewallManagement.IsProgramAllowedThroughFirewall() ?? "Unknown";
+        if (result.Equals("Allowed"))
+        {
+            qaCheck.SetPassed(null);
+        }
+        else
+        {
+            qaCheck.SetFailed("Program not allowed through firewall");
+        }
+
+        return qaCheck;
+    }
+    
+    /// <summary>
+    /// Is launcher allowed through firewall
+    /// </summary>
+    private QaCheck IsLauncherAllowedThroughFirewall()
+    {
+        QaCheck qaCheck = new QaCheck("launcher_allowed_through_firewall");
+
+        string result = FirewallManagement.IsProgramAllowedThroughFirewall($"C:\\Users\\{Environment.GetEnvironmentVariable("UserDirectory")}\\AppData\\Local\\Programs\\LeadMe") ?? "Unknown";
+        if (result.Equals("Allowed"))
+        {
+            qaCheck.SetPassed(null);
+        }
+        else
+        {
+            qaCheck.SetFailed("Program not allowed through firewall");
+        }
+
+        return qaCheck;
+    }
+    
+    private QaCheck CanAccessStationHeroku()
+    {
+        QaCheck qaCheck = new QaCheck("can_access_station_hosting");
+        try
+        {
+            using var httpClient = new HttpClient();
+            httpClient.Timeout = TimeSpan.FromSeconds(10);
+            var response = httpClient.GetAsync("http://learninglablauncher.herokuapp.com/program-station-version").GetAwaiter().GetResult();
+            if (response.IsSuccessStatusCode)
+            {
+                qaCheck.SetPassed(null);
+            }
+            else
+            {
+                qaCheck.SetFailed("Accessing station heroku failed with status code: " + response.StatusCode);
+            }
+        }
+        catch (Exception e)
+        {
+            qaCheck.SetFailed("Accessing station heroku failed with exception: " + e.ToString());
+        }
+
+        return qaCheck;
+    }
+    
+    private QaCheck CanAccessLauncherHeroku()
+    {
+        QaCheck qaCheck = new QaCheck("can_access_launcher_hosting");
+        try
+        {
+            using var httpClient = new HttpClient();
+            httpClient.Timeout = TimeSpan.FromSeconds(10);
+            var response = httpClient.GetAsync("http://electronlauncher.herokuapp.com/static/electron-launcher/latest.yml").GetAwaiter().GetResult();
+            if (response.IsSuccessStatusCode)
+            {
+                qaCheck.SetPassed(null);
+            }
+            else
+            {
+                qaCheck.SetFailed("Accessing launcher heroku failed with status code: " + response.StatusCode);
+            }
+        }
+        catch (Exception e)
+        {
+            qaCheck.SetFailed("Accessing launcher heroku failed with exception: " + e.ToString());
+        }
+
+        return qaCheck;
     }
     
     public List<QaCheck> GetNetworkInterfaceChecks()

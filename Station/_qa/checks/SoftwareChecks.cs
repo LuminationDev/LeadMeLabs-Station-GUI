@@ -2,6 +2,10 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
+using System.Management.Automation;
+using Microsoft.Win32;
+using Namotion.Reflection;
 
 namespace Station._qa.checks;
 
@@ -15,6 +19,9 @@ public class SoftwareChecks
         _qaChecks.Add(IsSteamCmdInitialised());
         _qaChecks.Add(IsSteamCmdConfigured());
         _qaChecks.Add(IsSteamGuardDisabled());
+        _qaChecks.Add(IsAmdInstalled());
+        _qaChecks.Add(IsDriverEasyNotInstalled());
+        _qaChecks.Add(IsNvidiaNotInstalled());
 
         return _qaChecks;
     }
@@ -157,31 +164,36 @@ public class SoftwareChecks
         string? output = "";
         string? error = "";
 
-        System.Diagnostics.Process process = new System.Diagnostics.Process();
-        System.Diagnostics.ProcessStartInfo startInfo = new System.Diagnostics.ProcessStartInfo();
-        startInfo.WindowStyle = System.Diagnostics.ProcessWindowStyle.Hidden;
+        Process process = new Process();
+        ProcessStartInfo startInfo = new ProcessStartInfo();
+        startInfo.WindowStyle = ProcessWindowStyle.Hidden;
         startInfo.FileName = "cmd.exe";
         startInfo.Arguments = $"/C rm -r {fullPath}temp";
         process.StartInfo = startInfo;
         process.Start();
         
-        System.Diagnostics.Process process2 = new System.Diagnostics.Process();
-        System.Diagnostics.ProcessStartInfo startInfo2 = new System.Diagnostics.ProcessStartInfo();
-        startInfo2.WindowStyle = System.Diagnostics.ProcessWindowStyle.Hidden;
+        Process process2 = new Process();
+        ProcessStartInfo startInfo2 = new ProcessStartInfo();
+        startInfo2.WindowStyle = ProcessWindowStyle.Hidden;
         startInfo2.FileName = "cmd.exe";
         startInfo2.Arguments = $"/C mkdir {fullPath}temp";
         process2.StartInfo = startInfo2;
         process2.Start();
         
-        System.Diagnostics.Process process3 = new System.Diagnostics.Process();
-        System.Diagnostics.ProcessStartInfo startInfo3 = new System.Diagnostics.ProcessStartInfo();
-        startInfo3.WindowStyle = System.Diagnostics.ProcessWindowStyle.Hidden;
+        Process process3 = new Process();
+        ProcessStartInfo startInfo3 = new ProcessStartInfo();
+        startInfo3.WindowStyle = ProcessWindowStyle.Hidden;
         startInfo3.FileName = "cmd.exe";
         startInfo3.Arguments = $"/C cp {fullPath}steamcmd.exe {fullPath}temp";
         process3.StartInfo = startInfo3;
         process3.Start();
         
         //Need to kill the process if there is a Guard Code input require so process creation is here instead of CommandLine
+        if (!File.Exists(fullPath + "temp\\steamcmd.exe"))
+        {
+            qaCheck.SetWarning("Could not complete Steam Guard check");
+            return qaCheck;
+        }
         Process? cmd = new Process();
         cmd.StartInfo.FileName = fullPath + "temp\\steamcmd.exe";
         cmd.StartInfo.RedirectStandardInput = true;
@@ -220,6 +232,92 @@ public class SoftwareChecks
         //Manually kill the process or it will stay on the guard code input 
         cmd.Kill(true);
 
+        return qaCheck;
+    }
+    
+    /// <summary>
+    /// Checks if AMD Adrenalin is installed on the system.
+    /// </summary>
+    private QaCheck IsAmdInstalled()
+    {
+        QaCheck qaCheck = new QaCheck("amd_installed");
+        const string adrenalinSearchKey = @"SOFTWARE\AMD";
+        const string adrenalinValueName = "DisplayName";
+        const string adrenalinValueExpected = "AMD Radeon Software";
+
+        try
+        {
+            using (RegistryKey key = Registry.CurrentUser.OpenSubKey(adrenalinSearchKey))
+            {
+                if (key != null)
+                {
+                    foreach (string subKeyName in key.GetSubKeyNames())
+                    {
+                        using (RegistryKey subKey = key.OpenSubKey(subKeyName))
+                        {
+                            if (subKey != null)
+                            {
+                                object value = subKey.GetValue(adrenalinValueName);
+                                if (value != null && value.ToString() == adrenalinValueExpected)
+                                {
+                                    qaCheck.SetPassed(null);
+                                    return qaCheck;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            Console.WriteLine("AMD Adrenalin is not installed.");
+            qaCheck.SetFailed("AMD Adrenalin is not installed.");
+            return qaCheck;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error: {ex.Message}");
+            qaCheck.SetFailed($"Error: {ex.Message}");
+            return qaCheck;
+        }
+    }
+    
+    /// <summary>
+    /// Checks that DriverEasy is not installed
+    /// </summary>
+    private QaCheck IsDriverEasyNotInstalled()
+    {
+        QaCheck qaCheck = new QaCheck("drivereasy_not_installed");
+        PowerShell powerShell = PowerShell.Create();
+        powerShell.AddCommand("Get-ItemProperty")
+            .AddParameter("Path", "HKLM:\\Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\*")
+            .AddCommand("Where-Object").AddArgument(ScriptBlock.Create("$_.DisplayName -Like '*Driver Easy*'"));
+        var output = powerShell.Invoke();
+        if (output.Count == 0)
+        {
+            qaCheck.SetPassed("Could not find DriverEasy");
+            return qaCheck;
+        }
+        qaCheck.SetFailed("Found DriverEasy at location: " + output[0].Properties.Where(info => info.Name.Contains("App Path")).First()?.Value);
+        return qaCheck;
+    }
+    
+    /// <summary>
+    /// Checks that NVIDIA is not installed
+    /// </summary>
+    private QaCheck IsNvidiaNotInstalled()
+    {
+        QaCheck qaCheck = new QaCheck("nvidia_not_installed");
+        PowerShell powerShell = PowerShell.Create();
+        powerShell.AddCommand("Get-ItemProperty")
+            .AddParameter("Path", "HKLM:\\Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\*")
+            .AddCommand("Where-Object").AddArgument(ScriptBlock.Create("$_.DisplayName -Like '*NVIDIA*'"));
+        var output = powerShell.Invoke();
+        if (output.Count == 0)
+        {
+            qaCheck.SetPassed("Could not find NVIDIA");
+            return qaCheck;
+        }
+        qaCheck.SetFailed("Found NVIDIA at location: " + output[0].Properties.Where(info => (info.Name.Contains("App Path") || info.Name.Contains("UninstallString"))).First()?.Value);
         return qaCheck;
     }
 }
