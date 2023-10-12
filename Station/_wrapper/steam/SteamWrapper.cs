@@ -243,9 +243,10 @@ namespace Station
                 UIUpdater.ResetUIDisplay();
                 SessionController.PassStationMessage($"MessageToAndroid,GameLaunchFailed:{lastExperience.Name}");
                 JObject response = new JObject();
-                response.Add("response", "ExperienceLaunchedFailed");
+                response.Add("response", "ExperienceLaunchFailed");
                 JObject responseData = new JObject();
                 responseData.Add("experienceId", lastExperience.ID);
+                responseData.Add("message", "Launch timed out, there may be a popup that needs confirmation");
                 response.Add("responseData", responseData);
                 
                 Manager.SendResponse("NUC", "QA", response.ToString());
@@ -311,7 +312,16 @@ namespace Station
         {
             if (currentProcess != null)
             {
-                currentProcess.Kill(true);
+                try
+                {
+                    currentProcess.Kill(true);
+                }
+                catch (InvalidOperationException e)
+                {
+                    
+                }
+
+                
             }
 
             experienceName = null; //Reset for correct headset state

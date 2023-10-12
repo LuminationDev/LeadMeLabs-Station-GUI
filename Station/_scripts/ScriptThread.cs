@@ -251,13 +251,13 @@ namespace Station
 
             if (action.Equals("LaunchExperience"))
             {
-                string experienceId = this.additionalData.Split(":", 5)[4];
+                string experienceId = actionData.GetValue("experienceId").ToString();
                 string experienceLaunchResponse = await WrapperManager.StartAProcess(experienceId);
                 
                 JObject response = new JObject();
                 response.Add("response", "ExperienceLaunchAttempt");
                 JObject responseData = new JObject();
-                responseData.Add("result", experienceLaunchResponse.Equals("Launching") ? "launching" : "failed");
+                responseData.Add("result", experienceLaunchResponse.ToLower().Equals("launching") ? "launching" : "failed");
                 responseData.Add("message", experienceLaunchResponse);
                 responseData.Add("experienceId", experienceId);
                 response.Add("responseData", responseData);
