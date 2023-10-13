@@ -355,5 +355,10 @@ namespace Station
                 WrapProcess(temp);
             }
         }
+        
+        public bool HasCurrentProcess()
+        {
+            return currentProcess != null;
+        }
     }
 }

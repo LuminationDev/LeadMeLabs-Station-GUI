@@ -307,6 +307,11 @@ namespace Station
         {
             return currentProcess?.Responding;
         }
+        
+        public bool HasCurrentProcess()
+        {
+            return currentProcess != null;
+        }
 
         public void StopCurrentProcess()
         {
@@ -320,9 +325,9 @@ namespace Station
                 {
                     
                 }
-
-                
             }
+            
+            CommandLine.ExecuteSteamCommand("+app_stop " + lastExperience.ID + " 1");
 
             experienceName = null; //Reset for correct headset state
             WrapperMonitoringThread.StopMonitoring();

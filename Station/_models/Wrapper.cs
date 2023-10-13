@@ -119,5 +119,7 @@ namespace Station
         /// Restart the current experience without restarting any external software.
         /// </summary>
         void RestartCurrentExperience();
+
+        bool HasCurrentProcess();
     }
 }

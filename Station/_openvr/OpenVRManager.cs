@@ -347,6 +347,26 @@ namespace Station
             if(pchKey == null) return false;
             
             EVRApplicationError error = OpenVR.Applications.LaunchApplication(pchKey);
+            if (error == EVRApplicationError.None)
+            {
+                ScheduledTaskQueue.EnqueueTask(() =>
+                {
+                    if (!WrapperManager.CurrentWrapper?.HasCurrentProcess() ?? true)
+                    {
+                        WrapperManager.CurrentWrapper?.StopCurrentProcess();
+                        UIUpdater.ResetUIDisplay();
+                        SessionController.PassStationMessage($"MessageToAndroid,GameLaunchFailed:{WrapperManager.CurrentWrapper.GetLastExperience()?.Name}");
+                
+                        JObject response = new JObject();
+                        response.Add("response", "ExperienceLaunchFailed");
+                        JObject responseData = new JObject();
+                        responseData.Add("experienceId", WrapperManager.CurrentWrapper.GetLastExperience()?.ID);
+                        response.Add("responseData", responseData);
+                
+                        Manager.SendResponse("NUC", "QA", response.ToString());
+                    }
+                }, TimeSpan.FromSeconds(30));
+            }
             return error == EVRApplicationError.None;
         }
 
