@@ -351,7 +351,7 @@ namespace Station
             {
                 ScheduledTaskQueue.EnqueueTask(() =>
                 {
-                    if (!WrapperManager.CurrentWrapper?.HasCurrentProcess() ?? true)
+                    if (WrapperManager.CurrentWrapper.LaunchFailedFromOpenVrTimeout())
                     {
                         WrapperManager.CurrentWrapper?.StopCurrentProcess();
                         UIUpdater.ResetUIDisplay();

@@ -121,5 +121,11 @@ namespace Station
         void RestartCurrentExperience();
 
         bool HasCurrentProcess();
+
+        /// <summary>
+        /// Returns a boolean indicating if post launch request we had a process at any point, the boolean is reset on launch
+        /// </summary>
+        /// <returns></returns>
+        bool LaunchFailedFromOpenVrTimeout();
     }
 }

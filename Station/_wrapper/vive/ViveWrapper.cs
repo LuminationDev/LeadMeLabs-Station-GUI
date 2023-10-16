@@ -82,5 +82,10 @@ namespace Station
         {
             throw new NotImplementedException();
         }
+        
+        public bool LaunchFailedFromOpenVrTimeout()
+        {
+            throw new NotImplementedException();
+        }
     }
 }
