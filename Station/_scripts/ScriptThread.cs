@@ -248,6 +248,9 @@ namespace Station
                     case "network_checks":
                         result = JsonConvert.SerializeObject(qualityManager.networkChecks.RunQa());
                         break;
+                    case "imvr_checks":
+                        result = JsonConvert.SerializeObject(qualityManager.imvrChecks.RunQa());
+                        break;
                     default:
                         return;
                 }
