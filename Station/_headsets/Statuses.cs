@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using Newtonsoft.Json.Linq;
+using Station._qa;
 
 namespace Station
 {
@@ -108,6 +109,12 @@ namespace Station
         {
             // Code to execute when the value changes.
             Manager.SendResponse("Android", "Station", $"DeviceStatus:{e.Data}");
+        }
+
+        private bool _headsetFirmwareStatus = false;
+        public void UpdateHeadsetFirmwareStatus(bool status)
+        {
+            this._headsetFirmwareStatus = status;
         }
 
         /// <summary>
@@ -338,6 +345,106 @@ namespace Station
             vrStatuses.Add("connectedBaseStations", active);
 
             return vrStatuses;
+        }
+
+        public List<QaCheck> VrQaChecks()
+        {
+            List<QaCheck> qaChecks = new List<QaCheck>();
+
+            QaCheck headsetConnected = new QaCheck("headset_connected");
+            if (OpenVRStatus == DeviceStatus.Connected && SoftwareStatus == DeviceStatus.Connected)
+            {
+                headsetConnected.SetPassed(null);
+            }
+            else
+            {
+                headsetConnected.SetFailed("Headset not connected");
+            }
+            
+            QaCheck headsetFirmwareUpToDate = new QaCheck("headset_firmware");
+            if (OpenVRStatus != DeviceStatus.Connected || SoftwareStatus != DeviceStatus.Connected)
+            {
+                headsetFirmwareUpToDate.SetFailed("Headset not connected");
+            }
+            else
+            {
+                if (_headsetFirmwareStatus)
+                {
+                    headsetFirmwareUpToDate.SetFailed("Headset has a firmware update");
+                }
+                else
+                {
+                    headsetFirmwareUpToDate.SetPassed(null);
+                }
+            }
+            
+            QaCheck controllersConnected = new QaCheck("controllers_connected");
+            if (controllers.Where((controller) => controller.Value.Tracking == DeviceStatus.Connected).Count() >= 2)
+            {
+                controllersConnected.SetPassed(null);
+            }
+            else
+            {
+                controllersConnected.SetFailed("Could not find two controllers that are tracking");
+            }
+            
+            QaCheck controllersFirmware = new QaCheck("controllers_firmware");
+            if (OpenVRStatus != DeviceStatus.Connected || SoftwareStatus != DeviceStatus.Connected)
+            {
+                controllersFirmware.SetFailed("Headset not connected");
+            } else if (controllers.Where((controller) => controller.Value.Tracking == DeviceStatus.Connected).Count() < 2)
+            {
+                controllersFirmware.SetFailed("Less than two controllers connected");
+            }
+            else
+            {
+                if (controllers.Where((controller) => controller.Value.FirmwareUpdateRequired()).Count() < 2)
+                {
+                    controllersFirmware.SetPassed(null);
+                }
+                else
+                {
+                    controllersFirmware.SetFailed("At least one controller needs a firmware update");
+                }
+            }
+            
+            QaCheck baseStationsConnected = new QaCheck("base_stations_connected");
+            if (baseStations.Where((baseStations) => baseStations.Value.Tracking == DeviceStatus.Connected).Count() >= 2)
+            {
+                baseStationsConnected.SetPassed(null);
+            }
+            else
+            {
+                baseStationsConnected.SetFailed("Could not find two base stations that are tracking");
+            }
+            
+            QaCheck baseStationsFirmware = new QaCheck("base_stations_firmware");
+            if (OpenVRStatus != DeviceStatus.Connected || SoftwareStatus != DeviceStatus.Connected)
+            {
+                baseStationsFirmware.SetFailed("Headset not connected");
+            } else if (baseStations.Where((baseStation) => baseStation.Value.Tracking == DeviceStatus.Connected).Count() < 2)
+            {
+                baseStationsFirmware.SetFailed("Less than two base stations connected");
+            }
+            else
+            {
+                if (baseStations.Where((baseStation) => baseStation.Value.FirmwareUpdateRequired()).Count() < 2)
+                {
+                    baseStationsFirmware.SetPassed(null);
+                }
+                else
+                {
+                    baseStationsFirmware.SetFailed("At least one base station needs a firmware update");
+                }
+            }
+
+            qaChecks.Add(headsetConnected);
+            qaChecks.Add(headsetFirmwareUpToDate);
+            qaChecks.Add(controllersConnected);
+            qaChecks.Add(controllersFirmware);
+            qaChecks.Add(baseStationsConnected);
+            qaChecks.Add(baseStationsFirmware);
+            return qaChecks;
         }
     }
 }

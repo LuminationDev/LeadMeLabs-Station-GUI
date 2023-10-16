@@ -13,6 +13,12 @@ namespace Station
         //The role is set at creation and will not change.
         public DeviceRole Role { get; }
         private readonly string serialNumber;
+        private bool _firmwareUpdateRequired = false;
+
+        public bool FirmwareUpdateRequired()
+        {
+            return _firmwareUpdateRequired;
+        }
 
         #region Observers
         //Tracking status observer
@@ -115,6 +121,10 @@ namespace Station
                 case "tracking":
                     UpdateProperty(value, (DeviceStatus newValue) => Tracking = newValue,
                         "Invalid tracking value");
+                    break;
+                
+                case "firmware_update_required":
+                    this._firmwareUpdateRequired = (bool) value;
                     break;
 
                 default:
