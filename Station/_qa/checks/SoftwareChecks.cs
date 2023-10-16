@@ -18,12 +18,18 @@ public class SoftwareChecks
         _qaChecks.Add(IsSteamCmdPresent());
         _qaChecks.Add(IsSteamCmdInitialised());
         _qaChecks.Add(IsSteamCmdConfigured());
-        _qaChecks.Add(IsSteamGuardDisabled());
         _qaChecks.Add(IsAmdInstalled());
         _qaChecks.Add(IsDriverEasyNotInstalled());
         _qaChecks.Add(IsNvidiaNotInstalled());
 
         return _qaChecks;
+    }
+
+    public List<QaCheck> RunSlowQaChecks()
+    {
+        List<QaCheck> qaChecks = new List<QaCheck>();
+        qaChecks.Add(IsSteamGuardDisabled());
+        return qaChecks;
     }
 
     /// <summary>
@@ -164,30 +170,16 @@ public class SoftwareChecks
         string? output = "";
         string? error = "";
 
-        Process process = new Process();
-        ProcessStartInfo startInfo = new ProcessStartInfo();
-        startInfo.WindowStyle = ProcessWindowStyle.Hidden;
-        startInfo.FileName = "cmd.exe";
-        startInfo.Arguments = $"/C rm -r {fullPath}temp";
-        process.StartInfo = startInfo;
-        process.Start();
-        
-        Process process2 = new Process();
-        ProcessStartInfo startInfo2 = new ProcessStartInfo();
-        startInfo2.WindowStyle = ProcessWindowStyle.Hidden;
-        startInfo2.FileName = "cmd.exe";
-        startInfo2.Arguments = $"/C mkdir {fullPath}temp";
-        process2.StartInfo = startInfo2;
-        process2.Start();
-        
-        Process process3 = new Process();
-        ProcessStartInfo startInfo3 = new ProcessStartInfo();
-        startInfo3.WindowStyle = ProcessWindowStyle.Hidden;
-        startInfo3.FileName = "cmd.exe";
-        startInfo3.Arguments = $"/C cp {fullPath}steamcmd.exe {fullPath}temp";
-        process3.StartInfo = startInfo3;
-        process3.Start();
-        
+        PowerShell powerShell = PowerShell.Create();
+        powerShell.AddCommand("Remove-Item").AddParameter("Path", $"{fullPath}temp").AddParameter("Recurse");
+        powerShell.Invoke();
+        powerShell = PowerShell.Create();
+        powerShell.AddCommand("New-Item").AddArgument($"{fullPath}temp").AddParameter("ItemType", "Directory");
+        powerShell.Invoke();
+        powerShell = PowerShell.Create();
+        powerShell.AddCommand("Copy-Item").AddParameter("Path", $"{fullPath}steamcmd.exe").AddParameter("Destination", $"{fullPath}temp");
+        powerShell.Invoke();
+
         //Need to kill the process if there is a Guard Code input require so process creation is here instead of CommandLine
         if (!File.Exists(fullPath + "temp\\steamcmd.exe"))
         {

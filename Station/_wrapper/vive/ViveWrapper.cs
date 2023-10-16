@@ -77,5 +77,15 @@ namespace Station
         {
             throw new NotImplementedException();
         }
+        
+        public bool HasCurrentProcess()
+        {
+            throw new NotImplementedException();
+        }
+        
+        public bool LaunchFailedFromOpenVrTimeout()
+        {
+            throw new NotImplementedException();
+        }
     }
 }
