@@ -326,8 +326,8 @@ namespace Station
                     
                 }
             }
-            
-            CommandLine.ExecuteSteamCommand("+app_stop " + lastExperience.ID + " 1");
+            CommandLine.StartProgram(SessionController.steam, " +app_stop " + lastExperience.ID);
+            SetLaunchingExperience(false);
 
             experienceName = null; //Reset for correct headset state
             WrapperMonitoringThread.StopMonitoring();
