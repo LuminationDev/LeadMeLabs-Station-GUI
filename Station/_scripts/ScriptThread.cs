@@ -269,7 +269,7 @@ namespace Station
             {
                 string experienceId = actionData.GetValue("experienceId").ToString();
                 WrapperManager.StopAProcess();
-                Task.Delay(3000);
+                Task.Delay(10000);
                 string experienceLaunchResponse = await WrapperManager.StartAProcess(experienceId);
                 
                 JObject response = new JObject();

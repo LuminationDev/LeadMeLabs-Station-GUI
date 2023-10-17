@@ -5,7 +5,9 @@ using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Timers;
+using Microsoft.Win32;
 using Newtonsoft.Json.Linq;
+using Sentry;
 using Timer = System.Timers.Timer;
 
 namespace Station
@@ -338,7 +340,46 @@ namespace Station
                     
                 }
             }
+
             CommandLine.StartProgram(SessionController.steam, " +app_stop " + lastExperience.ID);
+            
+            Task.Delay(1000);
+            
+            const string searchKey = @"SOFTWARE\Valve";
+            const string valueName = "RunningAppID";
+
+            try
+            {
+                using (RegistryKey key = Registry.CurrentUser.OpenSubKey(searchKey))
+                {
+                    if (key != null)
+                    {
+                        foreach (string subKeyName in key.GetSubKeyNames())
+                        {
+                            using (RegistryKey subKey = key.OpenSubKey(subKeyName))
+                            {
+                                if (subKey != null)
+                                {
+                                    object value = subKey.GetValue(valueName);
+                                    if (value.ToString().Length > 0)
+                                    {
+                                        if (value.ToString().Equals("250820") || value.ToString().Equals("1635730"))
+                                        {
+                                            break;
+                                        }
+                                        CommandLine.StartProgram(SessionController.steam, " +app_stop " + value.ToString());
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                SentrySdk.CaptureException(ex);
+            }
+
             SetLaunchingExperience(false);
 
             experienceName = null; //Reset for correct headset state
