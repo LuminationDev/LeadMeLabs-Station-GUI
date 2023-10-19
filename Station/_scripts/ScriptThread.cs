@@ -1,5 +1,6 @@
 using System;
 using System.Net;
+using System.Threading;
 using System.Threading.Tasks;
 using LeadMeLabsLibrary;
 using Newtonsoft.Json;
@@ -228,12 +229,27 @@ namespace Station
                         break;
                     case "software_checks":
                         result = JsonConvert.SerializeObject(qualityManager.softwareChecks.RunQa());
+                        new Thread(() =>
+                        {
+                            string output = JsonConvert.SerializeObject(qualityManager.softwareChecks.RunSlowQaChecks());
+                            JObject response = new JObject();
+                            response.Add("response", "RunGroup");
+                            JObject responseData = new JObject();
+                            responseData.Add("group", group);
+                            responseData.Add("data", output);
+                            response.Add("responseData", responseData);
+                
+                            Manager.SendResponse("NUC", "QA", response.ToString());
+                        }).Start();
                         break;
                     case "steam_config_checks":
                         result = JsonConvert.SerializeObject(qualityManager.steamConfigChecks.RunQa());
                         break;
                     case "network_checks":
                         result = JsonConvert.SerializeObject(qualityManager.networkChecks.RunQa());
+                        break;
+                    case "imvr_checks":
+                        result = JsonConvert.SerializeObject(qualityManager.imvrChecks.RunQa());
                         break;
                     default:
                         return;
@@ -252,6 +268,8 @@ namespace Station
             if (action.Equals("LaunchExperience"))
             {
                 string experienceId = actionData.GetValue("experienceId").ToString();
+                WrapperManager.StopAProcess();
+                Task.Delay(3000);
                 string experienceLaunchResponse = await WrapperManager.StartAProcess(experienceId);
                 
                 JObject response = new JObject();

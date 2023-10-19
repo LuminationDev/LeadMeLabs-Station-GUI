@@ -351,7 +351,7 @@ namespace Station
             {
                 ScheduledTaskQueue.EnqueueTask(() =>
                 {
-                    if (!WrapperManager.CurrentWrapper?.HasCurrentProcess() ?? true)
+                    if (WrapperManager.CurrentWrapper.LaunchFailedFromOpenVrTimeout())
                     {
                         WrapperManager.CurrentWrapper?.StopCurrentProcess();
                         UIUpdater.ResetUIDisplay();
@@ -619,7 +619,9 @@ namespace Station
                 SessionController.vrHeadset?.GetStatusManager().UpdateHeadset(VrManager.OpenVR, DeviceStatus.Connected);
                 MockConsole.WriteLine("Headset found", MockConsole.LogLevel.Debug);
             }
-            
+
+            SessionController.vrHeadset?.GetStatusManager().UpdateHeadsetFirmwareStatus(GetFirmwareUpdateRequired(headsetIndex));
+
             //Collect the headset model - only do this if it hasn't been set already.
             if (MainWindow.headsetDescription != null && 
                 ((SessionController.vrHeadset?.GetStatusManager().HeadsetDescription.Equals("") ?? true) || 
@@ -671,6 +673,10 @@ namespace Station
             SessionController.vrHeadset?.GetStatusManager().UpdateController(
                 serialNumber, null, "tracking", IsDeviceConnected(controllerIndex) ? DeviceStatus.Connected : DeviceStatus.Lost);
             
+            var firmwareUpdateRequired = GetFirmwareUpdateRequired(controllerIndex);
+            SessionController.vrHeadset?.GetStatusManager().UpdateController(
+                serialNumber, null, "firmware_update_required", firmwareUpdateRequired);
+
             if (role == ETrackedControllerRole.Invalid) return;
             
             DeviceRole controllerRole = role == ETrackedControllerRole.LeftHand ? DeviceRole.Left : DeviceRole.Right;
@@ -713,7 +719,9 @@ namespace Station
 
             var serialNumber = GetSerialNumber(baseStationIndex);
             var isConnected = IsDeviceConnected(baseStationIndex);
+            var firmwareUpdateRequired = GetFirmwareUpdateRequired(baseStationIndex);
             SessionController.vrHeadset?.GetStatusManager().UpdateBaseStation(serialNumber, "tracking", isConnected ? DeviceStatus.Connected : DeviceStatus.Lost);
+            SessionController.vrHeadset?.GetStatusManager().UpdateBaseStation(serialNumber, "firmware_update_required", firmwareUpdateRequired);
         }
         #endregion
         
@@ -761,6 +769,24 @@ namespace Station
             }
             
             return "Unknown";
+        }
+
+        private bool GetFirmwareUpdateRequired(uint deviceIndex)
+        {
+            if (_ovrSystem == null)
+            {
+                return false;
+            }
+
+            ETrackedPropertyError error = ETrackedPropertyError.TrackedProp_Success;
+            bool result = _ovrSystem.GetBoolTrackedDeviceProperty(deviceIndex, ETrackedDeviceProperty.Prop_Firmware_UpdateAvailable_Bool, ref error);
+
+            if (error == ETrackedPropertyError.TrackedProp_Success)
+            {
+                return result;
+            }
+            
+            return false;
         }
 
         /// <summary>

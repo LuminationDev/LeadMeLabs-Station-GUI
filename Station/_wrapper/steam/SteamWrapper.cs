@@ -20,6 +20,7 @@ namespace Station
         public static string? experienceName = null;
         private static string? installDir = null;
         private static Experience lastExperience;
+        private bool launchWillHaveFailedFromOpenVrTimeout = true;
 
         /// <summary>
         /// Track if an experience is being launched.
@@ -44,6 +45,11 @@ namespace Station
         public void SetLaunchingExperience(bool isLaunching)
         {
             launchingExperience = isLaunching;
+        }
+        
+        public bool LaunchFailedFromOpenVrTimeout()
+        {
+            return launchWillHaveFailedFromOpenVrTimeout;
         }
 
         public string? GetCurrentExperienceName()
@@ -73,12 +79,15 @@ namespace Station
             {
                 currentProcess.Kill(true);
             }
+
+            launchWillHaveFailedFromOpenVrTimeout = false;
             currentProcess = process;
             ListenForClose();
         }
 
         public string WrapProcess(Experience experience)
         {
+            launchWillHaveFailedFromOpenVrTimeout = false;
             if (experience.ID == null)
             {
                 SessionController.PassStationMessage($"MessageToAndroid,GameLaunchFailed:Unknown experience");
@@ -118,11 +127,14 @@ namespace Station
             Task.Factory.StartNew(() =>
             {
                 //Attempt to start the process using OpenVR
+                launchWillHaveFailedFromOpenVrTimeout = true;
                 if (OpenVRManager.LaunchApplication(experience.ID))
                 {
                     Logger.WriteLog($"SteamWrapper.WrapProcess: Launching {experience.Name} via OpenVR", MockConsole.LogLevel.Verbose);
                     return;
                 }
+
+                launchWillHaveFailedFromOpenVrTimeout = false;
 
                 //Fall back to the alternate if OpenVR launch fails or is not a registered VR experience in the vrmanifest
                 //Stop any accessory processes before opening a new process
@@ -326,8 +338,8 @@ namespace Station
                     
                 }
             }
-            
             CommandLine.StartProgram(SessionController.steam, " +app_stop " + lastExperience.ID);
+            SetLaunchingExperience(false);
 
             experienceName = null; //Reset for correct headset state
             WrapperMonitoringThread.StopMonitoring();

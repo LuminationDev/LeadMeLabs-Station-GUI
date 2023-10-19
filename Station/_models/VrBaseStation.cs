@@ -7,6 +7,13 @@ namespace Station
     {
         private readonly string _serialNumber;
 
+        private bool _firmwareUpdateRequired = false;
+        
+        public bool FirmwareUpdateRequired()
+        {
+            return _firmwareUpdateRequired;
+        }
+
         #region Observers
         //Tracking status observer
         private DeviceStatus _tracking = DeviceStatus.Off;
@@ -60,6 +67,9 @@ namespace Station
                 case "tracking":
                     UpdateProperty(value, (DeviceStatus newValue) => Tracking = newValue,
                         "Invalid tracking value");
+                    break;
+                case "firmware_update_required":
+                    this._firmwareUpdateRequired = (bool) value;
                     break;
 
                 default:

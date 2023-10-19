@@ -122,5 +122,10 @@ namespace Station
         {
             throw new NotImplementedException();
         }
+        
+        public bool LaunchFailedFromOpenVrTimeout()
+        {
+            return false;
+        }
     }
 }

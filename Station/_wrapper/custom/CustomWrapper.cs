@@ -14,6 +14,7 @@ namespace Station
         public static string wrapperType = "Custom";
         private static Process? currentProcess;
         public static Experience lastExperience;
+        private bool launchWillHaveFailedFromOpenVrTimeout = true;
 
         // <summary>
         /// Track if an experience is being launched.
@@ -38,6 +39,11 @@ namespace Station
         public void SetLaunchingExperience(bool isLaunching)
         {
             launchingExperience = isLaunching;
+        }
+        
+        public bool LaunchFailedFromOpenVrTimeout()
+        {
+            return launchWillHaveFailedFromOpenVrTimeout;
         }
         
         public string? GetCurrentExperienceName()
@@ -113,12 +119,14 @@ namespace Station
             {
                 currentProcess.Kill(true);
             }
+            launchWillHaveFailedFromOpenVrTimeout = false;
             currentProcess = process;
             ListenForClose();
         }
 
         public string WrapProcess(Experience experience)
         {
+            launchWillHaveFailedFromOpenVrTimeout = false;
             if(CommandLine.stationLocation == null)
             {
                 SessionController.PassStationMessage("Cannot find working directory");
@@ -159,11 +167,13 @@ namespace Station
             Task.Factory.StartNew(() =>
             {
                 //Attempt to start the process using OpenVR
+                launchWillHaveFailedFromOpenVrTimeout = true;
                 if (OpenVRManager.LaunchApplication(experience.ID))
                 {
                     Logger.WriteLog($"CustomWrapper.WrapProcess: Launching {experience.Name} via OpenVR", MockConsole.LogLevel.Verbose);
                     return;
                 }
+                launchWillHaveFailedFromOpenVrTimeout = false;
 
                 //Stop any accessory processes before opening a new process
                 SessionController.vrHeadset.StopProcessesBeforeLaunch();
