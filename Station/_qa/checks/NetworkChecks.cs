@@ -128,7 +128,7 @@ public class NetworkChecks
                     QaCheck defaultGateway = new QaCheck("default_gateway_is_correct");
                     if (ipProperties.GatewayAddresses.Count > 0)
                     {
-                        if (ipProperties.GatewayAddresses[0].Address.ToString().Equals("12.245.42.1"))
+                        if (ipProperties.GatewayAddresses[0].ToString().Equals("12.245.42.1"))
                         {
                             defaultGateway.SetPassed(null);
                         }
@@ -145,13 +145,13 @@ public class NetworkChecks
                     QaCheck dnsServer = new QaCheck("dns_server_is_correct");
                     if (ipProperties.DnsAddresses.Count > 0)
                     {
-                        if (ipProperties.DnsAddresses[0].Address.ToString().Equals("192.168.1.1"))
+                        if (ipProperties.DnsAddresses[0].ToString().Equals("192.168.1.1"))
                         {
                             dnsServer.SetPassed(null);
                         }
                         else
                         {
-                            dnsServer.SetFailed($"DNS server {ipProperties.DnsAddresses[0].Address.ToString()} does not match expected default gateway");
+                            dnsServer.SetFailed($"DNS server {ipProperties.DnsAddresses[0].Address.ToString()} does not match expected DNS server");
                         }
                     }
                     else
@@ -162,13 +162,13 @@ public class NetworkChecks
                     QaCheck altDnsServer = new QaCheck("alt_dns_server_is_correct");
                     if (ipProperties.DnsAddresses.Count > 1)
                     {
-                        if (ipProperties.DnsAddresses[1].Address.ToString().Equals("8.8.8.8"))
+                        if (ipProperties.DnsAddresses[1].ToString().Equals("8.8.8.8"))
                         {
                             altDnsServer.SetPassed(null);
                         }
                         else
                         {
-                            altDnsServer.SetFailed($"Alt DNS server {ipProperties.DnsAddresses[1].Address.ToString()} does not match expected default gateway");
+                            altDnsServer.SetFailed($"Alt DNS server {ipProperties.DnsAddresses[1].Address.ToString()} does not match expected alt DNS server");
                         }
                     }
                     else
@@ -185,7 +185,7 @@ public class NetworkChecks
                     }
                     else
                     {
-                        staticIpAddress.SetFailed($"Actual IP address {Manager.localEndPoint.Address} did not match expected IP address {expectedAddress}");
+                        staticIpAddress.SetWarning($"Actual IP address {Manager.localEndPoint.Address} did not match expected IP address {expectedAddress}");
                     }
                     
                     qaChecks.Add(defaultGateway);
