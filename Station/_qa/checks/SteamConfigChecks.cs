@@ -145,6 +145,10 @@ namespace Station._qa.checks
             }
             
             string fileLocation = $"C:\\Program Files (x86)\\Steam\\userdata\\{_steamId}\\config\\sharedconfig.vdf";
+            if (!File.Exists(fileLocation))
+            {
+                fileLocation = $"C:\\Program Files (x86)\\Steam\\userdata\\{_steamId}\\7\\remote\\sharedconfig.vdf";
+            }
 
             if (File.Exists(fileLocation))
             {
@@ -167,6 +171,8 @@ namespace Station._qa.checks
                             return qaCheck;
                         }
                     }
+                    qaCheck.SetFailed("Could not find setting for disabling friends. It is likely still on.");
+                    return qaCheck;
                 }
                 catch (Exception e)
                 {
@@ -238,9 +244,9 @@ namespace Station._qa.checks
                             qaCheck.SetFailed("Download region is not set to an Australian Region");
                             return qaCheck;
                         }
-                        qaCheck.SetFailed("Could not find download region setting.");
-                        return qaCheck;
                     }
+                    qaCheck.SetFailed("Could not find download region setting.");
+                    return qaCheck;
                 }
                 catch (Exception e)
                 {
@@ -359,9 +365,9 @@ namespace Station._qa.checks
 
                             return qaCheck;
                         }
-                        qaCheck.SetFailed("Could not find setting for default page in file: " + fileLocation);
-                        return qaCheck;
                     }
+                    qaCheck.SetFailed("Could not find setting for default page in file: " + fileLocation);
+                    return qaCheck;
                 }
                 catch (Exception e)
                 {
@@ -399,8 +405,20 @@ namespace Station._qa.checks
                 try
                 {
                     string[] lines = File.ReadAllLines(fileLocation);
+                    string latestAccountName = "";
+                    string expectedAccountName = Environment.GetEnvironmentVariable("SteamUserName", EnvironmentVariableTarget.Process) ?? "";
                     foreach (var line in lines)
                     {
+                        if (line.Contains("AccountName"))
+                        {
+                            string[] split = line.Trim('\t').Trim('\"').Split('\t');
+                            latestAccountName = split[split.Length - 1].Trim('\"').Trim('\t');
+                        }
+
+                        if (!latestAccountName.Equals(expectedAccountName))
+                        {
+                            continue;
+                        }
                         if (line.Contains("SkipOfflineModeWarning"))
                         {
                             if (line.Contains("1"))
