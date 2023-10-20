@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
@@ -268,9 +270,32 @@ namespace Station
             if (action.Equals("LaunchExperience"))
             {
                 string experienceId = actionData.GetValue("experienceId").ToString();
-                WrapperManager.StopAProcess();
-                Task.Delay(3000);
-                string experienceLaunchResponse = await WrapperManager.StartAProcess(experienceId);
+                
+                // check if there is an unaccepted EULA
+                // first get app info from steamcmd to get the list of eulas
+                // then read the localconfig.vdf file to see what eulas are in the list
+                string details = CommandLine.ExecuteSteamCommand($"+app_info_print {experienceId} +quit");
+                var data = new List<string>(details.Split("\n")).Where(line => line.Contains("_eula_")).Where(line => !line.Contains("http"));
+                List<string> neededEulas = new List<string>();
+                foreach (var eula in data)
+                {
+                    neededEulas.Add(eula.Split("\t")[eula.Split("\t").Length - 1].Trim('"'));
+                }
+
+                List<string> acceptedEulas = SteamConfig.GetAcceptedEulasForAppId(experienceId);
+                bool allEulasAccepted = !neededEulas.Except(acceptedEulas).Any();
+                string experienceLaunchResponse = "";
+                if (allEulasAccepted)
+                {
+                    WrapperManager.StopAProcess();
+                    Task.Delay(3000);
+                    experienceLaunchResponse = await WrapperManager.StartAProcess(experienceId);
+                }
+                else
+                {
+                    experienceLaunchResponse = "Found unaccepted EULAs, did not attempt to launch";
+                }
+                
                 
                 JObject response = new JObject();
                 response.Add("response", "ExperienceLaunchAttempt");

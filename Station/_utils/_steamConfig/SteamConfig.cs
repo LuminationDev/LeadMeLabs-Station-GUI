@@ -143,6 +143,51 @@ namespace Station
                 SentrySdk.CaptureException(e);
             }
         }
+        
+        public static List<string> GetAcceptedEulasForAppId(string appId)
+        {
+            if (steamId.Length == 0)
+            {
+                Logger.WriteLog(
+                    "Could not find steamId: " +
+                    location, MockConsole.LogLevel.Error);
+                return new List<string>();
+            }
+            string fileLocation = $"C:\\Program Files (x86)\\Steam\\userdata\\{steamId}\\config\\localconfig.vdf";
+            if (!File.Exists(fileLocation))
+            {
+                Logger.WriteLog(
+                    "Could not verify steam hide notification info: " +
+                    location, MockConsole.LogLevel.Error);
+                return new List<string>();
+            }
+
+
+            List<string> acceptedEulas = new List<string>();
+            try
+            {
+                string[] lines = File.ReadAllLines(fileLocation);
+                for (int i = 0; i < lines.Length; i++)
+                {
+                    if (lines[i].Equals("\t\t\t\t\t\"" + appId + "\""))
+                    {
+                        for (int j = i; !lines[j].Equals("\t\t\t\t\t}"); j++)
+                        {
+                            if (lines[j].Contains("eula"))
+                            {
+                                acceptedEulas.Add(lines[j].Trim('\"').Trim('0').Trim('1').Trim('\"').Trim('\t').Trim('\"'));
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                SentrySdk.CaptureException(e);
+            }
+
+            return acceptedEulas;
+        }
 
         private static void VerifyConfigSharedConfigFile()
         {
