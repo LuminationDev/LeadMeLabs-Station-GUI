@@ -213,7 +213,6 @@ namespace Station
 
                 await SessionController.PutTaskDelay(5000);
 
-                SessionController.PassStationMessage("MessageToAndroid,SetValue:session:Restarted");
                 SessionController.PassStationMessage("Processing,false");
 
                 ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage($"SoftwareState,Starting VR processes"), TimeSpan.FromSeconds(0));
