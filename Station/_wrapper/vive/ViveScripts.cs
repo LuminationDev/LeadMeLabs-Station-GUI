@@ -93,6 +93,7 @@ namespace Station
                 {
                     sent = true;
                     ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage($"SoftwareState,Awaiting headset connection..."), TimeSpan.FromSeconds(1));
+                    ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage("MessageToAndroid,SetValue:session:Restarted"), TimeSpan.FromSeconds(1));
                     await Task.Delay(2000);
                 }
                 else //Message has already been sent to the NUC, block so it does not take up too much processing power

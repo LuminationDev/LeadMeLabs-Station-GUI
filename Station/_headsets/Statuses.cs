@@ -151,7 +151,6 @@ namespace Station
             //If the headset is connected and no experience is currently running tell the tablet the Station is ready to go
             if (SoftwareStatus == DeviceStatus.Connected && OpenVRStatus == DeviceStatus.Connected && !SessionController.currentState.Equals("Ready to go"))
             {
-                ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage("MessageToAndroid,SetValue:session:Restarted"), TimeSpan.FromSeconds(0));
                 ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage($"SoftwareState,Ready to go"), TimeSpan.FromSeconds(0));
             }
         }
