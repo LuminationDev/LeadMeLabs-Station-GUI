@@ -415,7 +415,7 @@ namespace Station._qa.checks
                             latestAccountName = split[split.Length - 1].Trim('\"').Trim('\t');
                         }
 
-                        if (!latestAccountName.Equals(expectedAccountName))
+                        if (!latestAccountName.ToLower().Equals(expectedAccountName.ToLower()))
                         {
                             continue;
                         }
