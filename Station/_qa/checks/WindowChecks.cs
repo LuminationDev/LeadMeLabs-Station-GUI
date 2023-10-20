@@ -73,7 +73,7 @@ public class WindowChecks
         QaCheck qaCheck = new QaCheck("openssl_environment");
         string variableName = "OPENSSL_ia32cap";
         string? variableValue = Environment.GetEnvironmentVariable(variableName, EnvironmentVariableTarget.Machine);
-        if (variableName != null && variableName.Equals("~0x20000000"))
+        if (variableName != null && variableValue.Equals("~0x20000000"))
         {
             qaCheck.SetPassed(null);
         }
