@@ -282,6 +282,10 @@ namespace Station
                     neededEulas.Add(eula.Split("\t")[eula.Split("\t").Length - 1].Trim('"'));
                 }
 
+                JObject response = new JObject();
+                response.Add("response", "ExperienceLaunchAttempt");
+                JObject responseData = new JObject();
+                
                 List<string> acceptedEulas = SteamConfig.GetAcceptedEulasForAppId(experienceId);
                 bool allEulasAccepted = !neededEulas.Except(acceptedEulas).Any();
                 string experienceLaunchResponse = "";
@@ -290,17 +294,14 @@ namespace Station
                     WrapperManager.StopAProcess();
                     Task.Delay(3000);
                     experienceLaunchResponse = await WrapperManager.StartAProcess(experienceId);
+                    responseData.Add("result", experienceLaunchResponse.ToLower().Equals("launching") ? "launching" : "failed");
                 }
                 else
                 {
                     experienceLaunchResponse = "Found unaccepted EULAs, did not attempt to launch";
+                    responseData.Add("result", "warning");
                 }
                 
-                
-                JObject response = new JObject();
-                response.Add("response", "ExperienceLaunchAttempt");
-                JObject responseData = new JObject();
-                responseData.Add("result", experienceLaunchResponse.ToLower().Equals("launching") ? "launching" : "failed");
                 responseData.Add("message", experienceLaunchResponse);
                 responseData.Add("experienceId", experienceId);
                 response.Add("responseData", responseData);
