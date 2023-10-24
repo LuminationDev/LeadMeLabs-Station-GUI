@@ -108,7 +108,7 @@ namespace Station
         public void HandleValueChanged(object? sender, GenericEventArgs<string> e)
         {
             // Code to execute when the value changes.
-            Manager.SendResponse("Android", "Station", $"DeviceStatus:{e.Data}");
+            Manager.SendResponse("Android", "Station", $"SetValue:deviceStatus:{e.Data}");
         }
 
         private bool _headsetFirmwareStatus = false;
@@ -294,15 +294,15 @@ namespace Station
         public void QueryStatuses()
         {
             //Headset
-            Manager.SendResponse("Android", "Station", $"DeviceStatus:Headset:OpenVR:tracking:{OpenVRStatus.ToString()}");
-            Manager.SendResponse("Android", "Station", $"DeviceStatus:Headset:Vive:tracking:{SoftwareStatus.ToString()}");
+            Manager.SendResponse("Android", "Station", $"SetValue:deviceStatus:Headset:OpenVR:tracking:{OpenVRStatus.ToString()}");
+            Manager.SendResponse("Android", "Station", $"SetValue:deviceStatus:Headset:Vive:tracking:{SoftwareStatus.ToString()}");
 
             //Controllers
             foreach (var vrController in controllers)
             {
                 //Update the tablet
-                Manager.SendResponse("Android", "Station", $"DeviceStatus:Controller:{vrController.Value.Role.ToString()}:tracking:{vrController.Value.Tracking.ToString()}");
-                Manager.SendResponse("Android", "Station", $"DeviceStatus:Controller:{vrController.Value.Role.ToString()}:battery:{vrController.Value.Battery}");
+                Manager.SendResponse("Android", "Station", $"SetValue:deviceStatus:Controller:{vrController.Value.Role.ToString()}:tracking:{vrController.Value.Tracking.ToString()}");
+                Manager.SendResponse("Android", "Station", $"SetValue:deviceStatus:Controller:{vrController.Value.Role.ToString()}:battery:{vrController.Value.Battery}");
             }
 
             //Base stations
@@ -314,7 +314,7 @@ namespace Station
                     active++;
                 }
             }
-            Manager.SendResponse("Android", "Station", $"DeviceStatus:BaseStation:{active}:{baseStations.Count}");
+            Manager.SendResponse("Android", "Station", $"SetValue:deviceStatus:BaseStation:{active}:{baseStations.Count}");
         }
 
         public JObject GetStatusesJson()
