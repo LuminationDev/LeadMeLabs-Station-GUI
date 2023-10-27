@@ -15,7 +15,7 @@ namespace Station._qa.checks
         private const string NotInitializedMessage =
             "Steam has not been initialized, please login to Steam client to continue checks.";
 
-        public List<QaCheck> RunQa()
+        public List<QaCheck> RunQa(string labType)
         {
             QaCheck isSteamUserNameSet = IsSteamUserNameSet();
             QaCheck isSteamPasswordSet = IsSteamPasswordSet();
