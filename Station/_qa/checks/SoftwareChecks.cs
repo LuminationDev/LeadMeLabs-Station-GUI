@@ -10,7 +10,7 @@ namespace Station._qa.checks;
 public class SoftwareChecks
 {
     private List<QaCheck> _qaChecks = new();
-    public List<QaCheck> RunQa()
+    public List<QaCheck> RunQa(string labType)
     {
         _qaChecks.Add(IsSetVolPresent());
         _qaChecks.Add(IsSteamCmdPresent());
@@ -23,7 +23,7 @@ public class SoftwareChecks
         return _qaChecks;
     }
 
-    public List<QaCheck> RunSlowQaChecks()
+    public List<QaCheck> RunSlowQaChecks(string labType)
     {
         List<QaCheck> qaChecks = new List<QaCheck>();
         qaChecks.Add(IsSteamGuardDisabled());

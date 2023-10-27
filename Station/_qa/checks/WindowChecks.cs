@@ -1,24 +1,26 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Management;
 using System.Net.Http;
-using Microsoft.Win32;
 using Newtonsoft.Json;
-using LeadMeLabsLibrary;
 
 namespace Station._qa.checks;
 
 public class WindowChecks
 {
     private List<QaCheck> _qaChecks = new();
-    public List<QaCheck> RunQa()
+    public List<QaCheck> RunQa(string labType)
     {
         _qaChecks.Add(IsWakeOnMagicPacketEnabled());
         _qaChecks.Add(CheckEnvAsync());
         _qaChecks.Add(CheckWallpaper());
-        _qaChecks.Add(CheckTimezone());
-        _qaChecks.Add(CheckTimeAndDate());
+
+        if (labType.Equals("Online"))
+        {
+            _qaChecks.Add(CheckTimezone());
+            _qaChecks.Add(CheckTimeAndDate());
+        }
+
         _qaChecks.Add(IsTaskSchedulerCreated());
         _qaChecks.Add(IsOldTaskSchedulerNotPresent());
 

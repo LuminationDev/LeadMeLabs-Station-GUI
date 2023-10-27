@@ -15,7 +15,7 @@ namespace Station._qa.checks
         private const string NotInitializedMessage =
             "Steam has not been initialized, please login to Steam client to continue checks.";
 
-        public List<QaCheck> RunQa()
+        public List<QaCheck> RunQa(string labType)
         {
             QaCheck isSteamUserNameSet = IsSteamUserNameSet();
             QaCheck isSteamPasswordSet = IsSteamPasswordSet();
@@ -35,7 +35,7 @@ namespace Station._qa.checks
             _qaChecks.Add(IsCloudEnabledOff());
             _qaChecks.Add(IsDefaultPageSetToLibrary());
             _qaChecks.Add(IsSteamInstalledInTheCorrectLocation());
-            _qaChecks.AddRange(IsLoginUsersCorrectlySet());
+            _qaChecks.AddRange(IsLoginUsersCorrectlySet(labType.Equals("Online")));
             _qaChecks.AddRange(IsSteamVrSettingsCorrectlySet());
             return _qaChecks;
         }
@@ -384,7 +384,7 @@ namespace Station._qa.checks
             return qaCheck;
         }
 
-        private List<QaCheck> IsLoginUsersCorrectlySet()
+        private List<QaCheck> IsLoginUsersCorrectlySet(bool isOnline)
         {
             QaCheck skipOfflineWarning = new QaCheck("skip_offline_warning");
             QaCheck allowAutoLogin = new QaCheck("allow_auto_login");
@@ -445,7 +445,7 @@ namespace Station._qa.checks
                         
                         if (line.Contains("WantsOfflineMode"))
                         {
-                            if (Network.CheckIfConnectedToInternet())  // todo - this should be based on the QA tool telling us if we want online
+                            if (isOnline)  // todo - this should be based on the QA tool telling us if we want online
                             {
                                 if (line.Contains("0"))
                                 {
