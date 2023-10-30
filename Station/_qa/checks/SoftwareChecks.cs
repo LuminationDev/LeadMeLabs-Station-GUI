@@ -4,15 +4,13 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Management.Automation;
-using Microsoft.Win32;
-using Namotion.Reflection;
 
 namespace Station._qa.checks;
 
 public class SoftwareChecks
 {
     private List<QaCheck> _qaChecks = new();
-    public List<QaCheck> RunQa()
+    public List<QaCheck> RunQa(string labType)
     {
         _qaChecks.Add(IsSetVolPresent());
         _qaChecks.Add(IsSteamCmdPresent());
@@ -25,7 +23,7 @@ public class SoftwareChecks
         return _qaChecks;
     }
 
-    public List<QaCheck> RunSlowQaChecks()
+    public List<QaCheck> RunSlowQaChecks(string labType)
     {
         List<QaCheck> qaChecks = new List<QaCheck>();
         qaChecks.Add(IsSteamGuardDisabled());
@@ -233,44 +231,31 @@ public class SoftwareChecks
     private QaCheck IsAmdInstalled()
     {
         QaCheck qaCheck = new QaCheck("amd_installed");
-        const string adrenalinSearchKey = @"SOFTWARE\AMD";
-        const string adrenalinValueName = "DisplayName";
-        const string adrenalinValueExpected = "AMD Radeon Software";
 
         try
         {
-            using (RegistryKey key = Registry.CurrentUser.OpenSubKey(adrenalinSearchKey))
+            using PowerShell powerShell = PowerShell.Create();
+            powerShell.AddCommand("Get-ItemProperty")
+                .AddParameter("Path", "HKLM:\\Software\\AMD\\CN");
+            var results = powerShell.Invoke();
+
+            if (results.Count > 0 && results[0] != null)
             {
-                if (key != null)
+                var adrenalin = results[0].Properties["Adrenalin"]?.Value.ToString();
+                if (adrenalin is "True")
                 {
-                    foreach (string subKeyName in key.GetSubKeyNames())
-                    {
-                        using (RegistryKey subKey = key.OpenSubKey(subKeyName))
-                        {
-                            if (subKey != null)
-                            {
-                                object value = subKey.GetValue(adrenalinValueName);
-                                if (value != null && value.ToString() == adrenalinValueExpected)
-                                {
-                                    qaCheck.SetPassed(null);
-                                    return qaCheck;
-                                }
-                            }
-                        }
-                    }
+                    qaCheck.SetPassed(null);
+                    return qaCheck;
                 }
             }
-
-            Console.WriteLine("AMD Adrenalin is not installed.");
             qaCheck.SetFailed("AMD Adrenalin is not installed.");
-            return qaCheck;
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error: {ex.Message}");
             qaCheck.SetFailed($"Error: {ex.Message}");
-            return qaCheck;
         }
+
+        return qaCheck;
     }
     
     /// <summary>

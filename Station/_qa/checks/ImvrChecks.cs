@@ -4,7 +4,7 @@ namespace Station._qa.checks;
 
 public class ImvrChecks
 {
-    public List<QaCheck> RunQa()
+    public List<QaCheck> RunQa(string labType)
     {
         return SessionController.vrHeadset.GetStatusManager().VrQaChecks();
     }

@@ -218,22 +218,23 @@ namespace Station
             if (action.Equals("RunGroup"))
             {
                 string group = actionData.GetValue("group").ToString();
+                string? labType = actionData.GetValue("labType")?.ToString();
                 QualityManager qualityManager = new QualityManager();
 
                 string result = "";
                 switch (group)
                 {
                     case "station_connection_checks":
-                        result = JsonConvert.SerializeObject(qualityManager.stationConnectionChecks.RunQa());
+                        result = JsonConvert.SerializeObject(qualityManager.stationConnectionChecks.RunQa(labType ?? "Online"));
                         break;
                     case "windows_checks":
-                        result = JsonConvert.SerializeObject(qualityManager.windowChecks.RunQa());
+                        result = JsonConvert.SerializeObject(qualityManager.windowChecks.RunQa(labType ?? "Online"));
                         break;
                     case "software_checks":
-                        result = JsonConvert.SerializeObject(qualityManager.softwareChecks.RunQa());
+                        result = JsonConvert.SerializeObject(qualityManager.softwareChecks.RunQa(labType ?? "Online"));
                         new Thread(() =>
                         {
-                            string output = JsonConvert.SerializeObject(qualityManager.softwareChecks.RunSlowQaChecks());
+                            string output = JsonConvert.SerializeObject(qualityManager.softwareChecks.RunSlowQaChecks(labType ?? "Online"));
                             JObject response = new JObject();
                             response.Add("response", "RunGroup");
                             JObject responseData = new JObject();
@@ -245,13 +246,13 @@ namespace Station
                         }).Start();
                         break;
                     case "steam_config_checks":
-                        result = JsonConvert.SerializeObject(qualityManager.steamConfigChecks.RunQa());
+                        result = JsonConvert.SerializeObject(qualityManager.steamConfigChecks.RunQa(labType ?? "Online"));
                         break;
                     case "network_checks":
-                        result = JsonConvert.SerializeObject(qualityManager.networkChecks.RunQa());
+                        result = JsonConvert.SerializeObject(qualityManager.networkChecks.RunQa(labType ?? "Online"));
                         break;
                     case "imvr_checks":
-                        result = JsonConvert.SerializeObject(qualityManager.imvrChecks.RunQa());
+                        result = JsonConvert.SerializeObject(qualityManager.imvrChecks.RunQa(labType ?? "Online"));
                         break;
                     default:
                         return;

@@ -10,7 +10,7 @@ namespace Station._qa.checks;
 public class NetworkChecks
 {
     private List<QaCheck> _qaChecks = new();
-    public List<QaCheck> RunQa()
+    public List<QaCheck> RunQa(string labType)
     {
         _qaChecks.Add(IsAllowedThroughFirewall());
         _qaChecks.Add(IsLauncherAllowedThroughFirewall());
