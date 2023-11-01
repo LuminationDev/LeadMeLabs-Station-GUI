@@ -4,7 +4,6 @@ using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
 using LeadMeLabsLibrary;
-using Station._qa.checks;
 
 namespace Station
 {
@@ -23,7 +22,7 @@ namespace Station
         /// <summary>
         /// An integer representing the port of the NUC machine.
         /// </summary>
-        public static readonly int NUCPort = 55556;
+        private static readonly int NUCPort = 55556;
 
         /// <summary>
         /// IPEndPoint representing the server that is running on the local machine.
@@ -130,14 +129,16 @@ namespace Station
                 StationMonitoringThread.initializeMonitoring();
             }
 
-            if (Environment.GetEnvironmentVariable("NucAddress", EnvironmentVariableTarget.Process) != null)
+            if (Environment.GetEnvironmentVariable("NucAddress", EnvironmentVariableTarget.Process) == null)
             {
-                Logger.WriteLog($"Expected NUC address: {Environment.GetEnvironmentVariable("NucAddress", EnvironmentVariableTarget.Process)}", MockConsole.LogLevel.Normal);
-                SetRemoteEndPoint();
-                if (!Helper.GetStationMode().Equals(Helper.STATION_MODE_APPLIANCE))
-                {
-                    InitialStartUp();
-                }
+                return;
+            }
+            
+            Logger.WriteLog($"Expected NUC address: {Environment.GetEnvironmentVariable("NucAddress", EnvironmentVariableTarget.Process)}", MockConsole.LogLevel.Normal);
+            SetRemoteEndPoint();
+            if (!Helper.GetStationMode().Equals(Helper.STATION_MODE_APPLIANCE))
+            {
+                InitialStartUp();
             }
         }
 
@@ -223,10 +224,10 @@ namespace Station
         /// </summary>
         private static void InitialStartUp()
         {
-            Manager.SendResponse("NUC", "Station", "SetValue:status:On");
-            Manager.SendResponse("NUC", "Station", "SetValue:gameName:");
-            Manager.SendResponse("Android", "Station", "SetValue:gameId:");
-            Manager.SendResponse("NUC", "Station", "SetValue:volume:" + CommandLine.GetVolume());
+            SendResponse("NUC", "Station", "SetValue:status:On");
+            SendResponse("NUC", "Station", "SetValue:gameName:");
+            SendResponse("Android", "Station", "SetValue:gameId:");
+            SendResponse("NUC", "Station", "SetValue:volume:" + CommandLine.GetVolume());
         }
 
         /// <summary>
@@ -322,7 +323,6 @@ namespace Station
             {
                 address = IPAddress.Parse(destination.Substring(3).Split(":")[0]);
                 port = Int32.Parse(destination.Substring(3).Split(":")[1]);
-                destination = "QA";
                 response = additionalData;
             }
 

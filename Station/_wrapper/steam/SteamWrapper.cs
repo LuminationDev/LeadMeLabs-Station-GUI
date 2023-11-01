@@ -94,7 +94,7 @@ namespace Station
                 return $"MessageToAndroid,GameLaunchFailed:Unknown experience";
             };
 
-            if (SessionController.vrHeadset == null)
+            if (SessionController.VrHeadset == null)
             {
                 SessionController.PassStationMessage("No VR headset set.");
                 return "No VR headset set.";
@@ -119,7 +119,7 @@ namespace Station
             WrapperMonitoringThread.InitializeMonitoring(wrapperType);
 
             //Wait for the Headset's connection method to respond
-            if (!SessionController.vrHeadset.WaitForConnection(wrapperType)) return "Could not connect to headset";
+            if (!SessionController.VrHeadset.WaitForConnection(wrapperType)) return "Could not connect to headset";
 
             //If headset management software is open (with headset connected) and OpenVrSystem cannot initialise then restart SteamVR
             if (!OpenVRManager.WaitForOpenVR().Result) return "Could not start OpenVR";
@@ -138,7 +138,7 @@ namespace Station
 
                 //Fall back to the alternate if OpenVR launch fails or is not a registered VR experience in the vrmanifest
                 //Stop any accessory processes before opening a new process
-                SessionController.vrHeadset.StopProcessesBeforeLaunch();
+                SessionController.VrHeadset.StopProcessesBeforeLaunch();
 
                 Logger.WriteLog($"SteamWrapper.WrapProcess - Using AlternateLaunchProcess", MockConsole.LogLevel.Normal);
                 AlternateLaunchProcess(experience);
@@ -200,7 +200,7 @@ namespace Station
         private void AlternateLaunchProcess(Experience experience)
         {
             currentProcess = new Process();
-            currentProcess.StartInfo.FileName = SessionController.steam;
+            currentProcess.StartInfo.FileName = SessionController.Steam;
             currentProcess.StartInfo.Arguments = launch_params + experience.ID;
 
             //Add any extra launch parameters
@@ -338,7 +338,7 @@ namespace Station
                     
                 }
             }
-            CommandLine.StartProgram(SessionController.steam, " +app_stop " + lastExperience.ID);
+            CommandLine.StartProgram(SessionController.Steam, " +app_stop " + lastExperience.ID);
             SetLaunchingExperience(false);
 
             experienceName = null; //Reset for correct headset state
@@ -402,7 +402,7 @@ namespace Station
         public static void LauncherSteamVR()
         {
             currentProcess = new Process();
-            currentProcess.StartInfo.FileName = SessionController.steam;
+            currentProcess.StartInfo.FileName = SessionController.Steam;
             currentProcess.StartInfo.Arguments = launch_params + 250820;
             currentProcess.Start();
         }

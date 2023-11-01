@@ -51,7 +51,7 @@ namespace Station
         public VrBaseStation(string serialNumber)
         {
             this._serialNumber = serialNumber;
-            TrackingChanged += SessionController.vrHeadset.GetStatusManager().HandleValueChanged;
+            TrackingChanged += SessionController.VrHeadset.GetStatusManager().HandleValueChanged;
         }
 
         /// <summary>

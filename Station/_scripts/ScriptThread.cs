@@ -77,7 +77,7 @@ namespace Station
             if (additionalData.Equals("Connect"))
             {
                 Manager.SendResponse(source, "Station", "SetValue:status:On");
-                Manager.SendResponse(source, "Station", $"SetValue:state:{SessionController.currentState}");
+                Manager.SendResponse(source, "Station", $"SetValue:state:{SessionController.CurrentState}");
                 Manager.SendResponse(source, "Station", "SetValue:gameName:");
                 Manager.SendResponse("Android", "Station", "SetValue:gameId:");
                 Manager.SendResponse(source, "Station", "SetValue:volume:" + CommandLine.GetVolume());
@@ -101,7 +101,7 @@ namespace Station
                 if (key == "devices")
                 {
                     //When a tablet connects/reconnects to the NUC, send through the current VR device statuses.
-                    SessionController.vrHeadset?.GetStatusManager().QueryStatuses();
+                    SessionController.VrHeadset?.GetStatusManager().QueryStatuses();
                 }
             }
             if (additionalData.StartsWith("SetValue"))
@@ -318,9 +318,9 @@ namespace Station
                 JObject responseData = new JObject();
                 response.Add("responseData", responseData);
                 responseData.Add("result",
-                    SessionController.vrHeadset == null
+                    SessionController.VrHeadset == null
                         ? null
-                        : SessionController.vrHeadset.GetStatusManager().GetStatusesJson());
+                        : SessionController.VrHeadset.GetStatusManager().GetStatusesJson());
                 Manager.SendResponse("NUC", "QA", response.ToString());
             }
             

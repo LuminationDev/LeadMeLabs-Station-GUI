@@ -5,30 +5,54 @@ using Newtonsoft.Json;
 
 namespace Station
 {
-    public class RoomSetup
+    public static class RoomSetup
     {
-        private static readonly string defaultFilePath = CommandLine.stationLocation + @"\_config\chaperone_info.vrchap";
-        private static readonly string steamVRFilePath = @"C:\Program Files (x86)\Steam\config\chaperone_info.vrchap";
+        private static readonly string DefaultFilePath = CommandLine.stationLocation + @"\_config\chaperone_info.vrchap";
+        private const string SteamVrFilePath = @"C:\Program Files (x86)\Steam\config\chaperone_info.vrchap";
+        private const string HtcFilePath = @"C:\Program Files (x86)\Steam\config\htc_business_streaming\chaperone_info.vrchap";
+        private static string? currentFilePath;
 
-        public static string GetSteamVRPath()
+        /// <summary>
+        /// Determine what sort of headset is currently being used, this changes where the chaperone_info.vrchap is
+        /// located for SteamVR.
+        /// </summary>
+        private static bool DetermineFiletype()
         {
-            return steamVRFilePath;
-        }
+            string headset = (Environment.GetEnvironmentVariable("HeadsetType", EnvironmentVariableTarget.Process) ?? "Unknown");
+            switch (headset)
+            {
+                case "VivePro1":
+                case "VivePro2":
+                    currentFilePath = SteamVrFilePath;
+                    break;
+                case "ViveFocus3":
+                    currentFilePath = HtcFilePath;
+                    break;
+            }
 
+            return currentFilePath != null;
+        }
+        
         /// <summary>
         /// The SteamVR room setup has just been completed, input the default collision_bounds and play_area. Afterwards
         /// save the file for future comparison and loading. 
         /// </summary>
         public static string SaveRoomSetup()
         {
-            // Read the JSON file
-            if(!File.Exists(steamVRFilePath))
+            if (!DetermineFiletype())
             {
-                Logger.WriteLog($"SaveRoomSetup - chaperone_info.vrchap does not exist in SteamVR at {steamVRFilePath}", MockConsole.LogLevel.Error);
+                Logger.WriteLog($"SaveRoomSetup - chaperone_info.vrchap does not exist in SteamVR at {currentFilePath}", MockConsole.LogLevel.Error);
+                return @"chaperone_info.vrchap not found. Attempt SteamVR quick calibrate again.";
+            }
+            
+            // Read the JSON file
+            if(!File.Exists(currentFilePath))
+            {
+                Logger.WriteLog($"SaveRoomSetup - chaperone_info.vrchap does not exist in SteamVR at {currentFilePath}", MockConsole.LogLevel.Error);
                 return @"chaperone_info.vrchap not found. Attempt SteamVR quick calibrate again.";
             }
 
-            string jsonContent = File.ReadAllText(steamVRFilePath);
+            string jsonContent = File.ReadAllText(currentFilePath);
             ChaperoneInfo? chaperoneInfo = null;
 
             // Attempt to deserialize the JSON string
@@ -43,7 +67,7 @@ namespace Station
 
             if(chaperoneInfo == null)
             {
-                Logger.WriteLog($"SaveRoomSetup - Unable to DeserializeObject chaperone_info.vrchap at {steamVRFilePath}", MockConsole.LogLevel.Error);
+                Logger.WriteLog($"SaveRoomSetup - Unable to DeserializeObject chaperone_info.vrchap at {currentFilePath}", MockConsole.LogLevel.Error);
                 return "Unable to DeserializeObject chaperone_info.vrchap";
             }
 
@@ -53,7 +77,7 @@ namespace Station
 
             // Find the most recent universe (last in the .vrchap file)
             int mostRecent = chaperoneInfo.universes.Length - 1;
-            if(chaperoneInfo.universes[mostRecent] == null)
+            if (chaperoneInfo.universes[mostRecent] == null)
             {
                 Logger.WriteLog($"SaveRoomSetup - Most recent universe [{mostRecent}], cannot be found.", MockConsole.LogLevel.Error);
                 return $"Saving file error.";
@@ -66,7 +90,7 @@ namespace Station
             try
             {
                 string modifiedJson = JsonConvert.SerializeObject(chaperoneInfo, Formatting.Indented);
-                File.WriteAllText(defaultFilePath, modifiedJson);
+                File.WriteAllText(DefaultFilePath, modifiedJson);
             }
             catch (Exception ex)
             {
@@ -85,16 +109,22 @@ namespace Station
         /// </summary>
         public static void CompareRoomSetup()
         {
+            if (!DetermineFiletype() || currentFilePath == null)
+            {
+                Logger.WriteLog($"SaveRoomSetup - chaperone_info.vrchap does not exist in SteamVR at {currentFilePath}", MockConsole.LogLevel.Error);
+                return;
+            }
+            
             // Check if the files exist
-            bool defaultExists = File.Exists(defaultFilePath);
-            bool steamExists = File.Exists(steamVRFilePath);
+            bool defaultExists = File.Exists(DefaultFilePath);
+            bool steamExists = File.Exists(currentFilePath);
 
             Logger.WriteLog($"CompareRoomSetup - (chaperone_info.vrchap) steamExists: {steamExists}. defaultExists: {defaultExists}", MockConsole.LogLevel.Debug);
 
             if (defaultExists && steamExists)
             {
                 // Compare the content
-                bool filesAreEqual = AreFilesEqual(steamVRFilePath, defaultFilePath);
+                bool filesAreEqual = AreFilesEqual(currentFilePath, DefaultFilePath);
                 if (!filesAreEqual)
                 {
                     Logger.WriteLog("CompareRoomSetup - SteamVR is not equal to the Default", MockConsole.LogLevel.Error);
@@ -116,7 +146,7 @@ namespace Station
             }
             else
             { 
-                Logger.WriteLog($"CompareRoomSetup - chaperone_info.vrchap does not exist in SteamVR: {steamVRFilePath}. Or in _config: {defaultFilePath}, ROOM SETUP REQUIRED", MockConsole.LogLevel.Error);
+                Logger.WriteLog($"CompareRoomSetup - chaperone_info.vrchap does not exist in SteamVR: {currentFilePath}. Or in _config: {DefaultFilePath}, ROOM SETUP REQUIRED", MockConsole.LogLevel.Error);
             }
         }
 
@@ -125,14 +155,20 @@ namespace Station
         /// </summary>
         private static void LoadRoomSetup()
         {
+            if (currentFilePath == null)
+            {
+                Logger.WriteLog($"LoadRoomSetup - currentFilePath is null. Check HeadsetType", MockConsole.LogLevel.Normal);
+                return;
+            }
+            
             try
             {
-                if (File.Exists(steamVRFilePath))
+                if (File.Exists(currentFilePath))
                 {
-                    File.SetAttributes(steamVRFilePath, FileAttributes.Normal); // Clear read-only attribute
+                    File.SetAttributes(currentFilePath, FileAttributes.Normal); // Clear read-only attribute
                 }
 
-                File.Copy(defaultFilePath, steamVRFilePath, true);
+                File.Copy(DefaultFilePath, currentFilePath, true);
                 Logger.WriteLog("LoadRoomSetup - chaperone_info.vrchap file moved successfully.", MockConsole.LogLevel.Normal);
             }
             catch (Exception ex)
@@ -148,12 +184,11 @@ namespace Station
         /// <returns>The MD5 hash as a lowercase string.</returns>
         private static string CalculateMD5Hash(string filePath)
         {
-            using (var md5 = MD5.Create())
-            using (var stream = File.OpenRead(filePath))
-            {
-                byte[] hashBytes = md5.ComputeHash(stream);
-                return BitConverter.ToString(hashBytes).Replace("-", "").ToLower();
-            }
+            using var md5 = MD5.Create();
+            using var stream = File.OpenRead(filePath);
+            
+            byte[] hashBytes = md5.ComputeHash(stream);
+            return BitConverter.ToString(hashBytes).Replace("-", "").ToLower();
         }
 
         /// <summary>

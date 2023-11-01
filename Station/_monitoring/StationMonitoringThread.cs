@@ -93,13 +93,13 @@ namespace Station
         /// </summary>
         private static void ExternalSoftwareCheck()
         {
-            if (SessionController.vrHeadset == null) return;
+            if (SessionController.VrHeadset == null) return;
 
             //An early exit if the monitoring process is not currently running.
-            if (Process.GetProcessesByName(SessionController.vrHeadset.GetHeadsetManagementProcessName()).Length == 0) return;
+            if (Process.GetProcessesByName(SessionController.VrHeadset.GetHeadsetManagementProcessName()).Length == 0) return;
             
-            SessionController.vrHeadset.MonitorVrConnection();
-            MockConsole.WriteLine("VR SoftwareStatus: " + Enum.GetName(typeof(DeviceStatus), SessionController.vrHeadset.GetHeadsetManagementSoftwareStatus()), MockConsole.LogLevel.Debug);
+            SessionController.VrHeadset.MonitorVrConnection();
+            MockConsole.WriteLine("VR SoftwareStatus: " + Enum.GetName(typeof(DeviceStatus), SessionController.VrHeadset.GetHeadsetManagementSoftwareStatus()), MockConsole.LogLevel.Debug);
         }
 
         /// <summary>

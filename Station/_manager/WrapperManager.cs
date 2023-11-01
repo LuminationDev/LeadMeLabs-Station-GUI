@@ -174,13 +174,13 @@ namespace Station
         /// </summary>
         public static async Task RestartVRProcesses()
         {
-            if (SessionController.vrHeadset != null)
+            if (SessionController.VrHeadset != null)
             {
                 RoomSetup.CompareRoomSetup();
 
                 List<string> combinedProcesses = new List<string>();
-                combinedProcesses.AddRange(WrapperMonitoringThread.steamProcesses);
-                combinedProcesses.AddRange(WrapperMonitoringThread.viveProcesses);
+                combinedProcesses.AddRange(WrapperMonitoringThread.SteamProcesses);
+                combinedProcesses.AddRange(WrapperMonitoringThread.ViveProcesses);
 
                 CommandLine.QueryVRProcesses(combinedProcesses, true);
                 await SessionController.PutTaskDelay(2000);
@@ -188,14 +188,14 @@ namespace Station
                 //have to add a waiting time to make sure it has exited
                 int attempts = 0;
 
-                if (SessionController.vrHeadset == null)
+                if (SessionController.VrHeadset == null)
                 {
                     SessionController.PassStationMessage("No headset type specified.");
                     SessionController.PassStationMessage("Processing,false");
                     return;
                 }
 
-                List<string> processesToQuery = SessionController.vrHeadset.GetProcessesToQuery();
+                List<string> processesToQuery = SessionController.VrHeadset.GetProcessesToQuery();
                 while (CommandLine.QueryVRProcesses(processesToQuery))
                 {
                     await SessionController.PutTaskDelay(1000);
@@ -209,14 +209,14 @@ namespace Station
                 }
 
                 //Reset the VR device statuses
-                SessionController.vrHeadset.GetStatusManager().ResetStatuses();
+                SessionController.VrHeadset.GetStatusManager().ResetStatuses();
 
                 await SessionController.PutTaskDelay(5000);
 
                 SessionController.PassStationMessage("Processing,false");
 
                 ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage($"SoftwareState,Starting VR processes"), TimeSpan.FromSeconds(0));
-                SessionController.vrHeadset.StartVrSession();
+                SessionController.VrHeadset.StartVrSession();
                 WaitForVRProcesses();
             }
         }
@@ -232,10 +232,10 @@ namespace Station
             {
                 Task.Delay(3000).Wait();
                 count++;
-            } while ((Process.GetProcessesByName(SessionController.vrHeadset?.GetHeadsetManagementProcessName()).Length == 0) && count <= 60);
+            } while ((Process.GetProcessesByName(SessionController.VrHeadset?.GetHeadsetManagementProcessName()).Length == 0) && count <= 60);
 
             string error = "";
-            if (Process.GetProcessesByName(SessionController.vrHeadset?.GetHeadsetManagementProcessName()).Length == 0)
+            if (Process.GetProcessesByName(SessionController.VrHeadset?.GetHeadsetManagementProcessName()).Length == 0)
             {
                 error = "Error: Vive could not open";
             }
@@ -243,8 +243,8 @@ namespace Station
             string message = count <= 60 ? "Awaiting headset connection..." : error;
 
             //Only send the message if the headset is not yet connected
-            if (SessionController.vrHeadset?.GetStatusManager().SoftwareStatus != DeviceStatus.Connected ||
-                SessionController.vrHeadset?.GetStatusManager().OpenVRStatus != DeviceStatus.Connected)
+            if (SessionController.VrHeadset?.GetStatusManager().SoftwareStatus != DeviceStatus.Connected ||
+                SessionController.VrHeadset?.GetStatusManager().OpenVRStatus != DeviceStatus.Connected)
             {
                 ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage($"SoftwareState,{message}"),
                     TimeSpan.FromSeconds(1));

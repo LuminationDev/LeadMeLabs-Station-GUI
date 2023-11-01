@@ -96,10 +96,10 @@ namespace Station
             this.Role = role;
 
             //Implement Observer Pattern
-            if (SessionController.vrHeadset != null)
+            if (SessionController.VrHeadset != null)
             {
-                BatteryChanged += SessionController.vrHeadset.GetStatusManager().HandleValueChanged;
-                TrackingChanged += SessionController.vrHeadset.GetStatusManager().HandleValueChanged;
+                BatteryChanged += SessionController.VrHeadset.GetStatusManager().HandleValueChanged;
+                TrackingChanged += SessionController.VrHeadset.GetStatusManager().HandleValueChanged;
             }
         }
 

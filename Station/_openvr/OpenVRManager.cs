@@ -138,15 +138,15 @@ namespace Station
         /// <returns></returns>
         public static async Task<bool> WaitForOpenVR()
         {
-            if (SessionController.vrHeadset == null) return false;
+            if (SessionController.VrHeadset == null) return false;
 
-            MockConsole.WriteLine($"WaitForOpenVR - Checking SteamVR. Vive status: {Enum.GetName(typeof(DeviceStatus), SessionController.vrHeadset.GetHeadsetManagementSoftwareStatus())} " +
+            MockConsole.WriteLine($"WaitForOpenVR - Checking SteamVR. Vive status: {Enum.GetName(typeof(DeviceStatus), SessionController.VrHeadset.GetHeadsetManagementSoftwareStatus())} " +
                 $"- OpenVR status: {Manager.openVRManager?.InitialiseOpenVR() ?? false}", MockConsole.LogLevel.Normal);
 
             //If Vive is connect but OpenVR is not/cannot be initialised, restart SteamVR and check again.
-            if (SessionController.vrHeadset.GetHeadsetManagementSoftwareStatus() == DeviceStatus.Connected && (!Manager.openVRManager?.InitialiseOpenVR() ?? true))
+            if (SessionController.VrHeadset.GetHeadsetManagementSoftwareStatus() == DeviceStatus.Connected && (!Manager.openVRManager?.InitialiseOpenVR() ?? true))
             {
-                Logger.WriteLog($"OpenVRManager.WaitForOpenVR - Vive status: {SessionController.vrHeadset.GetHeadsetManagementSoftwareStatus()}, " +
+                Logger.WriteLog($"OpenVRManager.WaitForOpenVR - Vive status: {SessionController.VrHeadset.GetHeadsetManagementSoftwareStatus()}, " +
                     $"OpenVR connection not established - restarting SteamVR", MockConsole.LogLevel.Normal);
 
                 //Send message to the tablet (Updating what is happening)
@@ -163,7 +163,7 @@ namespace Station
                 bool steamvr = await MonitorLoop(() => Process.GetProcessesByName("vrmonitor").Length == 0);
                 if (!steamvr) return false;
 
-                Logger.WriteLog($"OpenVRManager.WaitForOpenVR - Vive status: {SessionController.vrHeadset.GetHeadsetManagementSoftwareStatus()}, " +
+                Logger.WriteLog($"OpenVRManager.WaitForOpenVR - Vive status: {SessionController.VrHeadset.GetHeadsetManagementSoftwareStatus()}, " +
                     $"SteamVR restarted successfully", MockConsole.LogLevel.Normal);
 
                 //Send message to the tablet (Updating what is happening)
@@ -176,7 +176,7 @@ namespace Station
                     return false;
                 }
 
-                Logger.WriteLog($"OpenVRManager.WaitForOpenVR - Vive status: {SessionController.vrHeadset.GetHeadsetManagementSoftwareStatus()}, " +
+                Logger.WriteLog($"OpenVRManager.WaitForOpenVR - Vive status: {SessionController.VrHeadset.GetHeadsetManagementSoftwareStatus()}, " +
                     $"OpenVR connection established", MockConsole.LogLevel.Normal);
             }
 
@@ -610,22 +610,22 @@ namespace Station
             if (headsetPosition == new Vector3(0, 0, 0) && headsetOrientation == new Quaternion(1, 0, 0, 0))
             {
                 _tracking = false;
-                SessionController.vrHeadset?.GetStatusManager().UpdateHeadset(VrManager.OpenVR, DeviceStatus.Lost);
+                SessionController.VrHeadset?.GetStatusManager().UpdateHeadset(VrManager.OpenVR, DeviceStatus.Lost);
                 MockConsole.WriteLine("Headset lost", MockConsole.LogLevel.Debug);
             }
             else if (headsetPosition != new Vector3(0, 0, 0) && headsetOrientation != new Quaternion(1, 0, 0, 0))
             {
                 _tracking = true;
-                SessionController.vrHeadset?.GetStatusManager().UpdateHeadset(VrManager.OpenVR, DeviceStatus.Connected);
+                SessionController.VrHeadset?.GetStatusManager().UpdateHeadset(VrManager.OpenVR, DeviceStatus.Connected);
                 MockConsole.WriteLine("Headset found", MockConsole.LogLevel.Debug);
             }
 
-            SessionController.vrHeadset?.GetStatusManager().UpdateHeadsetFirmwareStatus(GetFirmwareUpdateRequired(headsetIndex));
+            SessionController.VrHeadset?.GetStatusManager().UpdateHeadsetFirmwareStatus(GetFirmwareUpdateRequired(headsetIndex));
 
             //Collect the headset model - only do this if it hasn't been set already.
             if (MainWindow.headsetDescription != null && 
-                ((SessionController.vrHeadset?.GetStatusManager().HeadsetDescription.Equals("") ?? true) || 
-                (SessionController.vrHeadset?.GetStatusManager().HeadsetDescription.Equals("Unknown") ?? true))
+                ((SessionController.VrHeadset?.GetStatusManager().HeadsetDescription.Equals("") ?? true) || 
+                (SessionController.VrHeadset?.GetStatusManager().HeadsetDescription.Equals("Unknown") ?? true))
             )
             {
                 var error = ETrackedPropertyError.TrackedProp_Success;
@@ -639,7 +639,7 @@ namespace Station
 
                 if (error == ETrackedPropertyError.TrackedProp_Success)
                 {
-                    SessionController.vrHeadset?.GetStatusManager().SetHeadsetDescription(renderModelName.ToString());
+                    SessionController.VrHeadset?.GetStatusManager().SetHeadsetDescription(renderModelName.ToString());
                     UIUpdater.UpdateOpenVRStatus("headsetDescription", renderModelName.ToString());
                 }
             }
@@ -670,11 +670,11 @@ namespace Station
             var serialNumber = GetSerialNumber(controllerIndex);
 
             //Check the pose of the controller
-            SessionController.vrHeadset?.GetStatusManager().UpdateController(
+            SessionController.VrHeadset?.GetStatusManager().UpdateController(
                 serialNumber, null, "tracking", IsDeviceConnected(controllerIndex) ? DeviceStatus.Connected : DeviceStatus.Lost);
             
             var firmwareUpdateRequired = GetFirmwareUpdateRequired(controllerIndex);
-            SessionController.vrHeadset?.GetStatusManager().UpdateController(
+            SessionController.VrHeadset?.GetStatusManager().UpdateController(
                 serialNumber, null, "firmware_update_required", firmwareUpdateRequired);
 
             if (role == ETrackedControllerRole.Invalid) return;
@@ -696,7 +696,7 @@ namespace Station
                     $"Battery Level: {formattedBatteryLevel}%", 
                     MockConsole.LogLevel.Verbose);
                 
-                SessionController.vrHeadset?.GetStatusManager().UpdateController(
+                SessionController.VrHeadset?.GetStatusManager().UpdateController(
                     serialNumber, controllerRole, "battery", formattedBatteryLevel);
             }
             else
@@ -720,8 +720,8 @@ namespace Station
             var serialNumber = GetSerialNumber(baseStationIndex);
             var isConnected = IsDeviceConnected(baseStationIndex);
             var firmwareUpdateRequired = GetFirmwareUpdateRequired(baseStationIndex);
-            SessionController.vrHeadset?.GetStatusManager().UpdateBaseStation(serialNumber, "tracking", isConnected ? DeviceStatus.Connected : DeviceStatus.Lost);
-            SessionController.vrHeadset?.GetStatusManager().UpdateBaseStation(serialNumber, "firmware_update_required", firmwareUpdateRequired);
+            SessionController.VrHeadset?.GetStatusManager().UpdateBaseStation(serialNumber, "tracking", isConnected ? DeviceStatus.Connected : DeviceStatus.Lost);
+            SessionController.VrHeadset?.GetStatusManager().UpdateBaseStation(serialNumber, "firmware_update_required", firmwareUpdateRequired);
         }
         #endregion
         

@@ -15,7 +15,7 @@ namespace Station
         Off //No Vive connection
     }
 
-    public interface VrHeadset
+    public interface IVrHeadset
     {
         Statuses GetStatusManager();
 
@@ -28,10 +28,6 @@ namespace Station
         List<string> GetProcessesToQuery();
 
         void StartVrSession();
-
-        void MinimizeVrProcesses();
-
-        void StopTimer();
 
         void MonitorVrConnection();
 

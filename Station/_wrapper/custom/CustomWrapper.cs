@@ -133,7 +133,7 @@ namespace Station
                 return "Cannot find working directory";
             }
 
-            if (SessionController.vrHeadset == null)
+            if (SessionController.VrHeadset == null)
             {
                 SessionController.PassStationMessage("No VR headset set.");
                 return "No VR headset set.";
@@ -158,7 +158,7 @@ namespace Station
             WrapperMonitoringThread.InitializeMonitoring(wrapperType);
 
             //Wait for the Headset's connection method to respond
-            if (!SessionController.vrHeadset.WaitForConnection(wrapperType)) return "Could not get headset connection";
+            if (!SessionController.VrHeadset.WaitForConnection(wrapperType)) return "Could not get headset connection";
 
             //If headset management software is open (with headset connected) and OpenVrSystem cannot initialise then restart SteamVR
             if (!OpenVRManager.WaitForOpenVR().Result) return "Could not connect to OpenVR";
@@ -176,7 +176,7 @@ namespace Station
                 launchWillHaveFailedFromOpenVrTimeout = false;
 
                 //Stop any accessory processes before opening a new process
-                SessionController.vrHeadset.StopProcessesBeforeLaunch();
+                SessionController.VrHeadset.StopProcessesBeforeLaunch();
                 
                 //Fall back to the alternate if it fails or is not a registered VR experience in the vrmanifest
                 Logger.WriteLog($"CustomWrapper.WrapProcess - Using AlternateLaunchProcess", MockConsole.LogLevel.Normal);
