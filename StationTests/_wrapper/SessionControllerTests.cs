@@ -3,6 +3,7 @@ using Xunit;
 using System;
 using System.Threading.Tasks;
 using System.Diagnostics;
+using Station._headsets;
 
 namespace StationTests._wrapper
 {
@@ -22,7 +23,7 @@ namespace StationTests._wrapper
             SessionController.SetupHeadsetType();
 
             // Assert
-            Assert.IsType<VivePro1>(SessionController.vrHeadset);
+            Assert.IsType<VivePro1>(SessionController.VrHeadset);
         }
 
         /// <summary>
@@ -39,7 +40,7 @@ namespace StationTests._wrapper
             SessionController.SetupHeadsetType();
 
             // Assert
-            Assert.IsType<VivePro2>(SessionController.vrHeadset);
+            Assert.IsType<VivePro2>(SessionController.VrHeadset);
         }
 
         /// <summary>
@@ -54,13 +55,13 @@ namespace StationTests._wrapper
         public void StartVRSession_Should_Start_Session(string experienceType)
         {
             // Arrange
-            SessionController.vrHeadset = new VivePro1();
+            SessionController.VrHeadset = new VivePro1();
 
             // Act
             SessionController.StartVRSession(experienceType);
 
             // Assert
-            Assert.Equal(experienceType, SessionController.experienceType);
+            Assert.Equal(experienceType, SessionController.ExperienceType);
         }
 
         ///// <summary>
@@ -98,13 +99,13 @@ namespace StationTests._wrapper
         public void EndVRSession_Should_Set_ExperienceType_To_Null(string experienceType)
         {
             // Arrange
-            SessionController.experienceType = experienceType;
+            SessionController.ExperienceType = experienceType;
 
             // Act
             SessionController.EndVRSession();
 
             // Assert
-            Assert.Null(SessionController.experienceType);
+            Assert.Null(SessionController.ExperienceType);
         }
 
         /// <summary>

@@ -6,6 +6,6 @@ public class ImvrChecks
 {
     public List<QaCheck> RunQa(string labType)
     {
-        return SessionController.vrHeadset.GetStatusManager().VrQaChecks();
+        return SessionController.VrHeadset.GetStatusManager().VrQaChecks();
     }
 }

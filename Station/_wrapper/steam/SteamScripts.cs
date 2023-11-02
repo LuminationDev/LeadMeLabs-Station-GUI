@@ -150,7 +150,7 @@ namespace Station
         public static List<string>? loadAvailableGames()
         {
             //Close Steam if it is open
-            CommandLine.QueryVRProcesses(WrapperMonitoringThread.steamProcesses, true);
+            CommandLine.QueryVRProcesses(WrapperMonitoringThread.SteamProcesses, true);
 
             if (!Network.CheckIfConnectedToInternet())
             {

@@ -6,12 +6,10 @@ using System.Threading;
 
 namespace Station
 {
-    public class WrapperMonitoringThread
+    public static class WrapperMonitoringThread
     {
-        public static Thread? monitoringThread;
-        public static bool steamError = false;
-        public static bool monitoring = false;
-
+        private static Thread? monitoringThread;
+        private static bool steamError = false;
         private static System.Timers.Timer? timer;
         private static bool processesAreResponding = true;
         private static Process[]? allSteamProcesses;
@@ -21,17 +19,16 @@ namespace Station
         private static List<Process>? processes;
 
         /// <summary>
-        /// An array representing the process names needed to stop a VR session.
+        /// An array representing the all process names needed to stop any VR session.
         /// </summary>
-        public static List<string> steamProcesses = new List<string> { "vrmonitor", "steam", "steamerrorreporter64" };
-        public static List<string> viveProcesses = new List<string> { "HtcConnectionUtility", "LhStatusMonitor", "WaveConsole", "ViveVRServer", "ViveSettings" };
+        public static readonly List<string> SteamProcesses = new() { "vrmonitor", "steam", "steamerrorreporter64" };
+        public static readonly List<string> ViveProcesses = new() { "HtcConnectionUtility", "LhStatusMonitor", "WaveConsole", "ViveVRServer", "ViveSettings", "RRConsole", "RRServer" };
 
         /// <summary>
         /// Start a new thread with the supplied monitor check type.
         /// </summary>
         public static void InitializeMonitoring(string type)
         {
-            monitoring = true;
             monitoringThread = new Thread(() => {
                 InitializeRespondingCheck(type);
             });
@@ -44,7 +41,6 @@ namespace Station
         /// </summary>
         public static void StopMonitoring()
         {
-            monitoring = false;
             monitoringThread?.Interrupt();
             timer?.Stop();
         }
@@ -114,12 +110,12 @@ namespace Station
         {
             //Check the regular Steam processes are running
             List<string> combinedProcesses = new List<string>();
-            combinedProcesses.AddRange(steamProcesses);
-            combinedProcesses.AddRange(viveProcesses);
+            combinedProcesses.AddRange(SteamProcesses);
+            combinedProcesses.AddRange(ViveProcesses);
 
             processes = CommandLine.GetProcessesByName(combinedProcesses);
             bool processesAreAllResponding = CommandLine.CheckThatAllProcessesAreResponding(processes);
-            bool allProcessesAreRunning = processes.Count >= steamProcesses.Count;
+            bool allProcessesAreRunning = processes.Count >= SteamProcesses.Count;
 
             MockConsole.WriteLine($"Just checked that all processes are responding. Result: {processesAreAllResponding}", MockConsole.LogLevel.Verbose);
             MockConsole.WriteLine($"Just checked that all processes are running. Result: {allProcessesAreRunning}", MockConsole.LogLevel.Verbose);
@@ -162,32 +158,26 @@ namespace Station
             }
 
             steamVrErrorDialogs = Process.GetProcessesByName("steamtours");
-            for (int i = 0; i < steamVrErrorDialogs.Length; i++)
+            foreach (var process in steamVrErrorDialogs)
             {
-                Process process = steamVrErrorDialogs[i];
                 Logger.WriteLog("Killing steam error process: " + process.MainWindowTitle, MockConsole.LogLevel.Error);
                 process.Kill();
             }
-
-
+            
             //Detect if a process contains the experience trying to be launched and the '- Steam' header which indicates a pop has occurred
-            if (SteamWrapper.experienceName is not null)
+            if (SteamWrapper.experienceName is null) return;
+            
+            Process[] searchProcesses = Process.GetProcesses();
+            foreach (var process in searchProcesses)
             {
-                Process[] searchProcesses = Process.GetProcesses();
-                for (int i = 0; i < searchProcesses.Length; i++)
-                {
-                    Process process = searchProcesses[i];
-
-                    if (process.MainWindowTitle.Contains(SteamWrapper.experienceName)
-                        && process.MainWindowTitle.Contains("- Steam")
-                        && !SteamScripts.popupDetect)
-                    {
-                        //Only trigger once per experience
-                        SteamScripts.popupDetect = true;
-                        Console.WriteLine(process.MainWindowTitle);
-                        Manager.SendResponse("Android", "Station", "PopupDetected:" + SteamWrapper.experienceName);
-                    }
-                }
+                if (!process.MainWindowTitle.Contains(SteamWrapper.experienceName)
+                    || !process.MainWindowTitle.Contains("- Steam")
+                    || SteamScripts.popupDetect) continue;
+                
+                //Only trigger once per experience
+                SteamScripts.popupDetect = true;
+                Console.WriteLine(process.MainWindowTitle);
+                Manager.SendResponse("Android", "Station", "PopupDetected:" + SteamWrapper.experienceName);
             }
         }
     }

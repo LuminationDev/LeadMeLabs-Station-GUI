@@ -11,7 +11,7 @@ namespace Station
         private static bool terminateMonitoring = false;
 
         /// <summary>
-        /// Track if the vivecheck is currently running.
+        /// Track if the ViveCheck is currently running.
         /// </summary>
         private static bool activelyMonitoring = false;
 
@@ -33,11 +33,11 @@ namespace Station
         /// <returns></returns>
         public static async Task<bool> WaitForVive(string wrapperType)
         {
-            if (SessionController.vrHeadset == null) return false;
+            if (SessionController.VrHeadset == null) return false;
 
             //Wait for the Vive Check
             Logger.WriteLog("WaitForVive - Attempting to launch an application, vive status is: " +
-                Enum.GetName(typeof(DeviceStatus), SessionController.vrHeadset.GetHeadsetManagementSoftwareStatus()), MockConsole.LogLevel.Normal);
+                Enum.GetName(typeof(DeviceStatus), SessionController.VrHeadset.GetHeadsetManagementSoftwareStatus()), MockConsole.LogLevel.Normal);
             if (WrapperManager.CurrentWrapper?.GetLaunchingExperience() ?? false)
             {
                 SessionController.PassStationMessage("MessageToAndroid,AlreadyLaunchingGame");
@@ -60,21 +60,21 @@ namespace Station
         /// <returns></returns>
         private static async Task<bool> ViveCheck(string type)
         {
-            if (SessionController.vrHeadset == null) return false;
+            if (SessionController.VrHeadset == null) return false;
 
             //Determine if the awaiting headset connection has already been sent.
             bool sent = false;
             int count = 0;
 
             MockConsole.WriteLine("ViveCheck - About to launch a steam app, vive status is: " + 
-                Enum.GetName(typeof(DeviceStatus), SessionController.vrHeadset.GetHeadsetManagementSoftwareStatus()), MockConsole.LogLevel.Normal);
-            while (SessionController.vrHeadset.GetHeadsetManagementSoftwareStatus() != DeviceStatus.Connected)
+                Enum.GetName(typeof(DeviceStatus), SessionController.VrHeadset.GetHeadsetManagementSoftwareStatus()), MockConsole.LogLevel.Normal);
+            while (SessionController.VrHeadset.GetHeadsetManagementSoftwareStatus() != DeviceStatus.Connected)
             {
                 MockConsole.WriteLine("Vive check looping", MockConsole.LogLevel.Debug);
 
                 activelyMonitoring = true;
 
-                if (SessionController.vrHeadset.GetHeadsetManagementSoftwareStatus() == DeviceStatus.Off)
+                if (SessionController.VrHeadset.GetHeadsetManagementSoftwareStatus() == DeviceStatus.Off)
                 {
                     SessionController.StartVRSession(type);
                     ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage($"SoftwareState,Starting VR Session"), TimeSpan.FromSeconds(1));
