@@ -134,7 +134,7 @@ public class NetworkChecks
                         }
                         else
                         {
-                            defaultGateway.SetFailed($"Default gateway {ipProperties.GatewayAddresses[0].Address.ToString()} does not match expected default gateway");
+                            defaultGateway.SetFailed($"Default gateway {ipProperties.GatewayAddresses[0].ToString()} does not match expected default gateway");
                         }
                     }
                     else
@@ -151,7 +151,7 @@ public class NetworkChecks
                         }
                         else
                         {
-                            dnsServer.SetFailed($"DNS server {ipProperties.DnsAddresses[0].Address.ToString()} does not match expected DNS server");
+                            dnsServer.SetFailed($"DNS server {ipProperties.DnsAddresses[0].ToString()} does not match expected DNS server");
                         }
                     }
                     else
@@ -168,7 +168,7 @@ public class NetworkChecks
                         }
                         else
                         {
-                            altDnsServer.SetFailed($"Alt DNS server {ipProperties.DnsAddresses[1].Address.ToString()} does not match expected alt DNS server");
+                            altDnsServer.SetFailed($"Alt DNS server {ipProperties.DnsAddresses[1].ToString()} does not match expected alt DNS server");
                         }
                     }
                     else

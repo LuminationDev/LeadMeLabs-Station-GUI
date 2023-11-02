@@ -64,7 +64,7 @@ namespace Station
         public static async void StartProgram()
         {
             MockConsole.ClearConsole();
-            MockConsole.WriteLine("Loading ENV variables", MockConsole.LogLevel.Error);
+            Logger.WriteLog("Loading ENV variables", MockConsole.LogLevel.Error);
             
             //Check if the Encryption key and env variables are set correctly before starting anything else
             bool result = false;
@@ -78,7 +78,7 @@ namespace Station
             }
 
             //Even if DotEnv fails, still load up the server details to show the details to the user.
-            MockConsole.WriteLine("Setting up server.", MockConsole.LogLevel.Error);
+            Logger.WriteLog("Setting up server.", MockConsole.LogLevel.Error);
             bool connected = SetupServerDetails();
             if (!connected)
             {
@@ -90,7 +90,7 @@ namespace Station
             if (!result)
             {
                 App.SetWindowTitle("Station - Failed to load ENV variables.");
-                MockConsole.WriteLine("Failed loading ENV variables", MockConsole.LogLevel.Error);
+                Logger.WriteLog("Failed loading ENV variables", MockConsole.LogLevel.Error);
                 return;
             }
 
@@ -100,10 +100,9 @@ namespace Station
             ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage($"SoftwareState,Launching Software"), TimeSpan.FromSeconds(0));
 
             App.SetWindowTitle($"Station({Environment.GetEnvironmentVariable("StationId", EnvironmentVariableTarget.Process)}) -- {localEndPoint.Address} -- {macAddress} -- {versionNumber}");
-            MockConsole.WriteLine("ENV variables loaded", MockConsole.LogLevel.Error);
+            Logger.WriteLog("ENV variables loaded", MockConsole.LogLevel.Error);
             
             //Call as a new task to stop UI and server start up from hanging whilst reading the files
-            new Thread(() => SteamConfig.VerifySteamConfig(true)).Start();
             new Thread(Initialisation).Start();
         }
 
@@ -131,6 +130,7 @@ namespace Station
 
             if (Environment.GetEnvironmentVariable("NucAddress", EnvironmentVariableTarget.Process) == null)
             {
+                Logger.WriteLog($"Expected NUC address: is null, check environment variables are set.", MockConsole.LogLevel.Normal);
                 return;
             }
             
@@ -139,6 +139,7 @@ namespace Station
             if (!Helper.GetStationMode().Equals(Helper.STATION_MODE_APPLIANCE))
             {
                 InitialStartUp();
+                new Thread(() => SteamConfig.VerifySteamConfig(true)).Start();
             }
         }
 
