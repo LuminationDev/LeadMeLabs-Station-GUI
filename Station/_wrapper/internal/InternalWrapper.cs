@@ -8,7 +8,7 @@ namespace Station
 {
     public class InternalWrapper : Wrapper
     {
-        public static string wrapperType = "Internal";
+        public const string WrapperType = "Internal";
         //Track any internal executables in the dictionary to start/stop at will
         Dictionary<string, Process> InternalProcesses = new();
 

@@ -179,8 +179,8 @@ namespace Station
                         {
                             continue;
                         }
-                        list.Add($"{SteamWrapper.wrapperType}|{acfReader.appId}|{acfReader.gameName}");
-                        WrapperManager.StoreApplication(SteamWrapper.wrapperType, acfReader.appId, acfReader.gameName); // todo, I don't like this line here as it's a side-effect to the function
+                        list.Add($"{SteamWrapper.WrapperType}|{acfReader.appId}|{acfReader.gameName}");
+                        WrapperManager.StoreApplication(SteamWrapper.WrapperType, acfReader.appId, acfReader.gameName); // todo, I don't like this line here as it's a side-effect to the function
                     }
                 }
             }
@@ -288,10 +288,10 @@ namespace Station
                                     name = acfReader.gameName;
                                 }
                             }
-                            string application = $"{SteamWrapper.wrapperType}|{ID}|{name}";
+                            string application = $"{SteamWrapper.WrapperType}|{ID}|{name}";
 
                             //item.parameters may be null here
-                            WrapperManager.StoreApplication(SteamWrapper.wrapperType, ID, name);
+                            WrapperManager.StoreApplication(SteamWrapper.WrapperType, ID, name);
                             apps.Add(application);
                         }
                     }

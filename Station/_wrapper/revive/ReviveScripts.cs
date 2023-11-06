@@ -15,7 +15,7 @@ public static class ReviveScripts
     {
         List<string> apps = new ();
         List<(string appKey, string name)>? fileData = ManifestReader.CollectKeyAndName(_reviveManifest);
-        if (fileData == null)
+        if (fileData.Count == 0)
         {
             return apps;
         }
@@ -26,10 +26,10 @@ public static class ReviveScripts
             string id = pair.appKey.Replace("revive.app.", "");
             
             //Load the _reviveManifest
-            string application = $"{ReviveWrapper.wrapperType}|{id}|{pair.name}";
+            string application = $"{ReviveWrapper.WrapperType}|{id}|{pair.name}";
 
             //item.parameters may be null here
-            WrapperManager.StoreApplication(ReviveWrapper.wrapperType, id, pair.name);
+            WrapperManager.StoreApplication(ReviveWrapper.WrapperType, id, pair.name);
             apps.Add(application);
         }
         

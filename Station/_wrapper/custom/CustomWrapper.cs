@@ -11,15 +11,15 @@ namespace Station
 {
     internal class CustomWrapper : Wrapper
     {
-        public static string wrapperType = "Custom";
+        public const string WrapperType = "Custom";
         private static Process? currentProcess;
         public static Experience lastExperience;
-        private bool launchWillHaveFailedFromOpenVrTimeout = true;
+        private bool _launchWillHaveFailedFromOpenVrTimeout = true;
 
-        // <summary>
+        /// <summary>
         /// Track if an experience is being launched.
         /// </summary>
-        public static bool launchingExperience = false;
+        private static bool launchingExperience = false;
 
         public Experience? GetLastExperience()
         {
@@ -43,7 +43,7 @@ namespace Station
         
         public bool LaunchFailedFromOpenVrTimeout()
         {
-            return launchWillHaveFailedFromOpenVrTimeout;
+            return _launchWillHaveFailedFromOpenVrTimeout;
         }
         
         public string? GetCurrentExperienceName()
@@ -119,14 +119,14 @@ namespace Station
             {
                 currentProcess.Kill(true);
             }
-            launchWillHaveFailedFromOpenVrTimeout = false;
+            _launchWillHaveFailedFromOpenVrTimeout = false;
             currentProcess = process;
             ListenForClose();
         }
 
         public string WrapProcess(Experience experience)
         {
-            launchWillHaveFailedFromOpenVrTimeout = false;
+            _launchWillHaveFailedFromOpenVrTimeout = false;
             if(CommandLine.stationLocation == null)
             {
                 SessionController.PassStationMessage("Cannot find working directory");
@@ -155,10 +155,10 @@ namespace Station
             lastExperience = experience;
 
             //Begin monitoring the different processes
-            WrapperMonitoringThread.InitializeMonitoring(wrapperType);
+            WrapperMonitoringThread.InitializeMonitoring(WrapperType);
 
             //Wait for the Headset's connection method to respond
-            if (!SessionController.VrHeadset.WaitForConnection(wrapperType)) return "Could not get headset connection";
+            if (!SessionController.VrHeadset.WaitForConnection(WrapperType)) return "Could not get headset connection";
 
             //If headset management software is open (with headset connected) and OpenVrSystem cannot initialise then restart SteamVR
             if (!OpenVRManager.WaitForOpenVR().Result) return "Could not connect to OpenVR";
@@ -167,13 +167,13 @@ namespace Station
             Task.Factory.StartNew(() =>
             {
                 //Attempt to start the process using OpenVR
-                launchWillHaveFailedFromOpenVrTimeout = true;
+                _launchWillHaveFailedFromOpenVrTimeout = true;
                 if (OpenVRManager.LaunchApplication(experience.ID))
                 {
                     Logger.WriteLog($"CustomWrapper.WrapProcess: Launching {experience.Name} via OpenVR", MockConsole.LogLevel.Verbose);
                     return;
                 }
-                launchWillHaveFailedFromOpenVrTimeout = false;
+                _launchWillHaveFailedFromOpenVrTimeout = false;
 
                 //Stop any accessory processes before opening a new process
                 SessionController.VrHeadset.StopProcessesBeforeLaunch();
