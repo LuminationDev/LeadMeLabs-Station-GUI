@@ -7,15 +7,17 @@ using System.Threading.Tasks;
 using leadme_api;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using Station._utils;
 
 namespace Station
 {
     public class WrapperManager
     {
         //Store each wrapper class
-        private static readonly CustomWrapper customWrapper = new CustomWrapper();
-        private static readonly SteamWrapper steamWrapper = new SteamWrapper();
-        private static readonly ViveWrapper viveWrapper = new ViveWrapper();
+        private static readonly CustomWrapper customWrapper = new ();
+        private static readonly SteamWrapper steamWrapper = new ();
+        private static readonly ViveWrapper viveWrapper = new ();
+        private static readonly ReviveWrapper reviveWrapper = new ();
 
         //Used for multiple 'internal' applications, operations are separate from the other wrapper classes
         private readonly InternalWrapper internalWrapper = new();
@@ -25,7 +27,7 @@ namespace Station
         private static bool alreadyCollecting = false;
 
         //Store the list of applications (key = ID: [[0] = wrapper type, [1] = application name, [2] = launch params (nullable)])
-        public readonly static Dictionary<string, Experience> applicationList = new();
+        public static readonly Dictionary<string, Experience> applicationList = new();
 
         /// <summary>
         /// Open the pipe server for message to and from external applications (Steam, Custom, etc..) and setup
@@ -33,10 +35,20 @@ namespace Station
         /// </summary>
         public void Startup()
         {
+            ValidateManifestFiles();
             StartPipeServer();
             SessionController.SetupHeadsetType();
             ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage($"SoftwareState,Loading experiences"), TimeSpan.FromSeconds(2));
             Task.Factory.StartNew(() => CollectAllApplications());
+        }
+
+        /// <summary>
+        /// Validate the binary_windows_path inside the Revive vrmanifest. More validations can be added later.
+        /// </summary>
+        private void ValidateManifestFiles()
+        {
+            //Location is hardcoded for now
+            ManifestReader.ModifyBinaryPath(ReviveScripts._reviveManifest, @"C:/Program Files/Revive");
         }
 
         /// <summary>
@@ -157,6 +169,12 @@ namespace Station
             if (viveApplications != null)
             {
                 applications.AddRange(viveApplications);
+            }
+            
+            List<string>? reviveApplications = reviveWrapper.CollectApplications();
+            if (reviveApplications != null)
+            {
+                applications.AddRange(reviveApplications);
             }
 
             string response = string.Join('/', applications);
@@ -292,6 +310,9 @@ namespace Station
                     case "Custom":
                         customWrapper.CollectHeaderImage(appTokens[1]);
                         break;
+                    case "Revive":
+                        reviveWrapper.CollectHeaderImage(appTokens[1]);
+                        break;
                     case "Steam":
                         LogHandler("CollectHeaderImages not implemented for type: Steam.");
                         break;
@@ -318,8 +339,6 @@ namespace Station
                     break;
                 case "End":
                     SessionController.EndVRSession();
-                    break;
-                default:
                     break;
             }
         }
@@ -366,16 +385,13 @@ namespace Station
                 switch (experience.Type)
                 {
                     case "Custom":
-                        return CurrentWrapper.WrapProcess(experience);
-                        break;
+                    case "Revive":
                     case "Steam":
                         return CurrentWrapper.WrapProcess(experience);
-                        break;
                     case "Vive":
                         throw new NotImplementedException();
                     default:
                         return "Could not find that experience or experience type";
-                        break;
                 }
             });
             return response;
@@ -393,13 +409,14 @@ namespace Station
                 case "Custom":
                     CurrentWrapper = customWrapper;
                     break;
+                case "Revive":
+                    CurrentWrapper = reviveWrapper;
+                    break;
                 case "Steam":
                     CurrentWrapper = steamWrapper;
                     break;
                 case "Vive":
                     CurrentWrapper = viveWrapper;
-                    break;
-                default:
                     break;
             }
         }

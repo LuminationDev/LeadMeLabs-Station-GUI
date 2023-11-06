@@ -21,6 +21,7 @@ namespace Station
         /// <summary>
         /// An array representing the all process names needed to stop any VR session.
         /// </summary>
+        public static readonly List<string> ReviveProcesses = new() { "" }; //TODO find revive processes (perhaps oculus as well)
         public static readonly List<string> SteamProcesses = new() { "vrmonitor", "steam", "steamerrorreporter64" };
         public static readonly List<string> ViveProcesses = new() { "HtcConnectionUtility", "LhStatusMonitor", "WaveConsole", "ViveVRServer", "ViveSettings", "RRConsole", "RRServer" };
 
@@ -63,6 +64,10 @@ namespace Station
                 case "Steam":
                     timer.Elapsed += CallSteamCheck;
                     break;
+                
+                case "Revive":
+                    timer.Elapsed += CallReviveCheck;
+                    break;
 
                 case "Vive":
                     timer.Elapsed += CallViveCheck;
@@ -90,7 +95,15 @@ namespace Station
 
         private static void CallSteamCheck(Object? source, System.Timers.ElapsedEventArgs e)
         {
-            MockConsole.WriteLine("Checked Vive status", MockConsole.LogLevel.Verbose);
+            MockConsole.WriteLine("Checked Steam status", MockConsole.LogLevel.Verbose);
+            SteamCheck();
+
+            Logger.WorkQueue();
+        }
+        
+        private static void CallReviveCheck(Object? source, System.Timers.ElapsedEventArgs e)
+        {
+            MockConsole.WriteLine("Checked Revive status", MockConsole.LogLevel.Verbose);
             SteamCheck();
 
             Logger.WorkQueue();

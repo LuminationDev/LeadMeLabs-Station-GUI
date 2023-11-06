@@ -63,6 +63,7 @@ namespace Station
             {
                 case "Custom":
                 case "Steam":
+                case "Revive":
                     VrHeadset?.StartVrSession();
                     break;
                 case "Vive":
@@ -90,6 +91,7 @@ namespace Station
                 case "Custom":
                     MockConsole.WriteLine("restartVRSession not implemented for type: Custom.", MockConsole.LogLevel.Error);
                     break;
+                case "Revive":
                 case "Steam":
                     ViveScripts.StopMonitoring();
                     break;
@@ -112,6 +114,7 @@ namespace Station
                 case "Custom":
                     MockConsole.WriteLine("endVRSession not implemented for type: Custom.", MockConsole.LogLevel.Error);
                     break;
+                case "Revive":
                 case "Steam":
                     ViveScripts.StopMonitoring();
                     break;

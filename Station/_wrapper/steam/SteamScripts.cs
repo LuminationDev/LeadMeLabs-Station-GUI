@@ -147,7 +147,7 @@ namespace Station
         /// </summary>
         /// <param name="output">A string representing the raw output from the steamcmd command.</param>
         /// <returns>A string of IDs and names of installed applications</returns>
-        public static List<string>? loadAvailableGames()
+        public static List<string>? LoadAvailableGames()
         {
             //Close Steam if it is open
             CommandLine.QueryVRProcesses(WrapperMonitoringThread.SteamProcesses, true);
@@ -314,7 +314,7 @@ namespace Station
                 refreshing = true;
                 cooldownTimer();
                 Logger.WriteLog("Re-loading AvailableGames", MockConsole.LogLevel.Debug);
-                loadAvailableGames();
+                LoadAvailableGames();
 
                 SessionController.RestartVRSession(); //Restart the VR session as to log steam back in
             }

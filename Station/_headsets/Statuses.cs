@@ -220,6 +220,7 @@ namespace Station
             }
             else
             {
+                //TODO fix this for Focus 3 controllers? - HINT: serialNumber contains their position
                 //If there is no entry and no role then do not add the controller yet
                 MockConsole.WriteLine($"Found a new controller: {serialNumber} - Role invalid: {role}, not adding.", MockConsole.LogLevel.Normal);
             }

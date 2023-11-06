@@ -59,7 +59,7 @@ namespace Station
 
         public List<string>? CollectApplications()
         {
-            return SteamScripts.loadAvailableGames();
+            return SteamScripts.LoadAvailableGames();
         }
 
         public void CollectHeaderImage(string experienceName)
