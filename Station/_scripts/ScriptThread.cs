@@ -7,6 +7,8 @@ using System.Threading.Tasks;
 using LeadMeLabsLibrary;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using NUC._qa.checks;
+using Station._qa;
 
 namespace Station
 {
@@ -250,6 +252,31 @@ namespace Station
                         break;
                     case "network_checks":
                         result = JsonConvert.SerializeObject(qualityManager.networkChecks.RunQa(labType ?? "Online"));
+                        new Thread(async () =>
+                        {
+                            int stationId =
+                                Int32.Parse(Environment.GetEnvironmentVariable("StationId",
+                                    EnvironmentVariableTarget.Process));
+                            if (stationId > 10)
+                            {
+                                stationId = 1; // in testing we used 101+ for our ids
+                            }
+                            await Task.Delay(stationId * 20000);
+                            
+                            InternetSpeedCheck internetSpeedCheck = new InternetSpeedCheck();
+                            QaCheck qaCheck = internetSpeedCheck.RunInternetSpeedTest();
+                            List<QaCheck> qaCheckList = new List<QaCheck>();
+                            qaCheckList.Add(qaCheck);
+
+                            JObject response = new JObject();
+                            response.Add("response", "RunGroup");
+                            JObject responseData = new JObject();
+                            responseData.Add("group", "network_checks");
+                            responseData.Add("data", JsonConvert.SerializeObject(qaCheckList));
+                            response.Add("responseData", responseData);
+                
+                            Manager.SendResponse("NUC", "QA", response.ToString());
+                        }).Start();
                         break;
                     case "imvr_checks":
                         result = JsonConvert.SerializeObject(qualityManager.imvrChecks.RunQa(labType ?? "Online"));
