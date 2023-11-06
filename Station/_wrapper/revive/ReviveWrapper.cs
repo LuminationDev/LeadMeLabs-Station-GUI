@@ -61,7 +61,7 @@ namespace Station
             //TODO this is not working just yet
             Task.Factory.StartNew(() =>
             {
-                string? filePath = ManifestReader.GetApplicationImagePathByAppKey(ReviveScripts._reviveManifest, experienceName);
+                string? filePath = ManifestReader.GetApplicationImagePathByAppKey(ReviveScripts.ReviveManifest, experienceName);
 
                 if (!File.Exists(filePath))
                 {
@@ -160,14 +160,14 @@ namespace Station
         private void GetGameProcessDetails()
         {
             //IF error finding revive revive.manifest - bail out early
-            if (!File.Exists(ReviveScripts._reviveManifest))
+            if (!File.Exists(ReviveScripts.ReviveManifest))
             {
                 launchingExperience = false;
-                throw new FileNotFoundException("Error", ReviveScripts._reviveManifest);
+                throw new FileNotFoundException("Error", ReviveScripts.ReviveManifest);
             }
 
             //LOOK for experience name in the revive.manifest file
-            experienceName = ManifestReader.GetApplicationNameByAppKey(ReviveScripts._reviveManifest, lastExperience.ID);
+            experienceName = ManifestReader.GetApplicationNameByAppKey(ReviveScripts.ReviveManifest, lastExperience.ID);
         }
 
         public void ListenForClose()

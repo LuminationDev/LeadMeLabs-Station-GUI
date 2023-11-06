@@ -53,7 +53,7 @@ namespace Station
 
         public List<string>? CollectApplications()
         {
-            return CustomScripts.loadAvailableGames();
+            return CustomScripts.LoadAvailableGames();
         }
 
         public void CollectHeaderImage(string experienceID)

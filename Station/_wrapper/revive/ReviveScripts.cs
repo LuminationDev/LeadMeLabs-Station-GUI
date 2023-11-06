@@ -5,8 +5,8 @@ namespace Station;
 
 public static class ReviveScripts
 {
-    public static readonly string _reviveManifest = @"C:\Program Files\Revive\revive.vrmanifest";
-    
+    public const string ReviveManifest = @"C:\Program Files\Revive\revive.vrmanifest";
+
     /// <summary>
     /// Read through the revive vr manifest to find what applications are installed.
     /// </summary>
@@ -14,7 +14,7 @@ public static class ReviveScripts
     public static List<string>? LoadAvailableGames()
     {
         List<string> apps = new ();
-        List<(string appKey, string name)>? fileData = ManifestReader.CollectKeyAndName(_reviveManifest);
+        List<(string appKey, string name)>? fileData = ManifestReader.CollectKeyAndName(ReviveManifest);
         if (fileData.Count == 0)
         {
             return apps;

@@ -3,37 +3,20 @@ using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Threading.Tasks;
 using LeadMeLabsLibrary;
 
 namespace Station
 {
-    class CustomScripts
+    public static class CustomScripts
     {
-        private static string availableGames = "";
-
-        public static async Task<string> getAvailableGames()
-        {
-            Logger.WriteLog("Get available games function", MockConsole.LogLevel.Verbose);
-
-            // the load available games method is called on boot, we just need to wait for it to complete
-            while (availableGames.Length == 0 || !Char.IsNumber(availableGames[0]))
-            {
-                Console.WriteLine("LOOPING");
-                await Task.Delay(2000);
-            }
-
-            Logger.WriteLog(availableGames, MockConsole.LogLevel.Debug);
-
-            return availableGames;
-        }
+        public static readonly string CustomManifest = Path.GetFullPath(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "leadme_apps", "customapps.vrmanifest"));
 
         /// <summary>
         /// Read the manifest.json that has been created by the launcher program. Here each application has
         /// a specific entry contain it's ID, name and any launch parameters.
         /// </summary>
         /// <returns>A list of strings that represent all installed Custom experiences on a Station.</returns>
-        public static List<string>? loadAvailableGames()
+        public static List<string>? LoadAvailableGames()
         {
             if (CommandLine.stationLocation == null)
             {
@@ -55,8 +38,8 @@ namespace Station
             using (StreamReader r = new StreamReader(manifestPath))
             {
                 //Read and decipher the encrypted manifest
-                string? encrytedJson = r.ReadToEnd();
-                string? json = EncryptionHelper.DecryptNode(encrytedJson);
+                string encrytedJson = r.ReadToEnd();
+                string json = EncryptionHelper.DecryptNode(encrytedJson);
 
                 dynamic? array = JsonConvert.DeserializeObject(json);
 
@@ -99,8 +82,7 @@ namespace Station
                 }
             }
 
-            availableGames = string.Join('/', apps);
-            return apps;
+            return new List<string> { string.Join('/', apps) };
         }
 
         /// <summary>

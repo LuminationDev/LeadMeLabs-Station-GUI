@@ -48,7 +48,7 @@ namespace Station
         private void ValidateManifestFiles()
         {
             //Location is hardcoded for now
-            ManifestReader.ModifyBinaryPath(ReviveScripts._reviveManifest, @"C:/Program Files/Revive");
+            ManifestReader.ModifyBinaryPath(ReviveScripts.ReviveManifest, @"C:/Program Files/Revive");
         }
 
         /// <summary>

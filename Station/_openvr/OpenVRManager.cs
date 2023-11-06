@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.IO;
-using System.Linq;
 using System.Numerics;
 using System.Text;
 using System.Threading.Tasks;
@@ -29,14 +27,6 @@ namespace Station
     public class OpenVRManager
     {
         public OpenVRSystem? OpenVrSystem;
-        
-        private readonly string _steamManifest = @"C:\Program Files (x86)\Steam\config\steamapps.vrmanifest";
-        
-        //This contains the app. & support. manifests in the Revive folder - may want to filter these out
-        private readonly string _reviveManifest = @"C:\Program Files\Revive\revive.vrmanifest"; //TODO will need to rewrite the "binary_path_windows" for external calls
-        
-        //Load the local appData/Roaming folder path
-        private readonly string _customManifest = Path.GetFullPath(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "leadme_apps", "customapps.vrmanifest"));
 
         //Read this when launching an experience to know if it is VR (missing means it is standard)
         private static Dictionary<string, string>? _vrApplicationDictionary;
@@ -127,12 +117,12 @@ namespace Station
             }
 
             // Force reset of the Steam & Custom VR manifest lists for guaranteed up to date. 
-            OpenVR.Applications.RemoveApplicationManifest(_customManifest);
-            OpenVR.Applications.RemoveApplicationManifest(_steamManifest);
-            OpenVR.Applications.RemoveApplicationManifest(_reviveManifest);
-            OpenVR.Applications.AddApplicationManifest(_customManifest, true);
-            OpenVR.Applications.AddApplicationManifest(_steamManifest, true);
-            OpenVR.Applications.AddApplicationManifest(_reviveManifest, true);
+            OpenVR.Applications.RemoveApplicationManifest(CustomScripts.CustomManifest);
+            OpenVR.Applications.RemoveApplicationManifest(SteamScripts.SteamManifest);
+            OpenVR.Applications.RemoveApplicationManifest(ReviveScripts.ReviveManifest);
+            OpenVR.Applications.AddApplicationManifest(CustomScripts.CustomManifest, true);
+            OpenVR.Applications.AddApplicationManifest(SteamScripts.SteamManifest, true);
+            OpenVR.Applications.AddApplicationManifest(ReviveScripts.ReviveManifest, true);
 
             // Load in the steam & custom manifest
             LoadVrManifest();
@@ -687,6 +677,15 @@ namespace Station
             if (role == ETrackedControllerRole.Invalid) return;
             
             DeviceRole controllerRole = role == ETrackedControllerRole.LeftHand ? DeviceRole.Left : DeviceRole.Right;
+            
+            // Some headsets have specific controller roles baked into their serial numbers
+            string lowerCaseSerial = serialNumber.ToLower();
+            controllerRole = lowerCaseSerial switch
+            {
+                _ when lowerCaseSerial.Contains("right") => DeviceRole.Right,
+                _ when lowerCaseSerial.Contains("left") => DeviceRole.Left,
+                _ => controllerRole
+            };
 
             // Get the controller battery percentage as a float value
             float batteryLevel = _ovrSystem.GetFloatTrackedDeviceProperty(controllerIndex,
