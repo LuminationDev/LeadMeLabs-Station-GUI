@@ -25,7 +25,7 @@ public static class ManifestReader
         try
         {
             string json = File.ReadAllText(filePath);
-            return JObject.Parse(json);
+            return json.Length == 0 ? null : JObject.Parse(json);
         }
         catch (Exception ex)
         {
