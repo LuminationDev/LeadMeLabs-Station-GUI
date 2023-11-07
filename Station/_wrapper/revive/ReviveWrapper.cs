@@ -58,7 +58,6 @@ namespace Station
 
         public void CollectHeaderImage(string experienceName)
         {
-            //TODO this is not working just yet
             Task.Factory.StartNew(() =>
             {
                 string? filePath = ManifestReader.GetApplicationImagePathByAppKey(ReviveScripts.ReviveManifest, experienceName);
@@ -130,7 +129,7 @@ namespace Station
             SessionController.StartVRSession(WrapperType);
 
             //Begin monitoring the different processes
-            WrapperMonitoringThread.InitializeMonitoring(WrapperType); //TODO finish this for REVIVE
+            WrapperMonitoringThread.InitializeMonitoring(WrapperType);
 
             //Wait for the Headset's connection method to respond
             if (!SessionController.VrHeadset.WaitForConnection(WrapperType)) return "Could not connect to headset";

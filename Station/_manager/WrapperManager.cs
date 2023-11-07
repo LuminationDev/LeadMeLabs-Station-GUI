@@ -199,6 +199,7 @@ namespace Station
                 List<string> combinedProcesses = new List<string>();
                 combinedProcesses.AddRange(WrapperMonitoringThread.SteamProcesses);
                 combinedProcesses.AddRange(WrapperMonitoringThread.ViveProcesses);
+                combinedProcesses.AddRange(WrapperMonitoringThread.ReviveProcesses);
 
                 CommandLine.QueryVRProcesses(combinedProcesses, true);
                 await SessionController.PutTaskDelay(2000);
