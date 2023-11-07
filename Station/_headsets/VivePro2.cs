@@ -53,6 +53,15 @@ namespace Station._headsets
         {
             return new List<string> { "vrmonitor", "steam", "LhStatusMonitor", "WaveConsole", "steamwebhelper" };
         }
+        
+        /// <summary>
+        /// Minimise the software that handles the headset.
+        /// </summary>
+        /// <param name="attemptLimit"></param>
+        public void MinimizeSoftware(int attemptLimit = 6)
+        {
+            Minimize(GetProcessesToMinimize(), attemptLimit);
+        }
 
         public void StartVrSession()
         {
@@ -68,7 +77,7 @@ namespace Station._headsets
                 Environment.GetEnvironmentVariable("SteamUserName", EnvironmentVariableTarget.Process) + " " +
                 Environment.GetEnvironmentVariable("SteamPassword", EnvironmentVariableTarget.Process) + " steam://rungameid/1635730"); //Open up steam and run vive console
 
-            Minimize(GetProcessesToMinimize());
+            MinimizeSoftware();
         }
 
         public void MonitorVrConnection()

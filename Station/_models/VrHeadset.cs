@@ -27,6 +27,8 @@ namespace Station
 
         List<string> GetProcessesToQuery();
 
+        void MinimizeSoftware(int attemptLimit);
+
         void StartVrSession();
 
         void MonitorVrConnection();

@@ -19,7 +19,8 @@ namespace Station._headsets
         /// After 30 seconds (or 6 attempts at 5-second intervals), the minimization process stops.
         /// </summary>
         /// <param name="vrProcesses">Collection of strings representing VR-related processes to be minimized.</param>
-        protected void Minimize(IEnumerable<string> vrProcesses)
+        /// <param name="attemptLimit">An int of how many times the minimise process should run for.</param>
+        protected void Minimize(IEnumerable<string> vrProcesses, int attemptLimit)
         {
             if (minimising) return;
             
@@ -36,7 +37,7 @@ namespace Station._headsets
             {
                 MinimizeVrProcesses(vrProcesses);
                 attempts++;
-                if (attempts <= 6) return; // after 30 seconds, we can stop
+                if (attempts <= attemptLimit) return; // after 30 seconds, we can stop
                 _timer.Stop();
                 minimising = false;
             }

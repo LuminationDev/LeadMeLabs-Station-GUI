@@ -70,6 +70,9 @@ namespace Station
                     MockConsole.WriteLine("startVRSession not implemented for type: Vive.", MockConsole.LogLevel.Error);
                     break;
             }
+            
+            //Attempt to minimise other applications (mostly Steam)
+            VrHeadset?.MinimizeSoftware(2);
         }
 
         /// <summary>
@@ -102,6 +105,9 @@ namespace Station
                     MockConsole.WriteLine("Wrapper: No experience type set.", MockConsole.LogLevel.Error);
                     break;
             }
+            
+            //Attempt to minimise other applications (mostly Steam)
+            VrHeadset?.MinimizeSoftware(2);
         }
 
         /// <summary>
@@ -127,6 +133,9 @@ namespace Station
             }
 
             ExperienceType = null;
+            
+            //Attempt to minimise other applications (mostly Steam)
+            VrHeadset?.MinimizeSoftware(2);
         }
 
         /// <summary>
