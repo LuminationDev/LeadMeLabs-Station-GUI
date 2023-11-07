@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.IO;
 using System.Numerics;
 using System.Text;
 using System.Threading.Tasks;
@@ -28,10 +27,6 @@ namespace Station
     public class OpenVRManager
     {
         public OpenVRSystem? OpenVrSystem;
-        
-        private readonly string _steamManifest = @"C:\Program Files (x86)\Steam\config\steamapps.vrmanifest";
-        //Load the local appData/Roaming folder path
-        private readonly string _customManifest = Path.GetFullPath(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "leadme_apps", "customapps.vrmanifest"));
 
         //Read this when launching an experience to know if it is VR (missing means it is standard)
         private static Dictionary<string, string>? _vrApplicationDictionary;
@@ -122,10 +117,12 @@ namespace Station
             }
 
             // Force reset of the Steam & Custom VR manifest lists for guaranteed up to date. 
-            OpenVR.Applications.RemoveApplicationManifest(_customManifest);
-            OpenVR.Applications.RemoveApplicationManifest(_steamManifest);
-            OpenVR.Applications.AddApplicationManifest(_customManifest, true);
-            OpenVR.Applications.AddApplicationManifest(_steamManifest, true);
+            OpenVR.Applications.RemoveApplicationManifest(CustomScripts.CustomManifest);
+            OpenVR.Applications.RemoveApplicationManifest(SteamScripts.SteamManifest);
+            OpenVR.Applications.RemoveApplicationManifest(ReviveScripts.ReviveManifest);
+            OpenVR.Applications.AddApplicationManifest(CustomScripts.CustomManifest, true);
+            OpenVR.Applications.AddApplicationManifest(SteamScripts.SteamManifest, true);
+            OpenVR.Applications.AddApplicationManifest(ReviveScripts.ReviveManifest, true);
 
             // Load in the steam & custom manifest
             LoadVrManifest();
@@ -277,28 +274,20 @@ namespace Station
                 if (error == EVRApplicationError.None)
                 {
                     string pchKey = pchKeyBuffer.ToString();
-                    if (pchKey.Contains("steam.app") || pchKey.Contains("custom.app"))
+                    if (pchKey.Contains("steam.app") || pchKey.Contains("custom.app") || pchKey.Contains("revive.app"))
                     {
                         // Get the application properties using the pch key
                         string applicationName =
                             GetApplicationPropertyString(pchKey, EVRApplicationProperty.Name_String);
                         string applicationLaunchType =
                             GetApplicationPropertyString(pchKey, EVRApplicationProperty.LaunchType_String);
-
-
+                        
                         string output = $"Application Key: {pchKey} " +
                                         $"Application Name: {applicationName} " +
                                         $"Application Index: {index} " +
                                         $"Application Type: {applicationLaunchType}";
-
-                        // Check if the application is launched through Steam
-                        if (pchKey.Contains("steam") && applicationLaunchType.Equals("url"))
-                        {
-                            // Get the Steam game ID (App ID)
-                            output += " Application ID (App ID): " + pchKey.Replace("steam.app.", "");
-                        }
-
-                        //Logger.WriteLog(output, MockConsole.LogLevel.Verbose);
+                        
+                        //Logger.WriteLog(output, MockConsole.LogLevel.Normal);
 
                         vrApplicationCount++;
 
@@ -312,6 +301,10 @@ namespace Station
                         {
                             appID = pchKey.Replace("custom.app.", "");
                         } 
+                        else if (pchKey.Contains("revive.app"))
+                        {
+                            appID = pchKey.Replace("revive.app.", "");
+                        }
                         else
                         {
                             continue;
@@ -344,7 +337,11 @@ namespace Station
             if (_vrApplicationDictionary == null) return false;
 
             _vrApplicationDictionary.TryGetValue(appID, out var pchKey);
-            if(pchKey == null) return false;
+            if (pchKey == null)
+            {
+                Logger.WriteLog($"OPENVR: {appID} has no pchKey.", MockConsole.LogLevel.Normal);
+                return false;
+            }
             
             EVRApplicationError error = OpenVR.Applications.LaunchApplication(pchKey);
             if (error == EVRApplicationError.None)
@@ -680,6 +677,15 @@ namespace Station
             if (role == ETrackedControllerRole.Invalid) return;
             
             DeviceRole controllerRole = role == ETrackedControllerRole.LeftHand ? DeviceRole.Left : DeviceRole.Right;
+            
+            // Some headsets have specific controller roles baked into their serial numbers
+            string lowerCaseSerial = serialNumber.ToLower();
+            controllerRole = lowerCaseSerial switch
+            {
+                _ when lowerCaseSerial.Contains("right") => DeviceRole.Right,
+                _ when lowerCaseSerial.Contains("left") => DeviceRole.Left,
+                _ => controllerRole
+            };
 
             // Get the controller battery percentage as a float value
             float batteryLevel = _ovrSystem.GetFloatTrackedDeviceProperty(controllerIndex,

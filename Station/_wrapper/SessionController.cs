@@ -63,12 +63,16 @@ namespace Station
             {
                 case "Custom":
                 case "Steam":
+                case "Revive":
                     VrHeadset?.StartVrSession();
                     break;
                 case "Vive":
                     MockConsole.WriteLine("startVRSession not implemented for type: Vive.", MockConsole.LogLevel.Error);
                     break;
             }
+            
+            //Attempt to minimise other applications (mostly Steam)
+            VrHeadset?.MinimizeSoftware(2);
         }
 
         /// <summary>
@@ -90,6 +94,7 @@ namespace Station
                 case "Custom":
                     MockConsole.WriteLine("restartVRSession not implemented for type: Custom.", MockConsole.LogLevel.Error);
                     break;
+                case "Revive":
                 case "Steam":
                     ViveScripts.StopMonitoring();
                     break;
@@ -100,6 +105,9 @@ namespace Station
                     MockConsole.WriteLine("Wrapper: No experience type set.", MockConsole.LogLevel.Error);
                     break;
             }
+            
+            //Attempt to minimise other applications (mostly Steam)
+            VrHeadset?.MinimizeSoftware(2);
         }
 
         /// <summary>
@@ -112,6 +120,7 @@ namespace Station
                 case "Custom":
                     MockConsole.WriteLine("endVRSession not implemented for type: Custom.", MockConsole.LogLevel.Error);
                     break;
+                case "Revive":
                 case "Steam":
                     ViveScripts.StopMonitoring();
                     break;
@@ -124,6 +133,9 @@ namespace Station
             }
 
             ExperienceType = null;
+            
+            //Attempt to minimise other applications (mostly Steam)
+            VrHeadset?.MinimizeSoftware(2);
         }
 
         /// <summary>

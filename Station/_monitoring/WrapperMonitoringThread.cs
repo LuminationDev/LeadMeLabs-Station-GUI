@@ -12,18 +12,14 @@ namespace Station
         private static bool steamError = false;
         private static System.Timers.Timer? timer;
         private static bool processesAreResponding = true;
-        private static Process[]? allSteamProcesses;
-        private static Process[]? vrMonitorProcesses;
-        private static Process[]? allProcesses;
-        private static Process[]? steamVrErrorDialogs;
-        private static List<Process>? processes;
 
         /// <summary>
         /// An array representing the all process names needed to stop any VR session.
         /// </summary>
         public static readonly List<string> SteamProcesses = new() { "vrmonitor", "steam", "steamerrorreporter64" };
         public static readonly List<string> ViveProcesses = new() { "HtcConnectionUtility", "LhStatusMonitor", "WaveConsole", "ViveVRServer", "ViveSettings", "RRConsole", "RRServer" };
-
+        public static readonly List<string> ReviveProcesses = new() { "ReviveOverlay" }; 
+        
         /// <summary>
         /// Start a new thread with the supplied monitor check type.
         /// </summary>
@@ -63,6 +59,10 @@ namespace Station
                 case "Steam":
                     timer.Elapsed += CallSteamCheck;
                     break;
+                
+                case "Revive":
+                    timer.Elapsed += CallReviveCheck;
+                    break;
 
                 case "Vive":
                     timer.Elapsed += CallViveCheck;
@@ -83,6 +83,7 @@ namespace Station
         /// </summary>
         private static void CallCustomCheck(Object? source, System.Timers.ElapsedEventArgs e)
         {
+            ProcessesAreResponding();
             SteamCheck();
 
             Logger.WorkQueue();
@@ -90,7 +91,17 @@ namespace Station
 
         private static void CallSteamCheck(Object? source, System.Timers.ElapsedEventArgs e)
         {
-            MockConsole.WriteLine("Checked Vive status", MockConsole.LogLevel.Verbose);
+            MockConsole.WriteLine("Checked Steam status", MockConsole.LogLevel.Verbose);
+            ProcessesAreResponding();
+            SteamCheck();
+
+            Logger.WorkQueue();
+        }
+        
+        private static void CallReviveCheck(Object? source, System.Timers.ElapsedEventArgs e)
+        {
+            MockConsole.WriteLine("Checked Revive status", MockConsole.LogLevel.Verbose);
+            ProcessesAreResponding();
             SteamCheck();
 
             Logger.WorkQueue();
@@ -98,9 +109,37 @@ namespace Station
 
         private static void CallViveCheck(Object? source, System.Timers.ElapsedEventArgs e)
         {
-
-
             Logger.WorkQueue();
+        }
+
+        /// <summary>
+        /// Check that the necessary processes are responding for the current headset/application
+        /// </summary>
+        private static void ProcessesAreResponding()
+        {
+            List<string> combinedProcesses = new List<string>();
+            combinedProcesses.AddRange(SteamProcesses);
+            combinedProcesses.AddRange(ViveProcesses);
+            combinedProcesses.AddRange(ReviveProcesses);
+
+            //Check the regular Steam processes are running
+            List<Process>? runningSteamProcesses = CommandLine.GetProcessesByName(SteamProcesses);
+            bool allProcessesAreRunning = runningSteamProcesses.Count >= SteamProcesses.Count;
+            
+            //Check all processes are responding
+            List<Process>? processes = CommandLine.GetProcessesByName(combinedProcesses);
+            bool processesAreAllResponding = CommandLine.CheckThatAllProcessesAreResponding(processes);
+            
+            MockConsole.WriteLine($"Just checked that all processes are responding. Result: {processesAreAllResponding}", MockConsole.LogLevel.Verbose);
+            MockConsole.WriteLine($"Just checked that all processes are running. Result: {allProcessesAreRunning}", MockConsole.LogLevel.Verbose);
+
+            if (processesAreAllResponding == processesAreResponding) return;
+            
+            processesAreResponding = processesAreAllResponding;
+            
+            SessionController.PassStationMessage(!processesAreAllResponding
+                ? "MessageToAndroid,SetValue:state:Not Responding"
+                : "MessageToAndroid,SetValue:status:On");
         }
 
         /// <summary>
@@ -108,35 +147,10 @@ namespace Station
         /// </summary>
         private static void SteamCheck()
         {
-            //Check the regular Steam processes are running
-            List<string> combinedProcesses = new List<string>();
-            combinedProcesses.AddRange(SteamProcesses);
-            combinedProcesses.AddRange(ViveProcesses);
-
-            processes = CommandLine.GetProcessesByName(combinedProcesses);
-            bool processesAreAllResponding = CommandLine.CheckThatAllProcessesAreResponding(processes);
-            bool allProcessesAreRunning = processes.Count >= SteamProcesses.Count;
-
-            MockConsole.WriteLine($"Just checked that all processes are responding. Result: {processesAreAllResponding}", MockConsole.LogLevel.Verbose);
-            MockConsole.WriteLine($"Just checked that all processes are running. Result: {allProcessesAreRunning}", MockConsole.LogLevel.Verbose);
-
-            if (processesAreAllResponding != processesAreResponding)
-            {
-                processesAreResponding = processesAreAllResponding;
-                if (!processesAreAllResponding)
-                {
-                    SessionController.PassStationMessage("MessageToAndroid,SetValue:state:Not Responding");
-                }
-                else
-                {
-                    SessionController.PassStationMessage("MessageToAndroid,SetValue:status:On");
-                }
-            }
-
             //Check for any Steam errors
-            allSteamProcesses = Process.GetProcessesByName("steam");
-            vrMonitorProcesses = Process.GetProcessesByName("vrmonitor");
-            allProcesses = allSteamProcesses.Concat(vrMonitorProcesses).ToArray();
+            Process[]? allSteamProcesses = Process.GetProcessesByName("steam");
+            Process[]? vrMonitorProcesses = Process.GetProcessesByName("vrmonitor");
+            Process[]? allProcesses = allSteamProcesses.Concat(vrMonitorProcesses).ToArray();
             for (int i = 0; i < allProcesses.Length; i++)
             {
                 Process process = allProcesses[i];
@@ -157,7 +171,7 @@ namespace Station
                 }
             }
 
-            steamVrErrorDialogs = Process.GetProcessesByName("steamtours");
+            Process[]? steamVrErrorDialogs = Process.GetProcessesByName("steamtours");
             foreach (var process in steamVrErrorDialogs)
             {
                 Logger.WriteLog("Killing steam error process: " + process.MainWindowTitle, MockConsole.LogLevel.Error);

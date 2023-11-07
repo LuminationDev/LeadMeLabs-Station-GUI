@@ -11,6 +11,8 @@ namespace Station
 {
     public static class SteamScripts
     {
+        public const string SteamManifest = @"C:\Program Files (x86)\Steam\config\steamapps.vrmanifest";
+
         // login details as formatted "username password" - need to hide this/turn into a secret
         private static string loginDetailsAnonymous = "anonymous";
         private static string loginDetails = Environment.GetEnvironmentVariable("SteamUserName", EnvironmentVariableTarget.Process) + " " + 
@@ -121,33 +123,12 @@ namespace Station
         }
 
         /// <summary>
-        /// Attempt to collect the local Steam experiences from SteamCMD
-        /// </summary>
-        /// <returns>A string list of the currently installed experiences and their unique IDs</returns>
-        public static async Task<string> getAvailableGames()
-        {
-            Logger.WriteLog("Get available games function", MockConsole.LogLevel.Verbose);
-
-            // the load available games method is called on boot, we just need to wait for it to complete
-            while (availableGames.Length == 0 || !Char.IsNumber(availableGames[0]))
-            {
-                Console.WriteLine("LOOPING");
-                await Task.Delay(2000);
-            }
-
-            Logger.WriteLog(availableGames, MockConsole.LogLevel.Debug);
-
-            return availableGames;
-        }
-
-        /// <summary>
         /// Filter through the steam command output to select the Application IDs and names.
         /// Joining them together with specific delimiters to enable the Android tablet to
         /// decipher them.
         /// </summary>
-        /// <param name="output">A string representing the raw output from the steamcmd command.</param>
         /// <returns>A string of IDs and names of installed applications</returns>
-        public static List<string>? loadAvailableGames()
+        public static List<string>? LoadAvailableGames()
         {
             //Close Steam if it is open
             CommandLine.QueryVRProcesses(WrapperMonitoringThread.SteamProcesses, true);
@@ -179,8 +160,8 @@ namespace Station
                         {
                             continue;
                         }
-                        list.Add($"{SteamWrapper.wrapperType}|{acfReader.appId}|{acfReader.gameName}");
-                        WrapperManager.StoreApplication(SteamWrapper.wrapperType, acfReader.appId, acfReader.gameName); // todo, I don't like this line here as it's a side-effect to the function
+                        list.Add($"{SteamWrapper.WrapperType}|{acfReader.appId}|{acfReader.gameName}");
+                        WrapperManager.StoreApplication(SteamWrapper.WrapperType, acfReader.appId, acfReader.gameName); // todo, I don't like this line here as it's a side-effect to the function
                     }
                 }
             }
@@ -288,10 +269,10 @@ namespace Station
                                     name = acfReader.gameName;
                                 }
                             }
-                            string application = $"{SteamWrapper.wrapperType}|{ID}|{name}";
+                            string application = $"{SteamWrapper.WrapperType}|{ID}|{name}";
 
                             //item.parameters may be null here
-                            WrapperManager.StoreApplication(SteamWrapper.wrapperType, ID, name);
+                            WrapperManager.StoreApplication(SteamWrapper.WrapperType, ID, name);
                             apps.Add(application);
                         }
                     }
@@ -301,32 +282,6 @@ namespace Station
             availableGames = string.Join('/', apps);
 
             return apps;
-        }
-
-        /// <summary>
-        /// Triggered if the tablet/NUC does not have the list of steam games. Load the list if it is in memory
-        /// or reload the list from SteamCMD and then restart the VR session to log steam back in.
-        /// </summary>
-        public static void resendSteamGames()
-        {
-            if (!refreshing)
-            {
-                refreshing = true;
-                cooldownTimer();
-                Logger.WriteLog("Re-loading AvailableGames", MockConsole.LogLevel.Debug);
-                loadAvailableGames();
-
-                SessionController.RestartVRSession(); //Restart the VR session as to log steam back in
-            }
-        }
-
-        /// <summary>
-        /// Limit the number of Steam refreshes that can be performed within a given time period.
-        /// </summary>
-        private static async void cooldownTimer()
-        {
-            await Task.Delay(30 * 1000);
-            refreshing = false;
         }
 
         public static List<string> getParentalApprovedGames()
