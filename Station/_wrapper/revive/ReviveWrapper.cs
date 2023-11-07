@@ -56,28 +56,28 @@ namespace Station
             return ReviveScripts.LoadAvailableGames();
         }
 
-        public void CollectHeaderImage(string experienceName)
+        public void CollectHeaderImage(string experienceKey)
         {
             Task.Factory.StartNew(() =>
             {
-                string? filePath = ManifestReader.GetApplicationImagePathByAppKey(ReviveScripts.ReviveManifest, experienceName);
+                string? filePath = ManifestReader.GetApplicationImagePathByAppKey(ReviveScripts.ReviveManifest, experienceKey);
 
                 if (!File.Exists(filePath))
                 {
                     MockConsole.WriteLine($"File not found:{filePath}", MockConsole.LogLevel.Error);
                     SessionController.PassStationMessage($"StationError,File not found:{filePath}");
-                    Manager.SendResponse("Android", "Station", $"ThumbnailError:{experienceName}");
+                    Manager.SendResponse("Android", "Station", $"ThumbnailError:{experienceKey}");
                     return;
                 }
 
                 //Add the header image to the sending image queue through action transformation
-                SocketFile socketImage = new("image", experienceName, filePath);
+                SocketFile socketImage = new("image", experienceKey, filePath);
                 System.Action sendImage = new(() => socketImage.send());
 
                 //Queue the send function for invoking
                 TaskQueue.Queue(false, sendImage);
 
-                MockConsole.WriteLine($"Thumbnail for experience: {experienceName} now queued for transfer.", MockConsole.LogLevel.Error);
+                MockConsole.WriteLine($"Thumbnail for experience: {experienceKey} now queued for transfer.", MockConsole.LogLevel.Error);
             });
         }
 
