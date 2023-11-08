@@ -4,6 +4,7 @@ using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
 using LeadMeLabsLibrary;
+using Station._monitoring;
 
 namespace Station
 {
@@ -125,7 +126,7 @@ namespace Station
                 wrapperManager.Startup();
 
                 //Use to monitor SetVol and restart application
-                StationMonitoringThread.initializeMonitoring();
+                StationMonitoringThread.InitializeMonitoring();
             }
 
             if (Environment.GetEnvironmentVariable("NucAddress", EnvironmentVariableTarget.Process) == null)
@@ -228,7 +229,7 @@ namespace Station
             SendResponse("NUC", "Station", "SetValue:status:On");
             SendResponse("NUC", "Station", "SetValue:gameName:");
             SendResponse("Android", "Station", "SetValue:gameId:");
-            SendResponse("NUC", "Station", "SetValue:volume:" + CommandLine.GetVolume());
+            SendResponse("NUC", "Station", $"SetValue:volume:{CommandLine.GetVolume()}");
         }
 
         /// <summary>
@@ -313,11 +314,12 @@ namespace Station
             IPAddress? address = null;
             int? port = null;
             
-            string source = "Station," + Environment.GetEnvironmentVariable("StationId", EnvironmentVariableTarget.Process);
-            string response = source + ":" + destination + ":" + actionNamespace;
+            string source =
+                $"Station,{Environment.GetEnvironmentVariable("StationId", EnvironmentVariableTarget.Process)}";
+            string response = $"{source}:{destination}:{actionNamespace}";
             if (additionalData != null)
             {
-                response = response + ":" + additionalData;
+                response = $"{response}:{additionalData}";
             }
             
             if (destination.StartsWith("QA:"))
@@ -327,7 +329,7 @@ namespace Station
                 response = additionalData;
             }
 
-            Logger.WriteLog("Sending: " + response, MockConsole.LogLevel.Normal, writeToLog);
+            Logger.WriteLog($"Sending: {response}", MockConsole.LogLevel.Normal, writeToLog);
 
             string? key = Environment.GetEnvironmentVariable("AppKey", EnvironmentVariableTarget.Process);
             if (key is null) {

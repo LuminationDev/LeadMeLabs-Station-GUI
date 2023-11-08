@@ -6,6 +6,8 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Timers;
 using Newtonsoft.Json.Linq;
+using Station._commandLine;
+using Station._monitoring;
 using Timer = System.Timers.Timer;
 
 namespace Station
@@ -291,7 +293,7 @@ namespace Station
                 }
                 if (activeProcessId != null)
                 {
-                    Process proc = Process.GetProcessById(Int32.Parse(activeProcessId));
+                    Process? proc = ProcessManager.GetProcessById(Int32.Parse(activeProcessId));
                     Logger.WriteLog($"Application found: {proc.MainWindowTitle}/{proc.Id}", MockConsole.LogLevel.Debug);
 
                     UIUpdater.UpdateProcess(proc.MainWindowTitle);
@@ -374,7 +376,7 @@ namespace Station
                         timer.Stop();
                         OverlayManager.ManualStop();
                     }
-                    List<Process> list = CommandLine.GetProcessesByName(new List<string> { "steam" });
+                    List<Process> list = ProcessManager.GetProcessesByNames(new List<string> { "steam" });
                     foreach (Process process in list)
                     {
                         Logger.WriteLog($"Looking for steam sign in process: Process: {process.ProcessName} ID: {process.Id}, MainWindowTitle: {process.MainWindowTitle}", MockConsole.LogLevel.Debug);
