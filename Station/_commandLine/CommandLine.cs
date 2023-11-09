@@ -20,16 +20,6 @@ namespace Station
     public static class CommandLine
     {
         /// <summary>
-        /// Process name of the Launcher that coordinates the LeadMe software suite.
-        /// </summary>
-        private static readonly string launcherProcessName = "LeadMe";
-
-        /// <summary>
-        /// Process name of the current application.
-        /// </summary>
-        private static readonly string stationProcessName = "Station";
-
-        /// <summary>
         /// The location of the executing assembly. This is used to find the relative path for externally used applications.
         /// </summary>
         public static readonly string?
@@ -211,12 +201,22 @@ namespace Station
             Logger.WriteLog("Daily restart", MockConsole.LogLevel.Verbose);
             Logger.WorkQueue();
 
-            List<Process> processes = ProcessManager.GetProcessesByNames(new List<string> {launcherProcessName, stationProcessName});
+            Process[] processes = ProcessManager.GetProcessesByName("LeadMe");
 
             foreach (Process process in processes)
             {
-                process.Kill(true);
+                try
+                {
+                    process.Kill(true);
+                }
+                catch (Exception e)
+                {
+                    Logger.WriteLog($"Error: {e}", MockConsole.LogLevel.Normal);
+                }
             }
+
+            // Exit the application
+            Environment.Exit(0);
         }
 
         /// <summary>
