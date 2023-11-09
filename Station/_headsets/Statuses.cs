@@ -125,15 +125,18 @@ namespace Station
             MockConsole.WriteLine($"Updating Headset:{Enum.GetName(typeof(VrManager), manager)}:{Enum.GetName(typeof(DeviceStatus), status)}", 
                 MockConsole.LogLevel.Debug);
 
-            if (manager == VrManager.Software)
+            switch (manager)
             {
-                SendLostMessage(SoftwareStatus == DeviceStatus.Connected, status);
-                SoftwareStatus = status;
-            }
-            else if (manager == VrManager.OpenVR)
-            {
-                SendLostMessage(OpenVRStatus == DeviceStatus.Connected, status);
-                OpenVRStatus = status;
+                case VrManager.Software:
+                    SendLostMessage(SoftwareStatus == DeviceStatus.Connected, status);
+                    SoftwareStatus = status;
+                    UIUpdater.LoadImageFromAssetFolder("HeadsetVR", SoftwareStatus == DeviceStatus.Connected);
+                    break;
+                
+                case VrManager.OpenVR:
+                    SendLostMessage(OpenVRStatus == DeviceStatus.Connected, status);
+                    OpenVRStatus = status;
+                    break;
             }
             
             SendReadyMessage();

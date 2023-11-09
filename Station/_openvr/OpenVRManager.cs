@@ -99,7 +99,7 @@ namespace Station
             //Create a listener for VR events - this handles the gentle exit of SteamVR
             new Task(OnVREvent).Start();
 
-            UIUpdater.LoadImageFromAssetFolder(true);
+            UIUpdater.LoadImageFromAssetFolder("OpenVR", true);
 
             _initialising = false;
             return true;
@@ -244,7 +244,7 @@ namespace Station
                         _ovrSystem.AcknowledgeQuit_Exiting();
                         OpenVrSystem?.Shutdown();
                         OpenVrSystem = null;
-                        UIUpdater.LoadImageFromAssetFolder(false);
+                        UIUpdater.LoadImageFromAssetFolder("OpenVR", false);
                         break;
                 }
 

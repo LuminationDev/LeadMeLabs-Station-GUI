@@ -107,9 +107,10 @@ namespace Station
         /// <summary>
         /// Change the colour of the OpenVR image to symbolise the current connection status.
         /// </summary>
+        /// <param name="type">A string of the VR management type that is being updated</param>
         /// <param name="isOnline">A bool representing if the connection is online (true) or offline (false)</param>
         [MethodImpl(MethodImplOptions.Synchronized)]
-        public static void LoadImageFromAssetFolder(bool isOnline)
+        public static void LoadImageFromAssetFolder(string type, bool isOnline)
         {
             try
             {
@@ -117,10 +118,20 @@ namespace Station
                 Application.Current.Dispatcher.Invoke(delegate {
                     BitmapImage imageSource = GetActiveIcon(isOnline);
 
-                    if (MainWindow.openVrConnection == null) return;
-
-                    MainWindow.openVrConnection.ToolTip = isOnline ? "OpenVR Online" : "OpenVR Offline";
-                    MainWindow.openVrConnection.Source = imageSource;
+                    switch (type)
+                    {
+                        case "OpenVR":
+                            if (MainWindow.openVrConnection == null) return;
+                            MainWindow.openVrConnection.ToolTip = isOnline ? "OpenVR Online" : "OpenVR Offline";
+                            MainWindow.openVrConnection.Source = imageSource;
+                            break;
+                        
+                        case "ThirdParty":
+                            if (MainWindow.headsetVrConnection == null) return;
+                            MainWindow.headsetVrConnection.ToolTip = isOnline ? "HeadsetVR Online" : "HeadsetVR Offline";
+                            MainWindow.headsetVrConnection.Source = imageSource;
+                            break;
+                    }
                 });
             }
             catch (Exception ex)
