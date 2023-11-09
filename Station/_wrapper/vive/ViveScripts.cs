@@ -3,7 +3,7 @@ using System.Threading.Tasks;
 
 namespace Station
 {
-    public class ViveScripts
+    public static class ViveScripts
     {
         /// <summary>
         /// Track if an external process is stopping the Vive check.
@@ -82,6 +82,7 @@ namespace Station
                     {
                         terminateMonitoring = true;
                         SessionController.PassStationMessage("MessageToAndroid,HeadsetTimeout");
+                        ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage($"SoftwareState,Awaiting headset connection..."), TimeSpan.FromSeconds(1));
                     }
                     else
                     {

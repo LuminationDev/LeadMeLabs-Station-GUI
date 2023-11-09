@@ -239,7 +239,7 @@ namespace Station
 
         /// <summary>
         /// Find the active process that has been launched. This may have to loop if the main experience is
-        /// openning accompanying software such as SteamVR. 
+        /// opening accompanying software such as SteamVR. 
         /// </summary>
         private void FindCurrentProcess()
         {
