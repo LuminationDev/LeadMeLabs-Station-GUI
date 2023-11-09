@@ -12,7 +12,7 @@ namespace Station._commandLine;
 /// </summary>
 public static class ProcessManager
 {
-    private static readonly List<Process> RunningProcesses = new();
+    private static List<Process> runningProcesses = new();
     private static readonly object LockObject = new();
     private static DateTime lastUpdate = DateTime.MinValue;
 
@@ -31,20 +31,19 @@ public static class ProcessManager
             if (!lockTaken)
             {
                 // If lock is taken by another thread, return the current list.
-                return RunningProcesses;
+                return runningProcesses;
             }
 
             if (!((DateTime.Now - lastUpdate).TotalSeconds > 1))
             {
                 // If list is less than 1 second old, return the current list.
-                return RunningProcesses;
+                return runningProcesses;
             }
             
-            RunningProcesses.Clear();
-            RunningProcesses.AddRange(Process.GetProcesses());
+            runningProcesses = new List<Process>(Process.GetProcesses());
             lastUpdate = DateTime.Now;
 
-            return RunningProcesses;
+            return runningProcesses;
         }
         finally
         {

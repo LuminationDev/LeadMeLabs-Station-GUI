@@ -340,7 +340,8 @@ namespace Station
             _vrApplicationDictionary.TryGetValue(appID, out var pchKey);
             if (pchKey == null)
             {
-                Logger.WriteLog($"OPENVR: {appID} has no pchKey.", MockConsole.LogLevel.Normal);
+                Logger.WriteLog($"OPENVR: {appID} has no pchKey. Make sure OpenVR has been initialised and " +
+                                $"manifests have been loaded", MockConsole.LogLevel.Normal);
                 return false;
             }
             
@@ -353,12 +354,12 @@ namespace Station
                     {
                         WrapperManager.CurrentWrapper?.StopCurrentProcess();
                         UIUpdater.ResetUIDisplay();
-                        SessionController.PassStationMessage($"MessageToAndroid,GameLaunchFailed:{WrapperManager.CurrentWrapper.GetLastExperience()?.Name}");
+                        SessionController.PassStationMessage($"MessageToAndroid,GameLaunchFailed:{WrapperManager.CurrentWrapper?.GetLastExperience()?.Name}");
                 
                         JObject response = new JObject();
                         response.Add("response", "ExperienceLaunchFailed");
                         JObject responseData = new JObject();
-                        responseData.Add("experienceId", WrapperManager.CurrentWrapper.GetLastExperience()?.ID);
+                        responseData.Add("experienceId", WrapperManager.CurrentWrapper?.GetLastExperience()?.ID);
                         response.Add("responseData", responseData);
                 
                         Manager.SendResponse("NUC", "QA", response.ToString());

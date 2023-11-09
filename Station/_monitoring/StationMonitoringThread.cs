@@ -71,7 +71,7 @@ public static class StationMonitoringThread
     private static void OpenVRCheck()
     {
         ExternalSoftwareCheck();
-
+        
         //An early exit if the vrmonitor (SteamVR) process is not currently running
         if (ProcessManager.GetProcessesByName("vrmonitor").Length == 0) return;
 
@@ -95,7 +95,12 @@ public static class StationMonitoringThread
         if (SessionController.VrHeadset == null) return;
 
         //An early exit if the monitoring process is not currently running.
-        if (ProcessManager.GetProcessesByName(SessionController.VrHeadset.GetHeadsetManagementProcessName()).Length == 0) return;
+        if (ProcessManager.GetProcessesByName(SessionController.VrHeadset.GetHeadsetManagementProcessName()).Length ==
+            0)
+        {
+            SessionController.VrHeadset?.GetStatusManager().UpdateHeadset(VrManager.Software, DeviceStatus.Lost);
+            return;
+        }
         
         SessionController.VrHeadset.MonitorVrConnection();
         MockConsole.WriteLine(
