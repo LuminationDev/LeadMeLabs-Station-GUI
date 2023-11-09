@@ -130,7 +130,7 @@ namespace Station
                 case VrManager.Software:
                     SendLostMessage(SoftwareStatus == DeviceStatus.Connected, status);
                     SoftwareStatus = status;
-                    UIUpdater.LoadImageFromAssetFolder("HeadsetVR", SoftwareStatus == DeviceStatus.Connected);
+                    UIUpdater.LoadImageFromAssetFolder("ThirdParty", SoftwareStatus == DeviceStatus.Connected);
                     break;
                 
                 case VrManager.OpenVR:
