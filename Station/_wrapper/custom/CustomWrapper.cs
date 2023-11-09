@@ -6,6 +6,8 @@ using System.Threading.Tasks;
 using LeadMeLabsLibrary;
 using leadme_api;
 using Newtonsoft.Json.Linq;
+using Station._commandLine;
+using Station._monitoring;
 
 namespace Station
 {
@@ -302,7 +304,7 @@ namespace Station
             {
                 return null;
             }
-            Process proc = Process.GetProcessById(Int32.Parse(id));
+            Process? proc = ProcessManager.GetProcessById(Int32.Parse(id));
 
             //Get the steam process name from the CommandLine function and compare here instead of removing any external child processes
             if (proc != null)

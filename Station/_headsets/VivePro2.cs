@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
+using Station._commandLine;
 
 namespace Station._headsets
 {
@@ -82,19 +84,17 @@ namespace Station._headsets
 
         public void MonitorVrConnection()
         {
-            Process[] vivePro2Connector = Process.GetProcessesByName("WaveConsole");
-            Process[] viveStatusMonitor = Process.GetProcessesByName("LhStatusMonitor");
+            Process[] vivePro2Connector = ProcessManager.GetProcessesByName("WaveConsole");
             if (vivePro2Connector.Length > 0)
             {
-                foreach (var process in vivePro2Connector)
+                if (vivePro2Connector.Any(process => process.MainWindowTitle.Equals("VIVE Console")))
                 {
-                    if (process.MainWindowTitle.Equals("VIVE Console"))
-                    {
-                        Statuses.UpdateHeadset(VrManager.Software, DeviceStatus.Lost);
-                        return;
-                    }
+                    Statuses.UpdateHeadset(VrManager.Software, DeviceStatus.Lost);
+                    return;
                 }
             }
+            
+            Process[] viveStatusMonitor = ProcessManager.GetProcessesByName("LhStatusMonitor");
             if (viveStatusMonitor.Length > 0)
             {
                 Statuses.UpdateHeadset(VrManager.Software, DeviceStatus.Connected);

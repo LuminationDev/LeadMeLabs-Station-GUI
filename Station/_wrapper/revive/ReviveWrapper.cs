@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Threading.Tasks;
 using LeadMeLabsLibrary;
+using Station._monitoring;
 using Station._utils;
 
 namespace Station
@@ -58,6 +59,7 @@ namespace Station
 
         public void CollectHeaderImage(string experienceKey)
         {
+            //TODO finish this off
             Task.Factory.StartNew(() =>
             {
                 string? filePath = ManifestReader.GetApplicationImagePathByAppKey(ReviveScripts.ReviveManifest, experienceKey);

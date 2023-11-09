@@ -1,12 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using leadme_api;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using Station._commandLine;
+using Station._monitoring;
 using Station._utils;
 
 namespace Station
@@ -251,10 +252,10 @@ namespace Station
             {
                 Task.Delay(3000).Wait();
                 count++;
-            } while ((Process.GetProcessesByName(SessionController.VrHeadset?.GetHeadsetManagementProcessName()).Length == 0) && count <= 60);
+            } while ((ProcessManager.GetProcessesByName(SessionController.VrHeadset?.GetHeadsetManagementProcessName()).Length == 0) && count <= 60);
 
             string error = "";
-            if (Process.GetProcessesByName(SessionController.VrHeadset?.GetHeadsetManagementProcessName()).Length == 0)
+            if (ProcessManager.GetProcessesByName(SessionController.VrHeadset?.GetHeadsetManagementProcessName()).Length == 0)
             {
                 error = "Error: Vive could not open";
             }

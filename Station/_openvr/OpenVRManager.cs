@@ -5,6 +5,7 @@ using System.Numerics;
 using System.Text;
 using System.Threading.Tasks;
 using Newtonsoft.Json.Linq;
+using Station._commandLine;
 using Valve.VR;
 
 namespace Station
@@ -157,7 +158,7 @@ namespace Station
                 SteamWrapper.LauncherSteamVR();
                 await Task.Delay(3000);
 
-                bool steamvr = await MonitorLoop(() => Process.GetProcessesByName("vrmonitor").Length == 0);
+                bool steamvr = await MonitorLoop(() => ProcessManager.GetProcessesByName("vrmonitor").Length == 0);
                 if (!steamvr) return false;
 
                 Logger.WriteLog($"OpenVRManager.WaitForOpenVR - Vive status: {SessionController.VrHeadset.GetHeadsetManagementSoftwareStatus()}, " +
@@ -417,19 +418,20 @@ namespace Station
                 }
 
                 string currentAppName = appNameBuffer.ToString();
-                string? currentAppStatus = Enum.GetName(typeof(EVRSceneApplicationState),
-                    applications.GetSceneApplicationState());
-
-                string output = $"Application ID: {_processId}\n" +
-                                $"Application State: {currentAppStatus}\n" +
-                                $"Application Type: {currentAppType}\n" +
-                                $"Currently Running Application Key: {currentAppKey}\n" +
-                                $"Currently Running Application Name: {currentAppName}";
-
-                Logger.WriteLog(output, MockConsole.LogLevel.Verbose);
+                // string? currentAppStatus = Enum.GetName(typeof(EVRSceneApplicationState),
+                //     applications.GetSceneApplicationState());
+                //
+                // string output = $"Application ID: {_processId}\n" +
+                //                 $"Application State: {currentAppStatus}\n" +
+                //                 $"Application Type: {currentAppType}\n" +
+                //                 $"Currently Running Application Key: {currentAppKey}\n" +
+                //                 $"Currently Running Application Name: {currentAppName}";
+                //
+                // Logger.WriteLog(output, MockConsole.LogLevel.Verbose);
 
                 // Get the process associated with the _appId
-                Process targetProcess = Process.GetProcessById((int)_processId);
+                Process? targetProcess = ProcessManager.GetProcessById((int)_processId);
+                if (targetProcess == null) return;
                 
                 WrapperManager.LoadWrapper(currentAppType); //Load in the appropriate wrapper type
                 WrapperManager.applicationList.TryGetValue(currentAppKey.Split(".")[2], out var experience);
