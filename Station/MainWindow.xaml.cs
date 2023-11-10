@@ -14,6 +14,9 @@ namespace Station
         //Control the different log levels
         public static Button? logLevel;
         
+        //Image for Third party connection
+        public static Image? headsetVrConnection;
+        
         //Image for OpenVR connection
         public static Image? openVrConnection;
 
@@ -44,6 +47,8 @@ namespace Station
 
             console = this.ConsoleWindow;
             logLevel = this.LoggingLevel;
+
+            headsetVrConnection = this.HeadsetVrConnection;
             openVrConnection = this.OpenVrConnection;
             processConsole = this.ProcessConsole;
             statusConsole = this.StatusConsole;

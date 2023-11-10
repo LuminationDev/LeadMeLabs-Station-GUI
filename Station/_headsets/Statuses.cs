@@ -27,8 +27,9 @@ namespace Station
         #region Observers
         /// <summary>
         /// External software that is required to link the headset to SteamVR
-        ///     Vive Pro 1 - Determined by Vive Logs
-        ///     Vive Pro 2 - Determined by Vive Console
+        ///     Vive Pro 1      - Determined by Vive Logs
+        ///     Vive Pro 2      - Determined by Vive Console
+        ///     Vive Focus 3    - Determined by Vive Business Streaming
         /// </summary>
         private DeviceStatus _softwareStatus = DeviceStatus.Off;
         public DeviceStatus SoftwareStatus
@@ -125,15 +126,18 @@ namespace Station
             MockConsole.WriteLine($"Updating Headset:{Enum.GetName(typeof(VrManager), manager)}:{Enum.GetName(typeof(DeviceStatus), status)}", 
                 MockConsole.LogLevel.Debug);
 
-            if (manager == VrManager.Software)
+            switch (manager)
             {
-                SendLostMessage(SoftwareStatus == DeviceStatus.Connected, status);
-                SoftwareStatus = status;
-            }
-            else if (manager == VrManager.OpenVR)
-            {
-                SendLostMessage(OpenVRStatus == DeviceStatus.Connected, status);
-                OpenVRStatus = status;
+                case VrManager.Software:
+                    SendLostMessage(SoftwareStatus == DeviceStatus.Connected, status);
+                    SoftwareStatus = status;
+                    UIUpdater.LoadImageFromAssetFolder("ThirdParty", SoftwareStatus == DeviceStatus.Connected);
+                    break;
+                
+                case VrManager.OpenVR:
+                    SendLostMessage(OpenVRStatus == DeviceStatus.Connected, status);
+                    OpenVRStatus = status;
+                    break;
             }
             
             SendReadyMessage();

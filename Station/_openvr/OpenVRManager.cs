@@ -99,7 +99,7 @@ namespace Station
             //Create a listener for VR events - this handles the gentle exit of SteamVR
             new Task(OnVREvent).Start();
 
-            UIUpdater.LoadImageFromAssetFolder(true);
+            UIUpdater.LoadImageFromAssetFolder("OpenVR", true);
 
             _initialising = false;
             return true;
@@ -244,7 +244,7 @@ namespace Station
                         _ovrSystem.AcknowledgeQuit_Exiting();
                         OpenVrSystem?.Shutdown();
                         OpenVrSystem = null;
-                        UIUpdater.LoadImageFromAssetFolder(false);
+                        UIUpdater.LoadImageFromAssetFolder("OpenVR", false);
                         break;
                 }
 
@@ -379,91 +379,96 @@ namespace Station
             uint queriedProcessId = applications.GetCurrentSceneProcessId();
 
             //If _processId is 0 there is no active process, if _queriedProcessId is different then the application has changed
-            if (queriedProcessId != 0 && queriedProcessId != _processId)
+            if (queriedProcessId == 0 || queriedProcessId == _processId) return;
+            _processId = queriedProcessId;
+                
+            //Gets the active application pchKey running on SteamVR
+            StringBuilder appKeyBuffer = new StringBuilder(256); // Adjust the buffer size as needed
+
+            EVRApplicationError error =
+                applications.GetApplicationKeyByProcessId(_processId, appKeyBuffer, (uint)appKeyBuffer.Capacity);
+
+            if (error != EVRApplicationError.None)
             {
-                _processId = queriedProcessId;
-
-                //Gets the active application pchKey running on SteamVR
-                StringBuilder appKeyBuffer = new StringBuilder(256); // Adjust the buffer size as needed
-
-                EVRApplicationError error =
-                    applications.GetApplicationKeyByProcessId(_processId, appKeyBuffer, (uint)appKeyBuffer.Capacity);
-
-                if (error != EVRApplicationError.None)
-                {
-                    MockConsole.WriteLine($"Failed to get the current application key. Error: {error}", MockConsole.LogLevel.Debug);
-                    return;
-                }
-
-                string currentAppKey = appKeyBuffer.ToString();
-                string currentAppType = appKeyBuffer.ToString().Split(".")[0]; 
-                currentAppType = currentAppType.Substring(0, 1).ToUpper() + currentAppType.Substring(1);
-                
-                // Retrieve the name of the application using the application key
-                StringBuilder appNameBuffer = new StringBuilder(256); // Adjust the buffer size as needed
-                EVRApplicationError
-                    getAppNameError = EVRApplicationError.None; // Additional parameter for error handling
-
-                applications.GetApplicationPropertyString(
-                    currentAppKey,
-                    EVRApplicationProperty.Name_String,
-                    appNameBuffer,
-                    (uint)appNameBuffer.Capacity,
-                    ref getAppNameError);
-
-                if (getAppNameError != EVRApplicationError.None)
-                {
-                    Logger.WriteLog($"OpenVRManager.QueryCurrentApplication - Failed to get the application name. Error: {getAppNameError}", 
-                        MockConsole.LogLevel.Debug);
-                    return;
-                }
-
-                string currentAppName = appNameBuffer.ToString();
-                // string? currentAppStatus = Enum.GetName(typeof(EVRSceneApplicationState),
-                //     applications.GetSceneApplicationState());
-                //
-                // string output = $"Application ID: {_processId}\n" +
-                //                 $"Application State: {currentAppStatus}\n" +
-                //                 $"Application Type: {currentAppType}\n" +
-                //                 $"Currently Running Application Key: {currentAppKey}\n" +
-                //                 $"Currently Running Application Name: {currentAppName}";
-                //
-                // Logger.WriteLog(output, MockConsole.LogLevel.Verbose);
-
-                // Get the process associated with the _appId
-                Process? targetProcess = ProcessManager.GetProcessById((int)_processId);
-                if (targetProcess == null) return;
-                
-                WrapperManager.LoadWrapper(currentAppType); //Load in the appropriate wrapper type
-                WrapperManager.applicationList.TryGetValue(currentAppKey.Split(".")[2], out var experience);
-                WrapperManager.CurrentWrapper?.SetLastExperience(experience);
-                WrapperManager.CurrentWrapper?.SetCurrentProcess(targetProcess); //Sets the wrapper process and calls WaitForExit
-                WrapperManager.CurrentWrapper?.SetLaunchingExperience(false);
-                
-                WindowManager.MaximizeProcess(targetProcess); //Maximise the process experience
-
-                string? experienceId = experience.ID;
-                if (string.IsNullOrEmpty(experienceId))
-                {
-                    experienceId = "0";
-                }
-                
-                // Send a message to the NUC
-                SessionController.PassStationMessage(
-                    $"ApplicationUpdate,{currentAppName}/{experienceId}/{currentAppType}");
-                
-                JObject response = new JObject();
-                response.Add("response", "ExperienceLaunched");
-                JObject responseData = new JObject();
-                responseData.Add("experienceId", experienceId);
-                response.Add("responseData", responseData);
-                
-                Manager.SendResponse("NUC", "QA", response.ToString());
-
-                // Update the Station UI
-                UIUpdater.UpdateProcess(targetProcess.MainWindowTitle);
-                UIUpdater.UpdateStatus("Running...");
+                MockConsole.WriteLine($"Failed to get the current application key. Error: {error}", MockConsole.LogLevel.Debug);
+                return;
             }
+
+            string currentAppKey = appKeyBuffer.ToString();
+            string currentAppType = appKeyBuffer.ToString().Split(".")[0]; 
+            currentAppType = currentAppType.Substring(0, 1).ToUpper() + currentAppType.Substring(1);
+                
+                
+            // Retrieve the name of the application using the application key
+            StringBuilder appNameBuffer = new StringBuilder(256); // Adjust the buffer size as needed
+            EVRApplicationError
+                getAppNameError = EVRApplicationError.None; // Additional parameter for error handling
+
+            applications.GetApplicationPropertyString(
+                currentAppKey,
+                EVRApplicationProperty.Name_String,
+                appNameBuffer,
+                (uint)appNameBuffer.Capacity,
+                ref getAppNameError);
+
+            if (getAppNameError != EVRApplicationError.None)
+            {
+                Logger.WriteLog($"OpenVRManager.QueryCurrentApplication - Failed to get the application name. Error: {getAppNameError}", 
+                    MockConsole.LogLevel.Debug);
+                return;
+            }
+
+            string currentAppName = appNameBuffer.ToString();
+            // string? currentAppStatus = Enum.GetName(typeof(EVRSceneApplicationState),
+            //     applications.GetSceneApplicationState());
+            //
+            // string output = $"Application ID: {_processId}\n" +
+            //                 $"Application State: {currentAppStatus}\n" +
+            //                 $"Application Type: {currentAppType}\n" +
+            //                 $"Currently Running Application Key: {currentAppKey}\n" +
+            //                 $"Currently Running Application Name: {currentAppName}";
+            //
+            // Logger.WriteLog(output, MockConsole.LogLevel.Verbose);
+
+            // Get the process associated with the _appId
+            Process? targetProcess = ProcessManager.GetProcessById((int)_processId);
+            if (targetProcess == null)
+            {
+                Logger.WriteLog($"OpenVRManager.QueryCurrentApplication - Target Process NOT found.",
+                    MockConsole.LogLevel.Normal);
+                _processId = 0;
+                return;
+            }
+
+            WrapperManager.LoadWrapper(currentAppType); //Load in the appropriate wrapper type
+            WrapperManager.applicationList.TryGetValue(currentAppKey.Split(".")[2], out var experience);
+            WrapperManager.CurrentWrapper?.SetLastExperience(experience);
+            WrapperManager.CurrentWrapper?.SetCurrentProcess(targetProcess); //Sets the wrapper process and calls WaitForExit
+            WrapperManager.CurrentWrapper?.SetLaunchingExperience(false);
+                
+            WindowManager.MaximizeProcess(targetProcess); //Maximise the process experience
+
+            string? experienceId = experience.ID;
+            if (string.IsNullOrEmpty(experienceId))
+            {
+                experienceId = "0";
+            }
+                
+            // Send a message to the NUC
+            SessionController.PassStationMessage(
+                $"ApplicationUpdate,{currentAppName}/{experienceId}/{currentAppType}");
+                
+            JObject response = new JObject();
+            response.Add("response", "ExperienceLaunched");
+            JObject responseData = new JObject();
+            responseData.Add("experienceId", experienceId);
+            response.Add("responseData", responseData);
+                
+            Manager.SendResponse("NUC", "QA", response.ToString());
+
+            // Update the Station UI
+            UIUpdater.UpdateProcess(targetProcess.MainWindowTitle);
+            UIUpdater.UpdateStatus("Running...");
         }
         #endregion
 
