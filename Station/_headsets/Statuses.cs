@@ -27,8 +27,9 @@ namespace Station
         #region Observers
         /// <summary>
         /// External software that is required to link the headset to SteamVR
-        ///     Vive Pro 1 - Determined by Vive Logs
-        ///     Vive Pro 2 - Determined by Vive Console
+        ///     Vive Pro 1      - Determined by Vive Logs
+        ///     Vive Pro 2      - Determined by Vive Console
+        ///     Vive Focus 3    - Determined by Vive Business Streaming
         /// </summary>
         private DeviceStatus _softwareStatus = DeviceStatus.Off;
         public DeviceStatus SoftwareStatus
