@@ -27,13 +27,13 @@ namespace Station
         }
 
         private const int LineLimit = 100;
-        public static LogLevel _logLevel = LogLevel.Normal;
+        private static LogLevel _logLevel = LogLevel.Normal;
 
         /// <summary>
         /// Cycle through the Loglevels, if it has reach the max (Verbose) then reset
         /// back to None.
         /// </summary>
-        public static void changeLogLevel()
+        public static void ChangeLogLevel()
         {
             if (_logLevel == LogLevel.Verbose)
             {
