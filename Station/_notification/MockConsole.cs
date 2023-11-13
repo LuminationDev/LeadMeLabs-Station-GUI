@@ -1,11 +1,11 @@
 ﻿using System;
+using System.Text;
 
 namespace Station
 {
     public static class MockConsole
     {
         private static MainWindowViewModel? _viewModel;
-        private static int __lineCount = 30;
 
         public static void SetViewModel(MainWindowViewModel viewModel)
         {
@@ -25,14 +25,14 @@ namespace Station
             Verbose
         }
 
-        private static int _lineLimit = 100;
-        public static LogLevel _logLevel = LogLevel.Normal;
+        private const int LineLimit = 100;
+        private static LogLevel _logLevel = LogLevel.Normal;
 
         /// <summary>
         /// Cycle through the Loglevels, if it has reach the max (Verbose) then reset
         /// back to None.
         /// </summary>
-        public static void changeLogLevel()
+        public static void ChangeLogLevel()
         {
             if (_logLevel == LogLevel.Verbose)
             {
@@ -48,7 +48,7 @@ namespace Station
         }
 
         //The functions below handle updating the mock console that is present within the MainWindow. This
-        //proccess allows other parts of the project to display information to a user.
+        //process allows other parts of the project to display information to a user.
 
         /// <summary>
         /// Clear the MockConsole of all previous messages. The cleared message will be printed regardless
@@ -70,21 +70,24 @@ namespace Station
         {
             if (message.Trim() == "" || _viewModel == null) return;
             if (_logLevel == LogLevel.Off) return;
+            
+            var builder = new StringBuilder(_viewModel.ConsoleText);
 
-            if (_viewModel.ConsoleText != null)
+            if (builder.Length > 0 && builder[builder.Length - 1] != '\n')
             {
-                var lines = _viewModel.ConsoleText.Split(new[] { '\n' }, StringSplitOptions.RemoveEmptyEntries);
-
-                if (lines.Length >= __lineCount)
-                {
-                    var newLines = new string[__lineCount];
-                    Array.Copy(lines, 1, newLines, 0, newLines.Length - 1);
-                    newLines[newLines.Length - 1] = string.Empty;
-                    _viewModel.ConsoleText = string.Join("\n", newLines);
-                }
+                builder.AppendLine(); // Ensure the last line ends with a newline
             }
 
-            _viewModel.ConsoleText = _viewModel.ConsoleText + DateStamp() + message + "\n";
+            var lineCount = builder.ToString().Split('\n').Length;
+
+            if (lineCount >= LineLimit)
+            {
+                int startIndex = builder.ToString().IndexOf('\n') + 1;
+                builder.Remove(0, startIndex);
+            }
+
+            builder.AppendLine($"{DateStamp()}{message}");
+            _viewModel.ConsoleText = builder.ToString();
         }
 
         /// <summary>
@@ -94,24 +97,26 @@ namespace Station
         /// <param name="level">A Loglevel enum representing if it should be displayed at the current logging level.</param>
         public static void WriteLine(string message, LogLevel level)
         {
-            if (message.Trim() == "" || _viewModel == null) return;
+            if (string.IsNullOrWhiteSpace(message) || _viewModel == null) return;
             if (level > _logLevel || _logLevel == LogLevel.Off) return;
+            
+            var builder = new StringBuilder(_viewModel.ConsoleText);
 
-
-            if (_viewModel.ConsoleText != null)
+            if (builder.Length > 0 && builder[builder.Length - 1] != '\n')
             {
-                var lines = _viewModel.ConsoleText.Split(new[] { '\n' }, StringSplitOptions.RemoveEmptyEntries);
-
-                if (lines.Length >= _lineLimit)
-                {
-                    var newLines = new string[_lineLimit];
-                    Array.Copy(lines, 1, newLines, 0, newLines.Length - 1);
-                    newLines[newLines.Length - 1] = string.Empty;
-                    _viewModel.ConsoleText = string.Join("\n", newLines);
-                }
+                builder.AppendLine(); // Ensure the last line ends with a newline
             }
 
-            _viewModel.ConsoleText = _viewModel.ConsoleText + DateStamp() + message + "\n";
+            var lineCount = builder.ToString().Split('\n').Length;
+
+            if (lineCount >= LineLimit)
+            {
+                int startIndex = builder.ToString().IndexOf('\n') + 1;
+                builder.Remove(0, startIndex);
+            }
+
+            builder.AppendLine($"{DateStamp()}{message}");
+            _viewModel.ConsoleText = builder.ToString();
         }
 
         private static string DateStamp()

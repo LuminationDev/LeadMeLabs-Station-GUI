@@ -250,7 +250,7 @@ namespace Station
                 responseData.Add("experienceId", lastExperience.ID);
                 response.Add("responseData", responseData);
                 
-                Manager.SendResponse("NUC", "QA", response.ToString());
+                Manager.SendMessage("NUC", "QA", response);
             } else
             {
                 Logger.WriteLog("Game launch failure: " + lastExperience.Name, MockConsole.LogLevel.Normal);
@@ -263,7 +263,7 @@ namespace Station
                 responseData.Add("message", "Launch timed out, there may be a popup that needs confirmation");
                 response.Add("responseData", responseData);
                 
-                Manager.SendResponse("NUC", "QA", response.ToString());
+                Manager.SendMessage("NUC", "QA", response);
             }
         }
 

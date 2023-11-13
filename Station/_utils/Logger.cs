@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using LeadMeLabsLibrary;
+using Newtonsoft.Json.Linq;
 
 namespace Station
 {
@@ -86,7 +87,8 @@ namespace Station
 
             if(logs.Count == 0)
             {
-                Manager.SendResponse("NUC", "Station", "LogRequest:NoLogsFound");
+                JObject logRequest = new() { { "LogRequest", "NoLogsFound" } };
+                Manager.SendMessage("Android", "Station", logRequest);
                 return;
             }
 

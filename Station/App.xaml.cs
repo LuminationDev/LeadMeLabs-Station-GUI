@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Windows;
+using Newtonsoft.Json.Linq;
 using Sentry;
 using Application = System.Windows.Application;
 
@@ -64,18 +65,32 @@ namespace Station
             Logger.WriteLog("UnhandledExceptionHandler caught: " + e.Message, MockConsole.LogLevel.Error);
             Logger.WriteLog($"Runtime terminating: {args.IsTerminating}", MockConsole.LogLevel.Error);
             Logger.WorkQueue();
-            Manager.SendResponse("Android", "Station", "SetValue:status:Off");
-            Manager.SendResponse("Android", "Station", "SetValue:gameName:Unexpected error occured, please restart station");
-            Manager.SendResponse("Android", "Station", "SetValue:gameId:");
+            
+            JObject values = new JObject
+            {
+                { "status", "Off" },
+                { "gameName", "Unexpected error occured, please restart station" },
+                { "gameId", "" },
+                { "volume", CommandLine.GetVolume() }
+            };
+            JObject setValue = new() { { "SetValue", values } };
+            Manager.SendMessage("NUC", "Station", setValue);
         }
 
         static void ProcessExitHandler(object? sender, EventArgs args)
         {
             Logger.WriteLog($"Process Exiting. Sender: {sender}, Event: {args}", MockConsole.LogLevel.Verbose);
             Logger.WorkQueue();
-            Manager.SendResponse("Android", "Station", "SetValue:status:Off");
-            Manager.SendResponse("Android", "Station", "SetValue:gameName:");
-            Manager.SendResponse("Android", "Station", "SetValue:gameId:");
+            
+            JObject values = new JObject
+            {
+                { "status", "Off" },
+                { "gameName", "" },
+                { "gameId", "" },
+                { "volume", CommandLine.GetVolume() }
+            };
+            JObject setValue = new() { { "SetValue", values } };
+            Manager.SendMessage("NUC", "Station", setValue);
 
             //Shut down the pipe server if running
             WrapperManager.ClosePipeServer();

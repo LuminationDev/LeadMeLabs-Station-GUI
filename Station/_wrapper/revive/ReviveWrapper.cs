@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Threading.Tasks;
 using LeadMeLabsLibrary;
+using Newtonsoft.Json.Linq;
 using Station._monitoring;
 using Station._utils;
 
@@ -68,7 +69,8 @@ namespace Station
                 {
                     MockConsole.WriteLine($"File not found:{filePath}", MockConsole.LogLevel.Error);
                     SessionController.PassStationMessage($"StationError,File not found:{filePath}");
-                    Manager.SendResponse("Android", "Station", $"ThumbnailError:{experienceKey}");
+                    JObject thumbnailError = new() { { "ThumbnailError", experienceKey } };
+                    Manager.SendMessage("Android", "Station", thumbnailError);
                     return;
                 }
 

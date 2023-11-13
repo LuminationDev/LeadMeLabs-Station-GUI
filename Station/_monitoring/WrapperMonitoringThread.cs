@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading;
+using Newtonsoft.Json.Linq;
 using Station._commandLine;
 
 namespace Station._monitoring;
@@ -137,10 +138,20 @@ public static class WrapperMonitoringThread
         if (processesAreAllResponding == processesAreResponding) return;
         
         processesAreResponding = processesAreAllResponding;
-        
-        SessionController.PassStationMessage(!processesAreAllResponding
-            ? "MessageToAndroid,SetValue:state:Not Responding"
-            : "MessageToAndroid,SetValue:status:On");
+
+        JObject values = new();
+        if (!processesAreAllResponding)
+        {
+            values.Add("key", "state");
+            values.Add("value", "Not Responding");
+        }
+        else
+        {
+            values.Add("key", "status");
+            values.Add("value", "On");
+        }
+        JObject setValue = new() { { "SetValue", values } };
+        SessionController.PassStationObject(setValue);
     }
 
     /// <summary>
@@ -184,6 +195,8 @@ public static class WrapperMonitoringThread
         
         //Only trigger once per experience
         SteamScripts.popupDetect = true;
-        Manager.SendResponse("Android", "Station", $"PopupDetected:{SteamWrapper.experienceName}");
+        
+        JObject popupDetected = new() { { "PopupDetected", SteamWrapper.experienceName } };
+        Manager.SendMessage("Android", "Station", popupDetected);
     }
 }

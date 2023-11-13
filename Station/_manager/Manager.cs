@@ -4,7 +4,9 @@ using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
 using LeadMeLabsLibrary;
+using Newtonsoft.Json.Linq;
 using Station._monitoring;
+using Station._scripts;
 
 namespace Station
 {
@@ -98,7 +100,7 @@ namespace Station
             StartServer();
             
             //Cannot be any higher - encryption key does not exist before the DotEnv.Load()
-            ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage($"SoftwareState,Launching Software"), TimeSpan.FromSeconds(0));
+            ScheduledTaskQueue.EnqueueTask(() => SessionController.UpdateSoftwareState("Launching Software"), TimeSpan.FromSeconds(0));
 
             App.SetWindowTitle($"Station({Environment.GetEnvironmentVariable("StationId", EnvironmentVariableTarget.Process)}) -- {localEndPoint.Address} -- {macAddress} -- {versionNumber}");
             Logger.WriteLog("ENV variables loaded", MockConsole.LogLevel.Error);
@@ -112,7 +114,7 @@ namespace Station
         /// </summary>
         private static void Initialisation()
         {
-            ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage($"SoftwareState,Initialising configuration"), TimeSpan.FromSeconds(2));
+            ScheduledTaskQueue.EnqueueTask(() => SessionController.UpdateSoftwareState("Initialising configuration"), TimeSpan.FromSeconds(2));
 
             // Schedule the function to run after a 5-minute delay (300,000 milliseconds)
             variableCheck = new Timer(OnTimerCallback, null, 300000, Timeout.Infinite);
@@ -226,10 +228,21 @@ namespace Station
         /// </summary>
         private static void InitialStartUp()
         {
-            SendResponse("NUC", "Station", "SetValue:status:On");
-            SendResponse("NUC", "Station", "SetValue:gameName:");
-            SendResponse("Android", "Station", "SetValue:gameId:");
-            SendResponse("NUC", "Station", $"SetValue:volume:{CommandLine.GetVolume()}");
+            JObject values = new JObject
+            {
+                { "status", "On" },
+                { "gameName", "" },
+                { "gameId", "" },
+                { "volume", CommandLine.GetVolume() }
+            };
+            JObject setValue = new() { { "SetValue", values } };
+            SendMessage("NUC", "Station", setValue);
+            
+            //Backwards compat
+            // SendResponse("NUC", "Station", "SetValue:status:On");
+            // SendResponse("NUC", "Station", "SetValue:gameName:");
+            // SendResponse("Android", "Station", "SetValue:gameId:");
+            // SendResponse("NUC", "Station", $"SetValue:volume:{CommandLine.GetVolume()}");
         }
 
         /// <summary>
@@ -305,15 +318,11 @@ namespace Station
             Thread scriptThread = new(script.Run);
             scriptThread.Start();
         }
-
-        /// <summary>
-        /// Send a response back to the android server detailing what has happened.
-        /// </summary>
-        public static void SendResponse(string destination, string actionNamespace, string? additionalData, bool writeToLog = true)
+        
+        public static void SendMessage(string destination, string actionNamespace, JObject? additionalData, bool writeToLog = true)
         {
             IPAddress? address = null;
             int? port = null;
-            
             string source =
                 $"Station,{Environment.GetEnvironmentVariable("StationId", EnvironmentVariableTarget.Process)}";
             string response = $"{source}:{destination}:{actionNamespace}";
@@ -326,7 +335,7 @@ namespace Station
             {
                 address = IPAddress.Parse(destination.Substring(3).Split(":")[0]);
                 port = Int32.Parse(destination.Substring(3).Split(":")[1]);
-                response = additionalData;
+                response = additionalData.ToString();
             }
 
             Logger.WriteLog($"Sending: {response}", MockConsole.LogLevel.Normal, writeToLog);

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Threading.Tasks;
+using Newtonsoft.Json.Linq;
 
 namespace Station
 {
@@ -77,12 +78,12 @@ namespace Station
                 if (SessionController.VrHeadset.GetHeadsetManagementSoftwareStatus() == DeviceStatus.Off)
                 {
                     SessionController.StartVRSession(type);
-                    ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage($"SoftwareState,Starting VR Session"), TimeSpan.FromSeconds(1));
+                    ScheduledTaskQueue.EnqueueTask(() => SessionController.UpdateSoftwareState("Starting VR Session"), TimeSpan.FromSeconds(1));
                     if (count == 10) // (10 * 5000ms) this loop + 2000ms initial loop 
                     {
                         terminateMonitoring = true;
                         SessionController.PassStationMessage("MessageToAndroid,HeadsetTimeout");
-                        ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage($"SoftwareState,Awaiting headset connection..."), TimeSpan.FromSeconds(1));
+                        ScheduledTaskQueue.EnqueueTask(() => SessionController.UpdateSoftwareState("Awaiting headset connection..."), TimeSpan.FromSeconds(1));
                     }
                     else
                     {
@@ -93,8 +94,15 @@ namespace Station
                 else if (!sent)
                 {
                     sent = true;
-                    ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage($"SoftwareState,Awaiting headset connection..."), TimeSpan.FromSeconds(1));
-                    ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage("MessageToAndroid,SetValue:session:Restarted"), TimeSpan.FromSeconds(1));
+                    ScheduledTaskQueue.EnqueueTask(() => SessionController.UpdateSoftwareState("Awaiting headset connection..."), TimeSpan.FromSeconds(1));
+                    
+                    JObject values = new()
+                    {
+                        { "key", "session" },
+                        { "value", "Restarted" }
+                    };
+                    JObject setValue = new() { { "SetValue", values } };
+                    ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationObject(setValue), TimeSpan.FromSeconds(1));
                     await Task.Delay(2000);
                 }
                 else //Message has already been sent to the NUC, block so it does not take up too much processing power
@@ -117,7 +125,13 @@ namespace Station
                 {
                     SessionController.PassStationMessage("ApplicationClosed");
                     await Task.Delay(1000);
-                    SessionController.PassStationMessage("MessageToAndroid,SetValue:status:On");
+                    
+                    JObject values = new()
+                    {
+                        { "status", "On" }
+                    };
+                    JObject setValue = new() { { "SetValue", values } };
+                    SessionController.PassStationObject(setValue);
 
                     activelyMonitoring = false;
                     terminateMonitoring = false;

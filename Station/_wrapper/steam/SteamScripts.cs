@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using LeadMeLabsLibrary.Station;
+using Newtonsoft.Json.Linq;
 using Station._commandLine;
 using Station._monitoring;
 
@@ -66,7 +67,9 @@ namespace Station
                         if(restartAttempts > 2)
                         {
                             Logger.WriteLog("CheckForSteamLogError - SteamVR Error: restarts failed, sending message to tablet.", MockConsole.LogLevel.Normal);
-                            Manager.SendResponse("Android", "Station", "SteamVRError");
+                            
+                            JObject steamVrError = new() { { "SteamVRError", "" } };
+                            Manager.SendMessage("Android", "Station", steamVrError);
                             break;
                         }
 
@@ -186,7 +189,12 @@ namespace Station
             if(!File.Exists(filePath))
             {
                 Logger.WriteLog($"SteamCMD not initialised yet. Initialising now.", MockConsole.LogLevel.Error);
-                Manager.SendResponse("Android", "Station", "SetValue:steamCMD:required");
+                JObject values = new()
+                {
+                    { "steamCMD", "required" }
+                };
+                JObject setValue = new() { { "SetValue", values } };
+                Manager.SendMessage("Android", "Station", setValue);
 
                 steamCMDConfigured = "Missing";
 

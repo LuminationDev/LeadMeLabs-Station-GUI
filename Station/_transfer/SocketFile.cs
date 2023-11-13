@@ -5,6 +5,7 @@ using System.Net;
 using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
+using Newtonsoft.Json.Linq;
 
 // Client app is the one sending messages to a Server/listener.
 // Both listener and client can send messages back and forth once a
@@ -163,7 +164,8 @@ namespace Station
 
                 if (this.type.Equals("file"))
                 {
-                    Manager.SendResponse("NUC", "Station", "LogRequest:TransferFailed");
+                    JObject logRequest = new() { { "LogRequest", "TransferFailed" } };
+                    Manager.SendMessage("Android", "Station", logRequest);
                 }
             }
         }

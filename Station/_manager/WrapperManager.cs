@@ -39,7 +39,7 @@ namespace Station
             ValidateManifestFiles();
             StartPipeServer();
             SessionController.SetupHeadsetType();
-            ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage($"SoftwareState,Loading experiences"), TimeSpan.FromSeconds(2));
+            ScheduledTaskQueue.EnqueueTask(() => SessionController.UpdateSoftwareState("Loading experiences"), TimeSpan.FromSeconds(2));
             Task.Factory.StartNew(() => CollectAllApplications());
         }
 
@@ -98,7 +98,7 @@ namespace Station
         {
             Logger.WriteLog($"Pipe message: {message}", MockConsole.LogLevel.Normal);
 
-            if (message.Contains("Command recieved")) return;
+            if (message.Contains("Command recieved")) return; //TODO check if this is correctly incorrect?
 
             //Token break down
             //['TYPE','MESSAGE']
@@ -108,7 +108,12 @@ namespace Station
             switch (tokens[0])
             {
                 case "details":
-                    Manager.SendResponse("Android", "Station", $"SetValue:details:{CheckExperienceName(tokens[1])}");
+                    JObject values = new JObject
+                    {
+                        { "details", CheckExperienceName(tokens[1]) }
+                    };
+                    JObject setValue = new() { { "SetValue", values } };
+                    Manager.SendMessage("Android", "Station", setValue);
                     break;
                 default:
                     LogHandler($"Unknown actionspace: {tokens[0]}");
@@ -235,7 +240,7 @@ namespace Station
 
                 SessionController.PassStationMessage("Processing,false");
 
-                ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage($"SoftwareState,Starting VR processes"), TimeSpan.FromSeconds(0));
+                ScheduledTaskQueue.EnqueueTask(() => SessionController.UpdateSoftwareState("Starting VR processes"), TimeSpan.FromSeconds(0));
                 SessionController.VrHeadset.StartVrSession();
                 WaitForVRProcesses();
             }
@@ -266,9 +271,17 @@ namespace Station
             if (SessionController.VrHeadset?.GetStatusManager().SoftwareStatus != DeviceStatus.Connected ||
                 SessionController.VrHeadset?.GetStatusManager().OpenVRStatus != DeviceStatus.Connected)
             {
-                ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage($"SoftwareState,{message}"),
+                ScheduledTaskQueue.EnqueueTask(() => SessionController.UpdateSoftwareState($"{message}"),
                     TimeSpan.FromSeconds(1));
-                ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage("MessageToAndroid,SetValue:session:Restarted"), TimeSpan.FromSeconds(1));
+                
+                JObject values = new()
+                {
+                    { "key", "session" },
+                    { "value", "Restarted" }
+                };
+                JObject setValue = new() { { "SetValue", values } };
+                ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationObject(setValue), 
+                    TimeSpan.FromSeconds(1));
             }
         }
 

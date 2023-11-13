@@ -9,6 +9,7 @@ using System.Net.Http.Headers;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
+using Newtonsoft.Json.Linq;
 using Station._commandLine;
 
 namespace Station
@@ -329,7 +330,12 @@ namespace Station
                 if (output == null)
                 {
                     Logger.WriteLog("Unable to read output", MockConsole.LogLevel.Normal);
-                    Manager.SendResponse("Android", "Station", "SetValue:steamCMD:error");
+                    JObject values = new()
+                    {
+                        { "steamCMD", "error" }
+                    };
+                    JObject setValue = new() { { "SetValue", values } };
+                    Manager.SendMessage("Android", "Station", setValue);
                     configuringSteam = false;
                     return;
                 }
@@ -339,13 +345,24 @@ namespace Station
                 if (output.Contains("FAILED (Invalid Login Auth Code)"))
                 {
                     Logger.WriteLog("AUTH FAILED", MockConsole.LogLevel.Normal);
-                    Manager.SendResponse("Android", "Station", "SetValue:steamCMD:failure");
+                    
+                    JObject values = new()
+                    {
+                        { "steamCMD", "failure" }
+                    };
+                    JObject setValue = new() { { "SetValue", values } };
+                    Manager.SendMessage("Android", "Station", setValue);
                     configuringSteam = false;
                 }
                 else if (output.Contains("OK"))
                 {
                     Logger.WriteLog("AUTH SUCCESS, restarting VR system", MockConsole.LogLevel.Normal);
-                    Manager.SendResponse("Android", "Station", "SetValue:steamCMD:configured");
+                    JObject values = new()
+                    {
+                        { "steamCMD", "configured" }
+                    };
+                    JObject setValue = new() { { "SetValue", values } };
+                    Manager.SendMessage("Android", "Station", setValue);
 
                     //Recollect the installed experiences
                     Manager.wrapperManager?.ActionHandler("CollectApplications");
@@ -399,7 +416,13 @@ namespace Station
 
             if (output.Contains("Steam Guard code:"))
             {
-                Manager.SendResponse("Android", "Station", "SetValue:steamCMD:required");
+                JObject values = new()
+                {
+                    { "steamCMD", "required" }
+                };
+                JObject setValue = new() { { "SetValue", values } };
+                Manager.SendMessage("Android", "Station", setValue);
+                
                 MockConsole.WriteLine("Steam Guard is not enabled for this account.");
                 SteamScripts.steamCMDConfigured = "Missing";
 
@@ -407,10 +430,18 @@ namespace Station
                 cmd.Kill(true);
                 return null;
             }
-
-            Manager.SendResponse("Android", "Station", "SetValue:steamCMD:configured");
-            SteamScripts.steamCMDConfigured = "Configured";
-
+            else
+            {
+                JObject values = new()
+                {
+                    { "steamCMD", "configured" }
+                };
+                JObject setValue = new() { { "SetValue", values } };
+                Manager.SendMessage("Android", "Station", setValue);
+                
+                SteamScripts.steamCMDConfigured = "Configured";
+            }
+            
             return output;
         }
 

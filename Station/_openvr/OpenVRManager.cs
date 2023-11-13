@@ -148,7 +148,7 @@ namespace Station
                     $"OpenVR connection not established - restarting SteamVR", MockConsole.LogLevel.Normal);
 
                 //Send message to the tablet (Updating what is happening)
-                ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage($"SoftwareState,Restarting SteamVR"), TimeSpan.FromSeconds(1));
+                ScheduledTaskQueue.EnqueueTask(() => SessionController.UpdateSoftwareState("Restarting SteamVR"), TimeSpan.FromSeconds(1));
 
                 //Kill SteamVR
                 CommandLine.QueryVRProcesses(new List<string> { "vrmonitor" }, true);
@@ -165,12 +165,12 @@ namespace Station
                     $"SteamVR restarted successfully", MockConsole.LogLevel.Normal);
 
                 //Send message to the tablet (Updating what is happening)
-                ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage($"SoftwareState,Connecting SteamVR"), TimeSpan.FromSeconds(1));
+                ScheduledTaskQueue.EnqueueTask(() => SessionController.UpdateSoftwareState("Connecting SteamVR"), TimeSpan.FromSeconds(1));
 
                 bool openvr = await MonitorLoop(() => !Manager.openVRManager?.InitialiseOpenVR() ?? true);
                 if (!openvr)
                 {
-                    ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage($"SoftwareState,SteamVR Error"), TimeSpan.FromSeconds(1));
+                    ScheduledTaskQueue.EnqueueTask(() => SessionController.UpdateSoftwareState("SteamVR Error"), TimeSpan.FromSeconds(1));
                     return false;
                 }
 
@@ -362,7 +362,7 @@ namespace Station
                         responseData.Add("experienceId", WrapperManager.CurrentWrapper?.GetLastExperience()?.ID);
                         response.Add("responseData", responseData);
                 
-                        Manager.SendResponse("NUC", "QA", response.ToString());
+                        Manager.SendMessage("NUC", "QA", response);
                     }
                 }, TimeSpan.FromSeconds(30));
             }
@@ -458,7 +458,7 @@ namespace Station
                 responseData.Add("experienceId", experienceId);
                 response.Add("responseData", responseData);
                 
-                Manager.SendResponse("NUC", "QA", response.ToString());
+                Manager.SendMessage("NUC", "QA", response);
 
                 // Update the Station UI
                 UIUpdater.UpdateProcess(targetProcess.MainWindowTitle);

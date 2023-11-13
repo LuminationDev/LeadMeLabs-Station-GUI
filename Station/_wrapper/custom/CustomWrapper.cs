@@ -70,8 +70,9 @@ namespace Station
                 {
                     MockConsole.WriteLine($"Station working directory not found while searching for header file", MockConsole.LogLevel.Error);
                     SessionController.PassStationMessage($"StationError,Station working directory not found while searching for header file.");
-
-                    Manager.SendResponse("Android", "Station", $"ThumbnailError:{experienceName}");
+                    
+                    JObject setValue = new() { { "ThumbnailError", experienceName } };
+                    Manager.SendMessage("Android", "Station", setValue);
                     return;
                 }
 
@@ -90,7 +91,9 @@ namespace Station
                 {
                     MockConsole.WriteLine($"File not found:{filePath}", MockConsole.LogLevel.Error);
                     SessionController.PassStationMessage($"StationError,File not found:{filePath}");
-                    Manager.SendResponse("Android", "Station", $"ThumbnailError:{experienceName}");
+                    
+                    JObject thumbnailError = new() { { "ThumbnailError", experienceName } };
+                    Manager.SendMessage("Android", "Station", thumbnailError);
                     return;
                 }
 
@@ -268,7 +271,7 @@ namespace Station
                 JObject responseData = new JObject();
                 responseData.Add("experienceId", lastExperience.ID);
                 response.Add("responseData", responseData);
-                Manager.SendResponse("NUC", "QA", response.ToString());
+                Manager.SendMessage("NUC", "QA", response);
 
                 MockConsole.WriteLine($"Application launching: {currentProcess?.MainWindowTitle}/{lastExperience.ID}", MockConsole.LogLevel.Normal);
 
@@ -285,8 +288,7 @@ namespace Station
                 JObject responseData = new JObject();
                 responseData.Add("experienceId", lastExperience.ID);
                 response.Add("responseData", responseData);
-                
-                Manager.SendResponse("NUC", "QA", response.ToString());
+                Manager.SendMessage("NUC", "QA", response);
             }
         }
 

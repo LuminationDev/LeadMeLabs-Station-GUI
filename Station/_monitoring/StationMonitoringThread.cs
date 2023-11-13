@@ -2,6 +2,7 @@
 using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
+using Newtonsoft.Json.Linq;
 using Sentry;
 using Station._commandLine;
 
@@ -144,15 +145,16 @@ public static class StationMonitoringThread
             temperature = Temperature.GetTemperature();
         }
 
-        if (temperature > 90)
-        {
-            Manager.SendResponse("Android", "Station", "HighTemperature");
-            SentrySdk.CaptureMessage("High temperature detected (" + temperature + ") at: " +
-                (Environment.GetEnvironmentVariable("LabLocation", EnvironmentVariableTarget.Process) ?? "Unknown"));
-            Logger.WriteLog("High temperature detected (" + temperature + ") at: " +
-                (Environment.GetEnvironmentVariable("LabLocation", EnvironmentVariableTarget.Process) ?? "Unknown"), MockConsole.LogLevel.Error);
-            latestHighTemperatureWarning = DateTime.Now;
-        }
+        if (!(temperature > 90)) return;
+        
+        JObject highTemperature = new() { { "HighTemperature", "" } };
+        Manager.SendMessage("Android", "Station", highTemperature);
+        
+        SentrySdk.CaptureMessage("High temperature detected (" + temperature + ") at: " +
+                                 (Environment.GetEnvironmentVariable("LabLocation", EnvironmentVariableTarget.Process) ?? "Unknown"));
+        Logger.WriteLog("High temperature detected (" + temperature + ") at: " +
+                        (Environment.GetEnvironmentVariable("LabLocation", EnvironmentVariableTarget.Process) ?? "Unknown"), MockConsole.LogLevel.Error);
+        latestHighTemperatureWarning = DateTime.Now;
     }
 
     /// <summary>

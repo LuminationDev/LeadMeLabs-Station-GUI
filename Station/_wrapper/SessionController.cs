@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Threading;
 using System.Threading.Tasks;
+using Newtonsoft.Json.Linq;
 using Station._headsets;
+using Station._scripts;
 
 namespace Station
 {
@@ -80,7 +82,7 @@ namespace Station
         /// </summary>
         public static void RestartVRSession()
         {
-            ScheduledTaskQueue.EnqueueTask(() => PassStationMessage($"SoftwareState,Shutting down VR processes"), TimeSpan.FromSeconds(1));
+            ScheduledTaskQueue.EnqueueTask(() => UpdateSoftwareState("Shutting down VR processes"), TimeSpan.FromSeconds(1));
             _ = WrapperManager.RestartVRProcesses();
 
             if (ExperienceType == null)
@@ -149,6 +151,30 @@ namespace Station
         }
 
         /// <summary>
+        /// Update the software state, update both the internal variable and send the state on to the NUC for
+        /// further processing.
+        /// </summary>
+        public static void UpdateSoftwareState(string state)
+        {
+            CurrentState = state;
+            
+            JObject values = new()
+            {
+                { "state", state }
+            };
+            JObject setValue = new() { { "SetValue", values } };
+            PassStationObject(setValue);
+        }
+
+        /// <summary>
+        /// Take an action object from the wrapper and pass the response onto the NUC.
+        /// </summary>
+        public static void PassStationObject(JObject message)
+        {
+            Manager.SendMessage("Android", "Station", message);
+        }
+
+        /// <summary>
         /// Take an action message from the wrapper and pass the response onto the NUC or handle it internally.
         /// </summary>
         /// <param name="message">A string representing the message, different actions are separated by a ','</param>
@@ -159,48 +185,67 @@ namespace Station
 
                 //[TYPE, ACTION, INFORMATION]
                 string[] tokens = message.Split(',');
-
+                
+                JObject values = new JObject();
+                
                 switch (tokens[0])
                 {
                     case "MessageToAndroid":
-                        Manager.SendResponse("Android", "Station", tokens[1]);
-                        break;
+                        JObject androidMessage = new() { { "message", tokens[1] } };
+                        Manager.SendMessage("Android", "Station", androidMessage);
+                        
+                        //BACKWARD COMPAT
+                        //Manager.SendResponse("Android", "Station", tokens[1]);
+                        return;
 
                     case "Processing":
                         StationScripts.processing = bool.Parse(tokens[1]);
                         break;
 
                     case "ApplicationUpdate":
-                        string[] values = tokens[1].Split('/');
-                        Manager.SendResponse("Android", "Station", $"SetValue:gameName:{values[0]}");
+                        string[] info = tokens[1].Split('/');
 
-                        if (values.Length > 1)
+                        values.Add("gameName", info[0]);
+                        
+                        //BACKWARD COMPAT
+                        //Manager.SendResponse("Android", "Station", $"SetValue:gameName:{info[0]}");
+
+                        if (info.Length > 1)
                         {
-                            Manager.SendResponse("Android", "Station", $"SetValue:gameId:{values[1]}");
-                            Manager.SendResponse("Android", "Station", $"SetValue:gameType:{values[2]}");
+                            values.Add("gameId", info[1]);
+                            values.Add("gameType", info[2]);
+                            
+                            //BACKWARD COMPAT
+                            // Manager.SendResponse("Android", "Station", $"SetValue:gameId:{info[1]}");
+                            // Manager.SendResponse("Android", "Station", $"SetValue:gameType:{info[2]}");
                         }
                         else
                         {
-                            Manager.SendResponse("Android", "Station", "SetValue:gameId:");
-                            Manager.SendResponse("Android", "Station", "SetValue:gameType:");
+                            values.Add("gameId", "");
+                            values.Add("gameType", "");
+                            
+                            //BACKWARD COMPAT
+                            // Manager.SendResponse("Android", "Station", "SetValue:gameId:");
+                            // Manager.SendResponse("Android", "Station", "SetValue:gameType:");
                         }
                         break;
 
-                    case "SoftwareState":
-                        CurrentState = tokens[1];
-                        Manager.SendResponse("Android", "Station", $"SetValue:state:{tokens[1]}");
-                        break;
-
                     case "ApplicationList":
-                        //Backwards compatability, send both old (steamApplications) and new (installedApplications) commands for now.
-                        Manager.SendResponse("Android", "Station", "SetValue:steamApplications:" + tokens[1]);
-                        Manager.SendResponse("Android", "Station", "SetValue:installedApplications:" + tokens[1]);
+                        values.Add("installedApplications", tokens[1]);
+                        
+                        //BACKWARD COMPAT
+                        //  Manager.SendResponse("Android", "Station", "SetValue:installedApplications:" + tokens[1]);
                         break;
 
                     case "ApplicationClosed":
-                        Manager.SendResponse("Android", "Station", "SetValue:gameName:");
-                        Manager.SendResponse("Android", "Station", "SetValue:gameId:");
-                        Manager.SendResponse("Android", "Station", "SetValue:gameType:");
+                        values.Add("gameName", "");
+                        values.Add("gameId", "");
+                        values.Add("gameType", "");
+                        
+                        //BACKWARD COMPAT
+                        // Manager.SendResponse("Android", "Station", "SetValue:gameName:");
+                        // Manager.SendResponse("Android", "Station", "SetValue:gameId:");
+                        // Manager.SendResponse("Android", "Station", "SetValue:gameType:");
                         break;
 
                     case "StationError":
@@ -211,6 +256,9 @@ namespace Station
                         MockConsole.WriteLine("Non-primary command", MockConsole.LogLevel.Debug);
                         break;
                 }
+                
+                JObject setValue = new() { { "SetValue", values } };
+                Manager.SendMessage("Android", "Station", setValue);
             }).Start();
         }
     }
