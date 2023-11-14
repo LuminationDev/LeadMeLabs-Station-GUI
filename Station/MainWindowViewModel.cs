@@ -22,7 +22,7 @@ namespace Station
             StartStationCommand = new RelayCommand(() => Manager.StartProgram());
             RestartStationCommand = new RelayCommand(() => Manager.RestartProgram());
             StopStationCommand = new RelayCommand(() => Manager.StopProgram());
-            ChangeLogLevelCommand = new RelayCommand(() => MockConsole.changeLogLevel());
+            ChangeLogLevelCommand = new RelayCommand(() => MockConsole.ChangeLogLevel());
             StopCurrentProcess = new RelayCommand(() => WrapperManager.StopAProcess());
             ResetSteamVRProcess = new RelayCommand(() => RestartVR());
 
