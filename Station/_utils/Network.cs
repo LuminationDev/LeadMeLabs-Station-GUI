@@ -5,7 +5,7 @@ namespace Station
 { 
     public class Network
     {
-        private static readonly bool connected = RunInternetCheck();
+        private static bool connected = RunInternetCheck();
 
         private static bool RunInternetCheck()
         {
@@ -14,6 +14,7 @@ namespace Station
                 using var httpClient = new HttpClient();
                 httpClient.Timeout = TimeSpan.FromSeconds(10);
                 var response = httpClient.GetAsync("http://learninglablauncher.herokuapp.com/program-station-version").GetAwaiter().GetResult();
+                connected = response.IsSuccessStatusCode;
                 return response.IsSuccessStatusCode;
             }
             catch
@@ -22,8 +23,12 @@ namespace Station
             }
         }
 
-        public static bool CheckIfConnectedToInternet()
+        public static bool CheckIfConnectedToInternet(bool refresh = false)
         {
+            if (refresh)
+            {
+                RunInternetCheck();
+            }
             return connected;
         }
     }

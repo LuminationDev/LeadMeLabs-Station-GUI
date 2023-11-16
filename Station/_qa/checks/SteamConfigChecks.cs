@@ -35,7 +35,7 @@ namespace Station._qa.checks
             _qaChecks.Add(IsCloudEnabledOff());
             _qaChecks.Add(IsDefaultPageSetToLibrary());
             _qaChecks.Add(IsSteamInstalledInTheCorrectLocation());
-            _qaChecks.AddRange(IsLoginUsersCorrectlySet(labType.Equals("Online")));
+            _qaChecks.AddRange(IsLoginUsersCorrectlySet(labType.ToLower().Equals("online")));
             _qaChecks.AddRange(IsSteamVrSettingsCorrectlySet());
             return _qaChecks;
         }
@@ -445,7 +445,7 @@ namespace Station._qa.checks
                         
                         if (line.Contains("WantsOfflineMode"))
                         {
-                            if (isOnline)  // todo - this should be based on the QA tool telling us if we want online
+                            if (isOnline)
                             {
                                 if (line.Contains("0"))
                                 {

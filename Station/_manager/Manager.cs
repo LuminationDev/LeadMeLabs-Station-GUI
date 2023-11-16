@@ -66,6 +66,7 @@ namespace Station
         {
             MockConsole.ClearConsole();
             Logger.WriteLog("Loading ENV variables", MockConsole.LogLevel.Error);
+            Environment.SetEnvironmentVariable("POWERSHELL_TELEMETRY_OPTOUT", "1");
             
             //Check if the Encryption key and env variables are set correctly before starting anything else
             bool result = false;
