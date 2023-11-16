@@ -9,6 +9,7 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using NUC._qa.checks;
 using Station._qa;
+using Station._utils;
 
 namespace Station
 {
@@ -76,13 +77,13 @@ namespace Station
         private void HandleConnection(string? additionalData)
         {
             if (additionalData == null) return;
-            if (additionalData.Equals("Connect"))
+            if (additionalData.Contains("Connect"))
             {
                 Manager.SendResponse(source, "Station", "SetValue:status:On");
                 Manager.SendResponse(source, "Station", $"SetValue:state:{SessionController.CurrentState}");
                 Manager.SendResponse(source, "Station", "SetValue:gameName:");
                 Manager.SendResponse("Android", "Station", "SetValue:gameId:");
-                Manager.SendResponse(source, "Station", "SetValue:volume:" + CommandLine.GetVolume());
+                Manager.SendResponse(source, "Station", $"SetValue:volume:{CommandLine.GetVolume()}");
             }
         }
 

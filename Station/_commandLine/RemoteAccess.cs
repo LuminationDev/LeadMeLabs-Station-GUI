@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using LeadMeLabsLibrary;
 using Newtonsoft.Json.Linq;
+using Station._utils;
 
 namespace Station
 {
@@ -31,14 +32,12 @@ namespace Station
 
         private async static Task LoadRemoteConfig()
         {
-            string text = File.ReadAllText(remoteConfigFilePath);
-            if (text.Length == 0)
+            string? decryptedText = EncryptionHelper.DetectFileEncryption(remoteConfigFilePath);
+            if (string.IsNullOrEmpty(decryptedText))
             {
                 Logger.WriteLog($"Warning, Remote config file empty:{remoteConfigFilePath}", MockConsole.LogLevel.Debug);
                 return;
             }
-
-            string decryptedText = EncryptionHelper.DecryptNode(text);
 
             foreach (var line in decryptedText.Split('\n'))
             {

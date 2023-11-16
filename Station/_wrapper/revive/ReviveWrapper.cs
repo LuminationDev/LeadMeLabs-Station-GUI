@@ -5,6 +5,7 @@ using System.IO;
 using System.Threading.Tasks;
 using LeadMeLabsLibrary;
 using Station._monitoring;
+using Station._network;
 using Station._utils;
 
 namespace Station
@@ -74,7 +75,7 @@ namespace Station
 
                 //Add the header image to the sending image queue through action transformation
                 SocketFile socketImage = new("image", experienceKey, filePath);
-                System.Action sendImage = new(() => socketImage.send());
+                System.Action sendImage = new(() => socketImage.Send());
 
                 //Queue the send function for invoking
                 TaskQueue.Queue(false, sendImage);

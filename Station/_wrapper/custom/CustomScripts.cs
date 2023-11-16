@@ -34,52 +34,48 @@ namespace Station
                 return null;
             }
 
-            //Read the manifest
-            using (StreamReader r = new StreamReader(manifestPath))
+            //Read the manifest and modify the file if required
+            string? decryptedText = EncryptionHelper.DetectFileEncryption(manifestPath);
+            if (string.IsNullOrEmpty(decryptedText)) return new List<string> { string.Join('/', apps) };
+            
+            dynamic? array = JsonConvert.DeserializeObject(decryptedText);
+
+            if (array == null)
             {
-                //Read and decipher the encrypted manifest
-                string encrytedJson = r.ReadToEnd();
-                string json = EncryptionHelper.DecryptNode(encrytedJson);
+                return null;
+            }
 
-                dynamic? array = JsonConvert.DeserializeObject(json);
+            foreach (var item in array)
+            {
+                //Do not collect the Station or NUC application from the manifest file.
+                if (item.type == "LeadMe" || item.GetType == "Launcher") continue;
 
-                if (array == null)
+                //Basic application requirements
+                string application = $"{item.type}|{item.id}|{item.name}";
+
+                //Determine if there are launch parameters, if so create a passable string for a new process function
+                string? parameters = null;
+                if (item.parameters != null)
                 {
-                    return null;
-                }
-
-                foreach (var item in array)
-                {
-                    //Do not collect the Station or NUC application from the manifest file.
-                    if (item.type == "LeadMe" || item.GetType == "Launcher") continue;
-
-                    //Basic application requirements
-                    string application = $"{item.type}|{item.id}|{item.name}";
-
-                    //Determine if there are launch parameters, if so create a passable string for a new process function
-                    string? parameters = null;
-                    if (item.parameters != null)
+                    if (item.parameters is JObject input)
                     {
-                        if (item.parameters is JObject input)
+                        //Only require the Value, key is simply used for human reference within the manifest.json
+                        foreach (var x in input)
                         {
-                            //Only require the Value, key is simply used for human reference within the manifest.json
-                            foreach (var x in input)
-                            {
-                                parameters += $"{x.Value} ";
-                            }
+                            parameters += $"{x.Value} ";
                         }
                     }
-
-                    //Check if there is an alternate path (this is for imported experiences in the launcher)
-                    string? altPath = null;
-                    if(item.altPath != null)
-                    {
-                        altPath = item.altPath.ToString();
-                    }
-
-                    WrapperManager.StoreApplication(item.type.ToString(), item.id.ToString(), item.name.ToString(), parameters, altPath);
-                    apps.Add(application);
                 }
+
+                //Check if there is an alternate path (this is for imported experiences in the launcher)
+                string? altPath = null;
+                if(item.altPath != null)
+                {
+                    altPath = item.altPath.ToString();
+                }
+
+                WrapperManager.StoreApplication(item.type.ToString(), item.id.ToString(), item.name.ToString(), parameters, altPath);
+                apps.Add(application);
             }
 
             return new List<string> { string.Join('/', apps) };
@@ -94,13 +90,12 @@ namespace Station
         {
             // Used two separators windows style "\\" and linux "/" (for bad formed paths)
             // We make sure to remove extra unneeded characters.
-            int index = path.Trim('/', '\\').LastIndexOfAny(new char[] { '\\', '/' });
+            int index = path.Trim('/', '\\').LastIndexOfAny(new [] { '\\', '/' });
 
             // now if index is >= 0 that means we have at least one parent directory, otherwise the given path is the root most.
             if (index >= 0)
                 return path.Remove(index);
-            else
-                return "";
+            return "";
         }
     }
 }

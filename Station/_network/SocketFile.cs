@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
@@ -11,21 +12,41 @@ using Station._utils;
 // communication is established.
 namespace Station._network;
 
-public class SocketClient
+public class SocketFile
 {
     /// <summary>
-    /// A message that is to be sent to the android tablet's server.
+    /// The type of file being sent to the NUC.
     /// </summary>
-    private readonly string _message;
+    private readonly string _type;
+
+    /// <summary>
+    /// The name of the file as to be saved on the NUC.
+    /// </summary>
+    private readonly string _name;
+
+    /// <summary>
+    /// An absolute file path of a local file on the NUC.
+    /// </summary>
+    private readonly string _filePath;
 
     private TcpClient? _client;
 
     //Timeout for the socket connection in seconds
     private const int TimeOut = 1;
 
-    public SocketClient(string message)
+    public SocketFile(string type, string name, string filePath)
     {
-        this._message = message;
+        this._type = type;
+        this._name = GetName(type, name);
+        this._filePath = filePath;
+    }
+
+    /// <summary>
+    /// Determine if the name needs modification depending on the type of file being sent.
+    /// </summary>
+    private string GetName(string type, string name)
+    {
+        return type == "image" ? $"{name}_header.jpg" : name;
     }
 
     /// <summary>
@@ -57,28 +78,23 @@ public class SocketClient
     /// Sends a message to the android server with details about certain outputs or machine
     /// states.
     /// </summary>
-    public void Send(bool writeToLog = true, IPAddress? address = null, int? destPort = null)
+    public void Send(bool writeToLog = true)
     {
-        address ??= Manager.remoteEndPoint.Address;
-        int port = destPort ?? Manager.remoteEndPoint.Port; //ConnectAsync does not like int?
-        
         try
         {
             // Create a TCP client and connect via the supplied endpoint.
             _client = new TcpClient();
             CancellationTokenSource tokenSource = new CancellationTokenSource();
             CancellationToken token = tokenSource.Token;
-            ValueTask connect = _client.ConnectAsync(address, port, token);
+            ValueTask connect = _client.ConnectAsync(Manager.remoteEndPoint.Address, Manager.remoteEndPoint.Port, token);
             Task<bool> task = TimeoutAfter(connect, TimeOut);
 
             if (!task.Result)
             {
                 tokenSource.Cancel();
-                if (NotifyIconWrapper.Instance != null) NotifyIconWrapper.Instance.ChangeIcon("offline");
-                throw new Exception($"Socket timeout trying to contact: {Manager.remoteEndPoint.Address}");
+                Console.WriteLine("Socket timeout: " + Manager.remoteEndPoint.Address);
+                throw new SocketException();
             }
-
-            if (NotifyIconWrapper.Instance != null) NotifyIconWrapper.Instance.ChangeIcon("online");
 
             // Connect the socket to the remote endpoint. Catch any errors.
             try
@@ -91,24 +107,16 @@ public class SocketClient
                 // Get a client stream for reading and writing.
                 NetworkStream stream = _client.GetStream();
 
-                Logger.WriteLog($"Socket connected to {_client.Client.RemoteEndPoint}", MockConsole.LogLevel.Debug, writeToLog);
-
-                // Translate the passed message into ASCII and store it as a Byte array.
-                byte[] data = System.Text.Encoding.ASCII.GetBytes(this._message);
-
-                // Construct and send the header first
-                string headerMessageType = "text";
+                // Construct and send the header
+                string headerMessageType = this._type;
                 byte[] headerMessageTypeBytes;
-                
                 //TODO determine connection type
                 if (Manager.isNucUtf8)
                 {
-                    Console.WriteLine($"Sending UTF-8 encoded message");
                     headerMessageTypeBytes = System.Text.Encoding.UTF8.GetBytes(headerMessageType);
                 }
                 else
                 {
-                    Console.WriteLine($"Sending Unicode encoded message");
                     headerMessageTypeBytes = System.Text.Encoding.Unicode.GetBytes(headerMessageType);
                 }
 
@@ -118,15 +126,38 @@ public class SocketClient
                 byte[] headerToSendBytes = headerLengthBytes.Concat(headerMessageTypeBytes).ToArray();
                 stream.Write(headerToSendBytes, 0, headerToSendBytes.Length);
 
-                // Convert the data to network byte order
-                int dataLength = IPAddress.HostToNetworkOrder(data.Length);
-                byte[] lengthBytes = BitConverter.GetBytes(dataLength);
-                byte[] dataToSendBytes = lengthBytes.Concat(data).ToArray();
+                // Send the file name second
+                string fileName = _name;
+                byte[] fileNameBytes;
+                
+                //TODO determine connection type
+                if (Manager.isNucUtf8)
+                {
+                    fileNameBytes = System.Text.Encoding.UTF8.GetBytes(fileName);
+                    stream.Write(BitConverter.GetBytes(fileNameBytes.Length), 0, 4);
+                }
+                else
+                {
+                    fileNameBytes = System.Text.Encoding.Unicode.GetBytes(fileName);
+                    stream.Write(BitConverter.GetBytes(fileNameBytes.Length));
+                }
+                
+                stream.Write(fileNameBytes, 0, fileNameBytes.Length);
+
+                Logger.WriteLog($"Socket connected to {_client.Client.RemoteEndPoint}", MockConsole.LogLevel.Debug, writeToLog);
+
+                // Turn the image into a data byte stream and send the image data
+                FileStream fs = new FileStream(_filePath, FileMode.Open, FileAccess.Read);
+                byte[] buffer = new byte[fs.Length];
+                fs.Read(buffer, 0, (int)fs.Length);
 
                 // Send the message to the connected TcpServer.
-                stream.Write(data, 0, data.Length);
+                stream.Write(buffer, 0, (int)fs.Length);
+
+                Logger.WriteLog($"Sent {this._type}: {_filePath}", MockConsole.LogLevel.Normal, writeToLog);
 
                 // Close everything.
+                fs.Close();
                 stream.Close();
                 _client.Close();
             }
@@ -148,7 +179,12 @@ public class SocketClient
             _client?.Dispose();
             _client?.Close();
 
-            Logger.WriteLog($"Unexpected exception : {e.Message}", MockConsole.LogLevel.Error);
+            Logger.WriteLog($"Unexpected exception : {e}", MockConsole.LogLevel.Error);
+
+            if (this._type.Equals("file"))
+            {
+                Manager.SendResponse("NUC", "Station", "LogRequest:TransferFailed");
+            }
         }
     }
 }
