@@ -21,7 +21,7 @@ public class QualityManager
     private readonly SteamConfigChecks _steamConfigChecks = new();
     private readonly StationConnectionChecks _stationConnectionChecks = new();
     
-    private static string _labType; 
+    private static string labType = "Online"; 
     
     /// <summary>
     /// Run the requested software check.
@@ -32,7 +32,7 @@ public class QualityManager
         var action = requestData.GetValue("action").ToString();
         var actionData = (JObject) requestData.GetValue("actionData");
         
-        _labType = actionData?.GetValue("labType")?.ToString() ?? "Online";
+        labType = actionData?.GetValue("labType")?.ToString() ?? "Online";
 
         if (action.Equals("ConnectStation"))
         {
@@ -61,16 +61,16 @@ public class QualityManager
             switch (group)
             {
                 case "station_connection_checks":
-                    result = JsonConvert.SerializeObject(qualityManager._stationConnectionChecks.RunQa(_labType));
+                    result = JsonConvert.SerializeObject(qualityManager._stationConnectionChecks.RunQa(QualityManager.labType));
                     break;
                 case "windows_checks":
-                    result = JsonConvert.SerializeObject(qualityManager._windowChecks.RunQa(_labType));
+                    result = JsonConvert.SerializeObject(qualityManager._windowChecks.RunQa(QualityManager.labType));
                     break;
                 case "software_checks":
-                    result = JsonConvert.SerializeObject(await qualityManager._softwareChecks.RunQa(_labType));
+                    result = JsonConvert.SerializeObject(await qualityManager._softwareChecks.RunQa(QualityManager.labType));
                     new Thread(() =>
                     {
-                        string output = JsonConvert.SerializeObject(qualityManager._softwareChecks.RunSlowQaChecks(_labType));
+                        string output = JsonConvert.SerializeObject(qualityManager._softwareChecks.RunSlowQaChecks(QualityManager.labType));
                         JObject response = new JObject();
                         response.Add("response", "RunGroup");
                         JObject responseData = new JObject();
@@ -82,38 +82,44 @@ public class QualityManager
                     }).Start();
                     break;
                 case "steam_config_checks":
-                    result = JsonConvert.SerializeObject(qualityManager._steamConfigChecks.RunQa(_labType));
+                    result = JsonConvert.SerializeObject(qualityManager._steamConfigChecks.RunQa(QualityManager.labType));
                     break;
                 case "network_checks":
-                    result = JsonConvert.SerializeObject(qualityManager._networkChecks.RunQa(_labType));
-                    new Thread(async () =>
-                    {
-                        int stationId =
-                            Int32.Parse(Environment.GetEnvironmentVariable("StationId",
-                                EnvironmentVariableTarget.Process));
-                        if (stationId > 10)
-                        {
-                            stationId = 1; // in testing we used 101+ for our ids
-                        }
-                        await Task.Delay(stationId * 20000);
-                        
-                        InternetSpeedCheck internetSpeedCheck = new InternetSpeedCheck();
-                        QaCheck qaCheck = internetSpeedCheck.RunInternetSpeedTest();
-                        List<QaCheck> qaCheckList = new List<QaCheck>();
-                        qaCheckList.Add(qaCheck);
+                    result = JsonConvert.SerializeObject(qualityManager._networkChecks.RunQa(QualityManager.labType));
 
-                        JObject response = new JObject();
-                        response.Add("response", "RunGroup");
-                        JObject responseData = new JObject();
-                        responseData.Add("group", "network_checks");
-                        responseData.Add("data", JsonConvert.SerializeObject(qaCheckList));
-                        response.Add("responseData", responseData);
-            
-                        Manager.SendResponse("NUC", "QA", response.ToString());
-                    }).Start();
+                    if (QualityManager.labType.ToLower().Equals("Online"))
+                    {
+                        new Thread(async () =>
+                        {
+                            int stationId =
+                                Int32.Parse(Environment.GetEnvironmentVariable("StationId",
+                                    EnvironmentVariableTarget.Process));
+                            if (stationId > 10)
+                            {
+                                stationId = 1; // in testing we used 101+ for our ids
+                            }
+
+                            await Task.Delay(stationId * 20000);
+
+                            InternetSpeedCheck internetSpeedCheck = new InternetSpeedCheck();
+                            QaCheck qaCheck = internetSpeedCheck.RunInternetSpeedTest();
+                            List<QaCheck> qaCheckList = new List<QaCheck>();
+                            qaCheckList.Add(qaCheck);
+
+                            JObject response = new JObject();
+                            response.Add("response", "RunGroup");
+                            JObject responseData = new JObject();
+                            responseData.Add("group", "network_checks");
+                            responseData.Add("data", JsonConvert.SerializeObject(qaCheckList));
+                            response.Add("responseData", responseData);
+
+                            Manager.SendResponse("NUC", "QA", response.ToString());
+                        }).Start();
+                    }
+
                     break;
                 case "imvr_checks":
-                    result = JsonConvert.SerializeObject(qualityManager._imvrChecks.RunQa(_labType));
+                    result = JsonConvert.SerializeObject(qualityManager._imvrChecks.RunQa(QualityManager.labType));
                     break;
                 default:
                     return;
