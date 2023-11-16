@@ -24,10 +24,10 @@ namespace Station
             MainWindow mainWindow = new();
             mainWindow.Show();
 
+            InitSentry();
             AppDomain currentDomain = AppDomain.CurrentDomain;
             currentDomain.UnhandledException += UnhandledExceptionHandler;
             currentDomain.ProcessExit += ProcessExitHandler;
-            InitSentry();
             CheckStorage();
 
             Manager.StartProgram();
@@ -67,6 +67,14 @@ namespace Station
             Manager.SendResponse("Android", "Station", "SetValue:status:Off");
             Manager.SendResponse("Android", "Station", "SetValue:gameName:Unexpected error occured, please restart station");
             Manager.SendResponse("Android", "Station", "SetValue:gameId:");
+            try
+            {
+                SentrySdk.CaptureException(e);
+            }
+            catch (Exception e2)
+            {
+                Logger.WriteLog("UnhandledExceptionHandler caught while reporting: " + e2.Message, MockConsole.LogLevel.Error);
+            }
         }
 
         static void ProcessExitHandler(object? sender, EventArgs args)

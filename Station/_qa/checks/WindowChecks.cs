@@ -233,7 +233,7 @@ public class WindowChecks
     private QaCheck CheckTimeAndDate()
     {
         QaCheck qaCheck = new QaCheck("correct_datetime");
-        if (!Network.CheckIfConnectedToInternet())
+        if (!Network.CheckIfConnectedToInternet(true))
         {
             qaCheck.SetWarning("Unable to confirm datetime as not connected to internet");
             return qaCheck;
