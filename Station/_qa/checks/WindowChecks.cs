@@ -23,6 +23,7 @@ public class WindowChecks
 
         _qaChecks.Add(IsTaskSchedulerCreated());
         _qaChecks.Add(IsOldTaskSchedulerNotPresent());
+        _qaChecks.AddRange(CheckEnvironmentVariables());
 
         return _qaChecks;
     }
@@ -281,6 +282,45 @@ public class WindowChecks
             qaCheck.SetFailed($"Error: {ex.Message}");
         }
 
+        return qaCheck;
+    }
+
+    private List<QaCheck> CheckEnvironmentVariables()
+    {
+        List<QaCheck> list = new List<QaCheck>();
+        list.Add(CheckEnvironmentVariable("LabLocation", "environment_lab_location"));
+        list.Add(CheckEnvironmentVariable("SteamUserName", "environment_steam_username"));
+        list.Add(CheckEnvironmentVariable("SteamPassword", "environment_steam_password"));
+        list.Add(CheckEnvironmentVariable("UserDirectory", "environment_user_directory"));
+        list.Add(CheckEnvironmentVariable("NucAddress", "environment_nuc_address"));
+        list.Add(CheckEnvironmentVariable("StationId", "environment_station_id"));
+        list.Add(CheckEnvironmentVariable("AppKey", "environment_encryption_key"));
+        list.Add(CheckEnvironmentVariable("HeadsetType", "environment_headset_type"));
+        list.Add(CheckEnvironmentVariable("room", "environment_room"));
+        list.Add(CheckEnvironmentVariable("StationMode", "environment_station_mode"));
+        return list;
+    }
+
+    private QaCheck CheckEnvironmentVariable(string environmentVariableKey, string checkName)
+    {
+        QaCheck qaCheck = new QaCheck(checkName);
+        bool existsInProcess =
+            (Environment.GetEnvironmentVariable(environmentVariableKey, EnvironmentVariableTarget.Process) != null);
+        bool existsInUser =
+            (Environment.GetEnvironmentVariable(environmentVariableKey, EnvironmentVariableTarget.User) != null);
+        if (existsInUser)
+        {
+            qaCheck.SetFailed("Found variable in user environment variables");
+            return qaCheck;
+        }
+
+        if (!existsInProcess)
+        {
+            qaCheck.SetFailed("Could not find config variable, please check that it is set with the launcher");
+            return qaCheck;
+        }
+        
+        qaCheck.SetPassed(null);
         return qaCheck;
     }
     
