@@ -4,6 +4,8 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Management.Automation;
+using LeadMeLabsLibrary;
+using Newtonsoft.Json;
 
 namespace Station._qa.checks;
 
@@ -12,6 +14,7 @@ public class SoftwareChecks
     private List<QaCheck> _qaChecks = new();
     public List<QaCheck> RunQa(string labType)
     {
+        _qaChecks.Add(IsSetToProductionMode(labType));
         _qaChecks.Add(IsSetVolPresent());
         _qaChecks.Add(IsSteamCmdPresent());
         _qaChecks.Add(IsSteamCmdInitialised());
@@ -28,6 +31,60 @@ public class SoftwareChecks
         List<QaCheck> qaChecks = new List<QaCheck>();
         qaChecks.Add(IsSteamGuardDisabled());
         return qaChecks;
+    }
+
+    private QaCheck IsSetToProductionMode(string labType)
+    {
+        QaCheck qaCheck = new QaCheck("production_mode");
+        
+        //Load the local appData/Roaming folder path
+        string manifestPath = Path.GetFullPath(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "leadme_apps", "manifest.json"));
+
+        if(!File.Exists(manifestPath))
+        {
+            qaCheck.SetFailed("Could not find manifestPath at location: " + manifestPath);
+            return qaCheck;
+        }
+        
+        //Read the manifest
+        using StreamReader r = new StreamReader(manifestPath);
+        
+        //Read and decipher the encrypted manifest
+        string encryptedJson = r.ReadToEnd();
+        string json = EncryptionHelper.DecryptNode(encryptedJson);
+
+        dynamic? array = JsonConvert.DeserializeObject(json);
+
+        if (array == null)
+        {
+            qaCheck.SetFailed("Failed to DeserializeObject in file: " + manifestPath);
+            return qaCheck;;
+        }
+        
+        // Determine the mode required for the lab
+        string preferredMode = labType.Equals("Online") ? "production" : "offline" ;
+
+        foreach (var item in array)
+        {
+            //Launcher entry is only there if a user has changed it away from production, otherwise it defaults to production
+            if (item.type == "Launcher")
+            {
+                string mode = (string)item.mode;
+                if (mode.ToLower().Equals(preferredMode))
+                {
+                    qaCheck.SetPassed(null);
+                }
+                else
+                {
+                    qaCheck.SetFailed($"Launcher is set to: {item.mode}");
+                }
+
+                return qaCheck;
+            };
+        }
+
+        qaCheck.SetPassed("Launcher is defaulting to production");
+        return qaCheck;
     }
 
     /// <summary>
