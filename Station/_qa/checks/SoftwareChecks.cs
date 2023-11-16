@@ -4,6 +4,8 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Management.Automation;
+using System.Net.Http;
+using System.Threading.Tasks;
 using LeadMeLabsLibrary;
 using Newtonsoft.Json;
 
@@ -12,8 +14,12 @@ namespace Station._qa.checks;
 public class SoftwareChecks
 {
     private List<QaCheck> _qaChecks = new();
-    public List<QaCheck> RunQa(string labType)
+    public async Task<List<QaCheck>> RunQa(string labType)
     {
+        if (labType.ToLower().Equals("online"))
+        {
+            _qaChecks.Add(await IsLatestSoftwareVersion());
+        }
         _qaChecks.Add(IsSetToProductionMode(labType));
         _qaChecks.Add(IsSetVolPresent());
         _qaChecks.Add(IsSteamCmdPresent());
@@ -31,6 +37,61 @@ public class SoftwareChecks
         List<QaCheck> qaChecks = new List<QaCheck>();
         qaChecks.Add(IsSteamGuardDisabled());
         return qaChecks;
+    }
+    
+    private async Task<QaCheck> IsLatestSoftwareVersion()
+    {
+        QaCheck qaCheck = new QaCheck("latest_software_version");
+        
+        // Call the production heroku to collect the latest version number
+        try
+        {
+            using var httpClient = new HttpClient();
+            httpClient.Timeout = TimeSpan.FromSeconds(10);
+            var response = httpClient.GetAsync("http://learninglablauncher.herokuapp.com/program-station-version").GetAwaiter().GetResult();
+
+            string remoteVersion = "";
+            // Check if the request was successful (status code 200 OK)
+            if (response.IsSuccessStatusCode)
+            {
+                // Read and print the content
+                var content = await response.Content.ReadAsStringAsync();
+                var split = content.Split(" ");
+                remoteVersion = split[0];
+            }
+            else
+            {
+                qaCheck.SetFailed($"learninglablauncher.herokuapp.com/program-nuc-version request failed with status code: {response.StatusCode}");
+            }
+            
+            string localVersion = Updater.GetVersionNumber() ?? "Unknown";
+                
+            // Parse version strings
+            Version version1 = Version.Parse(localVersion);
+            Version version2 = Version.Parse(remoteVersion);
+
+            // Compare versions
+            int comparisonResult = version1.CompareTo(version2);
+
+            switch (comparisonResult)
+            {
+                case < 0:
+                    qaCheck.SetFailed($"Local version {version1}, is less than latest {version2}");
+                    break;
+                case > 0:
+                    qaCheck.SetFailed($"Local version {version1}, is greater than latest {version2}. Might be development branch.");
+                    break;
+                default:
+                    qaCheck.SetPassed($"Version is {version1}");
+                    break; 
+            }
+        }
+        catch (Exception e)
+        {
+            qaCheck.SetFailed($"Unexpected error: {e}");
+        }
+        
+        return qaCheck;
     }
 
     private QaCheck IsSetToProductionMode(string labType)
