@@ -87,7 +87,7 @@ public class QualityManager
                 case "network_checks":
                     result = JsonConvert.SerializeObject(qualityManager._networkChecks.RunQa(QualityManager.labType));
 
-                    if (QualityManager.labType.ToLower().Equals("Online"))
+                    if (QualityManager.labType.ToLower().Equals("online"))
                     {
                         new Thread(async () =>
                         {
