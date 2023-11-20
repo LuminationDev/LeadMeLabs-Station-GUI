@@ -1,35 +1,31 @@
 ﻿using System;
 using System.Threading;
 using System.Threading.Tasks;
+using Station._headsets;
 
 namespace Station
 {
-    public class SessionController
+    public static class SessionController
     {
         /// <summary>
         /// The absolute path of the steam executable on the local machine.
         /// </summary>
-        public static string steam = "C:/Program Files (x86)/Steam/steam.exe";
-
-        /// <summary>
-        /// The absolute path of the ViveWireless executable on the local machine.
-        /// </summary>
-        public static string vive = "C:/Program Files/VIVE Wireless/ConnectionUtility/HtcConnectionUtility.exe";
+        public const string Steam = "C:/Program Files (x86)/Steam/steam.exe";
 
         /// <summary>
         /// Store the HeadSet type that is linked to the current station.
         /// </summary>
-        public static VrHeadset? vrHeadset;
+        public static IVrHeadset? VrHeadset { set; get; }
 
         /// <summary>
         /// Store the current experience type that is running.
         /// </summary>
-        public static string? experienceType = null;
+        public static string? ExperienceType { set; get; }
 
         /// <summary>
         /// Track the current state of the Station software.
         /// </summary>
-        public static string currentState = "";
+        public static string CurrentState { private set; get; } = "";
 
         /// <summary>
         /// Read the store headset type from the config.env file and create an instance that 
@@ -41,10 +37,13 @@ namespace Station
             switch (Environment.GetEnvironmentVariable("HeadsetType", EnvironmentVariableTarget.Process))
             {
                 case "VivePro1":
-                    vrHeadset = new VivePro1();
+                    VrHeadset = new VivePro1();
                     break;
                 case "VivePro2":
-                    vrHeadset = new VivePro2();
+                    VrHeadset = new VivePro2();
+                    break;
+                case "ViveFocus3":
+                    VrHeadset = new ViveFocus3();
                     break;
                 default:
                     PassStationMessage("No headset type specified.");
@@ -54,24 +53,26 @@ namespace Station
 
         /// <summary>
         /// Start up a VR session on the local machine, this may include starting up Steam, steamVR and/or ViveWireless. The
-        /// applications that will be started/required depend on the suppiled type.
+        /// applications that will be started/required depend on the supplied type.
         /// </summary>
         /// <param name="type">A string of what type of experience is being loaded [Custom, Steam, Vive, etc]</param>
         public static void StartVRSession(string type)
         {
-            experienceType = type;
-            switch (experienceType)
+            ExperienceType = type;
+            switch (ExperienceType)
             {
                 case "Custom":
                 case "Steam":
-                    vrHeadset?.StartVrSession();
+                case "Revive":
+                    VrHeadset?.StartVrSession();
                     break;
                 case "Vive":
                     MockConsole.WriteLine("startVRSession not implemented for type: Vive.", MockConsole.LogLevel.Error);
                     break;
-                default:
-                    break;
             }
+            
+            //Attempt to minimise other applications (mostly Steam)
+            VrHeadset?.MinimizeSoftware(2);
         }
 
         /// <summary>
@@ -79,20 +80,21 @@ namespace Station
         /// </summary>
         public static void RestartVRSession()
         {
-            ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage($"SoftwareState,Shutting down VR processes"), TimeSpan.FromSeconds(1));
+            ScheduledTaskQueue.EnqueueTask(() => PassStationMessage($"SoftwareState,Shutting down VR processes"), TimeSpan.FromSeconds(1));
             _ = WrapperManager.RestartVRProcesses();
 
-            if (experienceType == null)
+            if (ExperienceType == null)
             {
                 PassStationMessage("No experience is currently running.");
                 return;
             }
 
-            switch (experienceType)
+            switch (ExperienceType)
             {
                 case "Custom":
                     MockConsole.WriteLine("restartVRSession not implemented for type: Custom.", MockConsole.LogLevel.Error);
                     break;
+                case "Revive":
                 case "Steam":
                     ViveScripts.StopMonitoring();
                     break;
@@ -103,6 +105,9 @@ namespace Station
                     MockConsole.WriteLine("Wrapper: No experience type set.", MockConsole.LogLevel.Error);
                     break;
             }
+            
+            //Attempt to minimise other applications (mostly Steam)
+            VrHeadset?.MinimizeSoftware(2);
         }
 
         /// <summary>
@@ -110,11 +115,12 @@ namespace Station
         /// </summary>
         public static void EndVRSession()
         {
-            switch (experienceType)
+            switch (ExperienceType)
             {
                 case "Custom":
                     MockConsole.WriteLine("endVRSession not implemented for type: Custom.", MockConsole.LogLevel.Error);
                     break;
+                case "Revive":
                 case "Steam":
                     ViveScripts.StopMonitoring();
                     break;
@@ -126,7 +132,10 @@ namespace Station
                     break;
             }
 
-            experienceType = null;
+            ExperienceType = null;
+            
+            //Attempt to minimise other applications (mostly Steam)
+            VrHeadset?.MinimizeSoftware(2);
         }
 
         /// <summary>
@@ -178,7 +187,7 @@ namespace Station
                         break;
 
                     case "SoftwareState":
-                        currentState = tokens[1];
+                        CurrentState = tokens[1];
                         Manager.SendResponse("Android", "Station", $"SetValue:state:{tokens[1]}");
                         break;
 

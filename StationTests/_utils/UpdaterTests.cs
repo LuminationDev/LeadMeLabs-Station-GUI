@@ -3,7 +3,6 @@ using System.Diagnostics;
 using System.IO;
 using System.Reflection;
 using Xunit;
-using LeadMeLabsLibrary;
 
 namespace StationTests._utils
 {

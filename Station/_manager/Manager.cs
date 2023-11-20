@@ -4,7 +4,10 @@ using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
 using LeadMeLabsLibrary;
-using Station._qa.checks;
+using Station._config;
+using Station._monitoring;
+using Station._network;
+using Station._utils;
 
 namespace Station
 {
@@ -23,7 +26,7 @@ namespace Station
         /// <summary>
         /// An integer representing the port of the NUC machine.
         /// </summary>
-        public static readonly int NUCPort = 55556;
+        private static readonly int NUCPort = 55556;
 
         /// <summary>
         /// IPEndPoint representing the server that is running on the local machine.
@@ -58,6 +61,8 @@ namespace Station
         public static string? macAddress = null;
         private static string? versionNumber = null;
         private static Timer? variableCheck;
+
+        public static bool isNucUtf8 = true;
 
         /// <summary>
         /// Starts the server running on the local machine
@@ -127,18 +132,21 @@ namespace Station
                 wrapperManager.Startup();
 
                 //Use to monitor SetVol and restart application
-                StationMonitoringThread.initializeMonitoring();
+                StationMonitoringThread.InitializeMonitoring();
             }
 
-            if (Environment.GetEnvironmentVariable("NucAddress", EnvironmentVariableTarget.Process) != null)
+            if (Environment.GetEnvironmentVariable("NucAddress", EnvironmentVariableTarget.Process) == null)
             {
-                Logger.WriteLog($"Expected NUC address: {Environment.GetEnvironmentVariable("NucAddress", EnvironmentVariableTarget.Process)}", MockConsole.LogLevel.Normal);
-                SetRemoteEndPoint();
-                if (!Helper.GetStationMode().Equals(Helper.STATION_MODE_APPLIANCE))
-                {
-                    InitialStartUp();
-                    new Thread(() => SteamConfig.VerifySteamConfig(true)).Start();
-                }
+                Logger.WriteLog($"Expected NUC address: is null, check environment variables are set.", MockConsole.LogLevel.Normal);
+                return;
+            }
+            
+            Logger.WriteLog($"Expected NUC address: {Environment.GetEnvironmentVariable("NucAddress", EnvironmentVariableTarget.Process)}", MockConsole.LogLevel.Normal);
+            SetRemoteEndPoint();
+            if (!Helper.GetStationMode().Equals(Helper.STATION_MODE_APPLIANCE))
+            {
+                InitialStartUp();
+                new Thread(() => SteamConfig.VerifySteamConfig(true)).Start();
             }
         }
 
@@ -224,10 +232,10 @@ namespace Station
         /// </summary>
         private static void InitialStartUp()
         {
-            Manager.SendResponse("NUC", "Station", "SetValue:status:On");
-            Manager.SendResponse("NUC", "Station", "SetValue:gameName:");
-            Manager.SendResponse("Android", "Station", "SetValue:gameId:");
-            Manager.SendResponse("NUC", "Station", "SetValue:volume:" + CommandLine.GetVolume());
+            SendResponse("NUC", "Station", "SetValue:status:On");
+            SendResponse("NUC", "Station", "SetValue:gameName:");
+            SendResponse("Android", "Station", "SetValue:gameId:");
+            SendResponse("NUC", "Station", $"SetValue:volume:{CommandLine.GetVolume()}");
         }
 
         /// <summary>
@@ -312,30 +320,40 @@ namespace Station
             IPAddress? address = null;
             int? port = null;
             
-            string source = "Station," + Environment.GetEnvironmentVariable("StationId", EnvironmentVariableTarget.Process);
-            string response = source + ":" + destination + ":" + actionNamespace;
+            string source = $"Station,{Environment.GetEnvironmentVariable("StationId", EnvironmentVariableTarget.Process)}";
+            string? response = $"{source}:{destination}:{actionNamespace}";
             if (additionalData != null)
             {
-                response = response + ":" + additionalData;
+                response = $"{response}:{additionalData}";
             }
             
             if (destination.StartsWith("QA:"))
             {
                 address = IPAddress.Parse(destination.Substring(3).Split(":")[0]);
                 port = Int32.Parse(destination.Substring(3).Split(":")[1]);
-                destination = "QA";
                 response = additionalData;
             }
+            if (response == null) return;
 
-            Logger.WriteLog("Sending: " + response, MockConsole.LogLevel.Normal, writeToLog);
+            Logger.WriteLog($"Sending: {response}", MockConsole.LogLevel.Normal, writeToLog);
 
             string? key = Environment.GetEnvironmentVariable("AppKey", EnvironmentVariableTarget.Process);
             if (key is null) {
                 Logger.WriteLog("Encryption key not set", MockConsole.LogLevel.Normal);
                 return;
             }
+
+            string encryptedText;
+            if (isNucUtf8)
+            {
+                encryptedText = EncryptionHelper.Encrypt(response, key);
+            }
+            else
+            {
+                encryptedText = EncryptionHelper.UnicodeEncrypt(response, key);
+            }
             
-            SocketClient client = new(EncryptionHelper.Encrypt(response, key));
+            SocketClient client = new(encryptedText);
             if (address != null && port != null)
             {
                 client.Send(writeToLog, address, port);

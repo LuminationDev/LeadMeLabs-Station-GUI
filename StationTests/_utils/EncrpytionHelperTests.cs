@@ -19,7 +19,7 @@ namespace StationTests._utils
             string passPhrase = "mySecretKey123";
 
             // Act
-            string encrypted = EncryptionHelper.Encrypt(plainText, passPhrase);
+            string encrypted = EncryptionHelper.UnicodeEncrypt(plainText, passPhrase);
 
             // Assert
             Assert.NotNull(encrypted);
@@ -38,13 +38,13 @@ namespace StationTests._utils
             string passPhrase = "mySecretKey123";
 
             // Act + Assert
-            Assert.Throws<ArgumentException>(() => EncryptionHelper.Encrypt(emptyPlainText, passPhrase));
+            Assert.Throws<ArgumentException>(() => EncryptionHelper.UnicodeEncrypt(emptyPlainText, passPhrase));
 
             string plainText = "Hello, World!";
             string emptyPassPhrase = "";
 
             // Act + Assert
-            Assert.Throws<ArgumentException>(() => EncryptionHelper.Encrypt(plainText, emptyPassPhrase));
+            Assert.Throws<ArgumentException>(() => EncryptionHelper.UnicodeEncrypt(plainText, emptyPassPhrase));
         }
 
         /// <summary>
@@ -58,7 +58,7 @@ namespace StationTests._utils
             string longPlainText = new string('A', 1024); // 1024 'A's
 
             // Act
-            string encrypted = EncryptionHelper.Encrypt(longPlainText, passPhrase);
+            string encrypted = EncryptionHelper.UnicodeEncrypt(longPlainText, passPhrase);
 
             // Assert
             Assert.NotNull(encrypted);
@@ -66,7 +66,7 @@ namespace StationTests._utils
             Assert.IsType<string>(encrypted);
 
             // Decrypt and verify the original plainText
-            string decrypted = EncryptionHelper.Decrypt(encrypted, passPhrase);
+            string decrypted = EncryptionHelper.UnicodeDecrypt(encrypted, passPhrase);
             Assert.Equal(longPlainText, decrypted);
         }
 
@@ -83,8 +83,8 @@ namespace StationTests._utils
             string passPhrase2 = "anotherSecret456";
 
             // Act
-            string encrypted1 = EncryptionHelper.Encrypt(plainText, passPhrase1);
-            string encrypted2 = EncryptionHelper.Encrypt(plainText, passPhrase2);
+            string encrypted1 = EncryptionHelper.UnicodeEncrypt(plainText, passPhrase1);
+            string encrypted2 = EncryptionHelper.UnicodeEncrypt(plainText, passPhrase2);
 
             // Assert
             Assert.NotNull(encrypted1);
@@ -96,10 +96,10 @@ namespace StationTests._utils
             Assert.IsType<string>(encrypted2);
 
             // Decrypt and verify the original plainText
-            string decrypted1 = EncryptionHelper.Decrypt(encrypted1, passPhrase1);
+            string decrypted1 = EncryptionHelper.UnicodeDecrypt(encrypted1, passPhrase1);
             Assert.Equal(plainText, decrypted1);
 
-            string decrypted2 = EncryptionHelper.Decrypt(encrypted2, passPhrase2);
+            string decrypted2 = EncryptionHelper.UnicodeDecrypt(encrypted2, passPhrase2);
             Assert.Equal(plainText, decrypted2);
         }
 
@@ -116,7 +116,7 @@ namespace StationTests._utils
         public void Decrypt_Should_Throw_ArgumentException_When_Input_Is_Invalid(string cipherText, string passPhrase)
         {
             // Act and Assert
-            Assert.Throws<ArgumentException>(() => EncryptionHelper.Decrypt(cipherText, passPhrase));
+            Assert.Throws<ArgumentException>(() => EncryptionHelper.UnicodeDecrypt(cipherText, passPhrase));
         }
 
         /// <summary>
@@ -132,7 +132,7 @@ namespace StationTests._utils
             string passPhrase = "passphrase";
 
             // Act
-            string decryptedText = EncryptionHelper.Decrypt(cipherText, passPhrase);
+            string decryptedText = EncryptionHelper.UnicodeDecrypt(cipherText, passPhrase);
 
             // Assert
             Assert.NotNull(decryptedText);

@@ -1,35 +1,35 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using LeadMeLabsLibrary.Station;
+using Station._commandLine;
+using Station._monitoring;
+using Station._utils;
 
 namespace Station
 {
     public static class SteamScripts
     {
+        public const string SteamManifest = @"C:\Program Files (x86)\Steam\config\steamapps.vrmanifest";
+
         // login details as formatted "username password" - need to hide this/turn into a secret
-        private static string loginDetailsAnonymous = "anonymous";
-        private static string loginDetails = Environment.GetEnvironmentVariable("SteamUserName", EnvironmentVariableTarget.Process) + " " + 
+        private static readonly string LoginDetails = 
+            Environment.GetEnvironmentVariable("SteamUserName", EnvironmentVariableTarget.Process) + " " + 
             Environment.GetEnvironmentVariable("SteamPassword", EnvironmentVariableTarget.Process);
 
-        private static string loginAnonymous = $"+login {loginDetailsAnonymous}";
-        private static string loginUser = $"+login {loginDetails}";
+        private const string LoginAnonymous = $"+login anonymous";
+        private static readonly string LoginUser = $"+login {LoginDetails}";
 
         //Important to keep the initial space in all commands after the login
-        private static string installed = " +apps_installed";
-        private static string licenses = " +licenses_print ";
-        private static string quit = " +quit";
-
-        public static bool launchingGame = false;
+        private const string Installed = " +apps_installed";
+        private const string Licenses = " +licenses_print ";
+        private const string Quit = " +quit";
+        
         public static bool popupDetect = false;
         public static string steamCMDConfigured = "Missing";
-
-        private static string availableGames = "";
-        private static bool refreshing = false; //keep track of if the station is currently refreshing the steam list
 
         private static int restartAttempts = 0; //Track how many times SteamVR has failed in a Station session
 
@@ -54,8 +54,8 @@ namespace Station
                     if (current.Contains("[Steam] Steam SHUTDOWN"))
                     {
                         //Double check that the vrmonitor program is still running in case it picked up the end of a session/restart vr session.
-                        Task.Delay(3000).Wait(); //vrserver takes 2.8 seconds to fully shut down
-                        if (Process.GetProcessesByName("vrmonitor").Length == 0)
+                        Task.Delay(3000).Wait(); //vrserver takes 2.8 seconds (at most) to fully shut down
+                        if (ProcessManager.GetProcessesByName("vrmonitor").Length == 0)
                         {
                             enumerator.Dispose();
                             break;
@@ -104,7 +104,7 @@ namespace Station
         /// </summary>
         public static void QuerySteamConfig()
         {
-            CommandLine.ExecuteSteamCommand(loginUser + licenses + quit);
+            CommandLine.ExecuteSteamCommand(LoginUser + Licenses + Quit);
             _ = WrapperManager.RestartVRProcesses();
         }
 
@@ -116,28 +116,8 @@ namespace Station
         public static void ConfigureSteamCommand(string guardKey)
         {
             string command = "\"+force_install_dir \\\"C:/Program Files (x86)/Steam\\\"\" ";
-            command += $"{loginUser} {guardKey} {quit}";
+            command += $"{LoginUser} {guardKey} {Quit}";
             CommandLine.MonitorSteamConfiguration(command);
-        }
-
-        /// <summary>
-        /// Attempt to collect the local Steam experiences from SteamCMD
-        /// </summary>
-        /// <returns>A string list of the currently installed experiences and their unique IDs</returns>
-        public static async Task<string> getAvailableGames()
-        {
-            Logger.WriteLog("Get available games function", MockConsole.LogLevel.Verbose);
-
-            // the load available games method is called on boot, we just need to wait for it to complete
-            while (availableGames.Length == 0 || !Char.IsNumber(availableGames[0]))
-            {
-                Console.WriteLine("LOOPING");
-                await Task.Delay(2000);
-            }
-
-            Logger.WriteLog(availableGames, MockConsole.LogLevel.Debug);
-
-            return availableGames;
         }
 
         /// <summary>
@@ -145,12 +125,11 @@ namespace Station
         /// Joining them together with specific delimiters to enable the Android tablet to
         /// decipher them.
         /// </summary>
-        /// <param name="output">A string representing the raw output from the steamcmd command.</param>
         /// <returns>A string of IDs and names of installed applications</returns>
-        public static List<string>? loadAvailableGames()
+        public static List<string>? LoadAvailableGames()
         {
             //Close Steam if it is open
-            CommandLine.QueryVRProcesses(WrapperMonitoringThread.steamProcesses, true);
+            CommandLine.QueryVRProcesses(WrapperMonitoringThread.SteamProcesses, true);
 
             if (!Network.CheckIfConnectedToInternet())
             {
@@ -184,8 +163,8 @@ namespace Station
 
                         if (approvedGames.Count == 0 || approvedGames.Contains(acfReader.appId))
                         {
-                            list.Add($"{SteamWrapper.wrapperType}|{acfReader.appId}|{acfReader.gameName}");
-                            WrapperManager.StoreApplication(SteamWrapper.wrapperType, acfReader.appId, acfReader.gameName); // todo, I don't like this line here as it's a side-effect to the function
+                            list.Add($"{SteamWrapper.WrapperType}|{acfReader.appId}|{acfReader.gameName}");
+                            WrapperManager.StoreApplication(SteamWrapper.WrapperType, acfReader.appId, acfReader.gameName); // todo, I don't like this line here as it's a side-effect to the function
                         }
                     }
                 }
@@ -219,13 +198,13 @@ namespace Station
                 steamCMDConfigured = "Missing";
 
                 //Login to initialise/update SteamCMD and get the Steam Guard email sent off
-                string command = $"{loginDetails} {quit}";
+                string command = $"{LoginDetails} {Quit}";
                 CommandLine.ExecuteSteamCommand(command);
                 
                 return null;
             }
 
-            string? steamResponse = CommandLine.ExecuteSteamCommand(loginAnonymous + installed + quit);
+            string? steamResponse = CommandLine.ExecuteSteamCommand(LoginAnonymous + Installed + Quit);
             if(steamResponse == null)
             {
                 return null;
@@ -235,7 +214,7 @@ namespace Station
 
             if (Directory.Exists("S:\\SteamLibrary\\steamapps"))
             {
-                string? additionalSteamResponse = CommandLine.ExecuteSteamCommandSDrive(loginAnonymous + installed + quit);
+                string? additionalSteamResponse = CommandLine.ExecuteSteamCommandSDrive(LoginAnonymous + Installed + Quit);
                 if (additionalSteamResponse == null)
                 {
                     return null;
@@ -244,7 +223,7 @@ namespace Station
                 installedGames.AddRange(additionalInstalledGames);
             }
 
-            List<string>? licenseList = CommandLine.ExecuteSteamCommand(loginUser + licenses + quit)?.Split('\n').ToList();
+            List<string>? licenseList = CommandLine.ExecuteSteamCommand(LoginUser + Licenses + Quit)?.Split('\n').ToList();
             if (licenseList == null)
             {
                 return null;
@@ -252,7 +231,7 @@ namespace Station
 
             List<string> apps = new List<string>();
             List<string> availableLicenses = new List<string>();
-            List<string> approvedGames = getParentalApprovedGames();
+            List<string> approvedGames = GetParentalApprovedGames();
             Logger.WriteLog("Approved games length: " + approvedGames.Count, MockConsole.LogLevel.Debug);
             List<string> blacklistedGames = new List<string>();
             blacklistedGames.Add("1635730"); // vive console
@@ -294,48 +273,20 @@ namespace Station
                                     name = acfReader.gameName;
                                 }
                             }
-                            string application = $"{SteamWrapper.wrapperType}|{ID}|{name}";
+                            string application = $"{SteamWrapper.WrapperType}|{ID}|{name}";
 
                             //item.parameters may be null here
-                            WrapperManager.StoreApplication(SteamWrapper.wrapperType, ID, name);
+                            WrapperManager.StoreApplication(SteamWrapper.WrapperType, ID, name);
                             apps.Add(application);
                         }
                     }
                 }
             }
 
-            availableGames = string.Join('/', apps);
-
             return apps;
         }
 
-        /// <summary>
-        /// Triggered if the tablet/NUC does not have the list of steam games. Load the list if it is in memory
-        /// or reload the list from SteamCMD and then restart the VR session to log steam back in.
-        /// </summary>
-        public static void resendSteamGames()
-        {
-            if (!refreshing)
-            {
-                refreshing = true;
-                cooldownTimer();
-                Logger.WriteLog("Re-loading AvailableGames", MockConsole.LogLevel.Debug);
-                loadAvailableGames();
-
-                SessionController.RestartVRSession(); //Restart the VR session as to log steam back in
-            }
-        }
-
-        /// <summary>
-        /// Limit the number of Steam refreshes that can be performed within a given time period.
-        /// </summary>
-        private static async void cooldownTimer()
-        {
-            await Task.Delay(30 * 1000);
-            refreshing = false;
-        }
-
-        public static List<string> getParentalApprovedGames()
+        private static List<string> GetParentalApprovedGames()
         {
             List<string> approvedGames = new List<string>();
             var directory = new DirectoryInfo(@"C:\Program Files (x86)\Steam\logs");

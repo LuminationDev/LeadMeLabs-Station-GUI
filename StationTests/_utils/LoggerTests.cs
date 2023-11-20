@@ -2,6 +2,7 @@
 using System;
 using System.IO;
 using System.Linq;
+using Station._utils;
 using Xunit;
 
 namespace StationTests._utils
@@ -23,11 +24,11 @@ namespace StationTests._utils
             Logger.WriteLog(message, logLevel);
 
             // Assert
-            Assert.Single(Logger.logQueue);
-            Assert.Equal($"[{DateTime.Now.ToString("yyyy-MM-ddTHH:mm:ss")}]: {message}", Logger.logQueue.Peek());
+            Assert.Single(Logger.LogQueue);
+            Assert.Equal($"[{DateTime.Now.ToString("yyyy-MM-ddTHH:mm:ss")}]: {message}", Logger.LogQueue.Peek());
 
             // Reset
-            Logger.logQueue.Clear();
+            Logger.LogQueue.Clear();
         }
 
         /// <summary>
@@ -48,7 +49,7 @@ namespace StationTests._utils
             Logger.WorkQueue();
 
             // Assert
-            Assert.False(Logger.logQueue.Any());
+            Assert.False(Logger.LogQueue.Any());
             Assert.True(File.Exists(logFilePath));
 
             string[] logLines = File.ReadAllLines(logFilePath);
@@ -74,7 +75,7 @@ namespace StationTests._utils
             Logger.WriteLog(message, logLevel);
 
             // Assert
-            Assert.Empty(Logger.logQueue);
+            Assert.Empty(Logger.LogQueue);
         }
 
         ///// <summary>

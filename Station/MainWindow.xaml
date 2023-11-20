@@ -73,10 +73,10 @@
     </Window.Resources>
 
     <Grid>
-        	<Grid.ColumnDefinitions>
-            <ColumnDefinition Width="125"/>
-            <ColumnDefinition Width="635"/>
-            <ColumnDefinition Width="125"/>
+        <Grid.ColumnDefinitions>
+        <ColumnDefinition Width="125"/>
+        <ColumnDefinition Width="635"/>
+        <ColumnDefinition Width="125"/>
         </Grid.ColumnDefinitions>
         
         <local:NotifyIconWrapper NotifyRequest="{Binding NotifyRequest}">
@@ -205,37 +205,10 @@
                 Background="#424242" 
                 HorizontalAlignment="Right"
                 VerticalAlignment="Stretch">
-
-                <WrapPanel 
-                    Height="30"
-                    Margin="5,0,0,0">
-                    
-                    <Label 
-                        Width="100"
-                        FontFamily="Fonts/#Poppins-Medium"
-                        Content="OpenVR" 
-                        Foreground="#828282"/>
-
-                    <Image 
-                        x:Name="OpenVrConnection" 
-                        ToolTip="OpenVR Offline" 
-                        Margin="0,0,0,3" 
-                        Source="../assets/openvr_offline.ico"
-                        Width="20"/>
-                </WrapPanel>
-                
-                <Button
-                    Style="{StaticResource MainButton}"
-                    Command="{Binding ResetSteamVRProcess}"
-                    Content="Reset"
-                    Margin="10,0,10,0"
-                    Width="50"
-                    Height="20"
-                    ToolTip="Reset SteamVR."/>
                 
                 <WrapPanel 
                     Height="25" 
-                    Margin="5,20,0,0">
+                    Margin="5,5,0,0">
                     
                     <Label
                         Width="100"
@@ -261,7 +234,7 @@
                 
                 <WrapPanel 
                     Height="25" 
-                    Margin="5,20,0,0">
+                    Margin="5,10,0,0">
                     
                     <Label
                         Width="100"
@@ -296,7 +269,7 @@
                 
                 <WrapPanel 
                     Height="25" 
-                    Margin="5,20,0,0">
+                    Margin="5,10,0,0">
                     
                     <Label
                         Width="100"
@@ -334,7 +307,7 @@
                     Content="Base Stations:" 
                     Foreground="#828282" 
                     Height="25" 
-                    Margin="5,20,10,0"/>
+                    Margin="5,10,10,0"/>
 
                 <WrapPanel 
                     Height="25" 
@@ -356,6 +329,57 @@
                         Content="0"
                         Foreground="#a8a8a8"/>
                 </WrapPanel>
+                
+                <Border BorderBrush="Gray" 
+                        BorderThickness="0,1,0,0" 
+                        Margin="0,7,0,3">
+                    
+                    <WrapPanel 
+                        Height="30"
+                        Margin="5,7,0,0">
+                        
+                        <Label 
+                            Width="100"
+                            FontFamily="Fonts/#Poppins-Medium"
+                            Content="Headset VR" 
+                            ToolTip="Third party headset software"
+                            Foreground="#828282"/>
+
+                        <Image 
+                            x:Name="HeadsetVrConnection" 
+                            ToolTip="HeadsetVR Offline" 
+                            Margin="0,0,0,3" 
+                            Source="../assets/openvr_offline.ico"
+                            Width="20"/>
+                    </WrapPanel>
+                </Border>
+
+                <WrapPanel 
+                    Height="30"
+                    Margin="5,0,0,0">
+                    
+                    <Label 
+                        Width="100"
+                        FontFamily="Fonts/#Poppins-Medium"
+                        Content="OpenVR" 
+                        Foreground="#828282"/>
+
+                    <Image 
+                        x:Name="OpenVrConnection" 
+                        ToolTip="OpenVR Offline" 
+                        Margin="0,0,0,3" 
+                        Source="../assets/openvr_offline.ico"
+                        Width="20"/>
+                </WrapPanel>
+                
+                <Button
+                    Style="{StaticResource MainButton}"
+                    Command="{Binding ResetSteamVRProcess}"
+                    Content="Reset"
+                    Margin="70,0,0,0"
+                    Width="50"
+                    Height="20"
+                    ToolTip="Reset SteamVR."/>
             </StackPanel>
         </Grid>
     </Grid>

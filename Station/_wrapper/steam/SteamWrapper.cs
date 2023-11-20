@@ -6,26 +6,29 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Timers;
 using Newtonsoft.Json.Linq;
+using Station._commandLine;
+using Station._monitoring;
+using Station._utils;
 using Timer = System.Timers.Timer;
 
 namespace Station
 {
     public class SteamWrapper : Wrapper
     {
-        public static string wrapperType = "Steam";
+        public const string WrapperType = "Steam";
         private static Process? currentProcess;
-        private static string launch_params = "-noreactlogin -login " + 
-            Environment.GetEnvironmentVariable("SteamUserName", EnvironmentVariableTarget.Process) + " " + 
-            Environment.GetEnvironmentVariable("SteamPassword", EnvironmentVariableTarget.Process) + " steam://rungameid/";
+        private static readonly string LaunchParams = "-noreactlogin -login " + 
+           Environment.GetEnvironmentVariable("SteamUserName", EnvironmentVariableTarget.Process) + " " + 
+           Environment.GetEnvironmentVariable("SteamPassword", EnvironmentVariableTarget.Process) + " steam://rungameid/";
         public static string? experienceName = null;
         private static string? installDir = null;
         private static Experience lastExperience;
-        private bool launchWillHaveFailedFromOpenVrTimeout = true;
+        private bool _launchWillHaveFailedFromOpenVrTimeout = true;
 
         /// <summary>
         /// Track if an experience is being launched.
         /// </summary>
-        public static bool launchingExperience = false;
+        private static bool launchingExperience = false;
 
         public Experience? GetLastExperience()
         {
@@ -49,7 +52,7 @@ namespace Station
         
         public bool LaunchFailedFromOpenVrTimeout()
         {
-            return launchWillHaveFailedFromOpenVrTimeout;
+            return _launchWillHaveFailedFromOpenVrTimeout;
         }
 
         public string? GetCurrentExperienceName()
@@ -59,7 +62,7 @@ namespace Station
 
         public List<string>? CollectApplications()
         {
-            return SteamScripts.loadAvailableGames();
+            return SteamScripts.LoadAvailableGames();
         }
 
         public void CollectHeaderImage(string experienceName)
@@ -80,21 +83,21 @@ namespace Station
                 currentProcess.Kill(true);
             }
 
-            launchWillHaveFailedFromOpenVrTimeout = false;
+            _launchWillHaveFailedFromOpenVrTimeout = false;
             currentProcess = process;
             ListenForClose();
         }
 
         public string WrapProcess(Experience experience)
         {
-            launchWillHaveFailedFromOpenVrTimeout = false;
+            _launchWillHaveFailedFromOpenVrTimeout = false;
             if (experience.ID == null)
             {
                 SessionController.PassStationMessage($"MessageToAndroid,GameLaunchFailed:Unknown experience");
                 return $"MessageToAndroid,GameLaunchFailed:Unknown experience";
-            };
+            }
 
-            if (SessionController.vrHeadset == null)
+            if (SessionController.VrHeadset == null)
             {
                 SessionController.PassStationMessage("No VR headset set.");
                 return "No VR headset set.";
@@ -113,13 +116,13 @@ namespace Station
             MockConsole.WriteLine($"Wrapping: {experienceName}", MockConsole.LogLevel.Debug);
 
             //Start the external processes to handle SteamVR
-            SessionController.StartVRSession(wrapperType);
+            SessionController.StartVRSession(WrapperType);
 
             //Begin monitoring the different processes
-            WrapperMonitoringThread.InitializeMonitoring(wrapperType);
+            WrapperMonitoringThread.InitializeMonitoring(WrapperType);
 
             //Wait for the Headset's connection method to respond
-            if (!SessionController.vrHeadset.WaitForConnection(wrapperType)) return "Could not connect to headset";
+            if (!SessionController.VrHeadset.WaitForConnection(WrapperType)) return "Could not connect to headset";
 
             //If headset management software is open (with headset connected) and OpenVrSystem cannot initialise then restart SteamVR
             if (!OpenVRManager.WaitForOpenVR().Result) return "Could not start OpenVR";
@@ -127,18 +130,18 @@ namespace Station
             Task.Factory.StartNew(() =>
             {
                 //Attempt to start the process using OpenVR
-                launchWillHaveFailedFromOpenVrTimeout = true;
+                _launchWillHaveFailedFromOpenVrTimeout = true;
                 if (OpenVRManager.LaunchApplication(experience.ID))
                 {
                     Logger.WriteLog($"SteamWrapper.WrapProcess: Launching {experience.Name} via OpenVR", MockConsole.LogLevel.Verbose);
                     return;
                 }
 
-                launchWillHaveFailedFromOpenVrTimeout = false;
+                _launchWillHaveFailedFromOpenVrTimeout = false;
 
                 //Fall back to the alternate if OpenVR launch fails or is not a registered VR experience in the vrmanifest
                 //Stop any accessory processes before opening a new process
-                SessionController.vrHeadset.StopProcessesBeforeLaunch();
+                SessionController.VrHeadset.StopProcessesBeforeLaunch();
 
                 Logger.WriteLog($"SteamWrapper.WrapProcess - Using AlternateLaunchProcess", MockConsole.LogLevel.Normal);
                 AlternateLaunchProcess(experience);
@@ -200,8 +203,8 @@ namespace Station
         private void AlternateLaunchProcess(Experience experience)
         {
             currentProcess = new Process();
-            currentProcess.StartInfo.FileName = SessionController.steam;
-            currentProcess.StartInfo.Arguments = launch_params + experience.ID;
+            currentProcess.StartInfo.FileName = SessionController.Steam;
+            currentProcess.StartInfo.Arguments = LaunchParams + experience.ID;
 
             //Add any extra launch parameters
             if (experience.Parameters != null)
@@ -291,7 +294,7 @@ namespace Station
                 }
                 if (activeProcessId != null)
                 {
-                    Process proc = Process.GetProcessById(Int32.Parse(activeProcessId));
+                    Process? proc = ProcessManager.GetProcessById(Int32.Parse(activeProcessId));
                     Logger.WriteLog($"Application found: {proc.MainWindowTitle}/{proc.Id}", MockConsole.LogLevel.Debug);
 
                     UIUpdater.UpdateProcess(proc.MainWindowTitle);
@@ -335,10 +338,10 @@ namespace Station
                 }
                 catch (InvalidOperationException e)
                 {
-                    
+                    Logger.WriteLog($"StopCurrentProcess - ERROR: {e}", MockConsole.LogLevel.Error);
                 }
             }
-            CommandLine.StartProgram(SessionController.steam, " +app_stop " + lastExperience.ID);
+            CommandLine.StartProgram(SessionController.Steam, " +app_stop " + lastExperience.ID);
             SetLaunchingExperience(false);
 
             experienceName = null; //Reset for correct headset state
@@ -374,7 +377,7 @@ namespace Station
                         timer.Stop();
                         OverlayManager.ManualStop();
                     }
-                    List<Process> list = CommandLine.GetProcessesByName(new List<string> { "steam" });
+                    List<Process> list = ProcessManager.GetProcessesByNames(new List<string> { "steam" });
                     foreach (Process process in list)
                     {
                         Logger.WriteLog($"Looking for steam sign in process: Process: {process.ProcessName} ID: {process.Id}, MainWindowTitle: {process.MainWindowTitle}", MockConsole.LogLevel.Debug);
@@ -402,8 +405,8 @@ namespace Station
         public static void LauncherSteamVR()
         {
             currentProcess = new Process();
-            currentProcess.StartInfo.FileName = SessionController.steam;
-            currentProcess.StartInfo.Arguments = launch_params + 250820;
+            currentProcess.StartInfo.FileName = SessionController.Steam;
+            currentProcess.StartInfo.Arguments = LaunchParams + 250820;
             currentProcess.Start();
         }
     }

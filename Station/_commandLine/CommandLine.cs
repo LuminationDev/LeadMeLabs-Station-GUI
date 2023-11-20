@@ -9,6 +9,8 @@ using System.Net.Http.Headers;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
+using Station._commandLine;
+using Station._utils;
 
 namespace Station
 {
@@ -18,16 +20,6 @@ namespace Station
     /// </summary>
     public static class CommandLine
     {
-        /// <summary>
-        /// Process name of the Launcher that coordinates the LeadMe software suite.
-        /// </summary>
-        private static readonly string launcherProcessName = "LeadMe";
-
-        /// <summary>
-        /// Process name of the current application.
-        /// </summary>
-        private static readonly string stationProcessName = "Station";
-
         /// <summary>
         /// The location of the executing assembly. This is used to find the relative path for externally used applications.
         /// </summary>
@@ -200,124 +192,32 @@ namespace Station
             return output;
         }
 
-        public static List<Process> GetAllProcesses(List<string> processNames, List<string> processIds)
-        {
-            List<Process> allProcesses = new();
-            if (processNames.Count > 0)
-            {
-                allProcesses.AddRange(GetProcessesByName(processNames));
-            }
-
-            if (processIds.Count > 0)
-            {
-                allProcesses.AddRange(GetProcessesById(processIds));
-            }
-
-            return allProcesses;
-        }
-
         /// <summary>
-        /// Retrieve running processes by ids.
+        /// Kill off the launcher program if the time is between a set amount. The Software_Checker scheduler task will
+        /// automatically restart the application within the next five minutes, updating the Launcher and Station software.
         /// </summary>
-        /// <param name="processIds">An array of string ids containing the processes to fetch</param>
-        /// <returns>A list of the processes for the ids supplied</returns>
-        public static List<Process> GetProcessesById(List<string> processIds)
-        {
-            List<Process> list = new();
-
-            foreach (string processId in processIds)
-            {
-                try
-                {
-                    Process process = Process.GetProcessById(Int32.Parse(processId));
-                    list.Add(process);
-                }
-                catch (ArgumentException)
-                {
-                    continue;
-                }
-            }
-
-            return list;
-        }
-
-        /// <summary>
-        /// Retrieve a single process by id
-        /// </summary>
-        /// <param name="processId">The id of the process to retreive</param>
-        /// <returns>The process corresponding to the id, or null if it doesn't exist</returns>
-        public static Process? GetProcessById(string processId)
-        {
-            if (processId.Equals(""))
-            {
-                return null;
-            }
-
-            try
-            {
-                Process process = Process.GetProcessById(Int32.Parse(processId));
-                return process;
-            }
-            catch (ArgumentException)
-            {
-                return null;
-            }
-        }
-
-        /// <summary>
-        /// Retrieve any processes running on the local machine.
-        /// </summary>
-        /// <returns>A list of all active processes currently running</returns>
-        public static Process[] GetAllProcesses()
-        {
-            Process[] processes = Process.GetProcesses();
-
-            foreach (Process process in processes)
-            {
-                Logger.WriteLog($"Process: {process.ProcessName} ID: {process.Id}", MockConsole.LogLevel.Verbose);
-            }
-
-            return processes;
-        }
-
-        /// <summary>
-        /// Check if any processes have stopped responding. May have to be manually called
-        /// every set amount of time.
-        /// </summary>
-        /// <returns>A list of processes that have stopped responding</returns>
-        public static List<Process> CheckAllProcesses()
-        {
-            List<Process> list = new();
-            Process[] processes = Process.GetProcesses();
-
-            foreach (Process process in processes)
-            {
-                if (!process.Responding)
-                {
-                    list.Add(process);
-                }
-            }
-
-            return list;
-        }
-
-        /// <summary>
-        /// Kill off the launcher program if the time is between a set amount. The Software_Checker scheduler task will automatically restart the
-        /// application within the next five minutes, updating the Launcher and Station software.
-        /// </summary>
-        /// <param name="time">A list containing the current time sections [0]-hours, [1]-minutes, [2]-seconds</param>
         public static void RestartProgram()
         {
             //Log the daily restart and write the Work Queue before exiting.
             Logger.WriteLog("Daily restart", MockConsole.LogLevel.Verbose);
             Logger.WorkQueue();
 
-            List<Process> processes = GetProcessesByName(new List<string> {launcherProcessName, stationProcessName});
+            Process[] processes = ProcessManager.GetProcessesByName("LeadMe");
 
             foreach (Process process in processes)
             {
-                process.Kill(true);
+                try
+                {
+                    process.Kill(true);
+                }
+                catch (Exception e)
+                {
+                    Logger.WriteLog($"Error: {e}", MockConsole.LogLevel.Normal);
+                }
             }
+
+            // Exit the application
+            Environment.Exit(0);
         }
 
         /// <summary>
@@ -393,7 +293,7 @@ namespace Station
 
 
         ///////////////////////////////////////////////
-        ///Wrapper Specific Methods
+        /// Wrapper Specific Methods
         ///////////////////////////////////////////////
         /// <summary>
         /// Configure SteamCMD for the current computer, monitor the output to determine what the
@@ -456,13 +356,11 @@ namespace Station
                 //Manually kill the process or it will stay on the guard code input 
                 cmd.Kill(true);
             }
-
-            ;
         }
 
         /// <summary>
-        /// Used to interact with Steamcmd. Uses the Arguments parameter for issuing commands instead
-        /// of the writeline funciton like in executeStationCommand. This way it can run multiple commands
+        /// Used to interact with SteamCMD. Uses the Arguments parameter for issuing commands instead
+        /// of the writeline function like in executeStationCommand. This way it can run multiple commands
         /// in sequence. Most likely used for gathering, installing and uninstalling applications.
         /// </summary>
         /// <param name="command">A collection of steam commands that will be run in sequence.</param>
@@ -552,28 +450,11 @@ namespace Station
         }
 
         /// <summary>
-        /// Retrieve any processes running on the local machine that have the same name as any of the supplied strings.
-        /// </summary>
-        /// <param name="processTitles">An array of strings containing the name of processes to search for</param>
-        /// <returns>A list of all active processes for the titles supplied</returns>
-        public static List<Process> GetProcessesByName(List<string> processTitles)
-        {
-            List<Process> list = new();
-
-            foreach (string process in processTitles)
-            {
-                list.AddRange(Process.GetProcessesByName(process));
-            }
-
-            return list;
-        }
-
-        /// <summary>
         /// Destroy the Steam sign in window if this happens to be up when going to launch an application.
         /// </summary>
         public static void KillSteamSigninWindow()
         {
-            List<Process> list = GetProcessesByName(new List<string> {"steam"});
+            List<Process> list = ProcessManager.GetProcessesByNames(new List<string> {"steam"});
             foreach (Process process in list)
             {
                 Logger.WriteLog(
@@ -591,27 +472,6 @@ namespace Station
         }
 
         /// <summary>
-        /// Provide a list of process names and ids and get a boolean if they are responding
-        /// If the process names do not have a running process, they will NOT return false
-        /// </summary>
-        /// <param name="allProcesses">Array of process names to check</param>
-        /// <returns>boolean of if any of the processes are not responding according to powershell</returns>
-        public static bool CheckThatAllProcessesAreResponding(List<Process> allProcesses)
-        {
-            foreach (Process process in allProcesses)
-            {
-                if (!process.Responding)
-                {
-                    Logger.WriteLog($"Process is not responding: {process.ProcessName}", MockConsole.LogLevel.Normal);
-                    return false;
-                }
-            }
-
-            Logger.WriteLog("All processes are responding", MockConsole.LogLevel.Verbose, false);
-            return true;
-        }
-
-        /// <summary>
         /// Query processes to see if any are currently running.
         /// </summary>
         /// <param name="processes">An array of strings containing the name of processes to search for</param>
@@ -619,7 +479,7 @@ namespace Station
         /// <returns>A boolean representing if a process is still running</returns>
         public static bool QueryVRProcesses(List<string> processes, bool kill = false)
         {
-            List<Process> list = GetProcessesByName(processes);
+            List<Process> list = ProcessManager.GetProcessesByNames(processes);
 
             foreach (Process process in list)
             {

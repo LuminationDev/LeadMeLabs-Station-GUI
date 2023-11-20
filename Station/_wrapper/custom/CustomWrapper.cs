@@ -6,20 +6,24 @@ using System.Threading.Tasks;
 using LeadMeLabsLibrary;
 using leadme_api;
 using Newtonsoft.Json.Linq;
+using Station._commandLine;
+using Station._monitoring;
+using Station._network;
+using Station._utils;
 
 namespace Station
 {
     internal class CustomWrapper : Wrapper
     {
-        public static string wrapperType = "Custom";
+        public const string WrapperType = "Custom";
         private static Process? currentProcess;
         public static Experience lastExperience;
-        private bool launchWillHaveFailedFromOpenVrTimeout = true;
+        private bool _launchWillHaveFailedFromOpenVrTimeout = true;
 
-        // <summary>
+        /// <summary>
         /// Track if an experience is being launched.
         /// </summary>
-        public static bool launchingExperience = false;
+        private static bool launchingExperience = false;
 
         public Experience? GetLastExperience()
         {
@@ -43,7 +47,7 @@ namespace Station
         
         public bool LaunchFailedFromOpenVrTimeout()
         {
-            return launchWillHaveFailedFromOpenVrTimeout;
+            return _launchWillHaveFailedFromOpenVrTimeout;
         }
         
         public string? GetCurrentExperienceName()
@@ -53,7 +57,7 @@ namespace Station
 
         public List<string>? CollectApplications()
         {
-            return CustomScripts.loadAvailableGames();
+            return CustomScripts.LoadAvailableGames();
         }
 
         public void CollectHeaderImage(string experienceID)
@@ -94,7 +98,7 @@ namespace Station
 
                 //Add the header image to the sending image queue through action transformation
                 SocketFile socketImage = new("image", experienceName, filePath);
-                System.Action sendImage = new(() => socketImage.send());
+                System.Action sendImage = new(() => socketImage.Send());
 
                 //Queue the send function for invoking
                 TaskQueue.Queue(false, sendImage);
@@ -119,21 +123,21 @@ namespace Station
             {
                 currentProcess.Kill(true);
             }
-            launchWillHaveFailedFromOpenVrTimeout = false;
+            _launchWillHaveFailedFromOpenVrTimeout = false;
             currentProcess = process;
             ListenForClose();
         }
 
         public string WrapProcess(Experience experience)
         {
-            launchWillHaveFailedFromOpenVrTimeout = false;
+            _launchWillHaveFailedFromOpenVrTimeout = false;
             if(CommandLine.stationLocation == null)
             {
                 SessionController.PassStationMessage("Cannot find working directory");
                 return "Cannot find working directory";
             }
 
-            if (SessionController.vrHeadset == null)
+            if (SessionController.VrHeadset == null)
             {
                 SessionController.PassStationMessage("No VR headset set.");
                 return "No VR headset set.";
@@ -155,10 +159,10 @@ namespace Station
             lastExperience = experience;
 
             //Begin monitoring the different processes
-            WrapperMonitoringThread.InitializeMonitoring(wrapperType);
+            WrapperMonitoringThread.InitializeMonitoring(WrapperType);
 
             //Wait for the Headset's connection method to respond
-            if (!SessionController.vrHeadset.WaitForConnection(wrapperType)) return "Could not get headset connection";
+            if (!SessionController.VrHeadset.WaitForConnection(WrapperType)) return "Could not get headset connection";
 
             //If headset management software is open (with headset connected) and OpenVrSystem cannot initialise then restart SteamVR
             if (!OpenVRManager.WaitForOpenVR().Result) return "Could not connect to OpenVR";
@@ -167,16 +171,16 @@ namespace Station
             Task.Factory.StartNew(() =>
             {
                 //Attempt to start the process using OpenVR
-                launchWillHaveFailedFromOpenVrTimeout = true;
+                _launchWillHaveFailedFromOpenVrTimeout = true;
                 if (OpenVRManager.LaunchApplication(experience.ID))
                 {
                     Logger.WriteLog($"CustomWrapper.WrapProcess: Launching {experience.Name} via OpenVR", MockConsole.LogLevel.Verbose);
                     return;
                 }
-                launchWillHaveFailedFromOpenVrTimeout = false;
+                _launchWillHaveFailedFromOpenVrTimeout = false;
 
                 //Stop any accessory processes before opening a new process
-                SessionController.vrHeadset.StopProcessesBeforeLaunch();
+                SessionController.VrHeadset.StopProcessesBeforeLaunch();
                 
                 //Fall back to the alternate if it fails or is not a registered VR experience in the vrmanifest
                 Logger.WriteLog($"CustomWrapper.WrapProcess - Using AlternateLaunchProcess", MockConsole.LogLevel.Normal);
@@ -237,7 +241,7 @@ namespace Station
 
         /// <summary>
         /// Find the active process that has been launched. This may have to loop if the main experience is
-        /// openning accompanying software such as SteamVR. 
+        /// opening accompanying software such as SteamVR. 
         /// </summary>
         private void FindCurrentProcess()
         {
@@ -302,7 +306,7 @@ namespace Station
             {
                 return null;
             }
-            Process proc = Process.GetProcessById(Int32.Parse(id));
+            Process? proc = ProcessManager.GetProcessById(Int32.Parse(id));
 
             //Get the steam process name from the CommandLine function and compare here instead of removing any external child processes
             if (proc != null)

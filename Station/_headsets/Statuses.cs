@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Newtonsoft.Json.Linq;
 using Station._qa;
+using Station._utils;
 
 namespace Station
 {
@@ -20,15 +21,16 @@ namespace Station
         public string HeadsetDescription { private set; get; } = "Unknown";
 
         //Controller models stored by serial number
-        public static Dictionary<string, VrController> controllers = new();
+        private static readonly Dictionary<string, VrController> Controllers = new();
         //Base Station models stored by serial number
         public static Dictionary<string, VrBaseStation> baseStations = new();
 
         #region Observers
         /// <summary>
         /// External software that is required to link the headset to SteamVR
-        ///     Vive Pro 1 - Determined by Vive Logs
-        ///     Vive Pro 2 - Determined by Vive Console
+        ///     Vive Pro 1      - Determined by Vive Logs
+        ///     Vive Pro 2      - Determined by Vive Console
+        ///     Vive Focus 3    - Determined by Vive Business Streaming
         /// </summary>
         private DeviceStatus _softwareStatus = DeviceStatus.Off;
         public DeviceStatus SoftwareStatus
@@ -40,10 +42,7 @@ namespace Station
                 OnSoftwareTrackingChanged(value.ToString());
                 _softwareStatus = value;
             }
-            get
-            {
-                return _softwareStatus;
-            }
+            get => _softwareStatus;
         }
 
         public event EventHandler<GenericEventArgs<string>>? SoftwareTrackingChanged;
@@ -69,10 +68,7 @@ namespace Station
                 _openVRStatus = value;
                 UIUpdater.UpdateOpenVRStatus("headsetConnection", Enum.GetName(typeof(DeviceStatus), value));
             }
-            get
-            {
-                return _openVRStatus;
-            }
+            get => _openVRStatus;
         }
 
         public event EventHandler<GenericEventArgs<string>>? OpenVRTrackingChanged;
@@ -131,15 +127,18 @@ namespace Station
             MockConsole.WriteLine($"Updating Headset:{Enum.GetName(typeof(VrManager), manager)}:{Enum.GetName(typeof(DeviceStatus), status)}", 
                 MockConsole.LogLevel.Debug);
 
-            if (manager == VrManager.Software)
+            switch (manager)
             {
-                SendLostMessage(SoftwareStatus == DeviceStatus.Connected, status);
-                SoftwareStatus = status;
-            }
-            else if (manager == VrManager.OpenVR)
-            {
-                SendLostMessage(OpenVRStatus == DeviceStatus.Connected, status);
-                OpenVRStatus = status;
+                case VrManager.Software:
+                    SendLostMessage(SoftwareStatus == DeviceStatus.Connected, status);
+                    SoftwareStatus = status;
+                    UIUpdater.LoadImageFromAssetFolder("ThirdParty", SoftwareStatus == DeviceStatus.Connected);
+                    break;
+                
+                case VrManager.OpenVR:
+                    SendLostMessage(OpenVRStatus == DeviceStatus.Connected, status);
+                    OpenVRStatus = status;
+                    break;
             }
             
             SendReadyMessage();
@@ -152,7 +151,7 @@ namespace Station
         private void SendReadyMessage()
         {
             //If the headset is connected and no experience is currently running tell the tablet the Station is ready to go
-            if (SoftwareStatus == DeviceStatus.Connected && OpenVRStatus == DeviceStatus.Connected && !SessionController.currentState.Equals("Ready to go"))
+            if (SoftwareStatus == DeviceStatus.Connected && OpenVRStatus == DeviceStatus.Connected && !SessionController.CurrentState.Equals("Ready to go"))
             {
                 ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage($"SoftwareState,Ready to go"), TimeSpan.FromSeconds(0));
             }
@@ -164,15 +163,14 @@ namespace Station
         /// </summary>
         private void SendLostMessage(bool oldConnectionStatus, DeviceStatus newConnectionStatus)
         {
-            if (oldConnectionStatus && newConnectionStatus is DeviceStatus.Lost or DeviceStatus.Off)
-            {
-                string? message = WrapperManager.CurrentWrapper?.GetCurrentExperienceName() == null ? 
-                    "Awaiting headset connection..." : "Lost headset connection";
+            if (!oldConnectionStatus || newConnectionStatus is not (DeviceStatus.Lost or DeviceStatus.Off)) return;
+            
+            string? message = WrapperManager.CurrentWrapper?.GetCurrentExperienceName() == null ? 
+                "Awaiting headset connection..." : "Lost headset connection";
                 
-                ScheduledTaskQueue.EnqueueTask(
-                    () => SessionController.PassStationMessage($"SoftwareState,{message}"),
-                    TimeSpan.FromSeconds(0));
-            }
+            ScheduledTaskQueue.EnqueueTask(
+                () => SessionController.PassStationMessage($"SoftwareState,{message}"),
+                TimeSpan.FromSeconds(0));
         }
 
         /// <summary>
@@ -185,9 +183,9 @@ namespace Station
         public void UpdateController(string serialNumber, DeviceRole? role, string propertyName, object value)
         {
             //Check if the entry exists
-            if (controllers.ContainsKey(serialNumber))
+            if (Controllers.ContainsKey(serialNumber))
             {
-                if (controllers.TryGetValue(serialNumber, out var temp) && temp != null)
+                if (Controllers.TryGetValue(serialNumber, out var temp) && temp != null)
                 {
                     temp.UpdateProperty(propertyName, value);
                 }
@@ -196,17 +194,17 @@ namespace Station
                     Logger.WriteLog($"VrStatus.UpdateController - A Controller entry is invalid removing {serialNumber}",
                         MockConsole.LogLevel.Error);
 
-                    controllers.Remove(serialNumber);
+                    Controllers.Remove(serialNumber);
                 }
             }
             else if (role != null)
             {
-                bool duplicate = controllers.Any(vrController => vrController.Value.Role == role);
+                bool duplicate = Controllers.Any(vrController => vrController.Value.Role == role);
 
                 //Invalidate the controllers dictionary if there are multiple of the same role. (i.e two lefts or two rights)
                 if (duplicate)
                 {
-                    foreach (var vrController in controllers)
+                    foreach (var vrController in Controllers)
                     {
                         if (vrController.Value.Role == role)
                         {
@@ -215,7 +213,7 @@ namespace Station
                             MockConsole.WriteLine($"Duplicate controller - Role: {Enum.GetName(typeof(DeviceRole), role)}. Reseting dictionary.", MockConsole.LogLevel.Normal);
                         }
                     }
-                    controllers.Clear();
+                    Controllers.Clear();
                     return;
                 }
 
@@ -223,7 +221,7 @@ namespace Station
                 MockConsole.WriteLine($"Found a new controller: {serialNumber} - Role: {Enum.GetName(typeof(DeviceRole), role)}", MockConsole.LogLevel.Normal);
                 VrController temp = new VrController(serialNumber, (DeviceRole)role);
                 temp.UpdateProperty(propertyName, value);
-                controllers.Add(serialNumber, temp);
+                Controllers.Add(serialNumber, temp);
             }
             else
             {
@@ -278,7 +276,7 @@ namespace Station
             UIUpdater.UpdateOpenVRStatus("headsetDescription", HeadsetDescription);
 
             //Reset controllers
-            foreach (var vrController in controllers)
+            foreach (var vrController in Controllers)
             {
                 vrController.Value.UpdateProperty("battery", 0);
                 vrController.Value.UpdateProperty("tracking", DeviceStatus.Off);
@@ -305,7 +303,7 @@ namespace Station
             Manager.SendResponse("Android", "Station", $"DeviceStatus:Headset:Vive:tracking:{SoftwareStatus.ToString()}");
 
             //Controllers
-            foreach (var vrController in controllers)
+            foreach (var vrController in Controllers)
             {
                 //Update the tablet
                 Manager.SendResponse("Android", "Station", $"SetValue:deviceStatus:Controller:{vrController.Value.Role.ToString()}:tracking:{vrController.Value.Tracking.ToString()}");
@@ -333,29 +331,26 @@ namespace Station
 
         public JObject GetStatusesJson()
         {
-            JObject vrStatuses = new JObject();
-            vrStatuses.Add("openVrStatus", OpenVRStatus.ToString());
-            vrStatuses.Add("headsetStatus", SoftwareStatus.ToString());
-            
+            JObject vrStatuses = new JObject
+            {
+                { "openVrStatus", OpenVRStatus.ToString() },
+                { "headsetStatus", SoftwareStatus.ToString() }
+            };
+
             // each controller
             JArray controllersJArray = new JArray();
-            foreach (var vrController in controllers)
+            foreach (var vrController in Controllers)
             {
-                JObject controller = new JObject();
-                controller.Add("tracking", vrController.Value.Tracking.ToString());
-                controller.Add("battery", vrController.Value.Battery);
+                JObject controller = new JObject
+                {
+                    { "tracking", vrController.Value.Tracking.ToString() },
+                    { "battery", vrController.Value.Battery }
+                };
                 controllersJArray.Add(controller);
             }
             vrStatuses.Add("controllers", controllersJArray);
             
-            int active = 0;
-            foreach (var vrBaseStation in baseStations)
-            {
-                if (vrBaseStation.Value.Tracking == DeviceStatus.Connected)
-                {
-                    active++;
-                }
-            }
+            int active = baseStations.Count(vrBaseStation => vrBaseStation.Value.Tracking == DeviceStatus.Connected);
             vrStatuses.Add("connectedBaseStations", active);
 
             return vrStatuses;
@@ -393,7 +388,7 @@ namespace Station
             }
             
             QaCheck controllersConnected = new QaCheck("controllers_connected");
-            if (controllers.Where((controller) => controller.Value.Tracking == DeviceStatus.Connected).Count() >= 2)
+            if (Controllers.Count(controller => controller.Value.Tracking == DeviceStatus.Connected) >= 2)
             {
                 controllersConnected.SetPassed(null);
             }
@@ -406,13 +401,13 @@ namespace Station
             if (OpenVRStatus != DeviceStatus.Connected || SoftwareStatus != DeviceStatus.Connected)
             {
                 controllersFirmware.SetFailed("Headset not connected");
-            } else if (controllers.Where((controller) => controller.Value.Tracking == DeviceStatus.Connected).Count() < 2)
+            } else if (Controllers.Count(controller => controller.Value.Tracking == DeviceStatus.Connected) < 2)
             {
                 controllersFirmware.SetFailed("Less than two controllers connected");
             }
             else
             {
-                if (controllers.Where((controller) => controller.Value.FirmwareUpdateRequired()).Count() < 2)
+                if (Controllers.Count(controller => controller.Value.FirmwareUpdateRequired()) < 2)
                 {
                     controllersFirmware.SetPassed(null);
                 }
@@ -423,7 +418,7 @@ namespace Station
             }
             
             QaCheck baseStationsConnected = new QaCheck("base_stations_connected");
-            if (baseStations.Where((baseStations) => baseStations.Value.Tracking == DeviceStatus.Connected).Count() >= 2)
+            if (baseStations.Count(baseStation => baseStation.Value.Tracking == DeviceStatus.Connected) >= 2)
             {
                 baseStationsConnected.SetPassed(null);
             }
@@ -436,13 +431,13 @@ namespace Station
             if (OpenVRStatus != DeviceStatus.Connected || SoftwareStatus != DeviceStatus.Connected)
             {
                 baseStationsFirmware.SetFailed("Headset not connected");
-            } else if (baseStations.Where((baseStation) => baseStation.Value.Tracking == DeviceStatus.Connected).Count() < 2)
+            } else if (baseStations.Count(baseStation => baseStation.Value.Tracking == DeviceStatus.Connected) < 2)
             {
                 baseStationsFirmware.SetFailed("Less than two base stations connected");
             }
             else
             {
-                if (baseStations.Where((baseStation) => baseStation.Value.FirmwareUpdateRequired()).Count() < 2)
+                if (baseStations.Count(baseStation => baseStation.Value.FirmwareUpdateRequired()) < 2)
                 {
                     baseStationsFirmware.SetPassed(null);
                 }

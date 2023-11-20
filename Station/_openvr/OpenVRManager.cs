@@ -1,11 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.IO;
 using System.Numerics;
 using System.Text;
 using System.Threading.Tasks;
 using Newtonsoft.Json.Linq;
+using Station._commandLine;
+using Station._utils;
 using Valve.VR;
 
 namespace Station
@@ -28,10 +29,6 @@ namespace Station
     public class OpenVRManager
     {
         public OpenVRSystem? OpenVrSystem;
-        
-        private readonly string _steamManifest = @"C:\Program Files (x86)\Steam\config\steamapps.vrmanifest";
-        //Load the local appData/Roaming folder path
-        private readonly string _customManifest = Path.GetFullPath(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "leadme_apps", "customapps.vrmanifest"));
 
         //Read this when launching an experience to know if it is VR (missing means it is standard)
         private static Dictionary<string, string>? _vrApplicationDictionary;
@@ -103,7 +100,7 @@ namespace Station
             //Create a listener for VR events - this handles the gentle exit of SteamVR
             new Task(OnVREvent).Start();
 
-            UIUpdater.LoadImageFromAssetFolder(true);
+            UIUpdater.LoadImageFromAssetFolder("OpenVR", true);
 
             _initialising = false;
             return true;
@@ -122,10 +119,12 @@ namespace Station
             }
 
             // Force reset of the Steam & Custom VR manifest lists for guaranteed up to date. 
-            OpenVR.Applications.RemoveApplicationManifest(_customManifest);
-            OpenVR.Applications.RemoveApplicationManifest(_steamManifest);
-            OpenVR.Applications.AddApplicationManifest(_customManifest, true);
-            OpenVR.Applications.AddApplicationManifest(_steamManifest, true);
+            OpenVR.Applications.RemoveApplicationManifest(CustomScripts.CustomManifest);
+            OpenVR.Applications.RemoveApplicationManifest(SteamScripts.SteamManifest);
+            OpenVR.Applications.RemoveApplicationManifest(ReviveScripts.ReviveManifest);
+            OpenVR.Applications.AddApplicationManifest(CustomScripts.CustomManifest, true);
+            OpenVR.Applications.AddApplicationManifest(SteamScripts.SteamManifest, true);
+            OpenVR.Applications.AddApplicationManifest(ReviveScripts.ReviveManifest, true);
 
             // Load in the steam & custom manifest
             LoadVrManifest();
@@ -138,15 +137,15 @@ namespace Station
         /// <returns></returns>
         public static async Task<bool> WaitForOpenVR()
         {
-            if (SessionController.vrHeadset == null) return false;
+            if (SessionController.VrHeadset == null) return false;
 
-            MockConsole.WriteLine($"WaitForOpenVR - Checking SteamVR. Vive status: {Enum.GetName(typeof(DeviceStatus), SessionController.vrHeadset.GetHeadsetManagementSoftwareStatus())} " +
+            MockConsole.WriteLine($"WaitForOpenVR - Checking SteamVR. Vive status: {Enum.GetName(typeof(DeviceStatus), SessionController.VrHeadset.GetHeadsetManagementSoftwareStatus())} " +
                 $"- OpenVR status: {Manager.openVRManager?.InitialiseOpenVR() ?? false}", MockConsole.LogLevel.Normal);
 
             //If Vive is connect but OpenVR is not/cannot be initialised, restart SteamVR and check again.
-            if (SessionController.vrHeadset.GetHeadsetManagementSoftwareStatus() == DeviceStatus.Connected && (!Manager.openVRManager?.InitialiseOpenVR() ?? true))
+            if (SessionController.VrHeadset.GetHeadsetManagementSoftwareStatus() == DeviceStatus.Connected && (!Manager.openVRManager?.InitialiseOpenVR() ?? true))
             {
-                Logger.WriteLog($"OpenVRManager.WaitForOpenVR - Vive status: {SessionController.vrHeadset.GetHeadsetManagementSoftwareStatus()}, " +
+                Logger.WriteLog($"OpenVRManager.WaitForOpenVR - Vive status: {SessionController.VrHeadset.GetHeadsetManagementSoftwareStatus()}, " +
                     $"OpenVR connection not established - restarting SteamVR", MockConsole.LogLevel.Normal);
 
                 //Send message to the tablet (Updating what is happening)
@@ -160,10 +159,10 @@ namespace Station
                 SteamWrapper.LauncherSteamVR();
                 await Task.Delay(3000);
 
-                bool steamvr = await MonitorLoop(() => Process.GetProcessesByName("vrmonitor").Length == 0);
+                bool steamvr = await MonitorLoop(() => ProcessManager.GetProcessesByName("vrmonitor").Length == 0);
                 if (!steamvr) return false;
 
-                Logger.WriteLog($"OpenVRManager.WaitForOpenVR - Vive status: {SessionController.vrHeadset.GetHeadsetManagementSoftwareStatus()}, " +
+                Logger.WriteLog($"OpenVRManager.WaitForOpenVR - Vive status: {SessionController.VrHeadset.GetHeadsetManagementSoftwareStatus()}, " +
                     $"SteamVR restarted successfully", MockConsole.LogLevel.Normal);
 
                 //Send message to the tablet (Updating what is happening)
@@ -176,7 +175,7 @@ namespace Station
                     return false;
                 }
 
-                Logger.WriteLog($"OpenVRManager.WaitForOpenVR - Vive status: {SessionController.vrHeadset.GetHeadsetManagementSoftwareStatus()}, " +
+                Logger.WriteLog($"OpenVRManager.WaitForOpenVR - Vive status: {SessionController.VrHeadset.GetHeadsetManagementSoftwareStatus()}, " +
                     $"OpenVR connection established", MockConsole.LogLevel.Normal);
             }
 
@@ -246,7 +245,7 @@ namespace Station
                         _ovrSystem.AcknowledgeQuit_Exiting();
                         OpenVrSystem?.Shutdown();
                         OpenVrSystem = null;
-                        UIUpdater.LoadImageFromAssetFolder(false);
+                        UIUpdater.LoadImageFromAssetFolder("OpenVR", false);
                         break;
                 }
 
@@ -277,28 +276,20 @@ namespace Station
                 if (error == EVRApplicationError.None)
                 {
                     string pchKey = pchKeyBuffer.ToString();
-                    if (pchKey.Contains("steam.app") || pchKey.Contains("custom.app"))
+                    if (pchKey.Contains("steam.app") || pchKey.Contains("custom.app") || pchKey.Contains("revive.app"))
                     {
                         // Get the application properties using the pch key
                         string applicationName =
                             GetApplicationPropertyString(pchKey, EVRApplicationProperty.Name_String);
                         string applicationLaunchType =
                             GetApplicationPropertyString(pchKey, EVRApplicationProperty.LaunchType_String);
-
-
+                        
                         string output = $"Application Key: {pchKey} " +
                                         $"Application Name: {applicationName} " +
                                         $"Application Index: {index} " +
                                         $"Application Type: {applicationLaunchType}";
-
-                        // Check if the application is launched through Steam
-                        if (pchKey.Contains("steam") && applicationLaunchType.Equals("url"))
-                        {
-                            // Get the Steam game ID (App ID)
-                            output += " Application ID (App ID): " + pchKey.Replace("steam.app.", "");
-                        }
-
-                        //Logger.WriteLog(output, MockConsole.LogLevel.Verbose);
+                        
+                        //Logger.WriteLog(output, MockConsole.LogLevel.Normal);
 
                         vrApplicationCount++;
 
@@ -312,6 +303,10 @@ namespace Station
                         {
                             appID = pchKey.Replace("custom.app.", "");
                         } 
+                        else if (pchKey.Contains("revive.app"))
+                        {
+                            appID = pchKey.Replace("revive.app.", "");
+                        }
                         else
                         {
                             continue;
@@ -344,7 +339,12 @@ namespace Station
             if (_vrApplicationDictionary == null) return false;
 
             _vrApplicationDictionary.TryGetValue(appID, out var pchKey);
-            if(pchKey == null) return false;
+            if (pchKey == null)
+            {
+                Logger.WriteLog($"OPENVR: {appID} has no pchKey. Make sure OpenVR has been initialised and " +
+                                $"manifests have been loaded", MockConsole.LogLevel.Normal);
+                return false;
+            }
             
             EVRApplicationError error = OpenVR.Applications.LaunchApplication(pchKey);
             if (error == EVRApplicationError.None)
@@ -355,12 +355,12 @@ namespace Station
                     {
                         WrapperManager.CurrentWrapper?.StopCurrentProcess();
                         UIUpdater.ResetUIDisplay();
-                        SessionController.PassStationMessage($"MessageToAndroid,GameLaunchFailed:{WrapperManager.CurrentWrapper.GetLastExperience()?.Name}");
+                        SessionController.PassStationMessage($"MessageToAndroid,GameLaunchFailed:{WrapperManager.CurrentWrapper?.GetLastExperience()?.Name}");
                 
                         JObject response = new JObject();
                         response.Add("response", "ExperienceLaunchFailed");
                         JObject responseData = new JObject();
-                        responseData.Add("experienceId", WrapperManager.CurrentWrapper.GetLastExperience()?.ID);
+                        responseData.Add("experienceId", WrapperManager.CurrentWrapper?.GetLastExperience()?.ID);
                         response.Add("responseData", responseData);
                 
                         Manager.SendResponse("NUC", "QA", response.ToString());
@@ -380,90 +380,96 @@ namespace Station
             uint queriedProcessId = applications.GetCurrentSceneProcessId();
 
             //If _processId is 0 there is no active process, if _queriedProcessId is different then the application has changed
-            if (queriedProcessId != 0 && queriedProcessId != _processId)
+            if (queriedProcessId == 0 || queriedProcessId == _processId) return;
+            _processId = queriedProcessId;
+                
+            //Gets the active application pchKey running on SteamVR
+            StringBuilder appKeyBuffer = new StringBuilder(256); // Adjust the buffer size as needed
+
+            EVRApplicationError error =
+                applications.GetApplicationKeyByProcessId(_processId, appKeyBuffer, (uint)appKeyBuffer.Capacity);
+
+            if (error != EVRApplicationError.None)
             {
-                _processId = queriedProcessId;
-
-                //Gets the active application pchKey running on SteamVR
-                StringBuilder appKeyBuffer = new StringBuilder(256); // Adjust the buffer size as needed
-
-                EVRApplicationError error =
-                    applications.GetApplicationKeyByProcessId(_processId, appKeyBuffer, (uint)appKeyBuffer.Capacity);
-
-                if (error != EVRApplicationError.None)
-                {
-                    MockConsole.WriteLine($"Failed to get the current application key. Error: {error}", MockConsole.LogLevel.Debug);
-                    return;
-                }
-
-                string currentAppKey = appKeyBuffer.ToString();
-                string currentAppType = appKeyBuffer.ToString().Split(".")[0]; 
-                currentAppType = currentAppType.Substring(0, 1).ToUpper() + currentAppType.Substring(1);
-                
-                // Retrieve the name of the application using the application key
-                StringBuilder appNameBuffer = new StringBuilder(256); // Adjust the buffer size as needed
-                EVRApplicationError
-                    getAppNameError = EVRApplicationError.None; // Additional parameter for error handling
-
-                applications.GetApplicationPropertyString(
-                    currentAppKey,
-                    EVRApplicationProperty.Name_String,
-                    appNameBuffer,
-                    (uint)appNameBuffer.Capacity,
-                    ref getAppNameError);
-
-                if (getAppNameError != EVRApplicationError.None)
-                {
-                    Logger.WriteLog($"OpenVRManager.QueryCurrentApplication - Failed to get the application name. Error: {getAppNameError}", 
-                        MockConsole.LogLevel.Debug);
-                    return;
-                }
-
-                string currentAppName = appNameBuffer.ToString();
-                string? currentAppStatus = Enum.GetName(typeof(EVRSceneApplicationState),
-                    applications.GetSceneApplicationState());
-
-                string output = $"Application ID: {_processId}\n" +
-                                $"Application State: {currentAppStatus}\n" +
-                                $"Application Type: {currentAppType}\n" +
-                                $"Currently Running Application Key: {currentAppKey}\n" +
-                                $"Currently Running Application Name: {currentAppName}";
-
-                Logger.WriteLog(output, MockConsole.LogLevel.Verbose);
-
-                // Get the process associated with the _appId
-                Process targetProcess = Process.GetProcessById((int)_processId);
-                
-                WrapperManager.LoadWrapper(currentAppType); //Load in the appropriate wrapper type
-                WrapperManager.applicationList.TryGetValue(currentAppKey.Split(".")[2], out var experience);
-                WrapperManager.CurrentWrapper?.SetLastExperience(experience);
-                WrapperManager.CurrentWrapper?.SetCurrentProcess(targetProcess); //Sets the wrapper process and calls WaitForExit
-                WrapperManager.CurrentWrapper?.SetLaunchingExperience(false);
-                
-                WindowManager.MaximizeProcess(targetProcess); //Maximise the process experience
-
-                string? experienceId = experience.ID;
-                if (string.IsNullOrEmpty(experienceId))
-                {
-                    experienceId = "0";
-                }
-                
-                // Send a message to the NUC
-                SessionController.PassStationMessage(
-                    $"ApplicationUpdate,{currentAppName}/{experienceId}/{currentAppType}");
-                
-                JObject response = new JObject();
-                response.Add("response", "ExperienceLaunched");
-                JObject responseData = new JObject();
-                responseData.Add("experienceId", experienceId);
-                response.Add("responseData", responseData);
-                
-                Manager.SendResponse("NUC", "QA", response.ToString());
-
-                // Update the Station UI
-                UIUpdater.UpdateProcess(targetProcess.MainWindowTitle);
-                UIUpdater.UpdateStatus("Running...");
+                MockConsole.WriteLine($"Failed to get the current application key. Error: {error}", MockConsole.LogLevel.Debug);
+                return;
             }
+
+            string currentAppKey = appKeyBuffer.ToString();
+            string currentAppType = appKeyBuffer.ToString().Split(".")[0]; 
+            currentAppType = currentAppType.Substring(0, 1).ToUpper() + currentAppType.Substring(1);
+                
+                
+            // Retrieve the name of the application using the application key
+            StringBuilder appNameBuffer = new StringBuilder(256); // Adjust the buffer size as needed
+            EVRApplicationError
+                getAppNameError = EVRApplicationError.None; // Additional parameter for error handling
+
+            applications.GetApplicationPropertyString(
+                currentAppKey,
+                EVRApplicationProperty.Name_String,
+                appNameBuffer,
+                (uint)appNameBuffer.Capacity,
+                ref getAppNameError);
+
+            if (getAppNameError != EVRApplicationError.None)
+            {
+                Logger.WriteLog($"OpenVRManager.QueryCurrentApplication - Failed to get the application name. Error: {getAppNameError}", 
+                    MockConsole.LogLevel.Debug);
+                return;
+            }
+
+            string currentAppName = appNameBuffer.ToString();
+            // string? currentAppStatus = Enum.GetName(typeof(EVRSceneApplicationState),
+            //     applications.GetSceneApplicationState());
+            //
+            // string output = $"Application ID: {_processId}\n" +
+            //                 $"Application State: {currentAppStatus}\n" +
+            //                 $"Application Type: {currentAppType}\n" +
+            //                 $"Currently Running Application Key: {currentAppKey}\n" +
+            //                 $"Currently Running Application Name: {currentAppName}";
+            //
+            // Logger.WriteLog(output, MockConsole.LogLevel.Verbose);
+
+            // Get the process associated with the _appId
+            Process? targetProcess = ProcessManager.GetProcessById((int)_processId);
+            if (targetProcess == null)
+            {
+                Logger.WriteLog($"OpenVRManager.QueryCurrentApplication - Target Process NOT found.",
+                    MockConsole.LogLevel.Normal);
+                _processId = 0;
+                return;
+            }
+
+            WrapperManager.LoadWrapper(currentAppType); //Load in the appropriate wrapper type
+            WrapperManager.applicationList.TryGetValue(currentAppKey.Split(".")[2], out var experience);
+            WrapperManager.CurrentWrapper?.SetLastExperience(experience);
+            WrapperManager.CurrentWrapper?.SetCurrentProcess(targetProcess); //Sets the wrapper process and calls WaitForExit
+            WrapperManager.CurrentWrapper?.SetLaunchingExperience(false);
+                
+            WindowManager.MaximizeProcess(targetProcess); //Maximise the process experience
+
+            string? experienceId = experience.ID;
+            if (string.IsNullOrEmpty(experienceId))
+            {
+                experienceId = "0";
+            }
+                
+            // Send a message to the NUC
+            SessionController.PassStationMessage(
+                $"ApplicationUpdate,{currentAppName}/{experienceId}/{currentAppType}");
+                
+            JObject response = new JObject();
+            response.Add("response", "ExperienceLaunched");
+            JObject responseData = new JObject();
+            responseData.Add("experienceId", experienceId);
+            response.Add("responseData", responseData);
+                
+            Manager.SendResponse("NUC", "QA", response.ToString());
+
+            // Update the Station UI
+            UIUpdater.UpdateProcess(targetProcess.MainWindowTitle);
+            UIUpdater.UpdateStatus("Running...");
         }
         #endregion
 
@@ -610,22 +616,22 @@ namespace Station
             if (headsetPosition == new Vector3(0, 0, 0) && headsetOrientation == new Quaternion(1, 0, 0, 0))
             {
                 _tracking = false;
-                SessionController.vrHeadset?.GetStatusManager().UpdateHeadset(VrManager.OpenVR, DeviceStatus.Lost);
+                SessionController.VrHeadset?.GetStatusManager().UpdateHeadset(VrManager.OpenVR, DeviceStatus.Lost);
                 MockConsole.WriteLine("Headset lost", MockConsole.LogLevel.Debug);
             }
             else if (headsetPosition != new Vector3(0, 0, 0) && headsetOrientation != new Quaternion(1, 0, 0, 0))
             {
                 _tracking = true;
-                SessionController.vrHeadset?.GetStatusManager().UpdateHeadset(VrManager.OpenVR, DeviceStatus.Connected);
+                SessionController.VrHeadset?.GetStatusManager().UpdateHeadset(VrManager.OpenVR, DeviceStatus.Connected);
                 MockConsole.WriteLine("Headset found", MockConsole.LogLevel.Debug);
             }
 
-            SessionController.vrHeadset?.GetStatusManager().UpdateHeadsetFirmwareStatus(GetFirmwareUpdateRequired(headsetIndex));
+            SessionController.VrHeadset?.GetStatusManager().UpdateHeadsetFirmwareStatus(GetFirmwareUpdateRequired(headsetIndex));
 
             //Collect the headset model - only do this if it hasn't been set already.
             if (MainWindow.headsetDescription != null && 
-                ((SessionController.vrHeadset?.GetStatusManager().HeadsetDescription.Equals("") ?? true) || 
-                (SessionController.vrHeadset?.GetStatusManager().HeadsetDescription.Equals("Unknown") ?? true))
+                ((SessionController.VrHeadset?.GetStatusManager().HeadsetDescription.Equals("") ?? true) || 
+                (SessionController.VrHeadset?.GetStatusManager().HeadsetDescription.Equals("Unknown") ?? true))
             )
             {
                 var error = ETrackedPropertyError.TrackedProp_Success;
@@ -639,7 +645,7 @@ namespace Station
 
                 if (error == ETrackedPropertyError.TrackedProp_Success)
                 {
-                    SessionController.vrHeadset?.GetStatusManager().SetHeadsetDescription(renderModelName.ToString());
+                    SessionController.VrHeadset?.GetStatusManager().SetHeadsetDescription(renderModelName.ToString());
                     UIUpdater.UpdateOpenVRStatus("headsetDescription", renderModelName.ToString());
                 }
             }
@@ -670,16 +676,25 @@ namespace Station
             var serialNumber = GetSerialNumber(controllerIndex);
 
             //Check the pose of the controller
-            SessionController.vrHeadset?.GetStatusManager().UpdateController(
+            SessionController.VrHeadset?.GetStatusManager().UpdateController(
                 serialNumber, null, "tracking", IsDeviceConnected(controllerIndex) ? DeviceStatus.Connected : DeviceStatus.Lost);
             
             var firmwareUpdateRequired = GetFirmwareUpdateRequired(controllerIndex);
-            SessionController.vrHeadset?.GetStatusManager().UpdateController(
+            SessionController.VrHeadset?.GetStatusManager().UpdateController(
                 serialNumber, null, "firmware_update_required", firmwareUpdateRequired);
 
             if (role == ETrackedControllerRole.Invalid) return;
             
             DeviceRole controllerRole = role == ETrackedControllerRole.LeftHand ? DeviceRole.Left : DeviceRole.Right;
+            
+            // Some headsets have specific controller roles baked into their serial numbers
+            string lowerCaseSerial = serialNumber.ToLower();
+            controllerRole = lowerCaseSerial switch
+            {
+                _ when lowerCaseSerial.Contains("right") => DeviceRole.Right,
+                _ when lowerCaseSerial.Contains("left") => DeviceRole.Left,
+                _ => controllerRole
+            };
 
             // Get the controller battery percentage as a float value
             float batteryLevel = _ovrSystem.GetFloatTrackedDeviceProperty(controllerIndex,
@@ -696,7 +711,7 @@ namespace Station
                     $"Battery Level: {formattedBatteryLevel}%", 
                     MockConsole.LogLevel.Verbose);
                 
-                SessionController.vrHeadset?.GetStatusManager().UpdateController(
+                SessionController.VrHeadset?.GetStatusManager().UpdateController(
                     serialNumber, controllerRole, "battery", formattedBatteryLevel);
             }
             else
@@ -720,8 +735,8 @@ namespace Station
             var serialNumber = GetSerialNumber(baseStationIndex);
             var isConnected = IsDeviceConnected(baseStationIndex);
             var firmwareUpdateRequired = GetFirmwareUpdateRequired(baseStationIndex);
-            SessionController.vrHeadset?.GetStatusManager().UpdateBaseStation(serialNumber, "tracking", isConnected ? DeviceStatus.Connected : DeviceStatus.Lost);
-            SessionController.vrHeadset?.GetStatusManager().UpdateBaseStation(serialNumber, "firmware_update_required", firmwareUpdateRequired);
+            SessionController.VrHeadset?.GetStatusManager().UpdateBaseStation(serialNumber, "tracking", isConnected ? DeviceStatus.Connected : DeviceStatus.Lost);
+            SessionController.VrHeadset?.GetStatusManager().UpdateBaseStation(serialNumber, "firmware_update_required", firmwareUpdateRequired);
         }
         #endregion
         

@@ -3,19 +3,18 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 using LeadMeLabsLibrary.Station;
 
 namespace Station._headsets
 {
-    public class VivePro1 : Headset, IVrHeadset
+    public class ViveFocus3 : Headset, IVrHeadset
     {
         private Statuses Statuses { get; } = new();
 
         /// <summary>
-        /// The absolute path of the ViveWireless executable on the local machine.
+        /// The absolute path of the Vive Business Streaming executable on the local machine.
         /// </summary>
-        private const string Vive = "C:/Program Files/VIVE Wireless/ConnectionUtility/HtcConnectionUtility.exe";
+        private const string Vive = @"C:\Program Files\VIVE Business Streaming\RRConsole\RRConsole.exe";
 
         public Statuses GetStatusManager()
         {
@@ -38,7 +37,7 @@ namespace Station._headsets
         /// <returns></returns>
         public string GetHeadsetManagementProcessName()
         {
-            return "HtcConnectionUtility";
+            return "RRServer";
         }
 
         /// <summary>
@@ -55,7 +54,7 @@ namespace Station._headsets
 
         public List<string> GetProcessesToQuery()
         {
-            return new List<string> { "vrmonitor", "steam", "HtcConnectionUtility", "steamwebhelper" };
+            return new List<string> { "vrmonitor", "steam", "RRConsole", "RRServer", "steamwebhelper" };
         }
         
         /// <summary>
@@ -80,56 +79,55 @@ namespace Station._headsets
             CommandLine.StartProgram(SessionController.Steam, " -login " + 
                 Environment.GetEnvironmentVariable("SteamUserName", EnvironmentVariableTarget.Process) + " " + 
                 Environment.GetEnvironmentVariable("SteamPassword", EnvironmentVariableTarget.Process) + " steam://rungameid/250820"); //Open up steam and run steamVR
-            CommandLine.StartProgram(Vive); //Start ViveWireless up
+            CommandLine.StartProgram(Vive); //Start Vive business streaming
 
             MinimizeSoftware();
         }
 
         public void MonitorVrConnection()
         {
-            var directory = new DirectoryInfo(@"C:\ProgramData\VIVE Wireless\ConnectionUtility\Log");
+            var directory = new DirectoryInfo(@"C:\ProgramData\HTC\ViveSoftware\ViveRR\Log");
             var file = directory.GetFiles()
+                .Where(f => f.Name.Contains("RRConsole"))
                 .OrderByDescending(f => f.LastWriteTime)
                 .First();
+            
+            bool containsOnHmdReady = false; // Flag to track if the string is found
             ReverseLineReader reverseLineReader = new ReverseLineReader(file.FullName, Encoding.Unicode);
             IEnumerator<string?> enumerator = reverseLineReader.GetEnumerator();
             do
             {
                 string? current = enumerator.Current;
-                if (current == null)
-                {
-                    continue;
-                }
-                if (current.Contains("Terminated"))
-                {
-                    enumerator.Dispose();
-                    Statuses.UpdateHeadset(VrManager.Software, DeviceStatus.Off);
-                    return;
-                }
-
-                if (!current.Contains("Connection Status set to")) continue;
+                if (current == null) continue;
+                if (!current.Contains("OnHMDReady")) continue;
+                containsOnHmdReady = true;
+                
                 switch (Statuses.SoftwareStatus)
                 {
-                    case DeviceStatus.Connected or DeviceStatus.Off when current.Contains("CONNECTION_STATUS_SCANNING"):
+                    case DeviceStatus.Connected or DeviceStatus.Off when current.Contains("False"):
                         Statuses.UpdateHeadset(VrManager.Software, DeviceStatus.Lost);
                         break;
                     
-                    case DeviceStatus.Lost or DeviceStatus.Off when current.Contains("CONNECTION_STATUS_CONNECTED"):
+                    case DeviceStatus.Lost or DeviceStatus.Off when current.Contains("True"):
                         Statuses.UpdateHeadset(VrManager.Software, DeviceStatus.Connected);
                         break;
                 }
                 enumerator.Dispose();
             } while (enumerator.MoveNext());
+
+            //The software is running but no headset has connected yet.
+            if (!containsOnHmdReady)
+            {
+                Statuses.UpdateHeadset(VrManager.Software, DeviceStatus.Lost);
+            }
         }
 
         /// <summary>
         /// Kill off the Steam VR process.
         /// </summary>
-        public async void StopProcessesBeforeLaunch()
+        public void StopProcessesBeforeLaunch()
         {
-            CommandLine.QueryVRProcesses(new List<string> { "vrmonitor" }, true);
-            
-            await Task.Delay(3000);
+            //Not currently required for ViveFocus3
         }
     }
 }

@@ -6,7 +6,7 @@ namespace Station
 {
     internal class ViveWrapper : Wrapper
     {
-        public static string wrapperType = "Vive";
+        public const string WrapperType = "Vive";
 
         public Experience? GetLastExperience()
         {
