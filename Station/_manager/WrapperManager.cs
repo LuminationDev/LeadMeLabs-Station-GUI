@@ -48,6 +48,8 @@ namespace Station
         /// </summary>
         private void ValidateManifestFiles()
         {
+            //TODO remove Oculus/CoreData/Manifests that have steam apps
+            
             //Location is hardcoded for now
             ManifestReader.ModifyBinaryPath(ReviveScripts.ReviveManifest, @"C:/Program Files/Revive");
         }

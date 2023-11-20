@@ -4,7 +4,10 @@ using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
 using LeadMeLabsLibrary;
+using Station._config;
 using Station._monitoring;
+using Station._network;
+using Station._utils;
 
 namespace Station
 {
@@ -58,6 +61,8 @@ namespace Station
         public static string? macAddress = null;
         private static string? versionNumber = null;
         private static Timer? variableCheck;
+
+        public static bool isNucUtf8 = true;
 
         /// <summary>
         /// Starts the server running on the local machine
@@ -315,9 +320,8 @@ namespace Station
             IPAddress? address = null;
             int? port = null;
             
-            string source =
-                $"Station,{Environment.GetEnvironmentVariable("StationId", EnvironmentVariableTarget.Process)}";
-            string response = $"{source}:{destination}:{actionNamespace}";
+            string source = $"Station,{Environment.GetEnvironmentVariable("StationId", EnvironmentVariableTarget.Process)}";
+            string? response = $"{source}:{destination}:{actionNamespace}";
             if (additionalData != null)
             {
                 response = $"{response}:{additionalData}";
@@ -329,6 +333,7 @@ namespace Station
                 port = Int32.Parse(destination.Substring(3).Split(":")[1]);
                 response = additionalData;
             }
+            if (response == null) return;
 
             Logger.WriteLog($"Sending: {response}", MockConsole.LogLevel.Normal, writeToLog);
 
@@ -337,8 +342,18 @@ namespace Station
                 Logger.WriteLog("Encryption key not set", MockConsole.LogLevel.Normal);
                 return;
             }
+
+            string encryptedText;
+            if (isNucUtf8)
+            {
+                encryptedText = EncryptionHelper.Encrypt(response, key);
+            }
+            else
+            {
+                encryptedText = EncryptionHelper.UnicodeEncrypt(response, key);
+            }
             
-            SocketClient client = new(EncryptionHelper.Encrypt(response, key));
+            SocketClient client = new(encryptedText);
             if (address != null && port != null)
             {
                 client.Send(writeToLog, address, port);
