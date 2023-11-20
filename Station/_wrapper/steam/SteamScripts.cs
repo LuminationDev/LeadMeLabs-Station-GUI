@@ -129,7 +129,7 @@ namespace Station
         public static List<string>? LoadAvailableGames()
         {
             //Close Steam if it is open
-            CommandLine.QueryVRProcesses(WrapperMonitoringThread.SteamProcesses, true);
+            CommandLine.QueryVRProcesses(WrapperMonitoringThread.steamProcesses, true);
 
             if (!Network.CheckIfConnectedToInternet())
             {
@@ -144,7 +144,7 @@ namespace Station
         private static List<string> AddInstalledSteamApplicationsFromDirectoryToList(List<string> list, string directoryPath)
         {
             List<string> blacklistedGames = new List<string>();
-            List<string> approvedGames = getParentalApprovedGames();
+            List<string> approvedGames = GetParentalApprovedGames();
             Logger.WriteLog("Approved games length: " + approvedGames.Count, MockConsole.LogLevel.Debug);
             blacklistedGames.Add("1635730"); // vive console // todo this needs to be abstracted
             if (Directory.Exists(directoryPath))
