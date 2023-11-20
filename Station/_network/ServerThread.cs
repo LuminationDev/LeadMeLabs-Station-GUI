@@ -179,6 +179,12 @@ public class ServerThread
             {
                 Manager.isNucUtf8 = false;
             }
+            else
+            {
+                //The NUC has been restarted and assumes the Station can't handle Unicode
+                connectionMessage = false;
+                Manager.isNucUtf8 = true;
+            }
         }
         catch (Exception e)
         {
