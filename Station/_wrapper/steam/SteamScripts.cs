@@ -165,6 +165,8 @@ namespace Station
         private static List<string> AddInstalledSteamApplicationsFromDirectoryToList(List<string> list, string directoryPath)
         {
             List<string> blacklistedGames = new List<string>();
+            List<string> approvedGames = getParentalApprovedGames();
+            Logger.WriteLog("Approved games length: " + approvedGames.Count, MockConsole.LogLevel.Debug);
             blacklistedGames.Add("1635730"); // vive console // todo this needs to be abstracted
             if (Directory.Exists(directoryPath))
             {
@@ -179,8 +181,12 @@ namespace Station
                         {
                             continue;
                         }
-                        list.Add($"{SteamWrapper.wrapperType}|{acfReader.appId}|{acfReader.gameName}");
-                        WrapperManager.StoreApplication(SteamWrapper.wrapperType, acfReader.appId, acfReader.gameName); // todo, I don't like this line here as it's a side-effect to the function
+
+                        if (approvedGames.Count == 0 || approvedGames.Contains(acfReader.appId))
+                        {
+                            list.Add($"{SteamWrapper.wrapperType}|{acfReader.appId}|{acfReader.gameName}");
+                            WrapperManager.StoreApplication(SteamWrapper.wrapperType, acfReader.appId, acfReader.gameName); // todo, I don't like this line here as it's a side-effect to the function
+                        }
                     }
                 }
             }
