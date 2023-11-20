@@ -108,14 +108,9 @@ public class SoftwareChecks
         }
         
         //Read the manifest
-        using StreamReader r = new StreamReader(manifestPath);
-        
-        //Read and decipher the encrypted manifest
-        string encryptedJson = r.ReadToEnd();
-        string json = EncryptionHelper.UnicodeDecryptNode(encryptedJson);
+        string? decryptedText = EncryptionHelper.DetectFileEncryption(manifestPath);
 
-        dynamic? array = JsonConvert.DeserializeObject(json);
-
+        dynamic? array = JsonConvert.DeserializeObject(decryptedText);
         if (array == null)
         {
             qaCheck.SetFailed("Failed to DeserializeObject in file: " + manifestPath);
