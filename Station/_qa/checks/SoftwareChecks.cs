@@ -112,7 +112,7 @@ public class SoftwareChecks
         
         //Read and decipher the encrypted manifest
         string encryptedJson = r.ReadToEnd();
-        string json = EncryptionHelper.DecryptNode(encryptedJson);
+        string json = EncryptionHelper.UnicodeDecryptNode(encryptedJson);
 
         dynamic? array = JsonConvert.DeserializeObject(json);
 
