@@ -15,8 +15,6 @@ public static class DotEnv
     /// </summary>
     public static Task<bool> Load()
     {
-        //TODO make a call to a secure database in the future
-        
         try
         {
             if (!File.Exists(FilePath))

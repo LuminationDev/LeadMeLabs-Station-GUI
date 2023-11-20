@@ -100,7 +100,6 @@ public class SocketClient
                 string headerMessageType = "text";
                 byte[] headerMessageTypeBytes;
                 
-                //TODO determine connection type
                 if (Manager.isNucUtf8)
                 {
                     Console.WriteLine($"Sending UTF-8 encoded message");

@@ -110,7 +110,6 @@ public class SocketFile
                 // Construct and send the header
                 string headerMessageType = this._type;
                 byte[] headerMessageTypeBytes;
-                //TODO determine connection type
                 if (Manager.isNucUtf8)
                 {
                     headerMessageTypeBytes = System.Text.Encoding.UTF8.GetBytes(headerMessageType);
@@ -130,7 +129,6 @@ public class SocketFile
                 string fileName = _name;
                 byte[] fileNameBytes;
                 
-                //TODO determine connection type
                 if (Manager.isNucUtf8)
                 {
                     fileNameBytes = System.Text.Encoding.UTF8.GetBytes(fileName);

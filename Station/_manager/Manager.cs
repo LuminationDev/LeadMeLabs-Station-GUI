@@ -343,7 +343,6 @@ namespace Station
             }
 
             string encryptedText;
-            //TODO determine connection type
             if (isNucUtf8)
             {
                 encryptedText = EncryptionHelper.Encrypt(response, key);
