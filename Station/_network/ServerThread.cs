@@ -131,7 +131,7 @@ public class ServerThread
             if (Manager.isNucUtf8)
             {
                 headerMessageType = Encoding.UTF8.GetString(headerMessageTypeBytes);
-                MockConsole.WriteLine($"Header with UTF8: {headerMessageType}", MockConsole.LogLevel.Normal);
+                MockConsole.WriteLine($"Header with UTF8: {headerMessageType}", MockConsole.LogLevel.Verbose);
             }
             else
             {
@@ -173,7 +173,7 @@ public class ServerThread
         try
         {
             string test = Encoding.Unicode.GetString(headerMessageTypeBytes);
-            MockConsole.WriteLine($"Header with unicode: {test}", MockConsole.LogLevel.Normal);
+            MockConsole.WriteLine($"Header with unicode: {test}", MockConsole.LogLevel.Verbose);
 
             if (test.Equals("text") || test.Equals("image") || test.Equals("file"))
             {
@@ -232,8 +232,6 @@ public class ServerThread
         {
             data = EncryptionHelper.UnicodeDecrypt(data, key);
         }
-
-        Logger.WriteLog($"Decrypted Text received : {data}", MockConsole.LogLevel.Normal);
 
         //Close the client connection
         clientConnection.Close();
