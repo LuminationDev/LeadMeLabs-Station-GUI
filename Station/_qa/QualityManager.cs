@@ -90,7 +90,7 @@ public static class QualityManager
                         break;
                     
                     case "network_checks":
-                        result = JsonConvert.SerializeObject(NetworkChecks.RunQa(labType));
+                        result = JsonConvert.SerializeObject(NetworkChecks.RunQa(parameters?.GetValue("networkType")?.ToString() ?? "Milesight"));
 
                         if (labType.ToLower().Equals("online"))
                         {

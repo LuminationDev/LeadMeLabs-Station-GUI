@@ -10,14 +10,57 @@ namespace Station._qa.checks;
 public class NetworkChecks
 {
     private List<QaCheck> _qaChecks = new();
-    public List<QaCheck> RunQa(string labType)
+    
+    public List<QaCheck> RunQa(string networkType)
     {
+        if (networkType.Equals("Milesight"))
+        {
+            _qaChecks.AddRange(GetNetworkInterfaceChecks());
+        }
+        else
+        {
+            _qaChecks.Add(IsStaticIpAddressPresent());
+        }
+        
         _qaChecks.Add(IsAllowedThroughFirewall());
         _qaChecks.Add(IsLauncherAllowedThroughFirewall());
         _qaChecks.Add(CanAccessStationHeroku());
         _qaChecks.Add(CanAccessLauncherHeroku());
-        _qaChecks.AddRange(GetNetworkInterfaceChecks());
         return _qaChecks;
+    }
+    
+    /// <summary>
+    /// Check if the currently active ip address is a statically set one.
+    /// </summary>
+    private QaCheck IsStaticIpAddressPresent()
+    {
+        QaCheck qaCheck = new QaCheck("static_ip_is_present");
+
+        IPAddress ipAddress = IPAddress.Parse(Manager.localEndPoint.Address.ToString());
+        
+        NetworkInterface[] networkInterfaces = NetworkInterface.GetAllNetworkInterfaces();
+        foreach (NetworkInterface networkInterface in networkInterfaces)
+        {
+            IPInterfaceProperties ipProperties = networkInterface.GetIPProperties();
+
+            foreach (UnicastIPAddressInformation unicastAddress in ipProperties.UnicastAddresses)
+            {
+                if (unicastAddress.Address.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork
+                    && IPAddress.Equals(unicastAddress.Address, ipAddress))
+                {
+                    if (unicastAddress.AddressPreferredLifetime == uint.MaxValue)
+                    {
+                        qaCheck.SetPassed($"{ipAddress} is a static IP address.");
+                    }
+                    else
+                    {
+                        qaCheck.SetFailed($"{ipAddress} is not a static IP address.");
+                    }
+                }
+            }
+        }
+
+        return qaCheck;
     }
     
     /// <summary>
