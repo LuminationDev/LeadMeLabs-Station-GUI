@@ -171,8 +171,36 @@ namespace Station._qa.checks
                             return qaCheck;
                         }
                     }
+                }
+                catch (Exception e)
+                {
+                    SentrySdk.CaptureException(e);
+                }
+            }
+            
+            string secondFileLocation = $"C:\\Program Files (x86)\\Steam\\userdata\\{_steamId}\\config\\localconfig.vdf";
+            if (File.Exists(secondFileLocation))
+            {
+                try
+                {
+                    string[] lines = File.ReadAllLines(secondFileLocation);
+                    foreach (var line in lines)
+                    {
+                        if (line.Contains("SignIntoFriends"))
+                        {
+                            if (line.Contains("0"))
+                            {
+                                qaCheck.SetPassed(null);
+                            }
+                            else
+                            {
+                                qaCheck.SetFailed("Setting is set to false in file: " + secondFileLocation);
+                            }
+
+                            return qaCheck;
+                        }
+                    }
                     qaCheck.SetFailed("Could not find setting for disabling friends. It is likely still on.");
-                    return qaCheck;
                 }
                 catch (Exception e)
                 {
@@ -181,11 +209,14 @@ namespace Station._qa.checks
             }
             else
             {
-                qaCheck.SetFailed("Could not find settings file: " + fileLocation);
-                return qaCheck;
+                qaCheck.SetFailed("Could not find settings file at either of " + fileLocation + "," + secondFileLocation);
             }
 
-            qaCheck.SetFailed("Unknown failure.");
+            if (qaCheck.PassedStatusNotSet())
+            {
+                qaCheck.SetFailed("Unknown failure.");
+            }
+            
             return qaCheck;
         }
         
