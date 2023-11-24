@@ -21,6 +21,7 @@ public class SoftwareChecks
             _qaChecks.Add(await IsLatestSoftwareVersion());
         }
         _qaChecks.Add(IsSetToProductionMode(labType));
+        _qaChecks.Add(IsLauncherInCorrectLocation());
         _qaChecks.Add(IsSetVolPresent());
         _qaChecks.Add(IsSteamCmdPresent());
         _qaChecks.Add(IsSteamCmdInitialised());
@@ -140,6 +141,32 @@ public class SoftwareChecks
         }
 
         qaCheck.SetPassed("Launcher is defaulting to production");
+        return qaCheck;
+    }
+    
+    private QaCheck IsLauncherInCorrectLocation()
+    {
+        QaCheck qaCheck = new QaCheck("launcher_install_location");
+
+        bool launcherInCorrectLocation =
+            File.Exists("C:\\Users\\Lumination\\AppData\\Local\\Programs\\LeadMe\\LeadMe.exe");
+        bool launcherInIncorrectLocation = File.Exists("C:\\Users\\Lumination\\Launcher\\LeadMe.exe");
+
+        if (launcherInIncorrectLocation)
+        {
+            qaCheck.SetFailed(
+                "Found launcher installed in incorrect location at: C:\\Users\\Lumination\\Launcher\\LeadMe.exe");
+            return qaCheck;
+        }
+
+        if (!launcherInCorrectLocation)
+        {
+            qaCheck.SetFailed(
+                "Could not find launcher at correct install location at: C:\\Users\\Lumination\\AppData\\Local\\Programs\\LeadMe\\LeadMe.exe");
+            return qaCheck;
+        }
+
+        qaCheck.SetPassed(null);
         return qaCheck;
     }
 
