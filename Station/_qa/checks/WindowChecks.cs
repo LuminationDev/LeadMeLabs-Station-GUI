@@ -291,7 +291,6 @@ public class WindowChecks
         list.Add(CheckEnvironmentVariable("LabLocation", "environment_lab_location"));
         list.Add(CheckEnvironmentVariable("SteamUserName", "environment_steam_username"));
         list.Add(CheckEnvironmentVariable("SteamPassword", "environment_steam_password"));
-        list.Add(CheckEnvironmentVariable("UserDirectory", "environment_user_directory"));
         list.Add(CheckEnvironmentVariable("NucAddress", "environment_nuc_address"));
         list.Add(CheckEnvironmentVariable("StationId", "environment_station_id"));
         list.Add(CheckEnvironmentVariable("AppKey", "environment_encryption_key"));

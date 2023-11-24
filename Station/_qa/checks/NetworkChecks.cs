@@ -90,7 +90,7 @@ public class NetworkChecks
     {
         QaCheck qaCheck = new QaCheck("launcher_allowed_through_firewall");
 
-        string result = FirewallManagement.IsProgramAllowedThroughFirewall($"C:\\Users\\{Environment.GetEnvironmentVariable("UserDirectory")}\\AppData\\Local\\Programs\\LeadMe") ?? "Unknown";
+        string result = FirewallManagement.IsProgramAllowedThroughFirewall($"C:\\Users\\Lumination\\AppData\\Local\\Programs\\LeadMe") ?? "Unknown";
         if (result.Equals("Allowed"))
         {
             qaCheck.SetPassed(null);
