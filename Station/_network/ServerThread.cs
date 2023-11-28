@@ -131,14 +131,12 @@ public class ServerThread
             if (Manager.isNucUtf8)
             {
                 headerMessageType = Encoding.UTF8.GetString(headerMessageTypeBytes);
-                MockConsole.WriteLine($"Header with UTF8: {headerMessageType}", MockConsole.LogLevel.Verbose);
             }
             else
             {
                 headerMessageType = Encoding.Unicode.GetString(headerMessageTypeBytes);
             }
             
-            MockConsole.WriteLine($"Header type: {headerMessageType}", MockConsole.LogLevel.Debug);
             switch (headerMessageType)
             {
                 case "text":
@@ -173,8 +171,6 @@ public class ServerThread
         try
         {
             string test = Encoding.Unicode.GetString(headerMessageTypeBytes);
-            MockConsole.WriteLine($"Header with unicode: {test}", MockConsole.LogLevel.Verbose);
-
             if (test.Equals("text") || test.Equals("image") || test.Equals("file"))
             {
                 Manager.isNucUtf8 = false;
