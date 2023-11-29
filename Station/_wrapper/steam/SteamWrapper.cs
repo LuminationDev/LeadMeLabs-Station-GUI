@@ -9,6 +9,7 @@ using Newtonsoft.Json.Linq;
 using Station._commandLine;
 using Station._monitoring;
 using Station._utils;
+using Debugger = Station._utils.Debugger;
 using Timer = System.Timers.Timer;
 
 namespace Station
@@ -402,8 +403,10 @@ namespace Station
         /// <summary>
         /// Launch SteamVR as a process, SteamVR's appID is (250820)
         /// </summary>
-        public static void LauncherSteamVR()
+        public static void LaunchSteamVR()
         {
+            if (!Debugger.GetAutoStart()) return;
+            
             currentProcess = new Process();
             currentProcess.StartInfo.FileName = SessionController.Steam;
             currentProcess.StartInfo.Arguments = LaunchParams + 250820;

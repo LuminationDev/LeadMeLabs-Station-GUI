@@ -156,7 +156,7 @@ namespace Station
                 await Task.Delay(5000);
 
                 //Launch SteamVR
-                SteamWrapper.LauncherSteamVR();
+                SteamWrapper.LaunchSteamVR();
                 await Task.Delay(3000);
 
                 bool steamvr = await MonitorLoop(() => ProcessManager.GetProcessesByName("vrmonitor").Length == 0);

@@ -4,6 +4,7 @@ using System.Linq;
 using System.Timers;
 using Station._commandLine;
 using Station._utils;
+using Debugger = Station._utils.Debugger;
 
 namespace Station._headsets;
 
@@ -53,6 +54,8 @@ public class Headset
     /// <param name="vrProcesses">Collection of strings representing VR-related processes to be minimized.</param>
     private void MinimizeVrProcesses(IEnumerable<string> vrProcesses)
     {
+        if (!Debugger.GetMinimisePrograms()) return;
+        
         Logger.WriteLog("minimizing processes", MockConsole.LogLevel.Verbose);
         foreach (var process in vrProcesses.Select(ProcessManager.GetProcessesByName).SelectMany(processes => processes))
         {

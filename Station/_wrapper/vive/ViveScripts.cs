@@ -35,6 +35,12 @@ namespace Station
         public static async Task<bool> WaitForVive(string wrapperType)
         {
             if (SessionController.VrHeadset == null) return false;
+            
+            if (!Debugger.GetAutoStart())
+            {
+                ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage($"SoftwareState,Debug Mode"), TimeSpan.FromSeconds(0));
+                return false;
+            }
 
             //Wait for the Vive Check
             Logger.WriteLog("WaitForVive - Attempting to launch an application, vive status is: " +
