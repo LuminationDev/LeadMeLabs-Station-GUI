@@ -31,6 +31,7 @@ namespace Station
             NotifyIconExitCommand = new RelayCommand(() => { Application.Current.Shutdown(); });
             
             // Debug processes
+            ChangeViewConsoleValue = new RelayCommand(() => ViewConsoleWindow = !ViewConsoleWindow);
             ChangeMinimisingValue = new RelayCommand(() => MinimiseVrPrograms = !MinimiseVrPrograms);
             AutoStartVrValue = new RelayCommand(() => AutoStartVrPrograms = !AutoStartVrPrograms);
         }
@@ -49,6 +50,7 @@ namespace Station
         public ICommand ResetSteamVrProcess { get; }
         
         // Debug bindings
+        public ICommand ChangeViewConsoleValue { get; }
         public ICommand ChangeMinimisingValue { get; }
         public ICommand AutoStartVrValue { get; }
 
@@ -114,7 +116,31 @@ namespace Station
         /// <summary>
         /// Below are the debug control logic from the UI into the program. 
         /// </summary>
+        private bool ViewConsoleWindow
+        {
+            get => Debugger.viewConsoleWindow;
+            set
+            {
+                Debugger.viewConsoleWindow = value;
+                ViewConsoleText = value ? "Yes" : "No";
+                if (!value)
+                {
+                    MockConsole.ClearConsole();
+                }
+            }
+        }
         
+        private string _viewConsoleText = "Yes";
+        public string ViewConsoleText
+        {
+            get => _viewConsoleText;
+            private set
+            {
+                if (_viewConsoleText == value) return;
+                _viewConsoleText = value;
+                OnPropertyChanged();
+            }
+        }
         
         private bool MinimiseVrPrograms
         {

@@ -3,6 +3,11 @@ namespace Station._utils;
 public static class Debugger
 {
     /// <summary>
+    /// Used to toggle the console window on or off
+    /// </summary>
+    public static bool viewConsoleWindow = true;
+    
+    /// <summary>
     /// Used to control if the VR programs should minimise or not
     /// </summary>
     public static bool minimiseVrPrograms = true;
