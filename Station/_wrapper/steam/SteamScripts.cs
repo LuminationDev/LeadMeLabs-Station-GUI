@@ -79,7 +79,7 @@ namespace Station
                         Task.Delay(5000).Wait();
 
                         //Relaunch SteamVR
-                        SteamWrapper.LauncherSteamVR();
+                        SteamWrapper.LaunchSteamVR();
 
                         enumerator.Dispose();
                     }

@@ -237,6 +237,12 @@ namespace Station
 
                 SessionController.PassStationMessage("Processing,false");
 
+                if (!Debugger.GetAutoStart())
+                {
+                    ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage($"SoftwareState,Debug Mode"), TimeSpan.FromSeconds(0));
+                    return;
+                }
+
                 ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage($"SoftwareState,Starting VR processes"), TimeSpan.FromSeconds(0));
                 SessionController.VrHeadset.StartVrSession();
                 WaitForVRProcesses();
