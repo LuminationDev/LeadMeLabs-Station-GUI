@@ -248,7 +248,6 @@ namespace Station
 
             foreach (var line in installedGames)
             {
-                Console.WriteLine(line);
                 if (line.StartsWith("AppID"))
                 {
                     Logger.WriteLog(line, MockConsole.LogLevel.Debug);

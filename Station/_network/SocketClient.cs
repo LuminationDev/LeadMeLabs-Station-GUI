@@ -102,12 +102,10 @@ public class SocketClient
                 
                 if (Manager.isNucUtf8)
                 {
-                    Console.WriteLine($"Sending UTF-8 encoded message");
                     headerMessageTypeBytes = System.Text.Encoding.UTF8.GetBytes(headerMessageType);
                 }
                 else
                 {
-                    Console.WriteLine($"Sending Unicode encoded message");
                     headerMessageTypeBytes = System.Text.Encoding.Unicode.GetBytes(headerMessageType);
                 }
 
