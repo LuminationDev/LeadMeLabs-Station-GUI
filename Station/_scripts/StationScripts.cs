@@ -143,6 +143,7 @@ namespace Station
                 //Shut down the server first, so the NUC cannot send off any more Pings
                 Manager.StopServer();
                 Manager.SendResponse(source, "Station", "SetValue:status:Off");
+                Manager.SendResponse(source, "Station", "SetValue:state:");
                 Manager.SendResponse(source, "Station", "SetValue:gameName:");
                 Manager.SendResponse(source, "Station", "SetValue:gameId:");
             }
