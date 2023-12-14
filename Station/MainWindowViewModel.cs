@@ -5,6 +5,7 @@ using System.Windows;
 using System.Windows.Input;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Station._utils;
 
 namespace Station
 {
@@ -19,15 +20,20 @@ namespace Station
             LoadedCommand = new RelayCommand(Loaded);
             ClosingCommand = new RelayCommand<CancelEventArgs>(Closing);
 
-            StartStationCommand = new RelayCommand(() => Manager.StartProgram());
-            RestartStationCommand = new RelayCommand(() => Manager.RestartProgram());
-            StopStationCommand = new RelayCommand(() => Manager.StopProgram());
-            ChangeLogLevelCommand = new RelayCommand(() => MockConsole.ChangeLogLevel());
-            StopCurrentProcess = new RelayCommand(() => WrapperManager.StopAProcess());
-            ResetSteamVRProcess = new RelayCommand(() => RestartVR());
+            StartStationCommand = new RelayCommand(Manager.StartProgram);
+            RestartStationCommand = new RelayCommand(Manager.RestartProgram);
+            StopStationCommand = new RelayCommand(Manager.StopProgram);
+            ChangeLogLevelCommand = new RelayCommand(MockConsole.ChangeLogLevel);
+            StopCurrentProcess = new RelayCommand(WrapperManager.StopAProcess);
+            ResetSteamVrProcess = new RelayCommand(RestartVr);
 
             NotifyIconOpenCommand = new RelayCommand(() => { WindowState = WindowState.Normal; });
             NotifyIconExitCommand = new RelayCommand(() => { Application.Current.Shutdown(); });
+            
+            // Debug processes
+            ChangeViewConsoleValue = new RelayCommand(() => ViewConsoleWindow = !ViewConsoleWindow);
+            ChangeMinimisingValue = new RelayCommand(() => MinimiseVrPrograms = !MinimiseVrPrograms);
+            AutoStartVrValue = new RelayCommand(() => AutoStartVrPrograms = !AutoStartVrPrograms);
         }
 
         public ICommand LoadedCommand { get; }
@@ -41,7 +47,12 @@ namespace Station
         public ICommand StopStationCommand { get; }
         public ICommand ChangeLogLevelCommand { get; }
         public ICommand StopCurrentProcess { get; }
-        public ICommand ResetSteamVRProcess { get; }
+        public ICommand ResetSteamVrProcess { get; }
+        
+        // Debug bindings
+        public ICommand ChangeViewConsoleValue { get; }
+        public ICommand ChangeMinimisingValue { get; }
+        public ICommand AutoStartVrValue { get; }
 
         public WindowState WindowState
         {
@@ -66,7 +77,7 @@ namespace Station
             set => SetProperty(ref _notifyRequest, value);
         }
 
-        private void RestartVR()
+        private void RestartVr()
         {
             new Task(() =>
             {
@@ -92,7 +103,7 @@ namespace Station
         }
 
         /// <summary>
-        /// Used for binding the MainWindow Mockconsole
+        /// Used for binding the MainWindow MockConsole
         /// </summary>
         private string _consoleText = "";
 
@@ -100,6 +111,79 @@ namespace Station
         {
             get => _consoleText;
             set => SetProperty(ref _consoleText, value);
+        }
+        
+        /// <summary>
+        /// Below are the debug control logic from the UI into the program. 
+        /// </summary>
+        private bool ViewConsoleWindow
+        {
+            get => Debugger.viewConsoleWindow;
+            set
+            {
+                Debugger.viewConsoleWindow = value;
+                ViewConsoleText = value ? "Yes" : "No";
+                if (!value)
+                {
+                    MockConsole.ClearConsole();
+                }
+            }
+        }
+        
+        private string _viewConsoleText = "Yes";
+        public string ViewConsoleText
+        {
+            get => _viewConsoleText;
+            private set
+            {
+                if (_viewConsoleText == value) return;
+                _viewConsoleText = value;
+                OnPropertyChanged();
+            }
+        }
+        
+        private bool MinimiseVrPrograms
+        {
+            get => Debugger.minimiseVrPrograms;
+            set
+            {
+                Debugger.minimiseVrPrograms = value;
+                MinimisingText = value ? "Yes" : "No";
+            }
+        }
+        
+        private string _minimisingText = "Yes";
+        public string MinimisingText
+        {
+            get => _minimisingText;
+            private set
+            {
+                if (_minimisingText == value) return;
+                _minimisingText = value;
+                OnPropertyChanged();
+            }
+        }
+        
+        private bool AutoStartVrPrograms
+        {
+            get => Debugger.autoStartVrPrograms;
+            set
+            {
+                Debugger.autoStartVrPrograms = value;
+                AutoStartSteamText = value ? "Yes" : "No";
+            }
+        }
+        
+        private string _autoStartSteamText = "Yes";
+        public string AutoStartSteamText
+        {
+            get => _autoStartSteamText;
+            private set
+            {
+                if (_autoStartSteamText == value) return;
+                _autoStartSteamText = value;
+                OnPropertyChanged();
+            }
         }
     }
 }

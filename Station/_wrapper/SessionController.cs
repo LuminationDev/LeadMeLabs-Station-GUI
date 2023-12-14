@@ -2,6 +2,7 @@
 using System.Threading;
 using System.Threading.Tasks;
 using Station._headsets;
+using Station._utils;
 
 namespace Station
 {
@@ -58,6 +59,8 @@ namespace Station
         /// <param name="type">A string of what type of experience is being loaded [Custom, Steam, Vive, etc]</param>
         public static void StartVRSession(string type)
         {
+            if (!Debugger.GetAutoStart()) return;
+            
             ExperienceType = type;
             switch (ExperienceType)
             {

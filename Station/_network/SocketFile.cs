@@ -92,7 +92,6 @@ public class SocketFile
             if (!task.Result)
             {
                 tokenSource.Cancel();
-                Console.WriteLine("Socket timeout: " + Manager.remoteEndPoint.Address);
                 throw new SocketException();
             }
 
