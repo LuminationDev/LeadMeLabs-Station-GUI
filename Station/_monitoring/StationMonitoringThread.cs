@@ -61,6 +61,7 @@ public static class StationMonitoringThread
         new Task(OpenVRCheck).Start(); //Perform as separate task in case SteamVR is restarting.
         SetVolCheck();
         TemperatureCheck();
+        NewSteamProcessesCheck();
 
         Logger.WorkQueue();
     }
@@ -123,6 +124,31 @@ public static class StationMonitoringThread
             
             Logger.WriteLog($"Killing SetVol process: {process.MainWindowTitle}", MockConsole.LogLevel.Error);
             process.Kill();
+        }
+    }
+
+    private static void NewSteamProcessesCheck()
+    {
+        Process[] steamProcesses = ProcessManager.GetProcessesByName("steamwebhelper");
+        foreach (var process in steamProcesses)
+        {
+            if (string.IsNullOrEmpty(process.MainWindowTitle)) continue;
+            if (!process.MainWindowTitle.Equals("Steam")) continue;
+
+            if (App.steamProcessId != process.Id)
+            {
+                try
+                {
+                    App.windowEventTracker.Subscribe("Steam", null);
+                }
+                catch (Exception e)
+                {
+                    Logger.WriteLog(e, MockConsole.LogLevel.Error);
+                    SentrySdk.CaptureException(e);
+                }
+                
+                App.steamProcessId = process.Id;
+            }
         }
     }
 
