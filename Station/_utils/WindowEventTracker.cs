@@ -3,6 +3,7 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using Station;
+using InternalDebugger = Station._utils.Debugger;
 
 public class WindowEventTracker
 {
@@ -128,7 +129,7 @@ public class WindowEventTracker
         else if (eventType == 23) // Starts
         {
             Console.WriteLine("maximise");
-            if (DateTime.Now > lastInteraction.AddSeconds(10))
+            if (DateTime.Now > lastInteraction.AddSeconds(10) && InternalDebugger.GetMinimisePrograms())
             {
                 WindowManager.MinimizeProcess(Process.GetProcessById(Convert.ToInt32(m_processId)));
                 lastInteraction = DateTime.Now;
