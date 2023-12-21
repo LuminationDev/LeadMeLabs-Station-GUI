@@ -11,6 +11,7 @@ public class WindowChecks
     private List<QaCheck> _qaChecks = new();
     public List<QaCheck> RunQa(string labType)
     {
+        _qaChecks.Add(GetWindowsVersion());
         _qaChecks.Add(IsWakeOnMagicPacketEnabled());
         _qaChecks.Add(CheckEnvAsync());
         _qaChecks.Add(CheckWallpaper());
@@ -26,6 +27,17 @@ public class WindowChecks
         _qaChecks.AddRange(CheckEnvironmentVariables());
 
         return _qaChecks;
+    }
+    
+    /// <summary>
+    /// Return a QA detail of the Windows version
+    /// </summary>
+    private QaCheck GetWindowsVersion()
+    {
+        QaCheck qaCheck = new QaCheck("windows_version_detail");
+        string version = Environment.OSVersion.Version.ToString();
+        qaCheck.SetDetail(version);
+        return qaCheck;
     }
     
     /// <summary>
