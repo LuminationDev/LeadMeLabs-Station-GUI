@@ -16,6 +16,12 @@ public class QaCheck
     {
         this._id = id;
     }
+    
+    public void SetDetail(string message)
+    {
+        this._passedStatus = "detail";
+        this._message = message;
+    }
 
     public void SetFailed(string message)
     {
