@@ -12,22 +12,12 @@
 		<UseWPF>true</UseWPF>
 		<UseWindowsForms>true</UseWindowsForms>
 		<Nullable>enable</Nullable>
-		<ApplicationIcon>./assets/icon.ico</ApplicationIcon>
+		<ApplicationIcon>./Assets/Icons/tray_neutral.ico</ApplicationIcon>
 		<Configurations>Debug;Release;DevDebug;DevRelease</Configurations>
 		<Version>1.1.9</Version>
 	</PropertyGroup>
 
 	<ItemGroup>
-    <None Remove="assets\icon.ico" />
-    <None Remove="assets\LuminationLogo.png" />
-    <None Remove="assets\offline.ico" />
-    <None Remove="assets\online.ico" />
-    <None Remove="assets\refresh.ico" />
-    <None Remove="_batch\LeadMeLabs-SoftwareChecker.deps.json" />
-    <None Remove="_batch\LeadMeLabs-SoftwareChecker.dll" />
-    <None Remove="_batch\LeadMeLabs-SoftwareChecker.exe" />
-    <None Remove="_batch\LeadMeLabs-SoftwareChecker.pdb" />
-    <None Remove="_batch\LeadMeLabs-SoftwareChecker.runtimeconfig.json" />
     <None Remove="_config\base_config.env" />
     <None Remove="_config\config.txt" />
     <None Remove="_logs\.gitkeep" />
@@ -47,37 +37,7 @@
 	</ItemGroup>
 
   <ItemGroup>
-    <Content Include="assets\LuminationLogo.png">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="assets\loadingspinner.gif">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="assets\offline.ico">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="assets\online.ico">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="assets\refresh.ico">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
     <Content Include="openvr_api.dll">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="_batch\LeadMeLabs-SoftwareChecker.deps.json">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="_batch\LeadMeLabs-SoftwareChecker.dll">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="_batch\LeadMeLabs-SoftwareChecker.exe">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="_batch\LeadMeLabs-SoftwareChecker.pdb">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="_batch\LeadMeLabs-SoftwareChecker.runtimeconfig.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
     <Content Include="_config\base_config.env">
@@ -89,13 +49,88 @@
     <Content Include="_logs\.gitkeep">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <None Remove="assets\openvr_offline.ico" />
-    <Content Include="assets\openvr_offline.ico">
+    <None Remove="Assets\Gifs\loadingSpinner.gif" />
+    <Content Include="Assets\Gifs\loadingSpinner.gif">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <None Remove="assets\openvr_online.ico" />
-    <Content Include="assets\openvr_online.ico">
+    <None Remove="Assets\Icons\experience_play.png" />
+    <Content Include="Assets\Icons\experience_play.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <None Remove="Assets\Icons\experience_stop.png" />
+    <Content Include="Assets\Icons\experience_stop.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <None Remove="Assets\Icons\openvr_offline.ico" />
+    <Content Include="Assets\Icons\openvr_offline.ico">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <None Remove="Assets\Icons\openvr_online.ico" />
+    <Content Include="Assets\Icons\openvr_online.ico">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <None Remove="Assets\Icons\power_restart.png" />
+    <Content Include="Assets\Icons\power_restart.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <None Remove="Assets\Icons\power_software.png" />
+    <Content Include="Assets\Icons\power_software.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <None Remove="Assets\Icons\tray_neutral.ico" />
+    <Content Include="Assets\Icons\tray_neutral.ico">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <None Remove="Assets\Icons\tray_offline.ico" />
+    <Content Include="Assets\Icons\tray_offline.ico">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <None Remove="Assets\Icons\tray_online.ico" />
+    <Content Include="Assets\Icons\tray_online.ico">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <None Remove="Assets\Images\LuminationLogo.png" />
+    <Content Include="Assets\Images\LuminationLogo.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <None Remove="Assets\Images\vr_basestation.svg" />
+    <Content Include="Assets\Images\vr_basestation.svg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <None Remove="Assets\Images\vr_battery_full.png" />
+    <Content Include="Assets\Images\vr_battery_full.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <None Remove="Assets\Images\vr_battery_low.png" />
+    <Content Include="Assets\Images\vr_battery_low.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <None Remove="Assets\Images\vr_battery_med.png" />
+    <Content Include="Assets\Images\vr_battery_med.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <None Remove="Assets\Images\vr_battery_off.png" />
+    <Content Include="Assets\Images\vr_battery_off.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <None Remove="Assets\Images\vr_controller.svg" />
+    <Content Include="Assets\Images\vr_controller.svg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <None Remove="Assets\Images\vr_headset.svg" />
+    <Content Include="Assets\Images\vr_headset.svg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <None Remove="Assets\Gifs\loadingSpinnerTransparent.gif" />
+    <Content Include="Assets\Gifs\loadingSpinnerTransparent.gif">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <None Remove="Assets\Images\default_header.jpg" />
+    <Content Include="Assets\Images\default_header.jpg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Update="_cache\.gitkeep">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
 
@@ -116,19 +151,12 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Content Include="assets\icon.ico">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-  </ItemGroup>
-
-  <ItemGroup>
-    <Page Update="_overlay\Overlay.xaml">
-      <XamlRuntime>$(DefaultXamlRuntime)</XamlRuntime>
-      <SubType>Designer</SubType>
-    </Page>
-  </ItemGroup>
-
-  <ItemGroup>
     <Service Include="{508349b6-6b84-4df5-91f0-309beebad82d}" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Page Update="Components\_overlay\Overlay.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
   </ItemGroup>
 </Project>

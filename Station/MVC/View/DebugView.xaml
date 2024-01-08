@@ -1,0 +1,107 @@
+﻿<UserControl x:Class="Station.MVC.View.DebugView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             mc:Ignorable="d"
+             Background="Transparent"
+             d:DesignHeight="560" d:DesignWidth="700">
+    
+    <Grid Margin="10, 0, 0, 0">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="60"/>
+            <RowDefinition Height="auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+        
+        <TextBlock Grid.Row="0" Text="Debug Panel"
+                   FontFamily="../../Fonts/#Poppins"
+                   Foreground="White"
+                   FontSize="28"
+                   HorizontalAlignment="Left"
+                   Margin="0, 0, 0, 0"/>
+        
+        <StackPanel Grid.Row="1">
+            
+            <!--Auto collect experiences on start up-->
+            <Grid Margin="10" Height="40">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <Label Grid.Column="0"
+                       FontSize="18"
+                       Foreground="White"
+                       Content="Auto minimise VR programs."
+                       HorizontalAlignment="Stretch" 
+                       ToolTip="Toggle if the program should attempt to minimise the various VR software."/>
+
+                <ToggleButton Grid.Column="1"
+                              Height="25"
+                              Style="{StaticResource CustomToggleButtonTheme}" 
+                              IsChecked="{Binding AutoMinimise, Mode=TwoWay}" />
+            </Grid>
+            
+            <!--Auto collect experiences on start up-->
+            <Grid Margin="10" Height="40">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <Label Grid.Column="0"
+                       FontSize="18"
+                       Foreground="White"
+                       Content="Auto start VR software on start up or restart."
+                       HorizontalAlignment="Stretch" 
+                       ToolTip="Toggle if the program should attempt to auto start the different VR software if it detects it has closed."/>
+
+                <ToggleButton Grid.Column="1"
+                              Height="25"
+                              Style="{StaticResource CustomToggleButtonTheme}" 
+                              IsChecked="{Binding AutoStartPrograms, Mode=TwoWay}" />
+            </Grid>
+            
+            <!--Auto scroll the console viewer-->
+            <Grid Margin="10" Height="40">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <Label Grid.Column="0"
+                       FontSize="18"
+                       Foreground="White"
+                       Content="Auto scroll the console window to the end."
+                       HorizontalAlignment="Stretch" 
+                       ToolTip="Toggle if the program should scroll to the end of the console window everytime a new message is logged."/>
+
+                <ToggleButton Grid.Column="1"
+                              Height="25"
+                              Style="{StaticResource CustomToggleButtonTheme}" 
+                              IsChecked="{Binding AutoScroll, Mode=TwoWay}" />
+            </Grid>
+            
+        </StackPanel>
+        
+        <!--Reset all debug statuses-->
+        <StackPanel 
+            Grid.Row="2"
+            Height="50"
+            HorizontalAlignment="Stretch" 
+            VerticalAlignment="Bottom">
+
+            <Button
+                Style="{StaticResource MainButton}"
+                Content="Reset All" 
+                Command="{Binding ResetDebugCommand}"
+                Margin="10"
+                Width="110" 
+                Height="35" 
+                HorizontalAlignment="Right" 
+                VerticalAlignment="Bottom"
+                ToolTip="Open the logs folder."/>
+        </StackPanel>
+    </Grid>
+</UserControl>

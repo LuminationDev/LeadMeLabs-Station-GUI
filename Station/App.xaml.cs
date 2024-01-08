@@ -1,19 +1,23 @@
 ﻿using System;
 using System.Windows;
 using Sentry;
-using Station._utils;
-using Application = System.Windows.Application;
+using Station.Components._commandLine;
+using Station.Components._notification;
+using Station.Components._utils;
+using Station.Components._utils._steamConfig;
+using Station.Components._wrapper;
+using Station.MVC.Controller;
 
 namespace Station
 {
     /// <summary>
     /// Interaction logic for App.xaml
     /// </summary>
-    public partial class App : Application
+    public partial class App
     {
         
         public static int steamProcessId = 0;
-        public static WindowEventTracker? windowEventTracker = null;
+        public static WindowEventTracker? windowEventTracker;
         private void Application_Startup(object sender, StartupEventArgs e)
         {
             if (e.Args.Length > 0 && e.Args[0].Trim().ToLower() == "writeversion")
@@ -36,7 +40,7 @@ namespace Station
             currentDomain.ProcessExit += ProcessExitHandler;
             CheckStorage();
 
-            Manager.StartProgram();
+            MainController.StartProgram();
         }
 
         /// <summary>
@@ -45,7 +49,7 @@ namespace Station
         private static void CheckStorage()
         {
             int? freeStorage = CommandLine.GetFreeStorage();
-            if (freeStorage != null && freeStorage < 10)
+            if (freeStorage is < 10)
             {
                 SentrySdk.CaptureMessage("Low memory detected (" + freeStorage + ") at: " +
                                          (Environment.GetEnvironmentVariable("LabLocation",
@@ -53,26 +57,15 @@ namespace Station
             }
         }
 
-        /// <summary>
-        /// Update the title of the MainWindow, this is designed to show the User the Station ID as well as the Current IP address.
-        /// </summary>
-        /// <param name="title"></param>
-        public static void SetWindowTitle(string title)
-        {
-            Application.Current.Dispatcher.BeginInvoke(new Action(() => {
-                Application.Current.MainWindow.Title = title;
-            }));
-        }
-
-        static void UnhandledExceptionHandler(object sender, UnhandledExceptionEventArgs args)
+        private static void UnhandledExceptionHandler(object sender, UnhandledExceptionEventArgs args)
         {
             Exception e = (Exception)args.ExceptionObject;
             Logger.WriteLog("UnhandledExceptionHandler caught: " + e.Message, MockConsole.LogLevel.Error);
             Logger.WriteLog($"Runtime terminating: {args.IsTerminating}", MockConsole.LogLevel.Error);
             Logger.WorkQueue();
-            Manager.SendResponse("Android", "Station", "SetValue:status:Off");
-            Manager.SendResponse("Android", "Station", "SetValue:gameName:Unexpected error occured, please restart station");
-            Manager.SendResponse("Android", "Station", "SetValue:gameId:");
+            MessageController.SendResponse("Android", "Station", "SetValue:status:Off");
+            MessageController.SendResponse("Android", "Station", "SetValue:gameName:Unexpected error occured, please restart station");
+            MessageController.SendResponse("Android", "Station", "SetValue:gameId:");
             try
             {
                 SentrySdk.CaptureException(e);
@@ -83,74 +76,71 @@ namespace Station
             }
         }
 
-        static void ProcessExitHandler(object? sender, EventArgs args)
+        private static void ProcessExitHandler(object? sender, EventArgs args)
         {
             Logger.WriteLog($"Process Exiting. Sender: {sender}, Event: {args}", MockConsole.LogLevel.Verbose);
             Logger.WorkQueue();
-            Manager.SendResponse("Android", "Station", "SetValue:status:Off");
-            Manager.SendResponse("Android", "Station", "SetValue:gameName:");
-            Manager.SendResponse("Android", "Station", "SetValue:gameId:");
+            MessageController.SendResponse("Android", "Station", "SetValue:status:Off");
+            MessageController.SendResponse("Android", "Station", "SetValue:gameName:");
+            MessageController.SendResponse("Android", "Station", "SetValue:gameId:");
 
             //Shut down the pipe server if running
             WrapperManager.ClosePipeServer();
 
             //Shut down any OpenVR systems
-            Manager.openVRManager?.OpenVrSystem?.Shutdown();
+            MainController.openVrManager?.OpenVrSystem?.Shutdown();
         }
 
-        public static void InitSentry()
+        private static void InitSentry()
         {
-            string? sentryDsn = "";
-
 #if DEBUG
-            sentryDsn = "https://ca9abb6c77444340802da0c5a3805841@o1294571.ingest.sentry.io/6704982"; //Development
+            var sentryDsn = "https://ca9abb6c77444340802da0c5a3805841@o1294571.ingest.sentry.io/6704982"; //Development
 #elif RELEASE
-	        sentryDsn = "https://812f2b29bf3c4d129071683c7cf62361@o1294571.ingest.sentry.io/6518754"; //Production
+	        var sentryDsn = "https://812f2b29bf3c4d129071683c7cf62361@o1294571.ingest.sentry.io/6518754"; //Production
 #endif
-            if (sentryDsn != null && sentryDsn.Length > 0)
+            if (sentryDsn.Length <= 0) return;
+            
+            SentrySdk.Init(options =>
             {
-                SentrySdk.Init(options =>
-                {
-                    options.Dsn = sentryDsn;
-                    options.Debug = false;
-                    options.TracesSampleRate = 0.1;
+                options.Dsn = sentryDsn;
+                options.Debug = false;
+                options.TracesSampleRate = 0.1;
 
-                    options.SetBeforeSend((SentryEvent sentryEvent) =>
+                options.SetBeforeSend(sentryEvent =>
+                {
+                    if (sentryEvent.Exception != null
+                        && sentryEvent.Exception.Message.Contains("Aggregate Exception")
+                        && sentryEvent.Exception.Message.Contains("WSACancelBlockingCall"))
                     {
-                        if (sentryEvent.Exception != null
-                            && sentryEvent.Exception.Message.Contains("Aggregate Exception")
-                            && sentryEvent.Exception.Message.Contains("WSACancelBlockingCall"))
-                        {
-                            return null; // Don't send this event to Sentry
-                        }
+                        return null; // Don't send this event to Sentry
+                    }
 
-                        Logger.WriteLog("Sentry Exception", MockConsole.LogLevel.Error);
+                    Logger.WriteLog("Sentry Exception", MockConsole.LogLevel.Error);
 
-                        if (sentryEvent.Exception != null)
-                        {
-                            Logger.WriteLog(sentryEvent.Exception, MockConsole.LogLevel.Error);
-                        }
-                        if (sentryEvent.Message != null)
-                        {
-                            Logger.WriteLog(sentryEvent.Message.ToString() ?? "No message", MockConsole.LogLevel.Error);
-                        }
+                    if (sentryEvent.Exception != null)
+                    {
+                        Logger.WriteLog(sentryEvent.Exception, MockConsole.LogLevel.Error);
+                    }
+                    if (sentryEvent.Message != null)
+                    {
+                        Logger.WriteLog(sentryEvent.Message.ToString() ?? "No message", MockConsole.LogLevel.Error);
+                    }
 
-                        sentryEvent.ServerName = null; // Never send Server Name to Sentry
-                        return sentryEvent;
-                    });
+                    sentryEvent.ServerName = null; // Never send Server Name to Sentry
+                    return sentryEvent;
                 });
-                SentrySdk.ConfigureScope(scope =>
-                {
-                    scope.SetTag("lab_location", Environment.GetEnvironmentVariable("LabLocation",
-                                             EnvironmentVariableTarget.Process) ?? "Unknown");
-                    scope.SetTag("station_id", Environment.GetEnvironmentVariable("StationId",
-                                             EnvironmentVariableTarget.Process) ?? "Unknown");
-                    scope.SetTag("headset_type", Environment.GetEnvironmentVariable("HeadsetType",
-                                             EnvironmentVariableTarget.Process) ?? "Unknown");
-                    scope.SetTag("room", Environment.GetEnvironmentVariable("room",
-                                             EnvironmentVariableTarget.Process) ?? "Unknown");
-                });
-            }
+            });
+            SentrySdk.ConfigureScope(scope =>
+            {
+                scope.SetTag("lab_location", Environment.GetEnvironmentVariable("LabLocation",
+                    EnvironmentVariableTarget.Process) ?? "Unknown");
+                scope.SetTag("station_id", Environment.GetEnvironmentVariable("StationId",
+                    EnvironmentVariableTarget.Process) ?? "Unknown");
+                scope.SetTag("headset_type", Environment.GetEnvironmentVariable("HeadsetType",
+                    EnvironmentVariableTarget.Process) ?? "Unknown");
+                scope.SetTag("room", Environment.GetEnvironmentVariable("room",
+                    EnvironmentVariableTarget.Process) ?? "Unknown");
+            });
         }
     }
 }

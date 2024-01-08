@@ -2,12 +2,14 @@
 using System.IO;
 using System.Threading.Tasks;
 using LeadMeLabsLibrary;
+using Station.Components._commandLine;
+using Station.Components._notification;
 
 namespace Station._config;
 
 public static class DotEnv
 {
-    private static readonly string FilePath = $"{CommandLine.stationLocation}\\_config\\config.env";
+    private static readonly string FilePath = $"{CommandLine.StationLocation}\\_config\\config.env";
 
     /// <summary>
     /// Load the variables within the config.env into the local environment for the running
@@ -24,7 +26,7 @@ public static class DotEnv
             }
 
             //Decrypt the data in the file
-            string? decryptedText = EncryptionHelper.DetectFileEncryption(FilePath);
+            string decryptedText = EncryptionHelper.DetectFileEncryption(FilePath);
             if (string.IsNullOrEmpty(decryptedText))
             {
                 MockConsole.WriteLine($"StationError, Config file empty:{FilePath}", MockConsole.LogLevel.Error);
