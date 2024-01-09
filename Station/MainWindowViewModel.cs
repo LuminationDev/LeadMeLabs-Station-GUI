@@ -34,6 +34,7 @@ namespace Station
             ChangeViewConsoleValue = new RelayCommand(() => ViewConsoleWindow = !ViewConsoleWindow);
             ChangeMinimisingValue = new RelayCommand(() => MinimiseVrPrograms = !MinimiseVrPrograms);
             AutoStartVrValue = new RelayCommand(() => AutoStartVrPrograms = !AutoStartVrPrograms);
+            HeadsetRequiredValue = new RelayCommand(() => HeadsetRequired = !HeadsetRequired);
         }
 
         public ICommand LoadedCommand { get; }
@@ -53,6 +54,7 @@ namespace Station
         public ICommand ChangeViewConsoleValue { get; }
         public ICommand ChangeMinimisingValue { get; }
         public ICommand AutoStartVrValue { get; }
+        public ICommand HeadsetRequiredValue { get; }
 
         public WindowState WindowState
         {
@@ -118,10 +120,10 @@ namespace Station
         /// </summary>
         private bool ViewConsoleWindow
         {
-            get => Debugger.viewConsoleWindow;
+            get => InternalDebugger.viewConsoleWindow;
             set
             {
-                Debugger.viewConsoleWindow = value;
+                InternalDebugger.viewConsoleWindow = value;
                 ViewConsoleText = value ? "Yes" : "No";
                 if (!value)
                 {
@@ -144,10 +146,10 @@ namespace Station
         
         private bool MinimiseVrPrograms
         {
-            get => Debugger.minimiseVrPrograms;
+            get => InternalDebugger.minimiseVrPrograms;
             set
             {
-                Debugger.minimiseVrPrograms = value;
+                InternalDebugger.minimiseVrPrograms = value;
                 MinimisingText = value ? "Yes" : "No";
             }
         }
@@ -166,10 +168,10 @@ namespace Station
         
         private bool AutoStartVrPrograms
         {
-            get => Debugger.autoStartVrPrograms;
+            get => InternalDebugger.autoStartVrPrograms;
             set
             {
-                Debugger.autoStartVrPrograms = value;
+                InternalDebugger.autoStartVrPrograms = value;
                 AutoStartSteamText = value ? "Yes" : "No";
             }
         }
@@ -182,6 +184,28 @@ namespace Station
             {
                 if (_autoStartSteamText == value) return;
                 _autoStartSteamText = value;
+                OnPropertyChanged();
+            }
+        }
+        
+        private bool HeadsetRequired
+        {
+            get => InternalDebugger.headsetRequired;
+            set
+            {
+                InternalDebugger.headsetRequired = value;
+                AHeadsetRequiredText = value ? "Yes" : "No";
+            }
+        }
+        
+        private string _headsetRequiredText = "Yes";
+        public string AHeadsetRequiredText
+        {
+            get => _headsetRequiredText;
+            private set
+            {
+                if (_headsetRequiredText == value) return;
+                _headsetRequiredText = value;
                 OnPropertyChanged();
             }
         }

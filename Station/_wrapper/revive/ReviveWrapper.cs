@@ -134,11 +134,22 @@ namespace Station
             //Begin monitoring the different processes
             WrapperMonitoringThread.InitializeMonitoring(WrapperType);
 
-            //Wait for the Headset's connection method to respond
-            if (!SessionController.VrHeadset.WaitForConnection(WrapperType)) return "Could not connect to headset";
+            if (InternalDebugger.GetHeadsetRequired())
+            {
+                //Wait for the Headset's connection method to respond
+                if (!SessionController.VrHeadset.WaitForConnection(WrapperType))
+                {
+                    lastExperience.Name = null; //Reset for correct headset state
+                    return "Could not get headset connection";
+                }
 
-            //If headset management software is open (with headset connected) and OpenVrSystem cannot initialise then restart SteamVR
-            if (!OpenVRManager.WaitForOpenVR().Result) return "Could not start OpenVR";
+                //If headset management software is open (with headset connected) and OpenVrSystem cannot initialise then restart SteamVR
+                if (!OpenVRManager.WaitForOpenVR().Result)
+                {
+                    lastExperience.Name = null; //Reset for correct headset state
+                    return "Could not connect to OpenVR";
+                }
+            }
 
             Task.Factory.StartNew(() =>
             {

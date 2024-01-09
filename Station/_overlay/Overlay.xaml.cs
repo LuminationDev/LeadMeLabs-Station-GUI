@@ -54,7 +54,7 @@ namespace Station
         {
             Spinner.Visibility = Visibility.Visible;
             current.Opacity = 0.1;
-            for (int i = 0; i < 100; i++)
+            for (int i = 0; i < 80; i++)
             {
                 double level = (double)i / 100;
                 current.Opacity = level;

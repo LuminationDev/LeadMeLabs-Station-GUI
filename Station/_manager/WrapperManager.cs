@@ -189,6 +189,19 @@ namespace Station
             _ = RestartVRProcesses();
             return applications;
         }
+        
+        /// <summary>
+        /// Stop any and all processes associated with the VR headset type.
+        /// </summary>
+        public static void StopVRProcesses()
+        {
+            List<string> combinedProcesses = new List<string>();
+            combinedProcesses.AddRange(WrapperMonitoringThread.SteamProcesses);
+            combinedProcesses.AddRange(WrapperMonitoringThread.ViveProcesses);
+            combinedProcesses.AddRange(WrapperMonitoringThread.ReviveProcesses);
+
+            CommandLine.QueryVRProcesses(combinedProcesses, true);
+        }
 
         /// <summary>
         /// Start or restart the VR session associated with the VR headset type
@@ -199,12 +212,7 @@ namespace Station
             {
                 RoomSetup.CompareRoomSetup();
 
-                List<string> combinedProcesses = new List<string>();
-                combinedProcesses.AddRange(WrapperMonitoringThread.SteamProcesses);
-                combinedProcesses.AddRange(WrapperMonitoringThread.ViveProcesses);
-                combinedProcesses.AddRange(WrapperMonitoringThread.ReviveProcesses);
-
-                CommandLine.QueryVRProcesses(combinedProcesses, true);
+                StopVRProcesses();
                 await SessionController.PutTaskDelay(2000);
 
                 //have to add a waiting time to make sure it has exited
@@ -237,7 +245,7 @@ namespace Station
 
                 SessionController.PassStationMessage("Processing,false");
 
-                if (!Debugger.GetAutoStart())
+                if (!InternalDebugger.GetAutoStart())
                 {
                     ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage($"SoftwareState,Debug Mode"), TimeSpan.FromSeconds(0));
                     return;

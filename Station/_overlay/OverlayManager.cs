@@ -46,7 +46,7 @@ namespace Station
 
         public static void OverlayThreadManual(string? text = null)
         {
-            Logger.WriteLog("Running offline overlay.", MockConsole.LogLevel.Normal);
+            Logger.WriteLog("Running overlay.", MockConsole.LogLevel.Normal);
 
             running = true;
 
@@ -61,7 +61,7 @@ namespace Station
 
         public static void ManualStop()
         {
-            Logger.WriteLog("Stopping offline overlay.", MockConsole.LogLevel.Normal);
+            Logger.WriteLog("Stopping overlay.", MockConsole.LogLevel.Normal);
 
             if (overlay == null)
             {
