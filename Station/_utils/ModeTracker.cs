@@ -34,7 +34,7 @@ public static class ModeTracker
         //An experience is active
         if (WrapperManager.CurrentWrapper?.GetCurrentExperienceName()?.Length > 0)
         {
-            Console.WriteLine($"ACTIVE PROCESS: {WrapperManager.CurrentWrapper?.GetCurrentExperienceName()}");
+            Logger.WriteLog($"ModeTracker - OnTimerCallback() Active process detected: {WrapperManager.CurrentWrapper?.GetCurrentExperienceName()}", MockConsole.LogLevel.Normal);
             idleCheck?.Change(Timeout, System.Threading.Timeout.Infinite);
             return;
         }
