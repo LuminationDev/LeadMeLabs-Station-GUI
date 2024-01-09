@@ -41,4 +41,13 @@ public static class InternalDebugger
     {
         return autoScroll;
     }
+        
+    /// <summary>
+    /// Used to control if a headset is required to launch experiences
+    /// </summary>
+    public static bool headsetRequired = true;
+    public static bool GetHeadsetRequired()
+    {
+        return headsetRequired;
+    }
 }

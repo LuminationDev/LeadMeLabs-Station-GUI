@@ -38,7 +38,7 @@ static class OverlayManager
         }
     }
 
-    public static void RunOverlay(string? text = null)
+    private static void RunOverlay(string? text = null)
     {
         overlay = new(text);
         _ = overlay.RunTask();
@@ -47,7 +47,7 @@ static class OverlayManager
 
     public static void OverlayThreadManual(string? text = null)
     {
-        Logger.WriteLog("Running offline overlay.", MockConsole.LogLevel.Normal);
+        Logger.WriteLog("Running manual overlay.", MockConsole.LogLevel.Normal);
 
         running = true;
 
@@ -62,7 +62,7 @@ static class OverlayManager
 
     public static void ManualStop()
     {
-        Logger.WriteLog("Stopping offline overlay.", MockConsole.LogLevel.Normal);
+        Logger.WriteLog("Stopping manual overlay.", MockConsole.LogLevel.Normal);
 
         if (overlay == null)
         {

@@ -10,7 +10,7 @@ using Station.Components._utils;
 
 namespace Station.MVC.Controller;
 
-public class MessageController
+public static class MessageController
 {
     /// <summary>
     /// On start up or Station address change send the status, steam list and the current volume to the NUC.

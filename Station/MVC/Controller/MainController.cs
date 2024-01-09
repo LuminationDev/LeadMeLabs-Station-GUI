@@ -95,7 +95,7 @@ public static class MainController
 
         if (!envVariablesLoaded)
         {
-            UIController.UpdateCurrentStatus("No config...");
+            UIController.UpdateCurrentState("No config...");
             return;
         }
         
@@ -109,6 +109,7 @@ public static class MainController
         StartServer();
         ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage($"SoftwareState,Launching Software"), TimeSpan.FromSeconds(0));
         new Thread(Initialisation).Start(); //Call as a new task to stop UI and server start up from hanging whilst reading the files
+        ModeTracker.Initialise();
     }
     
     /// <summary>
@@ -225,7 +226,7 @@ public static class MainController
         if (!restarting)
         {
             UIController.UpdateStationPowerStatus("Off");
-            UIController.UpdateCurrentStatus("Stopped...");
+            UIController.UpdateCurrentState("Stopped...");
         }
         
         StopVariableTimer();

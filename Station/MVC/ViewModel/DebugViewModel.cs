@@ -47,11 +47,24 @@ public class DebugViewModel : ObservableObject
             OnPropertyChanged();
         }
     }
+        
+    private bool _headsetRequired = true;
+    public bool HeadsetRequired
+    {
+        get => _headsetRequired;
+        set
+        {
+            InternalDebugger.headsetRequired = value;
+            _headsetRequired = value;
+            OnPropertyChanged();
+        }
+    }
     
     public void Reset()
     {
         AutoMinimise = true;
         AutoStartPrograms = true;
         AutoScroll = true;
+        HeadsetRequired = true;
     }
 }

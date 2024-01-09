@@ -126,13 +126,16 @@ public class SteamWrapper : IWrapper
 
         //Begin monitoring the different processes
         WrapperMonitoringThread.InitializeMonitoring(WrapperType);
-
-        //TODO uncomment this
-        // //Wait for the Headset's connection method to respond
-        // if (!SessionController.VrHeadset.WaitForConnection(WrapperType)) return "Could not connect to headset";
-        //
-        // //If headset management software is open (with headset connected) and OpenVrSystem cannot initialise then restart SteamVR
-        // if (!OpenVRManager.WaitForOpenVR().Result) return "Could not start OpenVR";
+        
+        //Check if a headset is required from the debugger menu
+        if (InternalDebugger.GetHeadsetRequired())
+        {
+            //Wait for the Headset's connection method to respond
+            if (!SessionController.VrHeadset.WaitForConnection(WrapperType)) return "Could not connect to headset";
+            
+            //If headset management software is open (with headset connected) and OpenVrSystem cannot initialise then restart SteamVR
+            if (!OpenVRManager.WaitForOpenVR().Result) return "Could not start OpenVR";
+        }
 
         Task.Factory.StartNew(() =>
         {

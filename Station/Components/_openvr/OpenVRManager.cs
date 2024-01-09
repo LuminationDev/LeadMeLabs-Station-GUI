@@ -167,7 +167,7 @@ public class OpenVRManager
             SteamWrapper.LaunchSteamVR();
             await Task.Delay(3000);
 
-            bool steamvr = await MonitorLoop(() => ProcessManager.GetProcessesByName("vrmonitor").Length == 0);
+            bool steamvr = await Helper.MonitorLoop(() => ProcessManager.GetProcessesByName("vrmonitor").Length == 0, 10);
             if (!steamvr) return false;
 
             Logger.WriteLog($"OpenVRManager.WaitForOpenVR - Vive status: {SessionController.VrHeadset.GetHeadsetManagementSoftwareStatus()}, " +
@@ -176,7 +176,7 @@ public class OpenVRManager
             //Send message to the tablet (Updating what is happening)
             ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage($"SoftwareState,Connecting SteamVR"), TimeSpan.FromSeconds(1));
 
-            bool openvr = await MonitorLoop(() => !MainController.openVrManager?.InitialiseOpenVR() ?? true);
+            bool openvr = await Helper.MonitorLoop(() => !MainController.openVrManager?.InitialiseOpenVR() ?? true, 10);
             if (!openvr)
             {
                 ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage($"SoftwareState,SteamVR Error"), TimeSpan.FromSeconds(1));
@@ -185,35 +185,6 @@ public class OpenVRManager
 
             Logger.WriteLog($"OpenVRManager.WaitForOpenVR - Vive status: {SessionController.VrHeadset.GetHeadsetManagementSoftwareStatus()}, " +
                 $"OpenVR connection established", MockConsole.LogLevel.Normal);
-        }
-
-        return true;
-    }
-
-    /// <summary>
-    /// Monitors a specified condition using a loop, with optional timeout and attempt limits.
-    /// </summary>
-    /// <param name="conditionChecker">A delegate that returns a boolean value indicating whether the monitored condition is met.</param>
-    /// <returns>True if the condition was successfully met within the specified attempts; false otherwise.</returns>
-    private static async Task<bool> MonitorLoop(Func<bool> conditionChecker)
-    {
-        //Track the attempts
-        int monitorAttempts = 0;
-        int attemptLimit = 10;
-        int delay = 3000;
-
-        //Check the condition status (bail out after x amount)
-        do
-        {
-            monitorAttempts++;
-            await Task.Delay(delay);
-        } while (conditionChecker.Invoke() && monitorAttempts < attemptLimit);
-
-        // Connection bailed out, send a failure message
-        if (monitorAttempts == attemptLimit)
-        {
-            SessionController.PassStationMessage("MessageToAndroid,HeadsetTimeout");
-            return false;
         }
 
         return true;

@@ -204,13 +204,13 @@ public class HomeViewModel : ObservableObject
     #endregion
     
     #region SoftwareInformation
-    private string _currentStatus = "";
-    public string CurrentStatus
+    private string _currentState = "";
+    public string CurrentState
     {
-        get => _currentStatus;
+        get => _currentState;
         set
         {
-            _currentStatus = value;
+            _currentState = value;
             OnPropertyChanged();
         }
     }

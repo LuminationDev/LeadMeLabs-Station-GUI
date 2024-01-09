@@ -81,7 +81,8 @@ public static class StationScripts
         else if (additionalData.StartsWith("IdentifyStation"))
         {
             OverlayManager.OverlayThread();
-        } else if (additionalData.StartsWith("UploadLogFile"))
+        } 
+        else if (additionalData.StartsWith("UploadLogFile"))
         {
             _ = CommandLine.UploadLogFile();
         }

@@ -42,9 +42,9 @@ public class UIController
     /// <summary>
     /// Updates the status UI on the Home panel.
     /// </summary>
-    public static void UpdateCurrentStatus(string status)
+    public static void UpdateCurrentState(string status)
     {
-        MainViewModel.ViewModelManager.HomeViewModel.CurrentStatus = status;
+        MainViewModel.ViewModelManager.HomeViewModel.CurrentState = status;
     }
 
     /// <summary>

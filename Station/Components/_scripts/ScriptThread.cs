@@ -10,20 +10,20 @@ namespace Station.Components._scripts;
 
 public class ScriptThread
 {
-    private readonly string data;
-    private readonly string source;
-    private readonly string destination;
-    private readonly string actionNamespace;
-    private readonly string? additionalData;
+    private readonly string _data;
+    private readonly string _source;
+    private readonly string _destination;
+    private readonly string _actionNamespace;
+    private readonly string? _additionalData;
 
     public ScriptThread(string data)
     {
-        this.data = data;
+        this._data = data;
         string[] dataParts = data.Split(":", 4);
-        source = dataParts[0];
-        destination = dataParts[1];
-        actionNamespace = dataParts[2];
-        additionalData = dataParts.Length > 3 ? dataParts[3] : null;
+        _source = dataParts[0];
+        _destination = dataParts[1];
+        _actionNamespace = dataParts[2];
+        _additionalData = dataParts.Length > 3 ? dataParts[3] : null;
     }
 
     /// <summary>
@@ -34,37 +34,37 @@ public class ScriptThread
     {
         //Based on the data, build/run a script and then send the output back to the client
         //Everything below is just for testing - definitely going to need something better to determine in the future
-        if (actionNamespace == "Connection")
+        if (_actionNamespace == "Connection")
         {
-            HandleConnection(additionalData);
+            HandleConnection(_additionalData);
         }
 
-        if (additionalData == null) return;
+        if (_additionalData == null) return;
 
-        switch (actionNamespace)
+        switch (_actionNamespace)
         {
             case "CommandLine":
-                StationScripts.Execute(source, additionalData);
+                StationScripts.Execute(_source, _additionalData);
                 break;
 
             case "Station":
-                HandleStation(additionalData);
+                HandleStation(_additionalData);
                 break;
 
             case "HandleExecutable":
-                HandleExecutable(additionalData);
+                HandleExecutable(_additionalData);
                 break;
 
             case "Experience":
-                HandleExperience(additionalData);
+                HandleExperience(_additionalData);
                 break;
 
             case "LogFiles":
-                HandleLogFiles(additionalData);
+                HandleLogFiles(_additionalData);
                 break;
             
             case "QA":
-                QualityManager.HandleQualityAssurance(additionalData);
+                QualityManager.HandleQualityAssurance(_additionalData);
                 break;
         }
     }
@@ -74,11 +74,11 @@ public class ScriptThread
         if (additionalData == null) return;
         if (!additionalData.Contains("Connect")) return;
         
-        MessageController.SendResponse(source, "Station", "SetValue:status:On");
-        MessageController.SendResponse(source, "Station", $"SetValue:state:{SessionController.CurrentState}");
-        MessageController.SendResponse(source, "Station", "SetValue:gameName:");
+        MessageController.SendResponse(_source, "Station", "SetValue:status:On");
+        MessageController.SendResponse(_source, "Station", $"SetValue:state:{SessionController.CurrentState}");
+        MessageController.SendResponse(_source, "Station", "SetValue:gameName:");
         MessageController.SendResponse("Android", "Station", "SetValue:gameId:");
-        MessageController.SendResponse(source, "Station", $"SetValue:volume:{CommandLine.GetVolume()}");
+        MessageController.SendResponse(_source, "Station", $"SetValue:volume:{CommandLine.GetVolume()}");
     }
 
     private void HandleStation(string additionalData)
@@ -93,7 +93,7 @@ public class ScriptThread
             }
             if (key == "volume")
             {
-                MessageController.SendResponse(source, "Station", "SetValue:" + key + ":" + CommandLine.GetVolume());
+                MessageController.SendResponse(_source, "Station", "SetValue:" + key + ":" + CommandLine.GetVolume());
             }
             if (key == "devices")
             {
@@ -105,7 +105,7 @@ public class ScriptThread
         {
             string[] keyValue = additionalData.Split(":", 3);
             string key = keyValue[1];
-            string? value = keyValue[2];
+            string value = keyValue[2];
             if (key == "volume")
             {
                 CommandLine.SetVolume(value);

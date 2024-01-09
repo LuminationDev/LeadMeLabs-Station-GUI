@@ -32,7 +32,18 @@ public static class SessionController
     /// <summary>
     /// Track the current state of the Station software.
     /// </summary>
-    public static string CurrentState { private set; get; } = "";
+    private static string currentState = "";
+    
+    public static string CurrentState
+    {
+        get => currentState;
+        set
+        {
+            currentState = value;
+            MessageController.SendResponse("Android", "Station", $"SetValue:state:{value}");
+            UIController.UpdateCurrentState(value); //Update the home page UI
+        }
+    }
 
     /// <summary>
     /// Read the store headset type from the config.env file and create an instance that 
@@ -117,6 +128,9 @@ public static class SessionController
         
         //Attempt to minimise other applications (mostly Steam)
         VrHeadset?.MinimizeSoftware(2);
+        
+        //Reset the idle timer and current mode type
+        ModeTracker.ResetMode();
     }
 
     /// <summary>
@@ -199,8 +213,6 @@ public static class SessionController
 
                 case "SoftwareState":
                     CurrentState = tokens[1];
-                    MessageController.SendResponse("Android", "Station", $"SetValue:state:{tokens[1]}");
-                    UIController.UpdateCurrentStatus(tokens[1]); //Update the home page UI
                     break;
 
                 case "ApplicationList":

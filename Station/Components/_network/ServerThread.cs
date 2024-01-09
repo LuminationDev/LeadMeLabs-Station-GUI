@@ -238,6 +238,17 @@ public class ServerThread
 
         //Data should never be null at this point
         Logger.WriteLog($"From {endPoint}, Decrypted Text received : {data}", MockConsole.LogLevel.Debug, !data.Contains(":Ping:"));
+        
+        //If the data is not a ping run the additional tasks
+        if (data.Contains(":Ping:")) return;
+        
+        //If the task relates to an experience restart the VR processes
+        if (data.Contains(":Experience:"))
+        {
+            //Reset the idle timer
+            bool success = await ModeTracker.ResetTimer();
+            if (!success) return;
+        }
 
         //Run the appropriate script
         MessageController.RunScript(data);
