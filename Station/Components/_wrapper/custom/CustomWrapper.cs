@@ -166,13 +166,22 @@ internal class CustomWrapper : IWrapper
         WrapperMonitoringThread.InitializeMonitoring(WrapperType);
 
         //Check if a headset is required from the debugger menu
+        //Check if a headset is required from the debugger menu
         if (InternalDebugger.GetHeadsetRequired())
         {
             //Wait for the Headset's connection method to respond
-            if (!SessionController.VrHeadset.WaitForConnection(WrapperType)) return "Could not connect to headset";
-            
+            if (!SessionController.VrHeadset.WaitForConnection(WrapperType))
+            {
+                lastExperience.Name = null; //Reset for correct headset state
+                return "Could not get headset connection";
+            }
+
             //If headset management software is open (with headset connected) and OpenVrSystem cannot initialise then restart SteamVR
-            if (!OpenVRManager.WaitForOpenVR().Result) return "Could not start OpenVR";
+            if (!OpenVRManager.WaitForOpenVR().Result)
+            {
+                lastExperience.Name = null; //Reset for correct headset state
+                return "Could not connect to OpenVR";
+            }
         }
 
         MockConsole.WriteLine($"Launching process: {experience.Name} - {experience.Id}", MockConsole.LogLevel.Normal);

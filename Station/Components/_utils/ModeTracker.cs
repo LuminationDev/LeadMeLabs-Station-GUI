@@ -12,9 +12,7 @@ namespace Station.Components._utils;
 public static class ModeTracker
 {
     //1 hour timeout (60 minutes) * (60 seconds) * (1000 milliseconds)
-    // private const int Timeout = 60 * 60 * 1000;
-    
-    private const int Timeout = 60 * 1000;
+    private const int Timeout = 60 * 60 * 1000;
     
     /// <summary>
     /// A private enum to track the different Station modes.
@@ -40,7 +38,7 @@ public static class ModeTracker
         //An experience is active
         if (WrapperManager.CurrentWrapper?.GetCurrentExperienceName()?.Length > 0)
         {
-            Console.WriteLine($"ACTIVE PROCESS: {WrapperManager.CurrentWrapper?.GetCurrentExperienceName()}");
+            Logger.WriteLog($"ModeTracker - OnTimerCallback() Active process detected: {WrapperManager.CurrentWrapper?.GetCurrentExperienceName()}", MockConsole.LogLevel.Normal);
             idleCheck?.Change(Timeout, System.Threading.Timeout.Infinite);
             return;
         }
@@ -95,11 +93,10 @@ public static class ModeTracker
         }
         
         await Task.Delay(2500);
-        
         OverlayManager.SetText("Ready for use");
-        OverlayManager.ManualStop();
-        
         await Task.Delay(2500);
+
+        OverlayManager.ManualStop();
 
         return steamvr;
     }

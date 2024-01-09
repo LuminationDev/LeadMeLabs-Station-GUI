@@ -131,10 +131,18 @@ public class SteamWrapper : IWrapper
         if (InternalDebugger.GetHeadsetRequired())
         {
             //Wait for the Headset's connection method to respond
-            if (!SessionController.VrHeadset.WaitForConnection(WrapperType)) return "Could not connect to headset";
-            
+            if (!SessionController.VrHeadset.WaitForConnection(WrapperType))
+            {
+                experienceName = null; //Reset for correct headset state
+                return "Could not get headset connection";
+            }
+
             //If headset management software is open (with headset connected) and OpenVrSystem cannot initialise then restart SteamVR
-            if (!OpenVRManager.WaitForOpenVR().Result) return "Could not start OpenVR";
+            if (!OpenVRManager.WaitForOpenVR().Result)
+            {
+                experienceName = null; //Reset for correct headset state
+                return "Could not connect to OpenVR";
+            }
         }
 
         Task.Factory.StartNew(() =>
