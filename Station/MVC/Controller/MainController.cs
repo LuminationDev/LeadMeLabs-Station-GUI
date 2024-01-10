@@ -158,7 +158,11 @@ public static class MainController
 
         if (!Helper.GetStationMode().Equals(Helper.STATION_MODE_APPLIANCE))
         {
-            openVrManager = new OpenVRManager();
+            if (Helper.GetStationMode().Equals(Helper.STATION_MODE_VR))
+            {
+                openVrManager = new OpenVRManager();
+            }
+            
             wrapperManager = new WrapperManager();
 
             //Launch the custom wrapper application here

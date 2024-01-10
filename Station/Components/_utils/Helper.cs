@@ -9,7 +9,7 @@ namespace Station.Components._utils;
 public static class Helper
 {
     public const string STATION_MODE_APPLIANCE = "Appliance";
-    private const string STATION_MODE_VR = "VR";
+    public const string STATION_MODE_VR = "VR";
     private const string STATION_MODE_CONTENT = "Content";
     private static readonly string[] STATION_MODES = { STATION_MODE_VR, STATION_MODE_APPLIANCE, STATION_MODE_CONTENT };
 

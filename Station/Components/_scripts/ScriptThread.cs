@@ -1,3 +1,4 @@
+using System;
 using System.Threading.Tasks;
 using Station.Components._commandLine;
 using Station.Components._notification;
@@ -122,17 +123,18 @@ public class ScriptThread
     /// </summary>
     private void HandleExecutable(string additionalData)
     {
-        string[] split = additionalData.Split(":", 4);
+        string[] split = additionalData.Split(":", 5);
         string action = split[0];
         string launchType = split[1];
+        bool isVr = Convert.ToBoolean(split[2]);
         
         //Convert the path back to absolute (NUC changed it for sending)
-        string safePath = split[2];
+        string safePath = split[3];
         string path = safePath.Replace("%", ":");
-        string safeParameters = split.Length > 3 ? split[3] : "";
+        string safeParameters = split.Length > 4 ? split[4] : "";
         string parameters = safeParameters.Replace("%", ":");
 
-        MainController.wrapperManager?.HandleInternalExecutable(action, launchType, path, parameters);
+        MainController.wrapperManager?.HandleInternalExecutable(action, launchType, isVr, path, parameters);
     }
 
     /// <summary>

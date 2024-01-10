@@ -16,6 +16,7 @@ namespace Station.Components._wrapper.steam;
 public static class SteamScripts
 {
     public const string SteamManifest = @"C:\Program Files (x86)\Steam\config\steamapps.vrmanifest";
+    private static ManifestReader.ManifestApplicationList steamManifestApplicationList = new (SteamManifest);
 
     // login details as formatted "username password" - need to hide this/turn into a secret
     private static readonly string LoginDetails = 
@@ -156,19 +157,13 @@ public static class SteamScripts
             {
                 AcfReader acfReader = new AcfReader(file.FullName, true);
                 acfReader.ACFFileToStruct();
-                if (acfReader.gameName != null && acfReader.appId != null)
-                {
-                    if (blacklistedGames.Contains(acfReader.appId))
-                    {
-                        continue;
-                    }
-
-                    if (approvedGames.Count == 0 || approvedGames.Contains(acfReader.appId))
-                    {
-                        list.Add($"{SteamWrapper.WrapperType}|{acfReader.appId}|{acfReader.gameName}");
-                        WrapperManager.StoreApplication(SteamWrapper.WrapperType, acfReader.appId, acfReader.gameName); // todo, I don't like this line here as it's a side-effect to the function
-                    }
-                }
+                if (acfReader.gameName == null || acfReader.appId == null) continue;
+                if (blacklistedGames.Contains(acfReader.appId)) continue;
+                if (approvedGames.Count != 0 && !approvedGames.Contains(acfReader.appId)) continue;
+                
+                list.Add($"{SteamWrapper.WrapperType}|{acfReader.appId}|{acfReader.gameName}");
+                WrapperManager.StoreApplication(SteamWrapper.WrapperType, acfReader.appId, acfReader.gameName, 
+                    steamManifestApplicationList.IsApplicationInstalledAndVrCompatible("steam.app." + acfReader.appId)); // todo, I don't like this line here as it's a side-effect to the function
             }
         }
 
@@ -277,7 +272,8 @@ public static class SteamScripts
                         string application = $"{SteamWrapper.WrapperType}|{ID}|{name}";
 
                         //item.parameters may be null here
-                        WrapperManager.StoreApplication(SteamWrapper.WrapperType, ID, name);
+                        WrapperManager.StoreApplication(SteamWrapper.WrapperType, ID, name, 
+                            steamManifestApplicationList.IsApplicationInstalledAndVrCompatible("steam.app." + ID));
                         apps.Add(application);
                     }
                 }

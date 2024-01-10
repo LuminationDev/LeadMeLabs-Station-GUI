@@ -5,6 +5,7 @@ using LeadMeLabsLibrary;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Station.Components._commandLine;
+using Station.Components._utils;
 using Station.MVC.Controller;
 
 namespace Station.Components._wrapper.custom;
@@ -12,7 +13,8 @@ namespace Station.Components._wrapper.custom;
 public static class CustomScripts
 {
     public static readonly string CustomManifest = Path.GetFullPath(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "leadme_apps", "customapps.vrmanifest"));
-
+    private static ManifestReader.ManifestApplicationList customManifestApplicationList = new (CustomManifest);
+    
     /// <summary>
     /// Read the manifest.json that has been created by the launcher program. Here each application has
     /// a specific entry contain it's ID, name and any launch parameters.
@@ -76,7 +78,9 @@ public static class CustomScripts
                 altPath = item.altPath.ToString();
             }
 
-            WrapperManager.StoreApplication(item.type.ToString(), item.id.ToString(), item.name.ToString(), parameters, altPath);
+            WrapperManager.StoreApplication(item.type.ToString(), item.id.ToString(), item.name.ToString(), 
+                customManifestApplicationList.IsApplicationInstalledAndVrCompatible("custom.app." + item.id.ToString()), 
+                parameters, altPath);
             apps.Add(application);
         }
 

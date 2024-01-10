@@ -309,14 +309,15 @@ public class WrapperManager {
     /// <param name="wrapperType">A string of the type of application (i.e. Custom, Steam, etc..)</param>
     /// <param name="id">A string of the unique ID of an application</param>
     /// <param name="name">A string representing the Name of the application, this is what will appear on the LeadMe Tablet</param>
+    /// <param name="isVr"></param>
     /// <param name="launchParameters">A stringified list of any parameters required at launch.</param>
     /// <param name="altPath"></param>
-    public static void StoreApplication(string wrapperType, string id, string name, string? launchParameters = null, string? altPath = null)
+    public static void StoreApplication(string wrapperType, string id, string name, bool isVr = true, string? launchParameters = null, string? altPath = null)
     {
         var exeName = altPath != null ? Path.GetFileName(altPath) : name;
 
         //Add to the WrapperManager list and the ExperienceViewModel ObservableCollection
-        Experience newExperience = new Experience(wrapperType, id, name, exeName, launchParameters, altPath);
+        Experience newExperience = new Experience(wrapperType, id, name, exeName, launchParameters, altPath, isVr);
         ApplicationList.TryAdd(id, newExperience);
         if (wrapperType.Equals("Launcher")) return;
         newExperience.Name = RemoveQuotesAtStartAndEnd(newExperience.Name); //Remove the " from either end
@@ -598,9 +599,10 @@ public class WrapperManager {
     /// </summary>
     /// <param name="action">A string describing the action to take (Start or Stop)</param>
     /// <param name="launchType">A string of if the experience is to show on the tablet (visible) or not (hidden)</param>
+    /// <param name="isVr"></param>
     /// <param name="path">A string of the absolute path of the executable to run</param>
     /// <param name="parameters">A string to be passed as the process arguments</param>
-    public void HandleInternalExecutable(string action, string launchType, string path, string? parameters)
+    public void HandleInternalExecutable(string action, string launchType, bool isVr, string path, string? parameters)
     {
         string name = Path.GetFileNameWithoutExtension(path);
         string id = "NA";
@@ -624,7 +626,7 @@ public class WrapperManager {
         }
 
         //Create a temporary Experience struct to hold the information
-        Experience experience = new("Internal", id, name, name, parameters, path);
+        Experience experience = new("Internal", id, name, name, parameters, path, isVr);
 
         switch(action)
         {

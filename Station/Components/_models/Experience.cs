@@ -13,8 +13,9 @@ public struct Experience
     public string? Parameters { get; set; }
     public string? AltPath { get; set; }
     public string? Status { get; set; } = "Stopped";
+    public bool IsVr { get; set; }
 
-    public Experience(string? type, string? id, string? name, string? exeName, string? parameters, string? altPath)
+    public Experience(string? type, string? id, string? name, string? exeName, string? parameters, string? altPath, bool isVr)
     {
         this.Type = type;
         this.Id = id;
@@ -22,6 +23,7 @@ public struct Experience
         this.ExeName = exeName;
         this.Parameters = parameters;
         this.AltPath = altPath;
+        this.IsVr = isVr;
     }
 
     /// <summary>
