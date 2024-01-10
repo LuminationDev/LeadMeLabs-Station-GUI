@@ -35,6 +35,7 @@ public static class DotEnv
             {
                 var parts = line.Split(
                     '=',
+                    2,
                     StringSplitOptions.RemoveEmptyEntries);
 
                 switch (parts.Length)
