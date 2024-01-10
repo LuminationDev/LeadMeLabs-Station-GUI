@@ -58,7 +58,10 @@ public static class StationMonitoringThread
             return;
         }
 
-        new Task(OpenVRCheck).Start(); //Perform as separate task in case SteamVR is restarting.
+        if (Helper.GetStationMode().Equals(Helper.STATION_MODE_VR))
+        {
+            new Task(OpenVRCheck).Start(); //Perform as separate task in case SteamVR is restarting.
+        }
         SetVolCheck();
         TemperatureCheck();
 

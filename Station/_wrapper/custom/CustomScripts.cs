@@ -4,12 +4,14 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using LeadMeLabsLibrary;
+using Station._utils;
 
 namespace Station
 {
     public static class CustomScripts
     {
         public static readonly string CustomManifest = Path.GetFullPath(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "leadme_apps", "customapps.vrmanifest"));
+        private static ManifestReader.ManifestApplicationList customManifestApplicationList = new (CustomManifest);
 
         /// <summary>
         /// Read the manifest.json that has been created by the launcher program. Here each application has
@@ -74,7 +76,7 @@ namespace Station
                     altPath = item.altPath.ToString();
                 }
 
-                WrapperManager.StoreApplication(item.type.ToString(), item.id.ToString(), item.name.ToString(), parameters, altPath);
+                WrapperManager.StoreApplication(item.type.ToString(), item.id.ToString(), item.name.ToString(), customManifestApplicationList.IsApplicationInstalledAndVrCompatible("custom.app." + item.id.ToString()), parameters, altPath);
                 apps.Add(application);
             }
 

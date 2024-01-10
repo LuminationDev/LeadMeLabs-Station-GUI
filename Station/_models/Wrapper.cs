@@ -16,7 +16,9 @@ namespace Station
         public string? Parameters { get; set; }
         public string? AltPath { get; set; }
 
-        public Experience(string? Type, string? ID, string? Name, string? ExeName, string? Parameters, string? AltPath)
+        public bool IsVr { get; set; }
+
+        public Experience(string? Type, string? ID, string? Name, string? ExeName, string? Parameters, string? AltPath, bool isVr)
         {
             this.Type = Type;
             this.ID = ID;
@@ -24,6 +26,7 @@ namespace Station
             this.ExeName = ExeName;
             this.Parameters = Parameters;
             this.AltPath = AltPath;
+            this.IsVr = isVr;
         }
 
         /// <summary>

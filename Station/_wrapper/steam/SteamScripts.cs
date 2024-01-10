@@ -33,6 +33,8 @@ namespace Station
 
         private static int restartAttempts = 0; //Track how many times SteamVR has failed in a Station session
 
+        private static ManifestReader.ManifestApplicationList steamManifestApplicationList = new (SteamManifest);
+
         /// <summary>
         /// If the vrmonitor process is running but OpenVR has not established a connection, check Steam's vrserver logs
         /// to see if the '[Steam] Steam SHUTDOWN' entry is present.
@@ -164,7 +166,7 @@ namespace Station
                         if (approvedGames.Count == 0 || approvedGames.Contains(acfReader.appId))
                         {
                             list.Add($"{SteamWrapper.WrapperType}|{acfReader.appId}|{acfReader.gameName}");
-                            WrapperManager.StoreApplication(SteamWrapper.WrapperType, acfReader.appId, acfReader.gameName); // todo, I don't like this line here as it's a side-effect to the function
+                            WrapperManager.StoreApplication(SteamWrapper.WrapperType, acfReader.appId, acfReader.gameName, steamManifestApplicationList.IsApplicationInstalledAndVrCompatible("steam.app." + acfReader.appId)); // todo, I don't like this line here as it's a side-effect to the function
                         }
                     }
                 }
@@ -276,7 +278,7 @@ namespace Station
                             string application = $"{SteamWrapper.WrapperType}|{ID}|{name}";
 
                             //item.parameters may be null here
-                            WrapperManager.StoreApplication(SteamWrapper.WrapperType, ID, name);
+                            WrapperManager.StoreApplication(SteamWrapper.WrapperType, ID, name, steamManifestApplicationList.IsApplicationInstalledAndVrCompatible("steam.app." + ID));
                             apps.Add(application);
                         }
                     }

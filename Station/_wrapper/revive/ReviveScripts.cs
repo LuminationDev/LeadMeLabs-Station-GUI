@@ -32,7 +32,7 @@ public static class ReviveScripts
             string application = $"{ReviveWrapper.WrapperType}|{id}|{name}";
 
             //item.parameters may be null here
-            WrapperManager.StoreApplication(ReviveWrapper.WrapperType, id, name);
+            WrapperManager.StoreApplication(ReviveWrapper.WrapperType, id, name, true);
             apps.Add(application);
         }
         

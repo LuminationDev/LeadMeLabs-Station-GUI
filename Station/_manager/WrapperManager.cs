@@ -284,7 +284,7 @@ namespace Station
         /// <param name="name">A string representing the Name of the application, this is what will appear on the LeadMe Tablet</param>
         /// <param name="exeName">A string representing the executbale name, this is use to launch the process.</param>
         /// <param name="launchParameters">A stringified list of any parameters required at launch.</param>
-        public static void StoreApplication(string wrapperType, string id, string name, string? launchParameters = null, string? altPath = null)
+        public static void StoreApplication(string wrapperType, string id, string name, bool isVr = true, string? launchParameters = null, string? altPath = null)
         {
             string? exeName;
             if(altPath != null)
@@ -295,7 +295,7 @@ namespace Station
                 exeName = name;
             }
 
-            applicationList.TryAdd(id, new Experience(wrapperType, id, name, exeName, launchParameters, altPath));
+            applicationList.TryAdd(id, new Experience(wrapperType, id, name, exeName, launchParameters, altPath, isVr));
         }
 
         /// <summary>
@@ -498,7 +498,7 @@ namespace Station
             string name = Path.GetFileNameWithoutExtension(messageTokens[1]);
 
             //Create a temporary Experience struct to hold the information
-            Experience experience = new("Internal", "NA", name, name, null, messageTokens[1]);
+            Experience experience = new("Internal", "NA", name, name, null, messageTokens[1], true);
 
             switch(messageTokens[0])
             {

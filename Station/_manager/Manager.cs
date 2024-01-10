@@ -125,7 +125,11 @@ namespace Station
 
             if (!Helper.GetStationMode().Equals(Helper.STATION_MODE_APPLIANCE))
             {
-                openVRManager = new OpenVRManager();
+                if (Helper.GetStationMode().Equals(Helper.STATION_MODE_VR))
+                {
+                    openVRManager = new OpenVRManager();
+                }
+
                 wrapperManager = new WrapperManager();
 
                 //Launch the custom wrapper application here
