@@ -3,7 +3,9 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Threading.Tasks;
+using leadme_api;
 using Station.Components._models;
+using Station.Components._notification;
 using Station.MVC.Controller;
 
 namespace Station.Components._wrapper.@internal;
@@ -11,22 +13,24 @@ namespace Station.Components._wrapper.@internal;
 public class InternalWrapper : IWrapper
 {
     public const string WrapperType = "Internal";
+    private static Process? currentProcess;
+    private static Experience lastExperience;
     //Track any internal executables in the dictionary to start/stop at will
-    Dictionary<string, Process> InternalProcesses = new();
+    private readonly Dictionary<string, Process> _internalProcesses = new();
 
     public Experience? GetLastExperience()
     {
-        return null;
+        return lastExperience;
     }
     
     public void SetLastExperience(Experience experience)
     {
-        throw new NotImplementedException();
+        lastExperience = experience;
     }
 
     public string? GetCurrentExperienceName()
     {
-        return null;
+        return lastExperience.Name;
     }
 
     public bool GetLaunchingExperience()
@@ -39,7 +43,7 @@ public class InternalWrapper : IWrapper
         throw new NotImplementedException();
     }
     
-    public List<string>? CollectApplications()
+    public List<string> CollectApplications()
     {
         throw new NotImplementedException();
     }
@@ -51,7 +55,12 @@ public class InternalWrapper : IWrapper
 
     public void PassMessageToProcess(string message)
     {
-        throw new NotImplementedException();
+        PipeClient pipeClient = new(MockConsole.WriteLine, 5);
+
+        Task.Factory.StartNew(() =>
+        {
+            pipeClient.Send(message);
+        });
     }
 
     public void SetCurrentProcess(Process process)
@@ -60,6 +69,11 @@ public class InternalWrapper : IWrapper
     }
 
     public string WrapProcess(Experience experience)
+    {
+        throw new NotImplementedException();
+    }
+    
+    public string WrapProcess(string launchType, Experience experience)
     {
         Task.Factory.StartNew(() =>
         {
@@ -72,57 +86,118 @@ public class InternalWrapper : IWrapper
                 SessionController.PassStationMessage($"StationError,File not found:{processPath}");
                 return;
             }
-
-            Process currentProcess = new Process();
-            currentProcess.StartInfo.FileName = processPath;
-
-            if (experience.Parameters != null)
+            
+            //Check if the process is already running as to not double up
+            _internalProcesses.TryGetValue(experience.Name, out var runningProcess);
+            if (runningProcess != null)
             {
-                currentProcess.StartInfo.Arguments = experience.Parameters;
+                MockConsole.WriteLine($"{experience.Name} is already running in the internal wrapper.");
+                return;
             }
 
-            currentProcess.Start();
+            Process newProcess = new Process
+            {
+                StartInfo = new ProcessStartInfo
+                {
+                    FileName = processPath,
+                    Arguments = experience.Parameters
+                }
+            };
 
-            InternalProcesses.Add(experience.Name, currentProcess);
+            newProcess.Start();
+            _internalProcesses.Add(experience.Name, newProcess);
+
+            if (launchType.Equals("hidden")) return;
+            
+            //Close any active experiences if the internal one is visible
+            WrapperManager.CurrentWrapper?.StopCurrentProcess();
+            
+            currentProcess = newProcess;
+            lastExperience = experience;
+            
+            //Update the UI, NUC and Tablet
+            UIController.UpdateProcessMessages("processName", lastExperience.Name ?? "Unknown");
+            UIController.UpdateProcessMessages("processStatus", "Running");
+            SessionController.PassStationMessage($"ApplicationUpdate,{lastExperience.Name}/{lastExperience.Id}/Internal");
+
+            ListenForClose();
         });
         return "launching";
     }
 
+    /// <summary>
+    /// Being a new thread with the purpose of detecting if the current process has been exited.
+    /// </summary>
     public void ListenForClose()
     {
-        throw new NotImplementedException();
+        Task.Factory.StartNew(() =>
+        {
+            currentProcess?.WaitForExit();
+            lastExperience.Name = null; //Reset for correct headset state
+            SessionController.PassStationMessage($"ApplicationClosed");
+            UIController.UpdateProcessMessages("reset");
+        });
     }
 
     public bool? CheckCurrentProcess()
     {
-        throw new NotImplementedException();
+        return currentProcess?.Responding;
     }
-
+    
     public void StopAProcess(Experience experience)
     {
         if (experience.Name == null) return;
 
-        Process? runningProcess;
-        InternalProcesses.TryGetValue(experience.Name, out runningProcess);
-
+        _internalProcesses.TryGetValue(experience.Name, out var runningProcess);
+        
         if (runningProcess == null) return;
-
+        
+        //Kill the process and remove it from the list
         runningProcess.Kill(true);
+        _internalProcesses.Remove(experience.Name);
+        
+        if (experience.Name != lastExperience.Name) return;
+        
+        lastExperience.Name = null; //Reset for correct headset state
+        SessionController.PassStationMessage($"ApplicationClosed");
+        UIController.UpdateProcessMessages("reset");
     }
 
     public void StopCurrentProcess()
     {
-        throw new NotImplementedException();
+        if (lastExperience.Name == null) return;
+        
+        _internalProcesses.TryGetValue(lastExperience.Name, out var runningProcess);
+        
+        if (runningProcess == null) return;
+        
+        //Kill the process and remove it from the list
+        runningProcess.Kill(true);
+        _internalProcesses.Remove(lastExperience.Name);
+        
+        lastExperience.Name = null; //Reset for correct headset state
+        SessionController.PassStationMessage($"ApplicationClosed");
+        UIController.UpdateProcessMessages("reset");
     }
 
     public void RestartCurrentExperience()
     {
-        throw new NotImplementedException();
+        if (lastExperience.Name == null) return;
+        
+        _internalProcesses.TryGetValue(lastExperience.Name, out var runningProcess);
+        
+        //Create a temp as the StopCurrenProcess alters the current experience
+        Experience temp = lastExperience;
+        if (runningProcess == null || lastExperience.IsNull()) return;
+        
+        StopCurrentProcess();
+        Task.Delay(3000).Wait();
+        WrapProcess("visible", temp);
     }
     
     public bool HasCurrentProcess()
     {
-        throw new NotImplementedException();
+        return currentProcess != null;
     }
     
     public bool LaunchFailedFromOpenVrTimeout()

@@ -122,18 +122,17 @@ public class ScriptThread
     /// </summary>
     private void HandleExecutable(string additionalData)
     {
-        string[] split = additionalData.Split(":", 2);
+        string[] split = additionalData.Split(":", 4);
         string action = split[0];
-        string path = split[1];
-        if (action.Equals("start"))
-        {
-            MainController.wrapperManager?.ActionHandler("Internal", $"Start:{path}");
-        }
+        string launchType = split[1];
+        
+        //Convert the path back to absolute (NUC changed it for sending)
+        string safePath = split[2];
+        string path = safePath.Replace("%", ":");
+        string safeParameters = split.Length > 3 ? split[3] : "";
+        string parameters = safeParameters.Replace("%", ":");
 
-        if (action.Equals("stop"))
-        {
-            MainController.wrapperManager?.ActionHandler("Internal", $"Stop:{path}");
-        }
+        MainController.wrapperManager?.HandleInternalExecutable(action, launchType, path, parameters);
     }
 
     /// <summary>
