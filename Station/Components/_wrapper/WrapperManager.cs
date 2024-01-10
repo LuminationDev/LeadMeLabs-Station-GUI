@@ -32,11 +32,11 @@ public class WrapperManager {
     private static readonly ReviveWrapper reviveWrapper = new ();
 
     //Used for multiple 'internal' applications, operations are separate from the other wrapper classes
-    private readonly InternalWrapper internalWrapper = new();
+    private static readonly InternalWrapper InternalWrapper = new();
 
     //Track the currently wrapper experience
     public static IWrapper? CurrentWrapper;
-    private static bool _alreadyCollecting = false;
+    private static bool alreadyCollecting = false;
 
     //Store the list of applications (key = ID: [[0] = wrapper type, [1] = application name, [2] = launch params (nullable)])
     public static readonly Dictionary<string, Experience> ApplicationList = new();
@@ -159,13 +159,13 @@ public class WrapperManager {
     private static List<string> CollectAllApplications()
     {
         List<string> applications = new();
-        if (_alreadyCollecting)
+        if (alreadyCollecting)
         {
             SessionController.PassStationMessage("Already collecting applications");
             return applications;
         }
 
-        _alreadyCollecting = true;
+        alreadyCollecting = true;
 
         List<string>? customApplications = customWrapper.CollectApplications();
         if (customApplications != null)
@@ -197,7 +197,7 @@ public class WrapperManager {
         Task.Factory.StartNew(() => ThumbnailOrganiser.CheckCache(response));
         SessionController.PassStationMessage($"ApplicationList,{response}");
 
-        _alreadyCollecting = false;
+        alreadyCollecting = false;
 
         _ = RestartVrProcesses();
         return applications;
@@ -411,8 +411,9 @@ public class WrapperManager {
             return "No process wrapper created.";
         }
 
-        //Stop any current processes before trying to launch a new one
+        //Stop any current processes (regular or 'visible' internal) before trying to launch a new one
         CurrentWrapper.StopCurrentProcess();
+        InternalWrapper.StopCurrentProcess();
 
         //Update the experience UI
         MainViewModel.ViewModelManager.ExperiencesViewModel.UpdateExperience(experience.Id, "status", "Launching");
@@ -485,7 +486,15 @@ public class WrapperManager {
     {
         if (CurrentWrapper == null)
         {
-            SessionController.PassStationMessage("No process wrapper present.");
+            SessionController.PassStationMessage("No process wrapper present, checking internal.");
+
+            if (InternalWrapper.GetCurrentExperienceName() != null)
+            {
+                Task.Factory.StartNew(() => InternalWrapper.PassMessageToProcess(message));
+                return;
+            }
+            
+            SessionController.PassStationMessage("No internal wrapper present.");
             return;
         }
 
@@ -500,6 +509,14 @@ public class WrapperManager {
         if (CurrentWrapper == null)
         {
             SessionController.PassStationMessage("No process wrapper present.");
+            
+            if (InternalWrapper.GetCurrentExperienceName() != null)
+            {
+                Task.Factory.StartNew(() => InternalWrapper.RestartCurrentExperience());
+                return;
+            }
+            
+            SessionController.PassStationMessage("No internal wrapper present.");
             return;
         }
         Task.Factory.StartNew(() => CurrentWrapper.RestartCurrentExperience());
@@ -516,41 +533,20 @@ public class WrapperManager {
         if (CurrentWrapper == null)
         {
             SessionController.PassStationMessage("No process wrapper present.");
+            
+            if (InternalWrapper.GetCurrentExperienceName() != null)
+            {
+                Task.Factory.StartNew(() => InternalWrapper.StopCurrentProcess());
+                return;
+            }
+            
+            SessionController.PassStationMessage("No internal wrapper present.");
             return;
         }
 
         UIController.UpdateProcessMessages("reset");
         CurrentWrapper.StopCurrentProcess();
         WrapperMonitoringThread.StopMonitoring();
-    }
-
-    /// <summary>
-    /// Manage the internal wrapper, coordinate the running, stopping or other functions that
-    /// relate to executables that are not experiences.
-    /// </summary>
-    /// <param name="message">A string of actions separated by ':'</param>
-    private void HandleInternalExecutable(string message)
-    {
-        //[0] - action to take, [1] - executable path
-        string[] messageTokens = message.Split(":");
-
-        string name = Path.GetFileNameWithoutExtension(messageTokens[1]);
-
-        //Create a temporary Experience struct to hold the information
-        Experience experience = new("Internal", "NA", name, name, null, messageTokens[1]);
-
-        switch(messageTokens[0])
-        {
-            case "Start":
-                internalWrapper.WrapProcess(experience);
-                break;
-            case "Stop":
-                internalWrapper.StopAProcess(experience);
-                break;
-            default:
-                LogHandler($"Unknown actionspace (HandleInternalExecutable): {messageTokens[0]}");
-                break;
-        }
     }
 
     /// <summary>
@@ -590,11 +586,56 @@ public class WrapperManager {
             case "Stop":
                 StopAProcess();
                 break;
-            case "Internal":
-                HandleInternalExecutable(message);
-                break;
             default:
                 LogHandler($"Unknown actionspace (ActionHandler): {type}");
+                break;
+        }
+    }
+    
+    /// <summary>
+    /// Manage the internal wrapper, coordinate the running, stopping or other functions that
+    /// relate to executables that are not experiences.
+    /// </summary>
+    /// <param name="action">A string describing the action to take (Start or Stop)</param>
+    /// <param name="launchType">A string of if the experience is to show on the tablet (visible) or not (hidden)</param>
+    /// <param name="path">A string of the absolute path of the executable to run</param>
+    /// <param name="parameters">A string to be passed as the process arguments</param>
+    public void HandleInternalExecutable(string action, string launchType, string path, string? parameters)
+    {
+        string name = Path.GetFileNameWithoutExtension(path);
+        string id = "NA";
+        
+        //Delay until experiences are collected so that if there are any details to be sent to the tablet it syncs correctly
+        do
+        {
+            MockConsole.WriteLine($"InternalWrapper - WrapProcess: Waiting for the software to collect experiences.", MockConsole.LogLevel.Normal);
+            Task.Delay(2000).Wait();
+        } while (ApplicationList.Count == 0 || alreadyCollecting);
+        
+        //Check if the application is known to the Software and replace the name with the correct one.
+        Dictionary<string, Experience> applicationListCopy = ApplicationList;
+        var matchingApplication = applicationListCopy
+            .FirstOrDefault(kvp => kvp.Value.AltPath == path);
+
+        if (matchingApplication.Key != null)
+        {
+            name = matchingApplication.Value.Name ?? name;
+            id = matchingApplication.Value.Id ?? "NA";
+        }
+
+        //Create a temporary Experience struct to hold the information
+        Experience experience = new("Internal", id, name, name, parameters, path);
+
+        switch(action)
+        {
+            case "Start":
+                InternalWrapper.WrapProcess(launchType, experience);
+                break;
+            case "Stop":
+                InternalWrapper.StopAProcess(experience);
+                break;
+            default:
+                LogHandler($"Unknown actionspace (HandleInternalExecutable): {action}");
                 break;
         }
     }

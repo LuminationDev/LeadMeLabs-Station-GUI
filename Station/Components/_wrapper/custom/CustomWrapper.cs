@@ -166,7 +166,6 @@ internal class CustomWrapper : IWrapper
         WrapperMonitoringThread.InitializeMonitoring(WrapperType);
 
         //Check if a headset is required from the debugger menu
-        //Check if a headset is required from the debugger menu
         if (InternalDebugger.GetHeadsetRequired())
         {
             //Wait for the Headset's connection method to respond
@@ -227,7 +226,7 @@ internal class CustomWrapper : IWrapper
 
         string filePath;
 
-        //The existance of an Alternate path means the experience has been imported through the launcher application
+        //The existence of an Alternate path means the experience has been imported through the launcher application
         if (experience.AltPath != null)
         {
             filePath = experience.AltPath;
@@ -350,7 +349,6 @@ internal class CustomWrapper : IWrapper
         {
             currentProcess?.WaitForExit();
             lastExperience.Name = null; //Reset for correct headset state
-            Trace.WriteLine("The current process has just exited.");
             SessionController.PassStationMessage($"ApplicationClosed");
             UIController.UpdateProcessMessages("reset");
         });
