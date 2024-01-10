@@ -64,7 +64,7 @@ namespace Station
         {
             Task.Factory.StartNew(() =>
             {
-                WrapperManager.applicationList.TryGetValue(experienceID, out var experience);
+                WrapperManager.ApplicationList.TryGetValue(experienceID, out var experience);
                 string? experienceName = experience.Name;
                 string? altPath = experience.AltPath;
 
@@ -210,7 +210,7 @@ namespace Station
 
             string filePath;
 
-            //The existance of an Alternate path means the experience has been imported through the launcher application
+            //The existence of an Alternate path means the experience has been imported through the launcher application
             if (experience.AltPath != null)
             {
                 filePath = experience.AltPath;
@@ -260,7 +260,7 @@ namespace Station
 
             if (child != null && currentProcess != null && lastExperience.ExeName != null)
             {
-                UIUpdater.UpdateProcess(lastExperience.Name ?? "Uknown");
+                UIUpdater.UpdateProcess(lastExperience.Name ?? "Unknown");
                 UIUpdater.UpdateStatus("Running...");
                 WindowManager.MaximizeProcess(child); //Maximise the process experience
                 SessionController.PassStationMessage($"ApplicationUpdate,{lastExperience.Name}/{lastExperience.ID}/Custom");
@@ -331,7 +331,6 @@ namespace Station
             {
                 currentProcess?.WaitForExit();
                 lastExperience.Name = null; //Reset for correct headset state
-                Trace.WriteLine("The current process has just exited.");
                 SessionController.PassStationMessage($"ApplicationClosed");
                 UIUpdater.ResetUIDisplay();
             });
