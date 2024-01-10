@@ -21,14 +21,14 @@ namespace Station
         private static readonly ReviveWrapper reviveWrapper = new ();
 
         //Used for multiple 'internal' applications, operations are separate from the other wrapper classes
-        private readonly InternalWrapper internalWrapper = new();
+        private static readonly InternalWrapper InternalWrapper = new();
 
         //Track the currently wrapper experience
         public static Wrapper? CurrentWrapper;
         private static bool alreadyCollecting = false;
 
         //Store the list of applications (key = ID: [[0] = wrapper type, [1] = application name, [2] = launch params (nullable)])
-        public static readonly Dictionary<string, Experience> applicationList = new();
+        public static readonly Dictionary<string, Experience> ApplicationList = new();
 
         /// <summary>
         /// Open the pipe server for message to and from external applications (Steam, Custom, etc..) and setup
@@ -95,7 +95,7 @@ namespace Station
         /// Handle an incoming action from the currently running process
         /// </summary>
         /// <param name="message">A multiple parameter message seperated by ',' detailing what action is to be taken</param>
-        /// <returns>An async task asscoiated with the action</returns>
+        /// <returns>An async task associated with the action</returns>
         private static void ExternalActionHandler(string message)
         {
             Logger.WriteLog($"Pipe message: {message}", MockConsole.LogLevel.Normal);
@@ -309,7 +309,7 @@ namespace Station
                 exeName = name;
             }
 
-            applicationList.TryAdd(id, new Experience(wrapperType, id, name, exeName, launchParameters, altPath));
+            ApplicationList.TryAdd(id, new Experience(wrapperType, id, name, exeName, launchParameters, altPath));
         }
 
         /// <summary>
@@ -369,7 +369,7 @@ namespace Station
         {
             //Get the type from the application dictionary
             //entry [application type, application name, application launch parameters]
-            Experience experience = applicationList.GetValueOrDefault(appID);
+            Experience experience = ApplicationList.GetValueOrDefault(appID);
             if (experience.IsNull())
             {
                 SessionController.PassStationMessage($"No application found: {appID}");
@@ -390,8 +390,9 @@ namespace Station
                 return "No process wrapper created.";
             }
 
-            //Stop any current processes before trying to launch a new one
+            //Stop any current processes (regular or 'visible' internal) before trying to launch a new one
             CurrentWrapper.StopCurrentProcess();
+            InternalWrapper.StopCurrentProcess();
 
             UIUpdater.UpdateProcess("Launching");
             UIUpdater.UpdateStatus("Loading...");
@@ -460,7 +461,15 @@ namespace Station
         {
             if (CurrentWrapper == null)
             {
-                SessionController.PassStationMessage("No process wrapper present.");
+                SessionController.PassStationMessage("No process wrapper present, checking internal.");
+
+                if (InternalWrapper.GetCurrentExperienceName() != null)
+                {
+                    Task.Factory.StartNew(() => InternalWrapper.PassMessageToProcess(message));
+                    return;
+                }
+
+                SessionController.PassStationMessage("No internal wrapper present.");
                 return;
             }
 
@@ -474,7 +483,13 @@ namespace Station
         {
             if (CurrentWrapper == null)
             {
-                SessionController.PassStationMessage("No process wrapper present.");
+                if (InternalWrapper.GetCurrentExperienceName() != null)
+                {
+                    Task.Factory.StartNew(() => InternalWrapper.RestartCurrentExperience());
+                    return;
+                }
+
+                SessionController.PassStationMessage("No internal wrapper present.");
                 return;
             }
             Task.Factory.StartNew(() => CurrentWrapper.RestartCurrentExperience());
@@ -491,6 +506,14 @@ namespace Station
             if (CurrentWrapper == null)
             {
                 SessionController.PassStationMessage("No process wrapper present.");
+                
+                if (InternalWrapper.GetCurrentExperienceName() != null)
+                {
+                    Task.Factory.StartNew(() => InternalWrapper.StopCurrentProcess());
+                    return;
+                }
+
+                SessionController.PassStationMessage("No internal wrapper present.");
                 return;
             }
 
@@ -498,36 +521,7 @@ namespace Station
             CurrentWrapper.StopCurrentProcess();
             WrapperMonitoringThread.StopMonitoring();
         }
-
-        /// <summary>
-        /// Manage the internal wrapper, coordinate the running, stopping or other functions that
-        /// relate to executables that are not experiences.
-        /// </summary>
-        /// <param name="message">A string of actions separated by ':'</param>
-        private void HandleInternalExecutable(string message)
-        {
-            //[0] - action to take, [1] - executable path
-            string[] messageTokens = message.Split(":");
-
-            string name = Path.GetFileNameWithoutExtension(messageTokens[1]);
-
-            //Create a temporary Experience struct to hold the information
-            Experience experience = new("Internal", "NA", name, name, null, messageTokens[1]);
-
-            switch(messageTokens[0])
-            {
-                case "Start":
-                    internalWrapper.WrapProcess(experience);
-                    break;
-                case "Stop":
-                    internalWrapper.StopAProcess(experience);
-                    break;
-                default:
-                    LogHandler($"Unknown actionspace (HandleInternalExecutable): {messageTokens[0]}");
-                    break;
-            }
-        }
-
+        
         /// <summary>
         /// Handle an incoming action, this may be from the LeadMe Station application
         /// </summary>
@@ -565,13 +559,58 @@ namespace Station
                 case "Stop":
                     StopAProcess();
                     break;
-                case "Internal":
-                    HandleInternalExecutable(message);
-                    break;
                 default:
                     LogHandler($"Unknown actionspace (ActionHandler): {type}");
                     break;
             }
         }
+        
+        /// <summary>
+    /// Manage the internal wrapper, coordinate the running, stopping or other functions that
+    /// relate to executables that are not experiences.
+    /// </summary>
+    /// <param name="action">A string describing the action to take (Start or Stop)</param>
+    /// <param name="launchType">A string of if the experience is to show on the tablet (visible) or not (hidden)</param>
+    /// <param name="path">A string of the absolute path of the executable to run</param>
+    /// <param name="parameters">A string to be passed as the process arguments</param>
+    public void HandleInternalExecutable(string action, string launchType, string path, string? parameters)
+    {
+        string name = Path.GetFileNameWithoutExtension(path);
+        string id = "NA";
+
+        //Delay until experiences are collected so that if there are any details to be sent to the tablet it syncs correctly
+        do
+        {
+            MockConsole.WriteLine($"InternalWrapper - WrapProcess: Waiting for the software to collect experiences.", MockConsole.LogLevel.Normal);
+            Task.Delay(2000).Wait();
+        } while (ApplicationList.Count == 0 || alreadyCollecting);
+
+        //Check if the application is known to the Software and replace the name with the correct one.
+        Dictionary<string, Experience> applicationListCopy = ApplicationList;
+        var matchingApplication = applicationListCopy
+            .FirstOrDefault(kvp => kvp.Value.AltPath == path);
+
+        if (matchingApplication.Key != null)
+        {
+            name = matchingApplication.Value.Name ?? name;
+            id = matchingApplication.Value.ID ?? "NA";
+        }
+
+        //Create a temporary Experience struct to hold the information
+        Experience experience = new("Internal", id, name, name, parameters, path);
+
+        switch(action)
+        {
+            case "Start":
+                InternalWrapper.WrapProcess(launchType, experience);
+                break;
+            case "Stop":
+                InternalWrapper.StopAProcess(experience);
+                break;
+            default:
+                LogHandler($"Unknown actionspace (HandleInternalExecutable): {action}");
+                break;
+        }
+    }
     }
 }

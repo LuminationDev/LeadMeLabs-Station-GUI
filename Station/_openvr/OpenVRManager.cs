@@ -413,7 +413,7 @@ namespace Station
             }
 
             WrapperManager.LoadWrapper(currentAppType); //Load in the appropriate wrapper type
-            WrapperManager.applicationList.TryGetValue(currentAppKey.Split(".")[2], out var experience);
+            WrapperManager.ApplicationList.TryGetValue(currentAppKey.Split(".")[2], out var experience);
             WrapperManager.CurrentWrapper?.SetLastExperience(experience);
             WrapperManager.CurrentWrapper?.SetCurrentProcess(targetProcess); //Sets the wrapper process and calls WaitForExit
             WrapperManager.CurrentWrapper?.SetLaunchingExperience(false);
