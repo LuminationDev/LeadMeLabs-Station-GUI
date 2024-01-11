@@ -132,7 +132,7 @@ namespace Station
             SessionController.StartVRSession(WrapperType);
 
             //Begin monitoring the different processes
-            WrapperMonitoringThread.InitializeMonitoring(WrapperType);
+            WrapperMonitoringThread.InitializeMonitoring(WrapperType, experience.IsVr);
 
             //Wait for the Headset's connection method to respond
             if (!SessionController.VrHeadset.WaitForConnection(WrapperType)) return "Could not connect to headset";

@@ -81,7 +81,7 @@ namespace Station
         public static void RestartVRSession()
         {
             ScheduledTaskQueue.EnqueueTask(() => PassStationMessage($"SoftwareState,Shutting down VR processes"), TimeSpan.FromSeconds(1));
-            _ = WrapperManager.RestartVRProcesses();
+            _ = WrapperManager.RestartVRProcesses(Helper.GetStationMode().Equals(Helper.STATION_MODE_VR));
 
             if (ExperienceType == null)
             {

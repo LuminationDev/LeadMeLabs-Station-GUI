@@ -137,7 +137,7 @@ namespace Station
                 return "Cannot find working directory";
             }
 
-            if (SessionController.VrHeadset == null)
+            if (SessionController.VrHeadset == null && experience.IsVr)
             {
                 SessionController.PassStationMessage("No VR headset set.");
                 return "No VR headset set.";
@@ -159,28 +159,34 @@ namespace Station
             lastExperience = experience;
 
             //Begin monitoring the different processes
-            WrapperMonitoringThread.InitializeMonitoring(WrapperType);
+            WrapperMonitoringThread.InitializeMonitoring(WrapperType, experience.IsVr);
 
-            //Wait for the Headset's connection method to respond
-            if (!SessionController.VrHeadset.WaitForConnection(WrapperType)) return "Could not get headset connection";
+            if (experience.IsVr)
+            {
+                //Wait for the Headset's connection method to respond
+                if (!SessionController.VrHeadset.WaitForConnection(WrapperType)) return "Could not get headset connection";
 
-            //If headset management software is open (with headset connected) and OpenVrSystem cannot initialise then restart SteamVR
-            if (!OpenVRManager.WaitForOpenVR().Result) return "Could not connect to OpenVR";
+                //If headset management software is open (with headset connected) and OpenVrSystem cannot initialise then restart SteamVR
+                if (!OpenVRManager.WaitForOpenVR().Result) return "Could not connect to OpenVR";
+            }
 
             MockConsole.WriteLine($"Launching process: {experience.Name} - {experience.ID}", MockConsole.LogLevel.Normal);
             Task.Factory.StartNew(() =>
             {
-                //Attempt to start the process using OpenVR
-                _launchWillHaveFailedFromOpenVrTimeout = true;
-                if (OpenVRManager.LaunchApplication(experience.ID))
+                if (experience.IsVr)
                 {
-                    Logger.WriteLog($"CustomWrapper.WrapProcess: Launching {experience.Name} via OpenVR", MockConsole.LogLevel.Verbose);
-                    return;
-                }
-                _launchWillHaveFailedFromOpenVrTimeout = false;
+                    //Attempt to start the process using OpenVR
+                    _launchWillHaveFailedFromOpenVrTimeout = true;
+                    if (OpenVRManager.LaunchApplication(experience.ID))
+                    {
+                        Logger.WriteLog($"CustomWrapper.WrapProcess: Launching {experience.Name} via OpenVR", MockConsole.LogLevel.Verbose);
+                        return;
+                    }
+                    _launchWillHaveFailedFromOpenVrTimeout = false;
 
-                //Stop any accessory processes before opening a new process
-                SessionController.VrHeadset.StopProcessesBeforeLaunch();
+                    //Stop any accessory processes before opening a new process
+                    SessionController.VrHeadset.StopProcessesBeforeLaunch();
+                }
                 
                 //Fall back to the alternate if it fails or is not a registered VR experience in the vrmanifest
                 Logger.WriteLog($"CustomWrapper.WrapProcess - Using AlternateLaunchProcess", MockConsole.LogLevel.Normal);
@@ -260,7 +266,7 @@ namespace Station
 
             if (child != null && currentProcess != null && lastExperience.ExeName != null)
             {
-                UIUpdater.UpdateProcess(lastExperience.Name ?? "Uknown");
+                UIUpdater.UpdateProcess(lastExperience.Name ?? "Unknown");
                 UIUpdater.UpdateStatus("Running...");
                 WindowManager.MaximizeProcess(child); //Maximise the process experience
                 SessionController.PassStationMessage($"ApplicationUpdate,{lastExperience.Name}/{lastExperience.ID}/Custom");

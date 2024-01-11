@@ -186,21 +186,23 @@ namespace Station
 
             alreadyCollecting = false;
 
-            _ = RestartVRProcesses();
+            _ = RestartVRProcesses(Helper.GetStationMode().Equals(Helper.STATION_MODE_VR));
             return applications;
         }
 
         /// <summary>
         /// Start or restart the VR session associated with the VR headset type
         /// </summary>
-        public static async Task RestartVRProcesses()
+        public static async Task RestartVRProcesses(bool isVr)
         {
             if (SessionController.VrHeadset != null)
             {
                 RoomSetup.CompareRoomSetup();
 
                 List<string> combinedProcesses = new List<string>();
+                
                 combinedProcesses.AddRange(WrapperMonitoringThread.SteamProcesses);
+                combinedProcesses.AddRange(WrapperMonitoringThread.SteamVrProcesses);
                 combinedProcesses.AddRange(WrapperMonitoringThread.ViveProcesses);
                 combinedProcesses.AddRange(WrapperMonitoringThread.ReviveProcesses);
 
@@ -217,29 +219,45 @@ namespace Station
                     return;
                 }
 
-                List<string> processesToQuery = SessionController.VrHeadset.GetProcessesToQuery();
-                while (CommandLine.QueryVRProcesses(processesToQuery))
+                if (isVr)
                 {
-                    await SessionController.PutTaskDelay(1000);
-                    if (attempts > 20)
+                    List<string> processesToQuery = SessionController.VrHeadset.GetProcessesToQuery();
+                    while (CommandLine.QueryVRProcesses(processesToQuery))
                     {
-                        SessionController.PassStationMessage("MessageToAndroid,FailedRestart");
-                        SessionController.PassStationMessage("Processing,false");
-                        return;
+                        await SessionController.PutTaskDelay(1000);
+                        if (attempts > 20)
+                        {
+                            SessionController.PassStationMessage("MessageToAndroid,FailedRestart");
+                            SessionController.PassStationMessage("Processing,false");
+                            return;
+                        }
+                        attempts++;
                     }
-                    attempts++;
+                    
+                    //Reset the VR device statuses
+                    SessionController.VrHeadset.GetStatusManager().ResetStatuses();
                 }
-
-                //Reset the VR device statuses
-                SessionController.VrHeadset.GetStatusManager().ResetStatuses();
 
                 await SessionController.PutTaskDelay(5000);
 
                 SessionController.PassStationMessage("Processing,false");
-
-                ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage($"SoftwareState,Starting VR processes"), TimeSpan.FromSeconds(0));
-                SessionController.VrHeadset.StartVrSession();
-                WaitForVRProcesses();
+                
+                if (!isVr)
+                {
+                    CommandLine.KillSteamSigninWindow();
+                    SteamConfig.VerifySteamConfig();
+                    CommandLine.StartProgram(SessionController.Steam, "-noreactlogin -login " +
+                                                                      Environment.GetEnvironmentVariable("SteamUserName", EnvironmentVariableTarget.Process) + " " +
+                                                                      Environment.GetEnvironmentVariable("SteamPassword", EnvironmentVariableTarget.Process));
+                    ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage($"SoftwareState,Starting processes"), TimeSpan.FromSeconds(0));
+                    WaitForSteamProcess();
+                }
+                else
+                {
+                    ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage($"SoftwareState,Starting VR processes"), TimeSpan.FromSeconds(0));
+                    SessionController.VrHeadset.StartVrSession();
+                    WaitForVRProcesses();
+                }
             }
         }
 
@@ -273,6 +291,32 @@ namespace Station
                 ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage("MessageToAndroid,SetValue:session:Restarted"), TimeSpan.FromSeconds(1));
             }
         }
+        
+        /// <summary>
+        /// Wait for Steam, bail out after 3 minutes. Send the outcome 
+        /// to the tablet.
+        /// </summary>
+        private static void WaitForSteamProcess()
+        {
+            int count = 0;
+            do
+            {
+                Task.Delay(3000).Wait();
+                count++;
+            } while ((ProcessManager.GetProcessesByName("steam").Length == 0) && count <= 60);
+
+            string error = "";
+            if (ProcessManager.GetProcessesByName("steam").Length == 0)
+            {
+                error = "Error: Steam could not open";
+            }
+
+            string message = count <= 60 ? "Ready to go" : error;
+
+            ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage($"SoftwareState,{message}"),
+                TimeSpan.FromSeconds(1));
+            ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage("MessageToAndroid,SetValue:session:Restarted"), TimeSpan.FromSeconds(1));
+        }
 
         /// <summary>
         /// Load a collected application into the local storage list to determine start processes based
@@ -286,6 +330,11 @@ namespace Station
         /// <param name="launchParameters">A stringified list of any parameters required at launch.</param>
         public static void StoreApplication(string wrapperType, string id, string name, bool isVr = true, string? launchParameters = null, string? altPath = null)
         {
+            if (!Helper.GetStationMode().Equals(Helper.STATION_MODE_VR) && isVr)
+            {
+                return;
+            }
+            
             string? exeName;
             if(altPath != null)
             {

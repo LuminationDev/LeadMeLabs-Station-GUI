@@ -71,7 +71,7 @@ namespace Station
             new Task(() =>
             {
                 ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage($"SoftwareState,Shutting down VR processes"), TimeSpan.FromSeconds(1));
-                _ = WrapperManager.RestartVRProcesses();
+                _ = WrapperManager.RestartVRProcesses(Helper.GetStationMode().Equals(Helper.STATION_MODE_VR));
             }).Start();
         }
 
