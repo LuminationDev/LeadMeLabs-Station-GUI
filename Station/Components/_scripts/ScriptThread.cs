@@ -55,6 +55,10 @@ public class ScriptThread
             case "HandleExecutable":
                 HandleExecutable(_additionalData);
                 break;
+            
+            case "DisplayChange":
+                HandleDisplayChange(_additionalData);
+                break;
 
             case "Experience":
                 HandleExperience(_additionalData);
@@ -135,6 +139,37 @@ public class ScriptThread
         string parameters = safeParameters.Replace("%", ":");
 
         MainController.wrapperManager?.HandleInternalExecutable(action, launchType, isVr, path, parameters);
+    }
+    
+    /// <summary>
+    /// Check that new display value is valid and then change to it
+    /// <param name="additionalData">Expected format: Height:1080:Width:1920</param>
+    /// </summary>
+    private void HandleDisplayChange(string additionalData)
+    {
+        string[] split = additionalData.Split(":", 4);
+        if (split.Length < 4)
+        {
+            Logger.WriteLog($"Could not parse display change for additional data {additionalData}", MockConsole.LogLevel.Error);
+            return;
+        }
+        string heightString = split[1];
+        string widthString = split[3];
+        
+        if (!Int32.TryParse(heightString, out var height) || !Int32.TryParse(widthString, out var width))
+        {
+            Logger.WriteLog($"Could not parse display change for values Height: {heightString}, Width: {widthString}", MockConsole.LogLevel.Error);
+            return;
+        }
+
+        if (!DisplayController.IsDisplayModeSupported(width, height, 32))
+        {
+            Logger.WriteLog($"Invalid display change for values Height: {heightString}, Width: {widthString}", MockConsole.LogLevel.Error);
+            return;
+        }
+
+        DisplayController.ChangeDisplaySettings(width, height, 32);
+        Logger.WriteLog($"Changed display settings to Height: {heightString}, Width: {widthString}", MockConsole.LogLevel.Debug);
     }
 
     /// <summary>
