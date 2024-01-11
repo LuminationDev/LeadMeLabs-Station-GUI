@@ -58,7 +58,7 @@ public class ServerThread
             
             if (Helper.GetStationMode().Equals(Helper.STATION_MODE_VR))
             {
-                SessionController.StartVRSession("steam");
+                SessionController.StartVrSession("steam");
             }
 
             server.Start();

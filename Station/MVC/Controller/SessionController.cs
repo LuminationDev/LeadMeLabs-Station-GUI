@@ -74,7 +74,7 @@ public static class SessionController
     /// applications that will be started/required depend on the supplied type.
     /// </summary>
     /// <param name="type">A string of what type of experience is being loaded [Custom, Steam, Vive, etc]</param>
-    public static void StartVRSession(string type)
+    public static void StartVrSession(string type)
     {
         if (!InternalDebugger.GetAutoStart()) return;
         
@@ -98,10 +98,10 @@ public static class SessionController
     /// <summary>
     /// Stop all processes that are associated with a VR session.
     /// </summary>
-    public static void RestartVRSession()
+    public static void RestartVrSession()
     {
         ScheduledTaskQueue.EnqueueTask(() => PassStationMessage($"SoftwareState,Shutting down VR processes"), TimeSpan.FromSeconds(1));
-        _ = WrapperManager.RestartVrProcesses();
+        _ = WrapperManager.RestartVrProcesses(Helper.GetStationMode().Equals(Helper.STATION_MODE_VR));
 
         if (ExperienceType == null)
         {
@@ -136,7 +136,7 @@ public static class SessionController
     /// <summary>
     /// Stop all processes that are associated with a VR session.
     /// </summary>
-    public static void EndVRSession()
+    public static void EndVrSession()
     {
         switch (ExperienceType)
         {

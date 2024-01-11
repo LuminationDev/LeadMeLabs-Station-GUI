@@ -58,7 +58,7 @@ public class SessionControllerTests
         SessionController.VrHeadset = new VivePro1();
 
         // Act
-        SessionController.StartVRSession(experienceType);
+        SessionController.StartVrSession(experienceType);
 
         // Assert
         Assert.Equal(experienceType, SessionController.ExperienceType);
@@ -102,7 +102,7 @@ public class SessionControllerTests
         SessionController.ExperienceType = experienceType;
 
         // Act
-        SessionController.EndVRSession();
+        SessionController.EndVrSession();
 
         // Assert
         Assert.Null(SessionController.ExperienceType);

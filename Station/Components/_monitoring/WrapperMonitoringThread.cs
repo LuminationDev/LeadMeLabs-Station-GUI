@@ -21,17 +21,18 @@ public static class WrapperMonitoringThread
     /// <summary>
     /// An array representing the all process names needed to stop any VR session.
     /// </summary>
-    public static readonly List<string> SteamProcesses = new() { "vrmonitor", "steam", "steamerrorreporter64" };
+    public static readonly List<string> SteamProcesses = new() { "steam", "steamerrorreporter64" };
+    public static readonly List<string> SteamVrProcesses = new() { "vrmonitor" };
     public static readonly List<string> ViveProcesses = new() { "HtcConnectionUtility", "LhStatusMonitor", "WaveConsole", "ViveVRServer", "ViveSettings", "RRConsole", "RRServer" };
     public static readonly List<string> ReviveProcesses = new() { "ReviveOverlay" }; 
     
     /// <summary>
     /// Start a new thread with the supplied monitor check type.
     /// </summary>
-    public static void InitializeMonitoring(string type)
+    public static void InitializeMonitoring(string type, bool isVr)
     {
         monitoringThread = new Thread(() => {
-            InitializeRespondingCheck(type);
+            InitializeRespondingCheck(type, isVr);
         });
 
         monitoringThread.Start();
@@ -50,7 +51,7 @@ public static class WrapperMonitoringThread
     /// Start checking that VR applications and current Steam app are responding
     /// Will check every 5 seconds
     /// </summary>
-    private static void InitializeRespondingCheck(string type)
+    private static void InitializeRespondingCheck(string type, bool isVr)
     {
         timer = new System.Timers.Timer(3000);
         timer.AutoReset = true;
@@ -58,19 +59,19 @@ public static class WrapperMonitoringThread
         switch (type)
         {
             case "Custom":
-                timer.Elapsed += CallCustomCheck;
+                timer.Elapsed += (sender, e) => CallCustomCheck(sender, e, isVr);
                 break;
 
             case "Steam":
-                timer.Elapsed += CallSteamCheck;
+                timer.Elapsed += (sender, e) => CallSteamCheck(sender, e, isVr);
                 break;
             
             case "Revive":
-                timer.Elapsed += CallReviveCheck;
+                timer.Elapsed += (sender, e) => CallReviveCheck(sender, e, isVr);
                 break;
 
             case "Vive":
-                timer.Elapsed += CallViveCheck;
+                timer.Elapsed += (sender, e) => CallViveCheck(sender, e, isVr);
                 break;
 
             default:
@@ -86,33 +87,33 @@ public static class WrapperMonitoringThread
     /// If they are not sends a messages to the Station application that there 
     /// are tasks that aren't responding.
     /// </summary>
-    private static void CallCustomCheck(Object? source, System.Timers.ElapsedEventArgs e)
+    private static void CallCustomCheck(Object? source, System.Timers.ElapsedEventArgs e, bool isVr)
     {
-        ProcessesAreResponding();
-        SteamCheck();
+        ProcessesAreResponding(isVr);
+        SteamCheck(isVr);
 
         Logger.WorkQueue();
     }
 
-    private static void CallSteamCheck(Object? source, System.Timers.ElapsedEventArgs e)
+    private static void CallSteamCheck(Object? source, System.Timers.ElapsedEventArgs e, bool isVr)
     {
         MockConsole.WriteLine("Checked Steam status", MockConsole.LogLevel.Verbose);
-        ProcessesAreResponding();
-        SteamCheck();
+        ProcessesAreResponding(isVr);
+        SteamCheck(isVr);
 
         Logger.WorkQueue();
     }
     
-    private static void CallReviveCheck(Object? source, System.Timers.ElapsedEventArgs e)
+    private static void CallReviveCheck(Object? source, System.Timers.ElapsedEventArgs e, bool isVr)
     {
         MockConsole.WriteLine("Checked Revive status", MockConsole.LogLevel.Verbose);
-        ProcessesAreResponding();
-        SteamCheck();
+        ProcessesAreResponding(isVr);
+        SteamCheck(isVr);
 
         Logger.WorkQueue();
     }
 
-    private static void CallViveCheck(Object? source, System.Timers.ElapsedEventArgs e)
+    private static void CallViveCheck(Object? source, System.Timers.ElapsedEventArgs e, bool isVr)
     {
         Logger.WorkQueue();
     }
@@ -120,16 +121,22 @@ public static class WrapperMonitoringThread
     /// <summary>
     /// Check that the necessary processes are responding for the current headset/application
     /// </summary>
-    private static void ProcessesAreResponding()
+    private static void ProcessesAreResponding(bool isVr)
     {
         List<string> combinedProcesses = new List<string>();
-        combinedProcesses.AddRange(SteamProcesses);
-        combinedProcesses.AddRange(ViveProcesses);
-        combinedProcesses.AddRange(ReviveProcesses);
+        List<string> computedSteamProcessList = new List<string>();
+        computedSteamProcessList.AddRange(SteamProcesses);
+        if (isVr)
+        {
+            computedSteamProcessList.AddRange(SteamVrProcesses);
+            combinedProcesses.AddRange(ViveProcesses);
+            combinedProcesses.AddRange(ReviveProcesses);
+        }
+        combinedProcesses.AddRange(computedSteamProcessList);
 
         //Check the regular Steam processes are running
-        List<Process> runningSteamProcesses = ProcessManager.GetProcessesByNames(SteamProcesses);
-        bool allProcessesAreRunning = runningSteamProcesses.Count >= SteamProcesses.Count;
+        List<Process> runningSteamProcesses = ProcessManager.GetProcessesByNames(computedSteamProcessList);
+        bool allProcessesAreRunning = runningSteamProcesses.Count >= computedSteamProcessList.Count;
         
         //Check all processes are responding
         List<Process> processes = ProcessManager.GetProcessesByNames(combinedProcesses);
@@ -150,7 +157,7 @@ public static class WrapperMonitoringThread
     /// <summary>
     /// Look for any steam errors, this may be from the Steam VR application or a Steam popup.
     /// </summary>
-    private static void SteamCheck()
+    private static void SteamCheck(bool isVr)
     {
         //Check for any Steam errors
         List<string> errorTitles = new List<string> { "Steam - Error", "Unexpected SteamVR Error" };
@@ -166,13 +173,16 @@ public static class WrapperMonitoringThread
             steamError = false;
         }
 
-        Process[] steamVrErrorDialogs = ProcessManager.GetProcessesByName("steamtours");
-        foreach (var process in steamVrErrorDialogs)
+        if (isVr)
         {
-            Logger.WriteLog($"Killing steam error process: {process.MainWindowTitle}", MockConsole.LogLevel.Error);
-            process.Kill();
+            Process[] steamVrErrorDialogs = ProcessManager.GetProcessesByName("steamtours");
+            foreach (var process in steamVrErrorDialogs)
+            {
+                Logger.WriteLog($"Killing steam error process: {process.MainWindowTitle}", MockConsole.LogLevel.Error);
+                process.Kill();
+            }
         }
-        
+
         //Detect if a process contains the experience trying to be launched and the '- Steam' header which indicates a pop has occurred
         if (SteamWrapper.experienceName is null) return;
         

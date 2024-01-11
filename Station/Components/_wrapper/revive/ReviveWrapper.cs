@@ -136,10 +136,10 @@ public class ReviveWrapper : IWrapper
         MockConsole.WriteLine($"Wrapping: {experienceName}", MockConsole.LogLevel.Debug);
 
         //Start the external processes to handle SteamVR
-        SessionController.StartVRSession(WrapperType);
+        SessionController.StartVrSession(WrapperType);
 
         //Begin monitoring the different processes
-        WrapperMonitoringThread.InitializeMonitoring(WrapperType);
+        WrapperMonitoringThread.InitializeMonitoring(WrapperType, experience.IsVr);
 
         //Check if a headset is required from the debugger menu
         //Check if a headset is required from the debugger menu

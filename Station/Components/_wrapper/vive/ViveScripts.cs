@@ -86,7 +86,7 @@ public static class ViveScripts
 
             if (SessionController.VrHeadset.GetHeadsetManagementSoftwareStatus() == DeviceStatus.Off)
             {
-                SessionController.StartVRSession(type);
+                SessionController.StartVrSession(type);
                 ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage($"SoftwareState,Starting VR Session"), TimeSpan.FromSeconds(1));
                 if (count == 10) // (10 * 5000ms) this loop + 2000ms initial loop 
                 {

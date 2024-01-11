@@ -72,7 +72,7 @@ public class WrapperManager {
     {
         ParentPipeServer.Close();
         CurrentWrapper?.StopCurrentProcess();
-        SessionController.EndVRSession();
+        SessionController.EndVrSession();
     }
 
     /// <summary>
@@ -199,7 +199,7 @@ public class WrapperManager {
 
         alreadyCollecting = false;
 
-        _ = RestartVrProcesses();
+        _ = RestartVrProcesses(Helper.GetStationMode().Equals(Helper.STATION_MODE_VR));
         return applications;
     }
 
@@ -210,6 +210,7 @@ public class WrapperManager {
     {
         List<string> combinedProcesses = new List<string>();
         combinedProcesses.AddRange(WrapperMonitoringThread.SteamProcesses);
+        combinedProcesses.AddRange(WrapperMonitoringThread.SteamVrProcesses);
         combinedProcesses.AddRange(WrapperMonitoringThread.ViveProcesses);
         combinedProcesses.AddRange(WrapperMonitoringThread.ReviveProcesses);
 
@@ -219,25 +220,25 @@ public class WrapperManager {
     /// <summary>
     /// Start or restart the VR session associated with the VR headset type
     /// </summary>
-    public static async Task RestartVrProcesses()
+    public static async Task RestartVrProcesses(bool isVr)
     {
-        if (SessionController.VrHeadset != null)
+        RoomSetup.CompareRoomSetup();
+
+        StopVrProcesses();
+        await SessionController.PutTaskDelay(2000);
+
+        //have to add a waiting time to make sure it has exited
+        int attempts = 0;
+
+        if (SessionController.VrHeadset == null)
         {
-            RoomSetup.CompareRoomSetup();
+            SessionController.PassStationMessage("No headset type specified.");
+            SessionController.PassStationMessage("Processing,false");
+            return;
+        }
 
-            StopVrProcesses();
-            await SessionController.PutTaskDelay(2000);
-
-            //have to add a waiting time to make sure it has exited
-            int attempts = 0;
-
-            if (SessionController.VrHeadset == null)
-            {
-                SessionController.PassStationMessage("No headset type specified.");
-                SessionController.PassStationMessage("Processing,false");
-                return;
-            }
-
+        if (isVr)
+        {
             List<string> processesToQuery = SessionController.VrHeadset.GetProcessesToQuery();
             while (CommandLine.QueryVRProcesses(processesToQuery))
             {
@@ -248,26 +249,66 @@ public class WrapperManager {
                     SessionController.PassStationMessage("Processing,false");
                     return;
                 }
+
                 attempts++;
             }
 
             //Reset the VR device statuses
             SessionController.VrHeadset.GetStatusManager().ResetStatuses();
+        }
 
-            await SessionController.PutTaskDelay(5000);
+        await SessionController.PutTaskDelay(5000);
 
-            SessionController.PassStationMessage("Processing,false");
+        SessionController.PassStationMessage("Processing,false");
 
-            if (!InternalDebugger.GetAutoStart())
-            {
-                ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage($"SoftwareState,Debug Mode"), TimeSpan.FromSeconds(0));
-                return;
-            }
-
+        if (!InternalDebugger.GetAutoStart())
+        {
+            ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage($"SoftwareState,Debug Mode"), TimeSpan.FromSeconds(0));
+            return;
+        }
+        
+        if (!isVr)
+        {
+            CommandLine.KillSteamSigninWindow();
+            SteamConfig.VerifySteamConfig();
+            CommandLine.StartProgram(SessionController.Steam, "-noreactlogin -login " +
+                                                              Environment.GetEnvironmentVariable("SteamUserName", EnvironmentVariableTarget.Process) + " " +
+                                                              Environment.GetEnvironmentVariable("SteamPassword", EnvironmentVariableTarget.Process));
+            ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage($"SoftwareState,Starting processes"), TimeSpan.FromSeconds(0));
+            WaitForSteamProcess();
+        }
+        else
+        {
             ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage($"SoftwareState,Starting VR processes"), TimeSpan.FromSeconds(0));
             SessionController.VrHeadset.StartVrSession();
             WaitForVrProcesses();
         }
+    }
+    
+    /// <summary>
+    /// Wait for Steam, bail out after 3 minutes. Send the outcome 
+    /// to the tablet.
+    /// </summary>
+    private static void WaitForSteamProcess()
+    {
+        int count = 0;
+        do
+        {
+            Task.Delay(3000).Wait();
+            count++;
+        } while ((ProcessManager.GetProcessesByName("steam").Length == 0) && count <= 60);
+
+        string error = "";
+        if (ProcessManager.GetProcessesByName("steam").Length == 0)
+        {
+            error = "Error: Steam could not open";
+        }
+
+        string message = count <= 60 ? "Ready to go" : error;
+
+        ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage($"SoftwareState,{message}"),
+            TimeSpan.FromSeconds(1));
+        ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage("MessageToAndroid,SetValue:session:Restarted"), TimeSpan.FromSeconds(1));
     }
 
     /// <summary>
@@ -314,6 +355,11 @@ public class WrapperManager {
     /// <param name="altPath"></param>
     public static void StoreApplication(string wrapperType, string id, string name, bool isVr = true, string? launchParameters = null, string? altPath = null)
     {
+        if (!Helper.GetStationMode().Equals(Helper.STATION_MODE_VR) && isVr)
+        {
+            return;
+        }
+        
         var exeName = altPath != null ? Path.GetFileName(altPath) : name;
 
         //Add to the WrapperManager list and the ExperienceViewModel ObservableCollection
@@ -375,10 +421,10 @@ public class WrapperManager {
         switch (action)
         {
             case "Restart":
-                SessionController.RestartVRSession();
+                SessionController.RestartVrSession();
                 break;
             case "End":
-                SessionController.EndVRSession();
+                SessionController.EndVrSession();
                 break;
         }
     }
