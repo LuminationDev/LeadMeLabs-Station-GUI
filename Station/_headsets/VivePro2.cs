@@ -53,7 +53,7 @@ namespace Station._headsets
 
         private List<string> GetProcessesToMinimize()
         {
-            return new List<string> { "vrmonitor", "steam", "LhStatusMonitor", "WaveConsole" };
+            return new List<string> { "vrmonitor", "steam", "LhStatusMonitor", "WaveConsole", "steamwebhelper" };
         }
         
         /// <summary>

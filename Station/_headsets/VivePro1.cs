@@ -55,7 +55,7 @@ namespace Station._headsets
 
         public List<string> GetProcessesToQuery()
         {
-            return new List<string> { "vrmonitor", "steam", "HtcConnectionUtility" };
+            return new List<string> { "vrmonitor", "steam", "HtcConnectionUtility", "steamwebhelper" };
         }
         
         /// <summary>
