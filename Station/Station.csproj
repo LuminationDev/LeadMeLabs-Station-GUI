@@ -14,7 +14,7 @@
 		<Nullable>enable</Nullable>
 		<ApplicationIcon>./assets/icon.ico</ApplicationIcon>
 		<Configurations>Debug;Release;DevDebug;DevRelease</Configurations>
-		<Version>1.1.10</Version>
+		<Version>1.1.11</Version>
 	</PropertyGroup>
 
 	<ItemGroup>
