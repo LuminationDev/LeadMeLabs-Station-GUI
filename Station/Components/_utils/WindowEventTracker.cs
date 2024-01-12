@@ -128,7 +128,7 @@ public class WindowEventTracker
         else if (eventType == 23) // Starts
         {
             Console.WriteLine("maximise");
-            if (DateTime.Now > lastInteraction.AddSeconds(10) && InternalDebugger.GetMinimisePrograms())
+            if ((DateTime.Now < lastInteraction.AddSeconds(1) ||  DateTime.Now > lastInteraction.AddSeconds(10)) && InternalDebugger.GetMinimisePrograms())
             {
                 WindowManager.MinimizeProcess(Process.GetProcessById(Convert.ToInt32(m_processId)));
                 lastInteraction = DateTime.Now;

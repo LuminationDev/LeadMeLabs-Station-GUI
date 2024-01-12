@@ -59,7 +59,7 @@ public class ViveFocus3 : Headset, IVrHeadset
 
     public List<string> GetProcessesToQuery()
     {
-        return new List<string> { "vrmonitor", "steam", "RRConsole", "RRServer" };
+        return new List<string> { "vrmonitor", "steam", "RRConsole", "RRServer", "steamwebhelper" };
     }
     
     /// <summary>

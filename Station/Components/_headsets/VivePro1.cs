@@ -60,7 +60,7 @@ public class VivePro1 : Headset, IVrHeadset
 
     public List<string> GetProcessesToQuery()
     {
-        return new List<string> { "vrmonitor", "steam", "HtcConnectionUtility" };
+        return new List<string> { "vrmonitor", "steam", "HtcConnectionUtility", "steamwebhelper" };
     }
     
     /// <summary>
