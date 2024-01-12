@@ -18,6 +18,7 @@ public class MainViewModel : ObservableObject
     public RelayCommand ExperiencesViewCommand { get; }
     public RelayCommand DebugViewCommand { get; }
     public RelayCommand LogsViewCommand { get; }
+    public RelayCommand QaViewCommand { get; }
     
     private object _currentView = null!;
 
@@ -66,6 +67,7 @@ public class MainViewModel : ObservableObject
         ExperiencesViewCommand = new RelayCommand(_ => CurrentView = ViewModelManager.ExperiencesViewModel);
         DebugViewCommand = new RelayCommand(_ => CurrentView = ViewModelManager.DebugViewModel);
         LogsViewCommand = new RelayCommand(_ => CurrentView = ViewModelManager.LogsViewModel);
+        QaViewCommand = new RelayCommand(_ => CurrentView = ViewModelManager.QaViewModel);
 
         ViewModelManager.MainViewModel = this;
     }

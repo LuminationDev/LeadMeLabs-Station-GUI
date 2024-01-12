@@ -8,4 +8,5 @@ public class ViewModelLocator
     public ExperiencesViewModel ExperiencesViewModel { get; } = new ();
     public DebugViewModel DebugViewModel { get; } = new ();
     public LogsViewModel LogsViewModel { get; } = new ();
+    public QaViewModel QaViewModel { get; } = new ();
 }

@@ -125,6 +125,13 @@
                                  Style="{StaticResource MenuButtonTheme}"
                                  Command="{Binding LogsViewCommand}"/>
                     
+                    <RadioButton Content="QA"
+                                 Height="50"
+                                 Foreground="White"
+                                 FontSize="14"
+                                 Style="{StaticResource MenuButtonTheme}"
+                                 Command="{Binding QaViewCommand}"/>
+                    
                 </StackPanel>
                 
                 <!--Action Buttons-->
