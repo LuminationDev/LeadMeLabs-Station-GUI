@@ -54,8 +54,12 @@ public static class CustomScripts
             //Do not collect the Station or NUC application from the manifest file.
             if (item.type == "LeadMe" || item.GetType == "Launcher") continue;
 
+            //Determine if it is a VR experience
+            bool isVr =
+                customManifestApplicationList.IsApplicationInstalledAndVrCompatible("custom.app." + item.id.ToString());
+            
             //Basic application requirements
-            string application = $"{item.type}|{item.id}|{item.name}";
+            string application = $"{item.type}|{item.id}|{item.name}|{isVr.ToString()}";
 
             //Determine if there are launch parameters, if so create a passable string for a new process function
             string? parameters = null;
@@ -79,7 +83,7 @@ public static class CustomScripts
             }
 
             WrapperManager.StoreApplication(item.type.ToString(), item.id.ToString(), item.name.ToString(), 
-                customManifestApplicationList.IsApplicationInstalledAndVrCompatible("custom.app." + item.id.ToString()), 
+                isVr, 
                 parameters, altPath);
             apps.Add(application);
         }
