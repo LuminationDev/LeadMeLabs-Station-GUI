@@ -70,7 +70,7 @@ namespace Station
         /// <param name="message">A string to be printed to the console.</param>
         public static void WriteLine(string message)
         {
-            if (!Debugger.viewConsoleWindow) return;
+            if (!InternalDebugger.viewConsoleWindow) return;
             
             if (message.Trim() == "" || _viewModel == null) return;
             if (_logLevel == LogLevel.Off) return;
@@ -101,7 +101,7 @@ namespace Station
         /// <param name="level">A Loglevel enum representing if it should be displayed at the current logging level.</param>
         public static void WriteLine(string message, LogLevel level)
         {
-            if (!Debugger.viewConsoleWindow) return;
+            if (!InternalDebugger.viewConsoleWindow) return;
             
             if (message.Trim() == "" || _viewModel == null) return;
             if (level > _logLevel || _logLevel == LogLevel.Off) return;

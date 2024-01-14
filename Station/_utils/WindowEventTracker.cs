@@ -3,7 +3,7 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using Station;
-using InternalDebugger = Station._utils.Debugger;
+using Station._utils;
 
 public class WindowEventTracker
 {

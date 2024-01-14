@@ -36,7 +36,7 @@ namespace Station
         {
             if (SessionController.VrHeadset == null) return false;
             
-            if (!Debugger.GetAutoStart())
+            if (!InternalDebugger.GetAutoStart())
             {
                 ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage($"SoftwareState,Debug Mode"), TimeSpan.FromSeconds(0));
                 return false;

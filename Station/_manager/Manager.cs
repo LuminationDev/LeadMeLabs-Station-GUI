@@ -113,6 +113,7 @@ namespace Station
             
             //Call as a new task to stop UI and server start up from hanging whilst reading the files
             new Thread(Initialisation).Start();
+            ModeTracker.Initialise();
         }
 
         /// <summary>

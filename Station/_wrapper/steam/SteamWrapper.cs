@@ -9,7 +9,6 @@ using Newtonsoft.Json.Linq;
 using Station._commandLine;
 using Station._monitoring;
 using Station._utils;
-using Debugger = Station._utils.Debugger;
 using Timer = System.Timers.Timer;
 
 namespace Station
@@ -122,11 +121,22 @@ namespace Station
             //Begin monitoring the different processes
             WrapperMonitoringThread.InitializeMonitoring(WrapperType);
 
-            //Wait for the Headset's connection method to respond
-            if (!SessionController.VrHeadset.WaitForConnection(WrapperType)) return "Could not connect to headset";
+            if (InternalDebugger.GetHeadsetRequired())
+            {
+                //Wait for the Headset's connection method to respond
+                if (!SessionController.VrHeadset.WaitForConnection(WrapperType))
+                {
+                    experienceName = null; //Reset for correct headset state
+                    return "Could not get headset connection";
+                }
 
-            //If headset management software is open (with headset connected) and OpenVrSystem cannot initialise then restart SteamVR
-            if (!OpenVRManager.WaitForOpenVR().Result) return "Could not start OpenVR";
+                //If headset management software is open (with headset connected) and OpenVrSystem cannot initialise then restart SteamVR
+                if (!OpenVRManager.WaitForOpenVR().Result)
+                {
+                    experienceName = null; //Reset for correct headset state
+                    return "Could not connect to OpenVR";
+                }
+            }
 
             Task.Factory.StartNew(() =>
             {
@@ -405,7 +415,7 @@ namespace Station
         /// </summary>
         public static void LaunchSteamVR()
         {
-            if (!Debugger.GetAutoStart()) return;
+            if (!InternalDebugger.GetAutoStart()) return;
             
             currentProcess = new Process();
             currentProcess.StartInfo.FileName = SessionController.Steam;

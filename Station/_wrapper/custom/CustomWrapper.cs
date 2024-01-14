@@ -64,7 +64,7 @@ namespace Station
         {
             Task.Factory.StartNew(() =>
             {
-                WrapperManager.applicationList.TryGetValue(experienceID, out var experience);
+                WrapperManager.ApplicationList.TryGetValue(experienceID, out var experience);
                 string? experienceName = experience.Name;
                 string? altPath = experience.AltPath;
 
@@ -161,11 +161,22 @@ namespace Station
             //Begin monitoring the different processes
             WrapperMonitoringThread.InitializeMonitoring(WrapperType);
 
-            //Wait for the Headset's connection method to respond
-            if (!SessionController.VrHeadset.WaitForConnection(WrapperType)) return "Could not get headset connection";
+            if (InternalDebugger.GetHeadsetRequired())
+            {
+                //Wait for the Headset's connection method to respond
+                if (!SessionController.VrHeadset.WaitForConnection(WrapperType))
+                {
+                    lastExperience.Name = null; //Reset for correct headset state
+                    return "Could not get headset connection";
+                }
 
-            //If headset management software is open (with headset connected) and OpenVrSystem cannot initialise then restart SteamVR
-            if (!OpenVRManager.WaitForOpenVR().Result) return "Could not connect to OpenVR";
+                //If headset management software is open (with headset connected) and OpenVrSystem cannot initialise then restart SteamVR
+                if (!OpenVRManager.WaitForOpenVR().Result)
+                {
+                    lastExperience.Name = null; //Reset for correct headset state
+                    return "Could not connect to OpenVR";
+                }
+            }
 
             MockConsole.WriteLine($"Launching process: {experience.Name} - {experience.ID}", MockConsole.LogLevel.Normal);
             Task.Factory.StartNew(() =>
@@ -210,7 +221,7 @@ namespace Station
 
             string filePath;
 
-            //The existance of an Alternate path means the experience has been imported through the launcher application
+            //The existence of an Alternate path means the experience has been imported through the launcher application
             if (experience.AltPath != null)
             {
                 filePath = experience.AltPath;
@@ -260,7 +271,7 @@ namespace Station
 
             if (child != null && currentProcess != null && lastExperience.ExeName != null)
             {
-                UIUpdater.UpdateProcess(lastExperience.Name ?? "Uknown");
+                UIUpdater.UpdateProcess(lastExperience.Name ?? "Unknown");
                 UIUpdater.UpdateStatus("Running...");
                 WindowManager.MaximizeProcess(child); //Maximise the process experience
                 SessionController.PassStationMessage($"ApplicationUpdate,{lastExperience.Name}/{lastExperience.ID}/Custom");
@@ -331,7 +342,6 @@ namespace Station
             {
                 currentProcess?.WaitForExit();
                 lastExperience.Name = null; //Reset for correct headset state
-                Trace.WriteLine("The current process has just exited.");
                 SessionController.PassStationMessage($"ApplicationClosed");
                 UIUpdater.ResetUIDisplay();
             });

@@ -1,6 +1,6 @@
 namespace Station._utils;
 
-public static class Debugger
+public static class InternalDebugger
 {
     /// <summary>
     /// Used to toggle the console window on or off
@@ -34,5 +34,19 @@ public static class Debugger
         }
         
         return autoStartVrPrograms;
+    }
+    
+    /// <summary>
+    /// Used to control if the VR programs should minimise or not
+    /// </summary>
+    public static bool headsetRequired = true;
+    public static bool GetHeadsetRequired()
+    {
+        if (!headsetRequired)
+        {
+            MockConsole.WriteLine("WARNING: Experiences will launch without a headset connected, Headset required set to 'No' in Debug Panel.");
+        }
+        
+        return headsetRequired;
     }
 }
