@@ -280,11 +280,13 @@ namespace Station
                                     name = acfReader.gameName;
                                 }
                             }
-                            string application = $"{SteamWrapper.WrapperType}|{ID}|{name}";
+                            
+                            //Determine if it is a VR experience
+                            bool isVr = steamManifestApplicationList.IsApplicationInstalledAndVrCompatible("steam.app." + ID);
+                            
+                            string application = $"{SteamWrapper.WrapperType}|{ID}|{name}|{isVr}";
 
                             //item.parameters may be null here
-                            bool isVr =
-                                steamManifestApplicationList.IsApplicationInstalledAndVrCompatible("steam.app." + ID);
                             WrapperManager.StoreApplication(SteamWrapper.WrapperType, ID, name, isVr);
                             if (Helper.GetStationMode().Equals(Helper.STATION_MODE_VR) || !isVr)
                             {
