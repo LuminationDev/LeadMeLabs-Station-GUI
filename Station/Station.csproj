@@ -101,7 +101,7 @@
 
   <ItemGroup>
 	<PackageReference Include="CommunityToolkit.Mvvm" Version="8.2.0" />
-	<PackageReference Include="LeadMeLabsLibrary" Version="1.0.15" />
+	<PackageReference Include="LeadMeLabsLibrary" Version="1.0.17" />
 	<PackageReference Include="leadme_api" Version="1.0.0" />
 	<PackageReference Include="Microsoft.Build.Framework" Version="17.6.3" />
 	<PackageReference Include="Microsoft.PowerShell.SDK" Version="7.2.15" />

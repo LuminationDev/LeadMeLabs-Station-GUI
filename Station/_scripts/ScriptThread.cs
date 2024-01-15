@@ -1,3 +1,4 @@
+using System;
 using System.Threading.Tasks;
 using Station._qa;
 using Station._utils;
@@ -49,6 +50,10 @@ namespace Station
 
                 case "HandleExecutable":
                     HandleExecutable(additionalData);
+                    break;
+                
+                case "DisplayChange":
+                    HandleDisplayChange(additionalData);
                     break;
 
                 case "Experience":
@@ -130,6 +135,38 @@ namespace Station
             string parameters = safeParameters.Replace("%", ":");
             
             Manager.wrapperManager?.HandleInternalExecutable(action, launchType, path, parameters);
+        }
+        
+        /// <summary>
+        /// Check that new display value is valid and then change to it
+        /// <param name="additionalData">Expected format: Height:1080:Width:1920</param>
+        /// </summary>
+        private void HandleDisplayChange(string additionalData)
+        {
+            string[] split = additionalData.Split(":", 4);
+            if (split.Length < 4)
+            {
+                Logger.WriteLog($"Could not parse display change for additional data {additionalData}", MockConsole.LogLevel.Error);
+                return;
+            }
+            string heightString = split[1];
+            string widthString = split[3];
+            int height = 0;
+            int width = 0;
+            if (!Int32.TryParse(heightString, out height) || !Int32.TryParse(widthString, out width))
+            {
+                Logger.WriteLog($"Could not parse display change for values Height: {heightString}, Width: {widthString}", MockConsole.LogLevel.Error);
+                return;
+            }
+
+            if (!DisplayController.IsDisplayModeSupported(width, height, 32))
+            {
+                Logger.WriteLog($"Invalid display change for values Height: {heightString}, Width: {widthString}", MockConsole.LogLevel.Error);
+                return;
+            }
+
+            DisplayController.ChangeDisplaySettings(width, height, 32);
+            Logger.WriteLog($"Changed display settings to Height: {heightString}, Width: {widthString}", MockConsole.LogLevel.Debug);
         }
 
         /// <summary>
