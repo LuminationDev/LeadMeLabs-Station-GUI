@@ -274,8 +274,6 @@ public class WindowChecks
 
                 // Define a threshold for acceptable time difference (e.g., 10 seconds)
                 long acceptableTimeDifferenceMs = 5000;
-
-                Console.WriteLine(timeDifferenceMs);
                 
                 // Compare the time difference with the acceptable threshold
                 if (timeDifferenceMs <= acceptableTimeDifferenceMs)

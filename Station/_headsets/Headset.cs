@@ -53,6 +53,8 @@ public class Headset
     /// <param name="vrProcesses">Collection of strings representing VR-related processes to be minimized.</param>
     private void MinimizeVrProcesses(IEnumerable<string> vrProcesses)
     {
+        if (!InternalDebugger.GetMinimisePrograms()) return;
+        
         Logger.WriteLog("minimizing processes", MockConsole.LogLevel.Verbose);
         foreach (var process in vrProcesses.Select(ProcessManager.GetProcessesByName).SelectMany(processes => processes))
         {

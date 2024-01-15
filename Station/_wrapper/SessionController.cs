@@ -2,6 +2,7 @@
 using System.Threading;
 using System.Threading.Tasks;
 using Station._headsets;
+using Station._utils;
 
 namespace Station
 {
@@ -25,7 +26,17 @@ namespace Station
         /// <summary>
         /// Track the current state of the Station software.
         /// </summary>
-        public static string CurrentState { private set; get; } = "";
+        private static string currentState = "";
+    
+        public static string CurrentState
+        {
+            get => currentState;
+            set
+            {
+                currentState = value;
+                Manager.SendResponse("Android", "Station", $"SetValue:state:{value}");
+            }
+        }
 
         /// <summary>
         /// Read the store headset type from the config.env file and create an instance that 
@@ -58,6 +69,8 @@ namespace Station
         /// <param name="type">A string of what type of experience is being loaded [Custom, Steam, Vive, etc]</param>
         public static void StartVRSession(string type)
         {
+            if (!InternalDebugger.GetAutoStart()) return;
+            
             ExperienceType = type;
             switch (ExperienceType)
             {
@@ -108,6 +121,9 @@ namespace Station
             
             //Attempt to minimise other applications (mostly Steam)
             VrHeadset?.MinimizeSoftware(2);
+            
+            //Reset the idle timer and current mode type
+            ModeTracker.ResetMode();
         }
 
         /// <summary>
@@ -188,7 +204,6 @@ namespace Station
 
                     case "SoftwareState":
                         CurrentState = tokens[1];
-                        Manager.SendResponse("Android", "Station", $"SetValue:state:{tokens[1]}");
                         break;
 
                     case "ApplicationList":

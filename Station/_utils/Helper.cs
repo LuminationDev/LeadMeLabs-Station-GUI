@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using System.Threading.Tasks;
 using Station._utils;
 
 namespace Station
@@ -32,6 +33,36 @@ namespace Station
             }
 
             return mode;
+        }
+        
+        /// <summary>
+        /// Monitors a specified condition using a loop that is delayed by 3 seconds each time the condition is not met, with
+        /// optional timeout and attempt limits.
+        /// </summary>
+        /// <param name="conditionChecker">A delegate that returns a boolean value indicating whether the monitored condition is met.</param>
+        /// <param name="attemptLimit">An int of the maximum amount of attempts the loop will wait for.</param>
+        /// <returns>True if the condition was successfully met within the specified attempts; false otherwise.</returns>
+        public static async Task<bool> MonitorLoop(Func<bool> conditionChecker, int attemptLimit)
+        {
+            //Track the attempts
+            int monitorAttempts = 0;
+            int delay = 3000;
+
+            //Check the condition status (bail out after x amount)
+            do
+            {
+                monitorAttempts++;
+                await Task.Delay(delay);
+            } while (conditionChecker.Invoke() && monitorAttempts < attemptLimit);
+
+            // Connection bailed out, send a failure message
+            if (monitorAttempts == attemptLimit)
+            {
+                SessionController.PassStationMessage("MessageToAndroid,HeadsetTimeout");
+                return false;
+            }
+
+            return true;
         }
     }
 }

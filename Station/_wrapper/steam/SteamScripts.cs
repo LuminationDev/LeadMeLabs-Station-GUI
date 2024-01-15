@@ -81,7 +81,7 @@ namespace Station
                         Task.Delay(5000).Wait();
 
                         //Relaunch SteamVR
-                        SteamWrapper.LauncherSteamVR();
+                        SteamWrapper.LaunchSteamVR();
 
                         enumerator.Dispose();
                     }
@@ -256,7 +256,6 @@ namespace Station
 
             foreach (var line in installedGames)
             {
-                Console.WriteLine(line);
                 if (line.StartsWith("AppID"))
                 {
                     Logger.WriteLog(line, MockConsole.LogLevel.Debug);

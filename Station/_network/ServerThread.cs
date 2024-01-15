@@ -112,6 +112,10 @@ public class ServerThread
             // Dispose of the original network stream.
             stream.Close();
             stream.Dispose();
+            
+            //Close the client connection
+            clientConnection.Close();
+            clientConnection.Dispose();
 
             // Reset the position of the MemoryStream to the beginning
             memoryStream.Position = 0;
@@ -134,21 +138,19 @@ public class ServerThread
             if (Manager.isNucUtf8)
             {
                 headerMessageType = Encoding.UTF8.GetString(headerMessageTypeBytes);
-                MockConsole.WriteLine($"Header with UTF8: {headerMessageType}", MockConsole.LogLevel.Verbose);
             }
             else
             {
                 headerMessageType = Encoding.Unicode.GetString(headerMessageTypeBytes);
             }
             
-            MockConsole.WriteLine($"Header type: {headerMessageType}", MockConsole.LogLevel.Debug);
             switch (headerMessageType)
             {
                 case "text":
-                    await StringMessageReceivedAsync(clientConnection, endPoint, memoryStream);
+                    await StringMessageReceivedAsync(endPoint, memoryStream);
                     break;
                 case "file":
-                    await FileMessageReceivedAsync(clientConnection, memoryStream);
+                    await FileMessageReceivedAsync(memoryStream);
                     break;
                 default:
                     Logger.WriteLog($"Unknown header connection attempt: {headerMessageType}", MockConsole.LogLevel.Error);
@@ -176,8 +178,6 @@ public class ServerThread
         try
         {
             string test = Encoding.Unicode.GetString(headerMessageTypeBytes);
-            MockConsole.WriteLine($"Header with unicode: {test}", MockConsole.LogLevel.Verbose);
-
             if (test.Equals("text") || test.Equals("image") || test.Equals("file"))
             {
                 Manager.isNucUtf8 = false;
@@ -198,7 +198,7 @@ public class ServerThread
     /// <summary>
     /// The server has determined that the incoming message is a string based message.
     /// </summary>
-    private async Task StringMessageReceivedAsync(TcpClient clientConnection, EndPoint? endPoint, MemoryStream stream)
+    private async Task StringMessageReceivedAsync(EndPoint? endPoint, MemoryStream stream)
     {
         // Incoming data from the client.
         var stringBuilder = new StringBuilder();
@@ -236,12 +236,20 @@ public class ServerThread
             data = EncryptionHelper.UnicodeDecrypt(data, key);
         }
 
-        //Close the client connection
-        clientConnection.Close();
-
         //Data should never be null at this point
         Logger.WriteLog($"From {endPoint}, Decrypted Text received : {data}", MockConsole.LogLevel.Debug, !data.Contains(":Ping:"));
 
+        //If the data is not a ping run the additional tasks
+        if (data.Contains(":Ping:")) return;
+        
+        //If the task relates to an experience restart the VR processes
+        if (data.Contains(":Experience:"))
+        {
+            //Reset the idle timer
+            bool success = await ModeTracker.ResetTimer();
+            if (!success) return;
+        }
+        
         //Run the appropriate script
         Manager.RunScript(data);
     }
@@ -250,7 +258,7 @@ public class ServerThread
     /// The server has determined that the incoming message is a file message. Save the file
     /// to the appropriate location for it's type.
     /// </summary>
-    private async Task FileMessageReceivedAsync(TcpClient clientConnection, MemoryStream stream)
+    private async Task FileMessageReceivedAsync(MemoryStream stream)
     {
         // Read the size of the file name
         byte[] header = new byte[4];
@@ -296,7 +304,6 @@ public class ServerThread
 
         // Close the client connection
         await stream.DisposeAsync();
-        await Task.Run(() => clientConnection.Dispose());
     }
     
     /// <summary>

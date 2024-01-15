@@ -101,6 +101,8 @@ namespace Station
                 return;
             }
 
+            ValidateInstall("Station");
+            
             StartServer();
             
             //Cannot be any higher - encryption key does not exist before the DotEnv.Load()
@@ -111,6 +113,7 @@ namespace Station
             
             //Call as a new task to stop UI and server start up from hanging whilst reading the files
             new Thread(Initialisation).Start();
+            ModeTracker.Initialise();
         }
 
         /// <summary>
@@ -303,6 +306,20 @@ namespace Station
         private static void SetRemoteEndPoint()
         {
             remoteEndPoint = new IPEndPoint(IPAddress.Parse((ReadOnlySpan<char>)Environment.GetEnvironmentVariable("NucAddress", EnvironmentVariableTarget.Process)), NUCPort);
+        }
+        
+        /// <summary>
+        /// Validates the installation directory of a specific software type using the RegistryHelper.
+        /// Checks if the installation location is correct and logs relevant information.
+        /// </summary>
+        /// <param name="softwareType">The type of software to validate (e.g., "Station" or "NUC").</param>
+        private static void ValidateInstall(string softwareType)
+        {
+            Tuple<bool, string> output = RegistryHelper.ValidateElectronInstallDirectory(softwareType);
+            if (output.Item2.Equals("Install location already correct.")) return;
+            
+            Logger.WriteLog($"{output.Item2}", MockConsole.LogLevel.Error);
+            SentrySdk.CaptureMessage($"{output.Item2}. Location: {Environment.GetEnvironmentVariable("LabLocation", EnvironmentVariableTarget.Process) ?? "Unknown"}");
         }
 
         /// <summary>

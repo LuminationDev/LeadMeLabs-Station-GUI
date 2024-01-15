@@ -5,6 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:bh="http://schemas.microsoft.com/xaml/behaviors"
         xmlns:local="clr-namespace:Station"
+        xmlns:system="clr-namespace:System;assembly=System.Runtime"
         mc:Ignorable="d"
         ShowInTaskbar="{Binding ShowInTaskbar}"
         WindowState="{Binding WindowState}"
@@ -15,43 +16,7 @@
     </Window.DataContext>
 
     <Window.Resources>
-        <Style
-            TargetType="{x:Type Button}">
-
-            <Setter Property="Background" Value="#5c5c5b"/>
-            
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="Button">
-                        <Border Name="border" CornerRadius="10" Background="{TemplateBinding Background}" BorderThickness="1" BorderBrush="{TemplateBinding Background}">
-                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                        </Border>
-
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="Button.IsPressed" Value="True">
-                                <Setter TargetName="border" Property="BorderBrush" Value="Transparent" />
-                            </Trigger>
-                            
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter Property="Background" Value="#a8a8a8"/>
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-
-            <Style.Resources>
-                <Style TargetType="Border">
-                    <Setter Property="CornerRadius" Value="4" />
-                </Style>
-            </Style.Resources>
-        </Style>
-
-        <Style 
-            x:Key="MainButton"
-            BasedOn="{StaticResource {x:Type Button}}"
-            TargetType="{x:Type Button}">
-
+        <Style x:Key="CommonButtonStyle" TargetType="{x:Type ButtonBase}">
             <Setter Property="Cursor" Value="Hand"/>
             <Setter Property="Height" Value="30"/>
             <Setter Property="Width" Value="100"/>
@@ -69,12 +34,55 @@
                     </LinearGradientBrush>
                 </Setter.Value>
             </Setter>
+
+            <Setter Property="Background" Value="#5c5c5b"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ButtonBase">
+                        <Border Name="border" CornerRadius="10" Background="{TemplateBinding Background}" BorderThickness="1" BorderBrush="{TemplateBinding Background}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="border" Property="BorderBrush" Value="Transparent" />
+                            </Trigger>
+
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="#a8a8a8"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
         </Style>
+
+        <!-- Button Style -->
+        <Style x:Key="MainButton" BasedOn="{StaticResource CommonButtonStyle}" TargetType="{x:Type Button}"/>
+
+        <!-- ToggleButton Style -->
+        <Style x:Key="MainToggleButton" BasedOn="{StaticResource CommonButtonStyle}" TargetType="{x:Type ToggleButton}"/>
     </Window.Resources>
 
     <Grid>
+        <Grid.Resources>
+            <system:Double x:Key="SlideOffSet">200</system:Double>
+
+            <Storyboard x:Key="SlideRight">
+                <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(TranslateTransform.X)"
+                                 From="0" To="{StaticResource SlideOffSet}"
+                                 Duration="0:0:0.3" />
+            </Storyboard>
+
+            <Storyboard x:Key="SlideLeft">
+                <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(TranslateTransform.X)"
+                                 From="{StaticResource SlideOffSet}" To="0" 
+                                 Duration="0:0:0.3" />
+            </Storyboard>
+        </Grid.Resources>
+        
         <Grid.ColumnDefinitions>
-        <ColumnDefinition Width="125"/>
+        <ColumnDefinition Width="130"/>
         <ColumnDefinition Width="635"/>
         <ColumnDefinition Width="125"/>
         </Grid.ColumnDefinitions>
@@ -90,86 +98,188 @@
             </bh:Interaction.Triggers>
         </local:NotifyIconWrapper>
 
-        <Grid Grid.Column="0">
-            <Button 
-                Style="{StaticResource MainButton}" 
-                Content="Start" 
-                Margin="10" 
-                Command="{Binding StartStationCommand}"
-                ToolTip="Start the Station application."/>
-        
-            <Button 
-                Style="{StaticResource MainButton}"
-                Content="Restart" 
-                Margin="10,45,0,0" 
-                Command="{Binding RestartStationCommand}"
-                ToolTip="Stop and then start the Station application."/>
-        
-            <Button 
-                Style="{StaticResource MainButton}"
-                Content="Stop" 
-                Margin="10,80,0,0"
-                Command="{Binding StopStationCommand}"
-                ToolTip="Stop the entire Station application, including server etc.."/>
-        
-            <Button 
-                Style="{StaticResource MainButton}"
-                x:Name="LoggingLevel" 
-                Content="Logging: Normal"
-                Margin="10,135,0,0"
-                Command="{Binding ChangeLogLevelCommand}"
-                ToolTip="Display different amounts of information in the console window."/>
+        <!-- Debug Panel -->
+        <StackPanel
+            Grid.Column="0"
+            ZIndex="2"
+            HorizontalAlignment="Left"
+            Orientation="Horizontal" 
+            Background="White"
+            Margin="-70, 0, 0, 0"
+            Width="200">
+            
+            <StackPanel.Style>
+                <Style TargetType="StackPanel">
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding IsChecked, ElementName=SlideState}" Value="True">
+                            <DataTrigger.EnterActions>
+                                <BeginStoryboard Storyboard="{StaticResource SlideRight}" />
+                            </DataTrigger.EnterActions>
+                            <DataTrigger.ExitActions>
+                                <BeginStoryboard Storyboard="{StaticResource SlideLeft}" />
+                            </DataTrigger.ExitActions>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </StackPanel.Style>
 
+            <StackPanel.RenderTransform>
+                <TranslateTransform />
+            </StackPanel.RenderTransform>
 
-            <StackPanel 
-                Width="125"
-                Background="#424242" 
-                HorizontalAlignment="Left" 
-                VerticalAlignment="Bottom">
-
-                <Label
-                    FontFamily="Fonts/#Poppins-Medium"
-                    Content="Process:" 
-                    Foreground="#828282" 
-                    Height="25" 
-                    Margin="5,0,10,0"/>
-
-                <Label 
-                    x:Name="ProcessConsole"
-                    FontFamily="Fonts/#Poppins-Medium"
-                    Content="No active process..."
-                    Foreground="#a8a8a8"
-                    Height="25" 
-                    Margin="5,0,10,0"/>
-
-                <Label
-                    FontFamily="Fonts/#Poppins-Medium"
-                    Content="Status:" 
-                    Foreground="#828282" 
-                    Height="25" 
-                    Margin="5,0,10,0"/>
-
-                <Label 
-                    x:Name="StatusConsole"
-                    FontFamily="Fonts/#Poppins-Medium"
-                    Content="Waiting..."
-                    Foreground="#a8a8a8"
-                    Height="25" 
-                    Margin="5,0,10,0"/>
-
-                <Button 
-                    Style="{StaticResource MainButton}"
-                    Command="{Binding StopCurrentProcess}"
-                    Content="Stop" 
-                    Margin="10,5,10,10" 
-                    Width="50" 
-                    Height="20" 
-                    HorizontalAlignment="Right" 
-                    VerticalAlignment="Bottom"
-                    ToolTip="Stop the current application the Station has opened."/>
+            <StackPanel
+                Width="200"
+                Background="White">
+                
+                <WrapPanel Margin="10">
+                    <Label Height="Auto" Width="140">Console Window</Label>
+                    <Button
+                        Width="40"
+                        HorizontalAlignment="Right"
+                        Style="{StaticResource MainButton}"
+                        Content="{Binding ViewConsoleText}"
+                        Command="{Binding ChangeViewConsoleValue}"
+                        ToolTip="Toggle the console window."/>
+                </WrapPanel>
+                <Separator HorizontalAlignment="Stretch" Margin="0,0,0,0" BorderBrush="Black" BorderThickness="0.5"/>
+                
+                <WrapPanel Margin="10">
+                    <Label Height="Auto" Width="140">Auto Minimise</Label>
+                    <Button
+                        Width="40"
+                        HorizontalAlignment="Right"
+                        Style="{StaticResource MainButton}"
+                        Content="{Binding MinimisingText}"
+                        Command="{Binding ChangeMinimisingValue}"
+                        ToolTip="Toggle if the program should attempt to minimise the various VR software."/>
+                </WrapPanel>
+                <Separator HorizontalAlignment="Stretch" Margin="0,0,0,0" BorderBrush="Black" BorderThickness="0.5"/>
+                
+                <WrapPanel Margin="10">
+                    <Label Height="Auto" Width="140">Auto start VR Software</Label>
+                    <Button
+                        Width="40"
+                        HorizontalAlignment="Right"
+                        Style="{StaticResource MainButton}"
+                        Content="{Binding AutoStartSteamText}"
+                        Command="{Binding AutoStartVrValue}"
+                        ToolTip="Toggle if the program should attempt to auto start the different VR software if it detects it has closed."/>
+                </WrapPanel>
+                <Separator HorizontalAlignment="Stretch" Margin="0,0,0,0" BorderBrush="Black" BorderThickness="0.5"/>
+                
+                <WrapPanel Margin="10">
+                    <Label Height="Auto" Width="140">Headset Required</Label>
+                    <Button
+                        Width="40"
+                        HorizontalAlignment="Right"
+                        Style="{StaticResource MainButton}"
+                        Content="{Binding AHeadsetRequiredText}"
+                        Command="{Binding HeadsetRequiredValue}"
+                        ToolTip="Toggle if the program should launch experiences regardless of if a headset is connected."/>
+                </WrapPanel>
+                <Separator HorizontalAlignment="Stretch" Margin="0,0,0,0" BorderBrush="Black" BorderThickness="0.5"/>
             </StackPanel>
+        </StackPanel>
+        
+        <!-- Side Panel -->
+        <Grid Grid.Column="0" ZIndex="3">
+            <DockPanel
+                Background="White"
+                Width="130"
+                HorizontalAlignment="Left">
+        
+                <StackPanel
+                    DockPanel.Dock="Top"
+                    Width="125"
+                    Height="Auto">
+        
+                    <Button
+                        Style="{StaticResource MainButton}"
+                        Content="Start"
+                        Margin="10,10,0,0"
+                        Command="{Binding StartStationCommand}"
+                        ToolTip="Start the Station application."/>
+        
+                    <Button
+                        Style="{StaticResource MainButton}"
+                        Content="Restart"
+                        Margin="10,5,0,0"
+                        Command="{Binding RestartStationCommand}"
+                        ToolTip="Stop and then start the Station application."/>
+        
+                    <Button
+                        Style="{StaticResource MainButton}"
+                        Content="Stop"
+                        Margin="10,5,0,0"
+                        Command="{Binding StopStationCommand}"
+                        ToolTip="Stop the entire Station application, including server etc.."/>
+        
+                    <Button
+                        Style="{StaticResource MainButton}"
+                        x:Name="LoggingLevel"
+                        Content="Logging: Normal"
+                        Margin="10,20,0,0"
+                        Command="{Binding ChangeLogLevelCommand}"
+                        ToolTip="Display different amounts of information in the console window."/>
+        
+                    <ToggleButton
+                        Style="{StaticResource MainToggleButton}"
+                        x:Name="SlideState"
+                        Content="Debug Panel"
+                        Margin="10,5,0,10" />
+                </StackPanel>
+        
+                <StackPanel
+                    DockPanel.Dock="Bottom"
+                    Width="130"
+                    Background="#424242"
+                    HorizontalAlignment="Left">
+        
+                    <Label
+                        FontFamily="Fonts/#Poppins-Medium"
+                        Content="Process:"
+                        Foreground="#828282"
+                        Height="25"
+                        Margin="5,5,10,0"/>
+        
+                    <Label
+                        x:Name="ProcessConsole"
+                        FontFamily="Fonts/#Poppins-Medium"
+                        Content="No active process..."
+                        Foreground="#a8a8a8"
+                        Height="25"
+                        Margin="5,0,10,0"/>
+        
+                    <Label
+                        FontFamily="Fonts/#Poppins-Medium"
+                        Content="Status:"
+                        Foreground="#828282"
+                        Height="25"
+                        Margin="5,0,10,0"/>
+        
+                    <Label
+                        x:Name="StatusConsole"
+                        FontFamily="Fonts/#Poppins-Medium"
+                        Content="Waiting..."
+                        Foreground="#a8a8a8"
+                        Height="25"
+                        Margin="5,0,10,0"/>
+        
+                    <Button
+                        Style="{StaticResource MainButton}"
+                        Command="{Binding StopCurrentProcess}"
+                        Content="Stop"
+                        Margin="10,5,10,10"
+                        Width="50"
+                        Height="20"
+                        HorizontalAlignment="Right"
+                        VerticalAlignment="Bottom"
+                        ToolTip="Stop the current application the Station has opened."/>
+                </StackPanel>
+            </DockPanel>
         </Grid>
 
+        <!-- Console Window -->
         <Grid Grid.Column="1">
             <ScrollViewer 
                 x:Name="ConsoleScroll" 
@@ -199,6 +309,7 @@
             </ScrollViewer>
         </Grid>
 
+        <!-- VR Status -->
         <Grid Grid.Column="2">
             <StackPanel
                 Width="125"
@@ -374,7 +485,7 @@
                 
                 <Button
                     Style="{StaticResource MainButton}"
-                    Command="{Binding ResetSteamVRProcess}"
+                    Command="{Binding ResetSteamVrProcess}"
                     Content="Reset"
                     Margin="70,0,0,0"
                     Width="50"

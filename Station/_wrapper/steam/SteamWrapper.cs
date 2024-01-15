@@ -124,13 +124,21 @@ namespace Station
             //Begin monitoring the different processes
             WrapperMonitoringThread.InitializeMonitoring(WrapperType, experience.IsVr);
 
-            if (experience.IsVr)
+            if (InternalDebugger.GetHeadsetRequired() || experience.IsVr)
             {
                 //Wait for the Headset's connection method to respond
-                if (!SessionController.VrHeadset.WaitForConnection(WrapperType)) return "Could not connect to headset";
+                if (!SessionController.VrHeadset.WaitForConnection(WrapperType))
+                {
+                    experienceName = null; //Reset for correct headset state
+                    return "Could not get headset connection";
+                }
 
                 //If headset management software is open (with headset connected) and OpenVrSystem cannot initialise then restart SteamVR
-                if (!OpenVRManager.WaitForOpenVR().Result) return "Could not start OpenVR";
+                if (!OpenVRManager.WaitForOpenVR().Result)
+                {
+                    experienceName = null; //Reset for correct headset state
+                    return "Could not connect to OpenVR";
+                }
             }
 
             Task.Factory.StartNew(() =>
@@ -411,8 +419,10 @@ namespace Station
         /// <summary>
         /// Launch SteamVR as a process, SteamVR's appID is (250820)
         /// </summary>
-        public static void LauncherSteamVR()
+        public static void LaunchSteamVR()
         {
+            if (!InternalDebugger.GetAutoStart()) return;
+            
             currentProcess = new Process();
             currentProcess.StartInfo.FileName = SessionController.Steam;
             currentProcess.StartInfo.Arguments = LaunchParams + 250820;
