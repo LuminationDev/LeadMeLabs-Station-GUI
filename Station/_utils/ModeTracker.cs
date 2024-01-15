@@ -77,7 +77,7 @@ public static class ModeTracker
         Manager.SendResponse("Android", "Station", "SetValue:status:On");
         
         //Start VR applications
-        await WrapperManager.RestartVRProcesses();
+        await WrapperManager.RestartVRProcesses(Helper.GetStationMode().Equals(Helper.STATION_MODE_VR));
         
         OverlayManager.SetText("Waiting for SteamVR");
         
