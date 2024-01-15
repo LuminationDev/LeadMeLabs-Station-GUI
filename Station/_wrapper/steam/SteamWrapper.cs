@@ -124,7 +124,7 @@ namespace Station
             //Begin monitoring the different processes
             WrapperMonitoringThread.InitializeMonitoring(WrapperType, experience.IsVr);
 
-            if (InternalDebugger.GetHeadsetRequired() || experience.IsVr)
+            if (InternalDebugger.GetHeadsetRequired() && experience.IsVr)
             {
                 //Wait for the Headset's connection method to respond
                 if (!SessionController.VrHeadset.WaitForConnection(WrapperType))
