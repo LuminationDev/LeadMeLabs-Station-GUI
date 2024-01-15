@@ -8,7 +8,29 @@ namespace Station._utils;
 
 public static class ManifestReader
 {
-    /// <summary>
+
+    public class ManifestApplicationList
+    {
+        private JArray applications = new JArray();
+        public ManifestApplicationList(string filePath)
+        {
+            JArray? newApplications = CollectApplications(filePath);
+            if (newApplications != null)
+            {
+                applications = newApplications;
+            }
+        }
+
+        public bool IsApplicationInstalledAndVrCompatible(string appKey)
+        {
+            var specificEntry = applications.FirstOrDefault(app => (((string)app["app_key"])!).Contains(appKey));
+        
+            return !String.IsNullOrEmpty(specificEntry?["strings"]?["en_us"]?["name"]?.ToString());
+        }
+    }
+
+
+/// <summary>
     /// Reads the content of a VR manifest file from the specified file path and converts it to a JObject.
     /// </summary>
     /// <param name="filePath">The path to the VR manifest file.</param>

@@ -97,7 +97,7 @@ namespace Station
                 return $"MessageToAndroid,GameLaunchFailed:Unknown experience";
             }
 
-            if (SessionController.VrHeadset == null)
+            if (SessionController.VrHeadset == null && experience.IsVr)
             {
                 SessionController.PassStationMessage("No VR headset set.");
                 return "No VR headset set.";
@@ -116,12 +116,15 @@ namespace Station
             MockConsole.WriteLine($"Wrapping: {experienceName}", MockConsole.LogLevel.Debug);
 
             //Start the external processes to handle SteamVR
-            SessionController.StartVRSession(WrapperType);
-
+            if (experience.IsVr)
+            {
+                SessionController.StartVRSession(WrapperType);
+            }
+            
             //Begin monitoring the different processes
-            WrapperMonitoringThread.InitializeMonitoring(WrapperType);
+            WrapperMonitoringThread.InitializeMonitoring(WrapperType, experience.IsVr);
 
-            if (InternalDebugger.GetHeadsetRequired())
+            if (InternalDebugger.GetHeadsetRequired() || experience.IsVr)
             {
                 //Wait for the Headset's connection method to respond
                 if (!SessionController.VrHeadset.WaitForConnection(WrapperType))
@@ -140,19 +143,22 @@ namespace Station
 
             Task.Factory.StartNew(() =>
             {
-                //Attempt to start the process using OpenVR
-                _launchWillHaveFailedFromOpenVrTimeout = true;
-                if (OpenVRManager.LaunchApplication(experience.ID))
+                if (experience.IsVr)
                 {
-                    Logger.WriteLog($"SteamWrapper.WrapProcess: Launching {experience.Name} via OpenVR", MockConsole.LogLevel.Verbose);
-                    return;
+                    //Attempt to start the process using OpenVR
+                    _launchWillHaveFailedFromOpenVrTimeout = true;
+                    if (OpenVRManager.LaunchApplication(experience.ID))
+                    {
+                        Logger.WriteLog($"SteamWrapper.WrapProcess: Launching {experience.Name} via OpenVR", MockConsole.LogLevel.Verbose);
+                        return;
+                    }
+
+                    _launchWillHaveFailedFromOpenVrTimeout = false;
+
+                    //Fall back to the alternate if OpenVR launch fails or is not a registered VR experience in the vrmanifest
+                    //Stop any accessory processes before opening a new process
+                    SessionController.VrHeadset.StopProcessesBeforeLaunch();
                 }
-
-                _launchWillHaveFailedFromOpenVrTimeout = false;
-
-                //Fall back to the alternate if OpenVR launch fails or is not a registered VR experience in the vrmanifest
-                //Stop any accessory processes before opening a new process
-                SessionController.VrHeadset.StopProcessesBeforeLaunch();
 
                 Logger.WriteLog($"SteamWrapper.WrapProcess - Using AlternateLaunchProcess", MockConsole.LogLevel.Normal);
                 AlternateLaunchProcess(experience);

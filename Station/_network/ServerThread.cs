@@ -52,9 +52,12 @@ public class ServerThread
                 Logger.WriteLog("Server not initialised..", MockConsole.LogLevel.Error);
                 return;
             }
-            
-            SessionController.StartVRSession("steam");
 
+            if (Helper.GetStationMode().Equals(Helper.STATION_MODE_VR))
+            {
+                SessionController.StartVRSession("steam");
+            }
+            
             server.Start();
 
             //Enter listening loop

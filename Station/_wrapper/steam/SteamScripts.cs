@@ -33,6 +33,8 @@ namespace Station
 
         private static int restartAttempts = 0; //Track how many times SteamVR has failed in a Station session
 
+        private static ManifestReader.ManifestApplicationList steamManifestApplicationList = new (SteamManifest);
+
         /// <summary>
         /// If the vrmonitor process is running but OpenVR has not established a connection, check Steam's vrserver logs
         /// to see if the '[Steam] Steam SHUTDOWN' entry is present.
@@ -105,7 +107,7 @@ namespace Station
         public static void QuerySteamConfig()
         {
             CommandLine.ExecuteSteamCommand(LoginUser + Licenses + Quit);
-            _ = WrapperManager.RestartVRProcesses();
+            _ = WrapperManager.RestartVRProcesses(Helper.GetStationMode().Equals(Helper.STATION_MODE_VR));
         }
 
         /// <summary>
@@ -130,6 +132,7 @@ namespace Station
         {
             //Close Steam if it is open
             CommandLine.QueryVRProcesses(WrapperMonitoringThread.SteamProcesses, true);
+            CommandLine.QueryVRProcesses(WrapperMonitoringThread.SteamVrProcesses, true);
 
             if (!Network.CheckIfConnectedToInternet())
             {
@@ -163,8 +166,13 @@ namespace Station
 
                         if (approvedGames.Count == 0 || approvedGames.Contains(acfReader.appId))
                         {
-                            list.Add($"{SteamWrapper.WrapperType}|{acfReader.appId}|{acfReader.gameName}");
-                            WrapperManager.StoreApplication(SteamWrapper.WrapperType, acfReader.appId, acfReader.gameName); // todo, I don't like this line here as it's a side-effect to the function
+                            bool isVr =
+                                steamManifestApplicationList.IsApplicationInstalledAndVrCompatible("steam.app." + acfReader.appId);
+                            WrapperManager.StoreApplication(SteamWrapper.WrapperType, acfReader.appId, acfReader.gameName, isVr); // todo, I don't like this line here as it's a side-effect to the function
+                            if (Helper.GetStationMode().Equals(Helper.STATION_MODE_VR) || !isVr)
+                            {
+                                list.Add($"{SteamWrapper.WrapperType}|{acfReader.appId}|{acfReader.gameName}");
+                            }
                         }
                     }
                 }
@@ -272,11 +280,18 @@ namespace Station
                                     name = acfReader.gameName;
                                 }
                             }
-                            string application = $"{SteamWrapper.WrapperType}|{ID}|{name}";
+                            
+                            //Determine if it is a VR experience
+                            bool isVr = steamManifestApplicationList.IsApplicationInstalledAndVrCompatible("steam.app." + ID);
+                            
+                            string application = $"{SteamWrapper.WrapperType}|{ID}|{name}|{isVr}";
 
                             //item.parameters may be null here
-                            WrapperManager.StoreApplication(SteamWrapper.WrapperType, ID, name);
-                            apps.Add(application);
+                            WrapperManager.StoreApplication(SteamWrapper.WrapperType, ID, name, isVr);
+                            if (Helper.GetStationMode().Equals(Helper.STATION_MODE_VR) || !isVr)
+                            {
+                                apps.Add(application);
+                            }
                         }
                     }
                 }

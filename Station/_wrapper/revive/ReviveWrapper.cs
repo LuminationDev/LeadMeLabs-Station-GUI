@@ -132,7 +132,7 @@ namespace Station
             SessionController.StartVRSession(WrapperType);
 
             //Begin monitoring the different processes
-            WrapperMonitoringThread.InitializeMonitoring(WrapperType);
+            WrapperMonitoringThread.InitializeMonitoring(WrapperType, experience.IsVr);
 
             if (InternalDebugger.GetHeadsetRequired())
             {

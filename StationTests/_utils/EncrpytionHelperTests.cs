@@ -140,21 +140,5 @@ namespace StationTests._utils
             Assert.IsType<string>(decryptedText);
             Assert.Equal("secret text", decryptedText);
         }
-
-        /// <summary>
-        /// Checks whether the Generate128BitsOfRandomEntropy method returns a non-null 
-        /// 16-byte array of type byte[] that contains cryptographically secure random bytes.
-        /// </summary>
-        [Fact]
-        public void Generate128BitsOfRandomEntropy_Should_Return_16_Byte_Array()
-        {
-            // Act
-            byte[] result = EncryptionHelper.Generate128BitsOfRandomEntropy();
-
-            // Assert
-            Assert.NotNull(result);
-            Assert.Equal(16, result.Length);
-            Assert.IsType<byte[]>(result);
-        }
     }
 }

@@ -137,7 +137,7 @@ namespace Station
                 return "Cannot find working directory";
             }
 
-            if (SessionController.VrHeadset == null)
+            if (SessionController.VrHeadset == null && experience.IsVr)
             {
                 SessionController.PassStationMessage("No VR headset set.");
                 return "No VR headset set.";
@@ -159,9 +159,9 @@ namespace Station
             lastExperience = experience;
 
             //Begin monitoring the different processes
-            WrapperMonitoringThread.InitializeMonitoring(WrapperType);
+            WrapperMonitoringThread.InitializeMonitoring(WrapperType, experience.IsVr);
 
-            if (InternalDebugger.GetHeadsetRequired())
+            if (InternalDebugger.GetHeadsetRequired() && experience.IsVr)
             {
                 //Wait for the Headset's connection method to respond
                 if (!SessionController.VrHeadset.WaitForConnection(WrapperType))
@@ -181,17 +181,20 @@ namespace Station
             MockConsole.WriteLine($"Launching process: {experience.Name} - {experience.ID}", MockConsole.LogLevel.Normal);
             Task.Factory.StartNew(() =>
             {
-                //Attempt to start the process using OpenVR
-                _launchWillHaveFailedFromOpenVrTimeout = true;
-                if (OpenVRManager.LaunchApplication(experience.ID))
+                if (experience.IsVr)
                 {
-                    Logger.WriteLog($"CustomWrapper.WrapProcess: Launching {experience.Name} via OpenVR", MockConsole.LogLevel.Verbose);
-                    return;
-                }
-                _launchWillHaveFailedFromOpenVrTimeout = false;
+                    //Attempt to start the process using OpenVR
+                    _launchWillHaveFailedFromOpenVrTimeout = true;
+                    if (OpenVRManager.LaunchApplication(experience.ID))
+                    {
+                        Logger.WriteLog($"CustomWrapper.WrapProcess: Launching {experience.Name} via OpenVR", MockConsole.LogLevel.Verbose);
+                        return;
+                    }
+                    _launchWillHaveFailedFromOpenVrTimeout = false;
 
-                //Stop any accessory processes before opening a new process
-                SessionController.VrHeadset.StopProcessesBeforeLaunch();
+                    //Stop any accessory processes before opening a new process
+                    SessionController.VrHeadset.StopProcessesBeforeLaunch();
+                }
                 
                 //Fall back to the alternate if it fails or is not a registered VR experience in the vrmanifest
                 Logger.WriteLog($"CustomWrapper.WrapProcess - Using AlternateLaunchProcess", MockConsole.LogLevel.Normal);
