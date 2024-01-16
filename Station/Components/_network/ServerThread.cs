@@ -46,8 +46,6 @@ public class ServerThread
     /// </summary>
     public async Task RunAsync()
     {
-        CommandLine.GetVolume();
-
         try
         {
             if (server == null)

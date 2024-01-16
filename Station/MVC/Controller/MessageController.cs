@@ -20,7 +20,6 @@ public static class MessageController
         SendResponse("NUC", "Station", "SetValue:status:On");
         SendResponse("NUC", "Station", "SetValue:gameName:");
         SendResponse("Android", "Station", "SetValue:gameId:");
-        SendResponse("NUC", "Station", $"SetValue:volume:{CommandLine.GetVolume()}");
     }
     
     /// <summary>
