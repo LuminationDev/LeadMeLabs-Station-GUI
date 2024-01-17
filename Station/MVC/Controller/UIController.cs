@@ -6,6 +6,15 @@ namespace Station.MVC.Controller;
 public class UIController
 {
     /// <summary>
+    /// Update the Id of the Station.
+    /// </summary>
+    public static void UpdateStationId(string id)
+    {
+        if (MainViewModel.ViewModelManager.MainViewModel == null) return;
+        MainViewModel.ViewModelManager.MainViewModel.Id = id;
+    }
+    
+    /// <summary>
     /// Updates software details in the MainViewModel based on the specified field.
     /// Supported fields include "ipAddress," "macAddress," "versionName," and "versionNumber."
     /// If the specified field is not recognized, a log message is written to the MockConsole.
@@ -48,7 +57,7 @@ public class UIController
     }
 
     /// <summary>
-    /// Update the overall power status (server etc..) of the NUC.
+    /// Update the overall power status (server etc..) of the Station.
     /// </summary>
     public static void UpdateStationPowerStatus(string status)
     {

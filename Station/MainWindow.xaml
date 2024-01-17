@@ -69,14 +69,13 @@
                     <SolidColorBrush Color="#576574" Opacity="0.2"/>
                 </DockPanel.Background>
                 
-                <!--TODO ADD THE STATION NUMBER HERE-->
-                <TextBlock Text="Station"
+                <TextBlock Text="{Binding Id}"
                            VerticalAlignment="Center"
                            HorizontalAlignment="Left"
                            Foreground="White"
-                           FontSize="40"
+                           FontSize="35"
                            FontFamily="Fonts/#Poppins"
-                           Margin="20, 0, 0, 0"/>
+                           Margin="10, 0, 0, 0"/>
             </DockPanel>
             
             <!--Menu Panel-->

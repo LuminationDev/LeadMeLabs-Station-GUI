@@ -13,6 +13,7 @@ using Station.Components._organisers;
 using Station.Components._utils;
 using Station.Components._utils._steamConfig;
 using Station.Components._wrapper;
+using Station.MVC.ViewModel;
 
 namespace Station.MVC.Controller;
 
@@ -98,7 +99,10 @@ public static class MainController
             UIController.UpdateCurrentState("No config...");
             return;
         }
-        
+
+        // Set the Id of the Station for UI binding
+        UIController.UpdateStationId(Environment.GetEnvironmentVariable("stationId", EnvironmentVariableTarget.Process) ?? "");
+
         // Continue with additional tasks if environment variables are loaded successfully
         MockConsole.WriteLine("ENV variables loaded", MockConsole.LogLevel.Error);
 

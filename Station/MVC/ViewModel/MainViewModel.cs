@@ -21,7 +21,6 @@ public class MainViewModel : ObservableObject
     public RelayCommand QaViewCommand { get; }
     
     private object _currentView = null!;
-
     public object CurrentView
     {
         get => _currentView;
@@ -33,13 +32,23 @@ public class MainViewModel : ObservableObject
     }
     
     private object _status = null!;
-
     public object Status
     {
         get => _status;
         set
         {
             _status = value;
+            OnPropertyChanged();
+        }
+    }
+    
+    private string _id = "Station";
+    public string Id
+    {
+        get => _id;
+        set
+        {
+            _id = $"Station {value}";
             OnPropertyChanged();
         }
     }
