@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.IO;
 using System.Linq;
 using System.Management.Automation;
 using System.Threading;
@@ -18,9 +19,7 @@ namespace Station.Components._utils;
 /// </summary>
 public static class AudioManager
 {
-    //TODO clean this pathing up
-    private const string ModulePath = @"C:\Users\ecoad\Projects\Experimental\AudioDeviceCmdlets\AudioDeviceCmdlets\bin\Release\AudioDeviceCmdlets.dll";
-    
+    private static readonly string ModulePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "AudioDeviceCmdlets.dll");
     private static readonly Dictionary<string, LocalAudioDevice> AudioDevices = new();
     
     #region Observers
