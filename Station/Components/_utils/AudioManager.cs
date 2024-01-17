@@ -238,7 +238,7 @@ public static class AudioManager
             powerShellInstance.AddScript(@$"Import-Module {ModulePath}");
             powerShellInstance.AddScript("Get-AudioDevice -List");
 
-            CollectAndPrintAudioDeviceInformation(powerShellInstance);
+            CollectAudioDeviceInformation(powerShellInstance);
         });
     }
 
@@ -271,7 +271,7 @@ public static class AudioManager
         return null;
     }
 
-    private static void CollectAndPrintAudioDeviceInformation(PowerShell powerShellInstance)
+    private static void CollectAudioDeviceInformation(PowerShell powerShellInstance)
     {
         Collection<PSObject> psOutput = powerShellInstance.Invoke();
 
@@ -290,8 +290,6 @@ public static class AudioManager
             {
                 AudioDevices.Add(deviceName, new LocalAudioDevice(deviceName, deviceId));
             }
-
-            Console.WriteLine($"New audio device found: Device Name: {deviceName}, Device Id: {deviceId}");
         }
 
         if (powerShellInstance.HadErrors)
