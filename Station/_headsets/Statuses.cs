@@ -361,6 +361,30 @@ namespace Station
             List<QaCheck> qaChecks = new List<QaCheck>();
 
             QaCheck headsetConnected = new QaCheck("headset_connected");
+            QaCheck headsetFirmwareUpToDate = new QaCheck("headset_firmware");
+            QaCheck controllersConnected = new QaCheck("controllers_connected");
+            QaCheck controllersFirmware = new QaCheck("controllers_firmware");
+            QaCheck baseStationsConnected = new QaCheck("base_stations_connected");
+            QaCheck baseStationsFirmware = new QaCheck("base_stations_firmware");
+
+            if (!Helper.GetStationMode().Equals(Helper.STATION_MODE_VR))
+            {
+                headsetConnected.SetPassed("Station is a non-vr station");
+                headsetFirmwareUpToDate.SetPassed("Station is a non-vr station");
+                controllersConnected.SetPassed("Station is a non-vr station");
+                controllersFirmware.SetPassed("Station is a non-vr station");
+                baseStationsConnected.SetPassed("Station is a non-vr station");
+                baseStationsFirmware.SetPassed("Station is a non-vr station");
+                
+                qaChecks.Add(headsetConnected);
+                qaChecks.Add(headsetFirmwareUpToDate);
+                qaChecks.Add(controllersConnected);
+                qaChecks.Add(controllersFirmware);
+                qaChecks.Add(baseStationsConnected);
+                qaChecks.Add(baseStationsFirmware);
+                return qaChecks;
+            }
+            
             if (OpenVRStatus == DeviceStatus.Connected && SoftwareStatus == DeviceStatus.Connected)
             {
                 headsetConnected.SetPassed(null);
@@ -370,7 +394,6 @@ namespace Station
                 headsetConnected.SetFailed("Headset not connected");
             }
             
-            QaCheck headsetFirmwareUpToDate = new QaCheck("headset_firmware");
             if (OpenVRStatus != DeviceStatus.Connected || SoftwareStatus != DeviceStatus.Connected)
             {
                 headsetFirmwareUpToDate.SetFailed("Headset not connected");
@@ -387,7 +410,6 @@ namespace Station
                 }
             }
             
-            QaCheck controllersConnected = new QaCheck("controllers_connected");
             if (Controllers.Count(controller => controller.Value.Tracking == DeviceStatus.Connected) >= 2)
             {
                 controllersConnected.SetPassed(null);
@@ -397,7 +419,6 @@ namespace Station
                 controllersConnected.SetFailed("Could not find two controllers that are tracking");
             }
             
-            QaCheck controllersFirmware = new QaCheck("controllers_firmware");
             if (OpenVRStatus != DeviceStatus.Connected || SoftwareStatus != DeviceStatus.Connected)
             {
                 controllersFirmware.SetFailed("Headset not connected");
@@ -417,7 +438,6 @@ namespace Station
                 }
             }
             
-            QaCheck baseStationsConnected = new QaCheck("base_stations_connected");
             if (baseStations.Count(baseStation => baseStation.Value.Tracking == DeviceStatus.Connected) >= 2)
             {
                 baseStationsConnected.SetPassed(null);
@@ -427,7 +447,7 @@ namespace Station
                 baseStationsConnected.SetFailed("Could not find two base stations that are tracking");
             }
             
-            QaCheck baseStationsFirmware = new QaCheck("base_stations_firmware");
+            
             if (OpenVRStatus != DeviceStatus.Connected || SoftwareStatus != DeviceStatus.Connected)
             {
                 baseStationsFirmware.SetFailed("Headset not connected");

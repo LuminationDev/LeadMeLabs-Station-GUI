@@ -46,6 +46,7 @@ public static class QualityManager
                 responseData.Add("nucIpAddress", Environment.GetEnvironmentVariable("NucAddress", EnvironmentVariableTarget.Process) ?? "Not found");
                 responseData.Add("id", Environment.GetEnvironmentVariable("StationId", EnvironmentVariableTarget.Process) ?? "Not found");
                 responseData.Add("labLocation", Environment.GetEnvironmentVariable("LabLocation", EnvironmentVariableTarget.Process) ?? "Not found");
+                responseData.Add("stationMode", Environment.GetEnvironmentVariable("StationMode", EnvironmentVariableTarget.Process) ?? "Not found");
                 responseData.Add("room", Environment.GetEnvironmentVariable("room", EnvironmentVariableTarget.Process) ?? "Not found");
                 responseData.Add("macAddress", SystemInformation.GetMACAddress());
                 responseData.Add("expectedStationId", actionData.GetValue("expectedStationId"));
@@ -146,6 +147,21 @@ public static class QualityManager
             case "LaunchExperience":
             {
                 string experienceId = actionData.GetValue("experienceId").ToString();
+                Experience experience = WrapperManager.ApplicationList.GetValueOrDefault(experienceId);
+
+                JObject response = new JObject();
+                response.Add("response", "ExperienceLaunchAttempt");
+                JObject responseData = new JObject();
+                
+                if (!Helper.GetStationMode().Equals(Helper.STATION_MODE_VR) && experience.IsVr)
+                {
+                    responseData.Add("result", "warning");
+                    responseData.Add("message", "Experience is a VR experience and Station is a non-vr Station");
+                    responseData.Add("experienceId", experienceId);
+                    response.Add("responseData", responseData);
+                    Manager.SendResponse("NUC", "QA", response.ToString());
+                    return;
+                }
             
                 // check if there is an unaccepted EULA
                 // first get app info from steamcmd to get the list of eulas
@@ -157,10 +173,6 @@ public static class QualityManager
                 {
                     neededEulas.Add(eula.Split("\t")[eula.Split("\t").Length - 1].Trim('"'));
                 }
-
-                JObject response = new JObject();
-                response.Add("response", "ExperienceLaunchAttempt");
-                JObject responseData = new JObject();
             
                 List<string> acceptedEulas = SteamConfig.GetAcceptedEulasForAppId(experienceId);
                 bool allEulasAccepted = !neededEulas.Except(acceptedEulas).Any();
