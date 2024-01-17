@@ -27,7 +27,7 @@ internal class CustomWrapper : IWrapper
     /// <summary>
     /// Track if an experience is being launched.
     /// </summary>
-    private static bool launchingExperience = false;
+    private static bool launchingExperience;
 
     public Experience? GetLastExperience()
     {

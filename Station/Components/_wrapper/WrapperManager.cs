@@ -6,7 +6,6 @@ using System.Threading.Tasks;
 using leadme_api;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using Station;
 using Station.Components._commandLine;
 using Station.Components._models;
 using Station.Components._monitoring;
@@ -36,7 +35,7 @@ public class WrapperManager {
 
     //Track the currently wrapper experience
     public static IWrapper? CurrentWrapper;
-    private static bool alreadyCollecting = false;
+    private static bool alreadyCollecting;
 
     //Store the list of applications (key = ID: [[0] = wrapper type, [1] = application name, [2] = launch params (nullable)])
     public static readonly Dictionary<string, Experience> ApplicationList = new();
@@ -334,7 +333,7 @@ public class WrapperManager {
 
         //Only send the message if the headset is not yet connected
         if (SessionController.VrHeadset?.GetStatusManager().SoftwareStatus != DeviceStatus.Connected ||
-            SessionController.VrHeadset?.GetStatusManager().OpenVRStatus != DeviceStatus.Connected)
+            SessionController.VrHeadset.GetStatusManager().OpenVRStatus != DeviceStatus.Connected)
         {
             ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage($"SoftwareState,{message}"),
                 TimeSpan.FromSeconds(1));

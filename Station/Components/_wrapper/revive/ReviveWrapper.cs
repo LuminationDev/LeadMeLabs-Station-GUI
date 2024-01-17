@@ -21,14 +21,14 @@ public class ReviveWrapper : IWrapper
 {
     public const string WrapperType = "Revive";
     private static Process? currentProcess;
-    private static string? experienceName = null;
+    private static string? experienceName;
     private static Experience lastExperience;
     private bool _launchWillHaveFailedFromOpenVrTimeout = true;
 
     /// <summary>
     /// Track if an experience is being launched.
     /// </summary>
-    private static bool launchingExperience = false;
+    private static bool launchingExperience;
 
     public Experience? GetLastExperience()
     {
@@ -60,7 +60,7 @@ public class ReviveWrapper : IWrapper
         return experienceName;
     }
 
-    public List<string>? CollectApplications()
+    public List<string> CollectApplications()
     {
         return ReviveScripts.LoadAvailableGames();
     }
@@ -82,7 +82,7 @@ public class ReviveWrapper : IWrapper
 
             //Add the header image to the sending image queue through action transformation
             SocketFile socketImage = new("image", experienceKey, filePath);
-            System.Action sendImage = new(() => socketImage.Send());
+            Action sendImage = new(() => socketImage.Send());
 
             //Queue the send function for invoking
             TaskQueue.Queue(false, sendImage);

@@ -13,7 +13,6 @@ using Station.Components._organisers;
 using Station.Components._utils;
 using Station.Components._utils._steamConfig;
 using Station.Components._wrapper;
-using Station.MVC.ViewModel;
 
 namespace Station.MVC.Controller;
 
