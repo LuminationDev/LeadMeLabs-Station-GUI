@@ -75,26 +75,41 @@ public static class ModeTracker
         //Update the status
         SessionController.CurrentState = "Exiting Idle Mode";
         Manager.SendResponse("Android", "Station", "SetValue:status:On");
-        
-        //Start VR applications
-        await WrapperManager.RestartVRProcesses(Helper.GetStationMode().Equals(Helper.STATION_MODE_VR));
-        
-        OverlayManager.SetText("Waiting for SteamVR");
-        
-        //Wait for OpenVR to be available
-        bool steamvr = await Helper.MonitorLoop(() => ProcessManager.GetProcessesByName("vrmonitor").Length == 0, 20);
-        if (!steamvr)
-        {
-            ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage($"SoftwareState,SteamVR Error"), TimeSpan.FromSeconds(1));
-        }
-        
-        await Task.Delay(2500);
-        OverlayManager.SetText("Ready for use");
-        await Task.Delay(2500);
-        
-        OverlayManager.ManualStop();
 
-        return steamvr;
+        if (Helper.GetStationMode().Equals(Helper.STATION_MODE_VR))
+        {
+            //Start VR applications
+            await WrapperManager.RestartVRProcesses(Helper.GetStationMode().Equals(Helper.STATION_MODE_VR));
+        
+            OverlayManager.SetText("Waiting for SteamVR");
+        
+            //Wait for OpenVR to be available
+            bool steamvr = await Helper.MonitorLoop(() => ProcessManager.GetProcessesByName("vrmonitor").Length == 0, 20);
+            if (!steamvr)
+            {
+                ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage($"SoftwareState,SteamVR Error"), TimeSpan.FromSeconds(1));
+            }
+        
+            await Task.Delay(2500);
+            
+            OverlayManager.SetText("Ready for use");
+            await Task.Delay(2500);
+        
+            OverlayManager.ManualStop();
+
+            return steamvr;
+        }
+        else
+        {
+            await Task.Delay(2500);
+            
+            OverlayManager.SetText("Ready for use");
+            await Task.Delay(2500);
+        
+            OverlayManager.ManualStop();
+
+            return true;
+        }
     }
     
     /// <summary>

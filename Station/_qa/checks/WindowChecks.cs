@@ -304,7 +304,16 @@ public class WindowChecks
         list.Add(CheckEnvironmentVariable("NucAddress", "environment_nuc_address"));
         list.Add(CheckEnvironmentVariable("StationId", "environment_station_id"));
         list.Add(CheckEnvironmentVariable("AppKey", "environment_encryption_key"));
-        list.Add(CheckEnvironmentVariable("HeadsetType", "environment_headset_type"));
+        if (Helper.GetStationMode().Equals(Helper.STATION_MODE_VR))
+        {
+            list.Add(CheckEnvironmentVariable("HeadsetType", "environment_headset_type"));
+        }
+        else
+        {
+            QaCheck qaCheck = new QaCheck("environment_headset_type");
+            qaCheck.SetPassed("Station is a non-vr station");
+            list.Add(qaCheck);
+        }
         list.Add(CheckEnvironmentVariable("room", "environment_room"));
         list.Add(CheckEnvironmentVariable("StationMode", "environment_station_mode"));
         return list;

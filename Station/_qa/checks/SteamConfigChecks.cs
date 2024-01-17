@@ -534,6 +534,19 @@ namespace Station._qa.checks
                 return qaChecks;
             }
             
+            if (!Helper.GetStationMode().Equals(Helper.STATION_MODE_VR))
+            {
+                homeAppDisabled.SetPassed("Station is a non-vr station");
+                controllerTimeoutSetToZero.SetPassed("Station is a non-vr station");
+                screenTimeoutSetTo1800.SetPassed("Station is a non-vr station");
+                pauseCompositorSetToFalse.SetPassed("Station is a non-vr station");
+                steamVrDashboardDisabled.SetPassed("Station is a non-vr station");
+                steamVrStatusNotOnTop.SetPassed("Station is a non-vr station");
+                fenceCorrectColour.SetPassed("Station is a non-vr station");
+                qaChecks = new List<QaCheck> { homeAppDisabled, controllerTimeoutSetToZero, screenTimeoutSetTo1800, pauseCompositorSetToFalse, steamVrDashboardDisabled, steamVrStatusNotOnTop };
+                return qaChecks;
+            }
+            
             string fileLocation = "C:\\Program Files (x86)\\Steam\\config\\steamvr.vrsettings";
             if (File.Exists(fileLocation))
             {
