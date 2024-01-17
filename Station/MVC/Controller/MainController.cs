@@ -68,7 +68,7 @@ public static class MainController
     private static Timer? variableCheck;
 
     public static bool isNucUtf8 = true;
-
+    
     /// <summary>
     /// Starts the server running on the local machine
     /// </summary>
@@ -104,12 +104,15 @@ public static class MainController
 
         ValidateInstall("Station");
         
+        // Collect audio devices before starting the server
+        AudioManager.Initialise();
+        
         // Additional tasks
         ThumbnailOrganiser.LoadCache();
         StartServer();
         ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage($"SoftwareState,Launching Software"), TimeSpan.FromSeconds(0));
         new Thread(Initialisation).Start(); //Call as a new task to stop UI and server start up from hanging whilst reading the files
-        ModeTracker.Initialise();
+        ModeTracker.Initialise(); //Start tracking any idle time
     }
     
     /// <summary>
@@ -168,7 +171,7 @@ public static class MainController
             //Launch the custom wrapper application here
             wrapperManager.Startup();
 
-            //Use to monitor SetVol and restart application
+            //Use to monitor restart of the application
             StationMonitoringThread.InitializeMonitoring();
         }
 

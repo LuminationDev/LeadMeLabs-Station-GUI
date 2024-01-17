@@ -132,6 +132,10 @@
     <Content Update="_cache\.gitkeep">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
+    <None Remove="AudioDeviceCmdlets.dll" />
+    <Content Include="AudioDeviceCmdlets.dll">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
 
   <ItemGroup>
@@ -158,5 +162,11 @@
     <Page Update="Components\_overlay\Overlay.xaml">
       <Generator>MSBuild:Compile</Generator>
     </Page>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="AudioDeviceCmdlets">
+      <HintPath>..\..\..\Experimental\AudioDeviceCmdlets\AudioDeviceCmdlets\bin\Release\AudioDeviceCmdlets.dll</HintPath>
+    </Reference>
   </ItemGroup>
 </Project>
