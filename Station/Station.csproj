@@ -97,6 +97,10 @@
     <Content Include="assets\openvr_online.ico">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+    <None Remove="AudioDeviceCmdlets.dll" />
+    <Content Include="AudioDeviceCmdlets.dll">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
 
   <ItemGroup>

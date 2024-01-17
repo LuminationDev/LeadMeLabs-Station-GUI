@@ -1,5 +1,6 @@
 using System;
 using System.Threading.Tasks;
+using Station._manager;
 using Station._qa;
 using Station._utils;
 
@@ -79,42 +80,62 @@ namespace Station
                 Manager.SendResponse(source, "Station", $"SetValue:state:{SessionController.CurrentState}");
                 Manager.SendResponse(source, "Station", "SetValue:gameName:");
                 Manager.SendResponse("Android", "Station", "SetValue:gameId:");
-                Manager.SendResponse(source, "Station", $"SetValue:volume:{CommandLine.GetVolume()}");
+                AudioManager.Initialise();
             }
         }
 
-        private void HandleStation(string additionalData)
+        private async void HandleStation(string additionalData)
         {
             if (additionalData.StartsWith("GetValue"))
             {
                 string key = additionalData.Split(":", 2)[1];
-                if (key == "installedApplications")
+                switch (key)
                 {
-                    Logger.WriteLog("Collecting station experiences", MockConsole.LogLevel.Normal);
-                    Manager.wrapperManager?.ActionHandler("CollectApplications");
-                }
-                if (key == "volume")
-                {
-                    Manager.SendResponse(source, "Station", "SetValue:" + key + ":" + CommandLine.GetVolume());
-                }
-                if (key == "devices")
-                {
-                    //When a tablet connects/reconnects to the NUC, send through the current VR device statuses.
-                    SessionController.VrHeadset?.GetStatusManager().QueryStatuses();
+                    case "installedApplications":
+                        Logger.WriteLog("Collecting station experiences", MockConsole.LogLevel.Normal);
+                        Manager.wrapperManager?.ActionHandler("CollectApplications");
+                        break;
+
+                    case "volume":
+                        string currentVolume = await AudioManager.GetVolume();
+                        Manager.SendResponse(source, "Station", "SetValue:" + key + ":" + currentVolume);
+                        break;
+
+                    case "muted":
+                        string isMuted = await AudioManager.GetMuted();
+                        Manager.SendResponse(source, "Station", "SetValue:" + key + ":" + isMuted);
+                        break;
+
+                    case "devices":
+                        //When a tablet connects/reconnects to the NUC, send through the current VR device statuses.
+                        SessionController.VrHeadset?.GetStatusManager().QueryStatuses();
+                        break;
                 }
             }
+            
             if (additionalData.StartsWith("SetValue"))
             {
                 string[] keyValue = additionalData.Split(":", 3);
                 string key = keyValue[1];
                 string? value = keyValue[2];
-                if (key == "volume")
+                
+                switch (key)
                 {
-                    CommandLine.SetVolume(value);
-                }
-                if (key == "steamCMD")
-                {
-                    SteamScripts.ConfigureSteamCommand(value);
+                    case "volume":
+                        AudioManager.SetVolume(value);
+                        break;
+
+                    case "activeAudioDevice":
+                        AudioManager.SetCurrentAudioDevice(value);
+                        break;
+
+                    case "muted":
+                        AudioManager.SetMuted(value);
+                        break;
+
+                    case "steamCMD":
+                        SteamScripts.ConfigureSteamCommand(value);
+                        break;
                 }
             }
         }

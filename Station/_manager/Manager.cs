@@ -5,6 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using LeadMeLabsLibrary;
 using Station._config;
+using Station._manager;
 using Station._monitoring;
 using Station._network;
 using Station._utils;
@@ -103,6 +104,9 @@ namespace Station
 
             ValidateInstall("Station");
             
+            // Collect audio devices before starting the server
+            AudioManager.Initialise();
+            
             StartServer();
             
             //Cannot be any higher - encryption key does not exist before the DotEnv.Load()
@@ -113,7 +117,7 @@ namespace Station
             
             //Call as a new task to stop UI and server start up from hanging whilst reading the files
             new Thread(Initialisation).Start();
-            ModeTracker.Initialise();
+            ModeTracker.Initialise(); //Start tracking any idle time
         }
 
         /// <summary>
@@ -138,7 +142,7 @@ namespace Station
                 //Launch the custom wrapper application here
                 wrapperManager.Startup();
 
-                //Use to monitor SetVol and restart application
+                //Use to monitor restart of the application
                 StationMonitoringThread.InitializeMonitoring();
             }
 
@@ -242,7 +246,6 @@ namespace Station
             SendResponse("NUC", "Station", "SetValue:status:On");
             SendResponse("NUC", "Station", "SetValue:gameName:");
             SendResponse("Android", "Station", "SetValue:gameId:");
-            SendResponse("NUC", "Station", $"SetValue:volume:{CommandLine.GetVolume()}");
         }
 
         /// <summary>
