@@ -244,8 +244,8 @@ public class ServerThread
         if (data.Contains(":Experience:"))
         {
             //Reset the idle timer
-            bool success = await ModeTracker.ResetTimer();
-            if (!success) return;
+            // bool success = await ModeTracker.ResetTimer();
+            // if (!success) return;
         }
         
         //Run the appropriate script

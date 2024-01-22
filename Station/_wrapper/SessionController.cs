@@ -123,7 +123,7 @@ namespace Station
             VrHeadset?.MinimizeSoftware(2);
             
             //Reset the idle timer and current mode type
-            ModeTracker.ResetMode();
+            // ModeTracker.ResetMode();
         }
 
         /// <summary>
