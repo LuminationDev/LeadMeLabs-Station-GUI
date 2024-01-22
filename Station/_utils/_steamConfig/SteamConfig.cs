@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Net.Http;
 using System.Text;
+using System.Threading.Tasks;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Station._utils;
@@ -15,6 +16,7 @@ namespace Station
         private static string steamId = "";
         private static string location = Environment.GetEnvironmentVariable("LabLocation", EnvironmentVariableTarget.Process) ?? "Unknown";
         private static string stationId = Environment.GetEnvironmentVariable("StationId", EnvironmentVariableTarget.Process) ?? "Unknown";
+        private static bool steamStatsReported = false;
 
         public static void VerifySteamConfig(bool initialCall = false)
         {
@@ -30,8 +32,8 @@ namespace Station
             if (initialCall)
             {
                 RoomSetup.CompareRoomSetup();
-                ReadAndReportSteamStats();
             }
+            ReadAndReportSteamStats();
         }
 
         public static string GetSteamId()
@@ -359,6 +361,11 @@ namespace Station
         
         private static async void ReadAndReportSteamStats()
         {
+            if (steamStatsReported)
+            {
+                return;
+            }
+
             if (steamId.Length == 0)
             {
                 Logger.WriteLog(
@@ -366,6 +373,7 @@ namespace Station
                     location, MockConsole.LogLevel.Error);
                 return;
             }
+
             string fileLocation = $"C:\\Program Files (x86)\\Steam\\userdata\\{steamId}\\config\\localconfig.vdf";
             if (!File.Exists(fileLocation))
             {
@@ -374,71 +382,87 @@ namespace Station
                     location, MockConsole.LogLevel.Error);
                 return;
             }
+            
+            if (!Network.CheckIfConnectedToInternet())
+            {
+                return;
+            }
 
             try
             {
-                Dictionary<String, String> experienceStats = new Dictionary<string, string>();
-                using (var fs = new FileStream(fileLocation, FileMode.Open, FileAccess.Read, FileShare.ReadWrite, 0x1000, FileOptions.SequentialScan))
-                using (var sr = new StreamReader(fs, Encoding.UTF8))
+                Task.Run(async () =>
                 {
-                    string line;
-                    string mostRecentId = "";
-                    bool startReadingApps = false;
-                    while ((line = sr.ReadLine()) != null)
+                    Dictionary<String, String> experienceStats = new Dictionary<string, string>();
+                    using (var fs = new FileStream(fileLocation, FileMode.Open, FileAccess.Read, FileShare.ReadWrite, 0x1000, FileOptions.SequentialScan))
+                    using (var sr = new StreamReader(fs, Encoding.UTF8))
                     {
-                        if (!startReadingApps && line.Equals("\t\t\t\t\"apps\""))
+                        string line;
+                        string mostRecentId = "";
+                        bool startReadingApps = false;
+                        while ((line = sr.ReadLine()) != null)
                         {
-                            startReadingApps = true;
-                            continue;
-                        }
+                            if (!startReadingApps && line.Equals("\t\t\t\t\"apps\""))
+                            {
+                                startReadingApps = true;
+                                continue;
+                            }
 
-                        if (line.Equals("\t\t\t\t}"))
-                        {
-                            break;
-                        }
+                            if (line.Equals("\t\t\t\t}"))
+                            {
+                                break;
+                            }
 
-                        if (!startReadingApps)
-                        {
-                            continue;
-                        }
+                            if (!startReadingApps)
+                            {
+                                continue;
+                            }
 
-                        if (line.StartsWith("\t\t\t\t\t\""))
-                        {
-                            mostRecentId = line.Trim('\t').Trim('\"');
-                            continue;
-                        }
+                            if (line.StartsWith("\t\t\t\t\t\""))
+                            {
+                                mostRecentId = line.Trim('\t').Trim('\"');
+                                continue;
+                            }
 
-                        if (line.Equals("\t\t\t\t\t}"))
-                        {
-                            mostRecentId = "";
-                            continue;
-                        }
+                            if (line.Equals("\t\t\t\t\t}"))
+                            {
+                                mostRecentId = "";
+                                continue;
+                            }
 
-                        if (mostRecentId.Length > 0 && line.StartsWith("\t\t\t\t\t\t\"Playtime\""))
-                        {
-                            experienceStats.Add(mostRecentId, line.Remove(0, 19).Trim('\"'));
+                            if (mostRecentId.Length > 0 && line.StartsWith("\t\t\t\t\t\t\"Playtime\""))
+                            {
+                                experienceStats.Add(mostRecentId, line.Remove(0, 19).Trim('\"'));
+                            }
                         }
                     }
-                }
 
-                if (experienceStats.Count > 0)
-                {
-                    using var httpClient = new HttpClient();
-                    string strJSON = "{";
-                    var datetime = new DateTimeOffset(DateTime.UtcNow).ToUnixTimeSeconds();
-                    foreach (KeyValuePair<string,string> experienceStat in experienceStats)
+                    if (experienceStats.Count > 0)
                     {
-                        strJSON += String.Format("\"{0}/{1}\": {2},", experienceStat.Key, datetime, experienceStat.Value);
-                    }
+                        using var httpClient = new HttpClient();
+                        string strJSON = "{";
+                        var datetime = new DateTimeOffset(DateTime.UtcNow).ToUnixTimeSeconds();
+                        foreach (KeyValuePair<string,string> experienceStat in experienceStats)
+                        {
+                            strJSON += String.Format("\"{0}/{1}\": {2},", experienceStat.Key, datetime, experienceStat.Value);
+                        }
 
-                    strJSON = strJSON.Remove(strJSON.Length - 1, 1);
-                    strJSON += "}";
-                    StringContent objData = new StringContent(strJSON, Encoding.UTF8, "application/json");
-                    await httpClient.PatchAsync(
-                        $"https://leadme-labs-default-rtdb.asia-southeast1.firebasedatabase.app/lab_experience_playtime/{location}/{stationId}.json",
-                        objData
-                    );
-                }
+                        strJSON = strJSON.Remove(strJSON.Length - 1, 1);
+                        strJSON += "}";
+                        StringContent objData = new StringContent(strJSON, Encoding.UTF8, "application/json");
+                        var result = await httpClient.PatchAsync(
+                            $"https://leadme-labs-default-rtdb.asia-southeast1.firebasedatabase.app/lab_experience_playtime/{location}/{stationId}.json",
+                            objData
+                        );
+                        if (result.IsSuccessStatusCode)
+                        {
+                            steamStatsReported = true;
+                        }
+                        else
+                        {
+                            SentrySdk.CaptureMessage($"Steam capture failed with response code {result.StatusCode}");
+                        }
+                    }
+                });
             }
             catch (Exception e)
             {
