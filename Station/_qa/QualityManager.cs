@@ -16,6 +16,7 @@ public static class QualityManager
     private static readonly NetworkChecks NetworkChecks = new();
     private static readonly ImvrChecks ImvrChecks = new();
     private static readonly WindowChecks WindowChecks = new();
+    private static readonly ConfigurationChecks configurationChecks = new();
     private static readonly SoftwareChecks SoftwareChecks = new();
     private static readonly ConfigChecks ConfigChecks = new();
     private static readonly SteamConfigChecks SteamConfigChecks = new();
@@ -68,6 +69,10 @@ public static class QualityManager
                     
                     case "windows_checks":
                         result = JsonConvert.SerializeObject(WindowChecks.RunQa(labType));
+                        break;
+                    
+                    case "configuration_checks":
+                        result = JsonConvert.SerializeObject(configurationChecks.RunQa(labType));
                         break;
                     
                     case "software_checks":

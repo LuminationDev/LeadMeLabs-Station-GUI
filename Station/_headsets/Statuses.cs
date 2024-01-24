@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using Newtonsoft.Json.Linq;
+using Station._manager;
 using Station._qa;
 using Station._utils;
 
@@ -51,6 +52,8 @@ namespace Station
             MockConsole.WriteLine($"DeviceStatus:Headset:tracking:Vive:{newValue}", MockConsole.LogLevel.Debug);
             string message = $"Headset:Vive:tracking:{newValue}";
             SoftwareTrackingChanged?.Invoke(this, new GenericEventArgs<string>(message));
+            
+            AudioManager.Initialise();
         }
 
         /// <summary>
