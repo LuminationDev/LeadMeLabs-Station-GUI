@@ -271,7 +271,15 @@ public static class AudioManager
 
             if (!AudioDevices.ContainsKey(deviceName))
             {
-                AudioDevices.Add(deviceName, new LocalAudioDevice(deviceName, deviceId));
+                // apparently despite the if statement, this can still throw an exception, potentially a threading thing that should be handled with locks, rather than a try catch....
+                try
+                {
+                    AudioDevices.Add(deviceName, new LocalAudioDevice(deviceName, deviceId));
+                }
+                catch (Exception e)
+                {
+                    SentrySdk.CaptureException(e);
+                }
             }
         }
 
