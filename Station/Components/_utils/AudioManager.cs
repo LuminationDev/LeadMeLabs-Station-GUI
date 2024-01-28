@@ -21,6 +21,7 @@ public static class AudioManager
 {
     private static readonly string ModulePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "AudioDeviceCmdlets.dll");
     private static readonly Dictionary<string, LocalAudioDevice> AudioDevices = new();
+    private static readonly object AudioDevicesLock = new();
     
     #region Observers
     private static string activeAudioDevice = "";
@@ -201,7 +202,6 @@ public static class AudioManager
             powerShellInstance.AddScript($"Get-AudioDevice -PlaybackMute");
 
             result = ExecuteAndReturnFirstPowerShellScriptResult(powerShellInstance)?.ToString() ?? "false";
-            Console.WriteLine("MUTED: " + result);
         });
 
         return result;
@@ -286,9 +286,19 @@ public static class AudioManager
             // Do not proceed if one of the values is null
             if (deviceName == null || deviceId == null) continue;
 
-            if (!AudioDevices.ContainsKey(deviceName))
+            // Lock the AudioDevices dictionary to avoid duplicate entry race conditions
+            lock (AudioDevicesLock)
             {
-                AudioDevices.Add(deviceName, new LocalAudioDevice(deviceName, deviceId));
+                if (AudioDevices.ContainsKey(deviceName)) continue;
+                
+                try
+                {
+                    AudioDevices.Add(deviceName, new LocalAudioDevice(deviceName, deviceId));
+                }
+                catch (Exception e)
+                {
+                    SentrySdk.CaptureException(e);
+                }
             }
         }
 
