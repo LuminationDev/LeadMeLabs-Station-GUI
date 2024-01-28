@@ -21,6 +21,7 @@ public static class AudioManager
     //Load the audio dll through a path as it needs runs through powershell module commands
     private static readonly string ModulePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "AudioDeviceCmdlets.dll");
     private static readonly Dictionary<string, LocalAudioDevice> AudioDevices = new();
+    private static readonly object AudioDevicesLock = new();
 
     #region Observers
     private static string activeAudioDevice = "";
@@ -269,9 +270,11 @@ public static class AudioManager
             // Do not proceed if one of the values is null
             if (deviceName == null || deviceId == null) continue;
 
-            if (!AudioDevices.ContainsKey(deviceName))
+            // Lock the AudioDevices dictionary to avoid duplicate entry race conditions
+            lock (AudioDevicesLock)
             {
-                // apparently despite the if statement, this can still throw an exception, potentially a threading thing that should be handled with locks, rather than a try catch....
+                if (AudioDevices.ContainsKey(deviceName)) continue;
+                
                 try
                 {
                     AudioDevices.Add(deviceName, new LocalAudioDevice(deviceName, deviceId));
