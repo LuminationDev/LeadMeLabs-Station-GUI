@@ -6,6 +6,18 @@ public class HomeViewModel : ObservableObject
 {
     #region VirtualRealityStatus
 
+    private bool? _isVr = false;
+    public bool? IsVr
+    {
+        get => _isVr;
+        set
+        {
+            if (_isVr == value) return;
+            _isVr = value;
+            OnPropertyChanged();
+        }
+    }
+    
     private const string Connected = "#00FF00";
     private const string Off = "#C3C8D8";
     private const string Lost = "#c42d2d";

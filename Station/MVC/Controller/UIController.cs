@@ -15,6 +15,15 @@ public class UIController
     }
     
     /// <summary>
+    /// Update the mode of the Station, currently this is limited to VR or non-VR controlled by a boolean.
+    /// VR (true), non-VR (false)
+    /// </summary>
+    public static void UpdateStationMode(bool isVr)
+    {
+        MainViewModel.ViewModelManager.HomeViewModel.IsVr = isVr;
+    }
+    
+    /// <summary>
     /// Updates software details in the MainViewModel based on the specified field.
     /// Supported fields include "ipAddress," "macAddress," "versionName," and "versionNumber."
     /// If the specified field is not recognized, a log message is written to the MockConsole.
