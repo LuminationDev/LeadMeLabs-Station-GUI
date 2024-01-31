@@ -8,6 +8,7 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Station.Components._commandLine;
 using Station.Components._notification;
+using Station.Components._profiles;
 using Station.Components._utils._steamConfig;
 using Station.Components._wrapper;
 using Station.MVC.Controller;
@@ -201,10 +202,12 @@ public static class QualityManager
                 response.Add("response", "GetVrStatuses");
                 JObject responseData = new JObject();
                 response.Add("responseData", responseData);
-                responseData.Add("result",
-                    SessionController.VrHeadset == null
-                        ? null
-                        : SessionController.VrHeadset.GetStatusManager().GetStatusesJson());
+                
+                // Safe cast and null checks
+                VrProfile? vrProfile = Profile.CastToType<VrProfile>(SessionController.StationProfile);
+                if (vrProfile?.VrHeadset == null) break;
+                
+                responseData.Add("result", vrProfile.VrHeadset?.GetStatusManager().GetStatusesJson());
                 MessageController.SendResponse("NUC", "QA", response.ToString());
                 break;
             }

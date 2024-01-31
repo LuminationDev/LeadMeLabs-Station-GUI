@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Threading;
 using System.Threading.Tasks;
-using Station.Components._headsets;
-using Station.Components._models;
+using Station.Components._interfaces;
 using Station.Components._notification;
+using Station.Components._profiles;
 using Station.Components._scripts;
 using Station.Components._utils;
 using Station.Components._wrapper;
@@ -18,11 +18,11 @@ public static class SessionController
     /// The absolute path of the steam executable on the local machine.
     /// </summary>
     public const string Steam = "C:/Program Files (x86)/Steam/steam.exe";
-
+    
     /// <summary>
-    /// Store the HeadSet type that is linked to the current station.
+    /// Store the profile that is linked to the current station.
     /// </summary>
-    public static IVrHeadset? VrHeadset { set; get; }
+    public static IProfile? StationProfile { private set; get; }
 
     /// <summary>
     /// Store the current experience type that is running.
@@ -46,25 +46,21 @@ public static class SessionController
     }
 
     /// <summary>
-    /// Read the store headset type from the config.env file and create an instance that 
-    /// can be accessed from this class.
+    /// Setup the Station profiles using the supplied .config information. The profile determines what processes are
+    /// started and monitored.
     /// </summary>
-    public static void SetupHeadsetType()
+    public static void SetupStationProfile(string profile)
     {
-        //Read from env file
-        switch (Environment.GetEnvironmentVariable("HeadsetType", EnvironmentVariableTarget.Process))
+        switch (profile)
         {
-            case "VivePro1":
-                VrHeadset = new VivePro1();
+            case "Vr":
+                StationProfile = new VrProfile();
                 break;
-            case "VivePro2":
-                VrHeadset = new VivePro2();
-                break;
-            case "ViveFocus3":
-                VrHeadset = new ViveFocus3();
+            case "Content":
+                StationProfile = new ContentProfile();
                 break;
             default:
-                PassStationMessage("No headset type specified.");
+                PassStationMessage($"Unknown profile selected: {profile}");
                 break;
         }
     }
@@ -74,7 +70,7 @@ public static class SessionController
     /// applications that will be started/required depend on the supplied type.
     /// </summary>
     /// <param name="type">A string of what type of experience is being loaded [Custom, Steam, Vive, etc]</param>
-    public static void StartVrSession(string type)
+    public static void StartSession(string type)
     {
         if (!InternalDebugger.GetAutoStart()) return;
         
@@ -84,7 +80,7 @@ public static class SessionController
             case "Custom":
             case "Steam":
             case "Revive":
-                VrHeadset?.StartVrSession();
+                StationProfile?.StartSession();
                 break;
             case "Vive":
                 MockConsole.WriteLine("startVRSession not implemented for type: Vive.", MockConsole.LogLevel.Error);
@@ -92,7 +88,7 @@ public static class SessionController
         }
         
         //Attempt to minimise other applications (mostly Steam)
-        VrHeadset?.MinimizeSoftware(2);
+        StationProfile?.MinimizeSoftware(2);
     }
 
     /// <summary>
@@ -101,7 +97,7 @@ public static class SessionController
     public static void RestartVrSession()
     {
         ScheduledTaskQueue.EnqueueTask(() => PassStationMessage($"SoftwareState,Shutting down VR processes"), TimeSpan.FromSeconds(1));
-        _ = WrapperManager.RestartVrProcesses(Helper.GetStationMode().Equals(Helper.STATION_MODE_VR));
+        _ = WrapperManager.RestartVrProcesses();
 
         if (ExperienceType == null)
         {
@@ -127,7 +123,7 @@ public static class SessionController
         }
         
         //Attempt to minimise other applications (mostly Steam)
-        VrHeadset?.MinimizeSoftware(2);
+        StationProfile?.MinimizeSoftware(2);
         
         //Reset the idle timer and current mode type
         ModeTracker.ResetMode();
@@ -158,7 +154,7 @@ public static class SessionController
         ExperienceType = null;
         
         //Attempt to minimise other applications (mostly Steam)
-        VrHeadset?.MinimizeSoftware(2);
+        StationProfile?.MinimizeSoftware(2);
     }
 
     /// <summary>
@@ -216,8 +212,6 @@ public static class SessionController
                     break;
 
                 case "ApplicationList":
-                    //Backwards compatability, send both old (steamApplications) and new (installedApplications) commands for now.
-                    MessageController.SendResponse("Android", "Station", "SetValue:steamApplications:" + tokens[1]);
                     MessageController.SendResponse("Android", "Station", "SetValue:installedApplications:" + tokens[1]);
                     break;
 

@@ -32,7 +32,6 @@ public static class SteamScripts
     private const string Quit = " +quit";
     
     public static bool popupDetect = false;
-    public static string steamCMDConfigured = "Missing";
 
     private static int restartAttempts = 0; //Track how many times SteamVR has failed in a Station session
 
@@ -77,7 +76,7 @@ public static class SteamScripts
                     Logger.WriteLog("CheckForSteamLogError - SteamVR Error: restarting SteamVR", MockConsole.LogLevel.Normal);
 
                     //Kill SteamVR
-                    CommandLine.QueryVRProcesses(new List<string> { "vrmonitor" }, true);
+                    CommandLine.QueryProcesses(new List<string> { "vrmonitor" }, true);
 
                     Task.Delay(5000).Wait();
 
@@ -108,7 +107,7 @@ public static class SteamScripts
     public static void QuerySteamConfig()
     {
         CommandLine.ExecuteSteamCommand(LoginUser + Licenses + Quit);
-        _ = WrapperManager.RestartVrProcesses(Helper.GetStationMode().Equals(Helper.STATION_MODE_VR));
+        _ = WrapperManager.RestartVrProcesses();
     }
 
     /// <summary>
@@ -132,8 +131,8 @@ public static class SteamScripts
     public static List<string>? LoadAvailableGames()
     {
         //Close Steam if it is open
-        CommandLine.QueryVRProcesses(WrapperMonitoringThread.SteamProcesses, true);
-        CommandLine.QueryVRProcesses(WrapperMonitoringThread.SteamVrProcesses, true);
+        CommandLine.QueryProcesses(WrapperMonitoringThread.SteamProcesses, true);
+        CommandLine.QueryProcesses(WrapperMonitoringThread.SteamVrProcesses, true);
 
         if (!Network.CheckIfConnectedToInternet())
         {
@@ -195,8 +194,6 @@ public static class SteamScripts
         {
             Logger.WriteLog($"SteamCMD not initialised yet. Initialising now.", MockConsole.LogLevel.Error);
             MessageController.SendResponse("Android", "Station", "SetValue:steamCMD:required");
-
-            steamCMDConfigured = "Missing";
 
             //Login to initialise/update SteamCMD and get the Steam Guard email sent off
             string command = $"{LoginDetails} {Quit}";

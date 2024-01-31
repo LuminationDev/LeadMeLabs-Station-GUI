@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Threading.Tasks;
 using leadme_api;
+using Station.Components._interfaces;
 using Station.Components._models;
 using Station.Components._notification;
 using Station.MVC.Controller;
@@ -110,7 +111,7 @@ public class InternalWrapper : IWrapper
             if (launchType.Equals("hidden")) return;
             
             //Close any active experiences if the internal one is visible
-            WrapperManager.CurrentWrapper?.StopCurrentProcess();
+            WrapperManager.currentWrapper?.StopCurrentProcess();
             
             currentProcess = newProcess;
             lastExperience = experience;

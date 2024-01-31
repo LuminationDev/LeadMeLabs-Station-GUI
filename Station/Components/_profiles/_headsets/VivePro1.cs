@@ -6,14 +6,13 @@ using System.Text;
 using System.Threading.Tasks;
 using LeadMeLabsLibrary.Station;
 using Station.Components._commandLine;
-using Station.Components._models;
+using Station.Components._interfaces;
 using Station.Components._utils._steamConfig;
-using Station.Components._wrapper.vive;
 using Station.MVC.Controller;
 
-namespace Station.Components._headsets;
+namespace Station.Components._profiles._headsets;
 
-public class VivePro1 : Headset, IVrHeadset
+public class VivePro1 : IVrHeadset
 {
     private Statuses Statuses { get; } = new();
 
@@ -46,48 +45,26 @@ public class VivePro1 : Headset, IVrHeadset
         return "HtcConnectionUtility";
     }
 
-    /// <summary>
-    /// Collect the connection status of the headset from the headset's specific management software. In this case it
-    /// is Vive Wireless.
-    /// </summary>
-    /// <param name="wrapperType">A string of the Wrapper type that is being launched, required if the process
-    /// needs to restart/start the VR session.</param>
-    /// <returns>A bool representing the connection status.</returns>
-    public bool WaitForConnection(string wrapperType)
+    public List<string> GetProcesses(ProcessListType type)
     {
-        return ViveScripts.WaitForVive(wrapperType).Result;
-    }
-
-    public List<string> GetProcessesToQuery()
-    {
-        return new List<string> { "vrmonitor", "steam", "HtcConnectionUtility", "steamwebhelper" };
-    }
-    
-    /// <summary>
-    /// Minimise the software that handles the headset.
-    /// </summary>
-    /// <param name="attemptLimit"></param>
-    public void MinimizeSoftware(int attemptLimit = 6)
-    {
-        Minimize(GetProcessesToQuery(), attemptLimit);
+        switch (type)
+        {
+            case ProcessListType.Query:
+            case ProcessListType.Minimize:
+                return new List<string> { "vrmonitor", "steam", "HtcConnectionUtility", "steamwebhelper" };
+            default:
+                throw new ArgumentException("Invalid process list type.");
+        }
     }
 
     public void StartVrSession()
     {
-        //Bail out if Steam and SteamVR are already running
-        if (QueryMonitorProcesses(GetProcessesToQuery()))
-        {
-            return;
-        }
-
         CommandLine.KillSteamSigninWindow();
         SteamConfig.VerifySteamConfig();
         CommandLine.StartProgram(SessionController.Steam, " -login " + 
             Environment.GetEnvironmentVariable("SteamUserName", EnvironmentVariableTarget.Process) + " " + 
             Environment.GetEnvironmentVariable("SteamPassword", EnvironmentVariableTarget.Process) + " steam://rungameid/250820"); //Open up steam and run steamVR
         CommandLine.StartProgram(Vive); //Start ViveWireless up
-
-        MinimizeSoftware();
     }
 
     public void MonitorVrConnection()
@@ -132,7 +109,7 @@ public class VivePro1 : Headset, IVrHeadset
     /// </summary>
     public async void StopProcessesBeforeLaunch()
     {
-        CommandLine.QueryVRProcesses(new List<string> { "vrmonitor" }, true);
+        CommandLine.QueryProcesses(new List<string> { "vrmonitor" }, true);
         
         await Task.Delay(3000);
     }

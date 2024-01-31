@@ -308,7 +308,6 @@ public static class CommandLine
         if (!File.Exists(fullPath))
         {
             SessionController.PassStationMessage($"StationError,File not found:{fullPath}");
-            SteamScripts.steamCMDConfigured = "steamcmd.exe not found";
             return null;
         }
 
@@ -333,7 +332,6 @@ public static class CommandLine
         {
             MessageController.SendResponse("Android", "Station", "SetValue:steamCMD:required");
             MockConsole.WriteLine("Steam Guard is not enabled for this account.");
-            SteamScripts.steamCMDConfigured = "Missing";
 
             //Manually kill the process or it will stay on the guard code input 
             cmd.Kill(true);
@@ -341,8 +339,6 @@ public static class CommandLine
         }
 
         MessageController.SendResponse("Android", "Station", "SetValue:steamCMD:configured");
-        SteamScripts.steamCMDConfigured = "Configured";
-
         return output;
     }
 
@@ -408,7 +404,7 @@ public static class CommandLine
     /// <param name="processes">An array of strings containing the name of processes to search for</param>
     /// <param name="kill">A bool representing if the processes should be stopped or not</param>
     /// <returns>A boolean representing if a process is still running</returns>
-    public static bool QueryVRProcesses(List<string> processes, bool kill = false)
+    public static bool QueryProcesses(List<string> processes, bool kill = false)
     {
         List<Process> list = ProcessManager.GetProcessesByNames(processes);
 

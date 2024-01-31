@@ -1,5 +1,7 @@
 ﻿using System;
+using Station.Components._interfaces;
 using Station.Components._notification;
+using Station.Components._profiles;
 using Station.MVC.Controller;
 
 namespace Station.Components._models;
@@ -15,7 +17,7 @@ public class VrController
     //The role is set at creation and will not change.
     public DeviceRole Role { get; }
     private readonly string _serialNumber;
-    private bool _firmwareUpdateRequired = false;
+    private bool _firmwareUpdateRequired;
 
     public bool FirmwareUpdateRequired()
     {
@@ -91,10 +93,12 @@ public class VrController
         this.Role = role;
 
         //Implement Observer Pattern
-        if (SessionController.VrHeadset == null) return;
+        // Safe cast for potential vr profile
+        VrProfile? vrProfile = Profile.CastToType<VrProfile>(SessionController.StationProfile);
+        if (vrProfile?.VrHeadset == null) return;
         
-        BatteryChanged += SessionController.VrHeadset.GetStatusManager().HandleValueChanged;
-        TrackingChanged += SessionController.VrHeadset.GetStatusManager().HandleValueChanged;
+        BatteryChanged += vrProfile.VrHeadset.GetStatusManager().HandleValueChanged;
+        TrackingChanged += vrProfile.VrHeadset.GetStatusManager().HandleValueChanged;
     }
 
     /// <summary>

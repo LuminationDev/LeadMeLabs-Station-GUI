@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using Newtonsoft.Json.Linq;
+using Station.Components._interfaces;
 using Station.Components._models;
 using Station.Components._notification;
 using Station.Components._utils;
@@ -9,14 +10,14 @@ using Station.Components._wrapper;
 using Station.MVC.Controller;
 using Station.QA;
 
-namespace Station.Components._headsets;
+namespace Station.Components._profiles._headsets;
 
 /// <summary>
 /// A class designed to hold the statuses of the different connected VR devices. This class belongs to a headset
 /// as the headset is required for connection to SteamVR before other statuses can be determined. The statuses
 /// included are:
 /// Software Management Status - the software required to manage the headset outside of SteamVR.
-/// OpenVR Status - OpenVR's current status of the headset.
+/// OpenVR Status - OpenVRs current status of the headset.
 /// Controller Statuses - The roll of (left/right) and statuses of connected controllers.
 /// Base Stations - The number of and current status of the connected base stations.
 /// </summary>
@@ -170,7 +171,7 @@ public class Statuses
          {
              if (!oldConnectionStatus || newConnectionStatus is not (DeviceStatus.Lost or DeviceStatus.Off)) return;
              
-             string? message = WrapperManager.CurrentWrapper?.GetCurrentExperienceName() == null ? 
+             string? message = WrapperManager.currentWrapper?.GetCurrentExperienceName() == null ? 
                  "Awaiting headset connection..." : "Lost headset connection";
                  
              ScheduledTaskQueue.EnqueueTask(

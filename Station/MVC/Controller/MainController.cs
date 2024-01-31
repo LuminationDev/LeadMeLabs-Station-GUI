@@ -10,6 +10,7 @@ using Station.Components._network;
 using Station.Components._notification;
 using Station.Components._openvr;
 using Station.Components._organisers;
+using Station.Components._profiles;
 using Station.Components._utils;
 using Station.Components._utils._steamConfig;
 using Station.Components._wrapper;
@@ -194,7 +195,14 @@ public static class MainController
         
         if (Helper.GetStationMode().Equals(Helper.STATION_MODE_APPLIANCE)) return;
         MessageController.InitialStartUp();
-        new Thread(() => SteamConfig.VerifySteamConfig(true)).Start();
+        
+        // Safe cast for potential content profile
+        ContentProfile? contentProfile = Profile.CastToType<ContentProfile>(SessionController.StationProfile);
+        if (Helper.GetStationMode().Equals(Helper.STATION_MODE_VR) ||
+            (contentProfile != null && contentProfile.DoesProfileHaveAccount("Steam")))
+        {
+            new Thread(() => SteamConfig.VerifySteamConfig(true)).Start();
+        }
     }
 
     /// <summary>

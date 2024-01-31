@@ -4,8 +4,9 @@ using System.Threading;
 using System.Threading.Tasks;
 using Sentry;
 using Station.Components._commandLine;
-using Station.Components._models;
+using Station.Components._interfaces;
 using Station.Components._notification;
+using Station.Components._profiles;
 using Station.Components._utils;
 using Station.Components._wrapper.steam;
 using Station.MVC.Controller;
@@ -17,7 +18,7 @@ public static class StationMonitoringThread
     private static Thread? monitoringThread;
     private static DateTime latestHighTemperatureWarning = DateTime.Now;
     private static System.Timers.Timer? timer;
-    private static bool restarting = false;
+    private static bool restarting;
 
     /// <summary>
     /// Start a new thread with the Vive monitor check.
@@ -64,11 +65,19 @@ public static class StationMonitoringThread
 
         if (Helper.GetStationMode().Equals(Helper.STATION_MODE_VR))
         {
-            new Task(OpenVRCheck).Start(); //Perform as separate task in case SteamVR is restarting.
+            new Task(OpenVrCheck).Start(); //Perform as separate task in case SteamVR is restarting.
         }
         SetVolCheck();
         TemperatureCheck();
-        NewSteamProcessesCheck();
+        
+        // Only check if a VR profile or the Content profile's account list has 'Steam' in it
+        // Safe cast for potential content profile
+        ContentProfile? contentProfile = Profile.CastToType<ContentProfile>(SessionController.StationProfile);
+        
+        if (Helper.GetStationMode().Equals(Helper.STATION_MODE_VR) || (contentProfile != null && contentProfile.DoesProfileHaveAccount("Steam")))
+        {
+            NewSteamProcessesCheck();
+        }
 
         Logger.WorkQueue();
     }
@@ -77,7 +86,7 @@ public static class StationMonitoringThread
     /// Checks the third party headset management software and if OpenVR has been initialised, 
     /// if not attempt to initialise it and query if there are any running application.
     /// </summary>
-    private static void OpenVRCheck()
+    private static void OpenVrCheck()
     {
         ExternalSoftwareCheck();
         
@@ -101,19 +110,20 @@ public static class StationMonitoringThread
     /// </summary>
     private static void ExternalSoftwareCheck()
     {
-        if (SessionController.VrHeadset == null) return;
+        VrProfile? vrProfile = Profile.CastToType<VrProfile>(SessionController.StationProfile);
+        if (vrProfile?.VrHeadset == null) return;
 
         //An early exit if the monitoring process is not currently running.
-        if (ProcessManager.GetProcessesByName(SessionController.VrHeadset.GetHeadsetManagementProcessName()).Length ==
+        if (ProcessManager.GetProcessesByName(vrProfile.VrHeadset.GetHeadsetManagementProcessName()).Length ==
             0)
         {
-            SessionController.VrHeadset.GetStatusManager().UpdateHeadset(VrManager.Software, DeviceStatus.Lost);
+            vrProfile.VrHeadset.GetStatusManager().UpdateHeadset(VrManager.Software, DeviceStatus.Lost);
             return;
         }
         
-        SessionController.VrHeadset.MonitorVrConnection();
+        vrProfile.VrHeadset.MonitorVrConnection();
         MockConsole.WriteLine(
-            $"VR SoftwareStatus: {SessionController.VrHeadset.GetHeadsetManagementSoftwareStatus()}", 
+            $"VR SoftwareStatus: {vrProfile.VrHeadset.GetHeadsetManagementSoftwareStatus()}", 
             MockConsole.LogLevel.Debug);
     }
 

@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
-using Station.Components._headsets;
+using Station.Components._profiles._headsets;
 
-namespace Station.Components._models;
+namespace Station.Components._interfaces;
 
 public enum VrManager
 {
@@ -16,6 +16,12 @@ public enum DeviceStatus
     Off //No Vive connection
 }
 
+public enum ProcessListType
+{
+    Query,
+    Minimize
+}
+
 public interface IVrHeadset
 {
     Statuses GetStatusManager();
@@ -24,11 +30,7 @@ public interface IVrHeadset
     
     string GetHeadsetManagementProcessName();
 
-    bool WaitForConnection(string wrapperType);
-
-    List<string> GetProcessesToQuery();
-
-    void MinimizeSoftware(int attemptLimit);
+    List<string> GetProcesses(ProcessListType type);
 
     void StartVrSession();
 

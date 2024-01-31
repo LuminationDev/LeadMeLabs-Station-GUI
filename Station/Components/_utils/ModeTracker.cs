@@ -36,9 +36,9 @@ public static class ModeTracker
     private static void OnTimerCallback(object? state)
     {
         //An experience is active
-        if (WrapperManager.CurrentWrapper?.GetCurrentExperienceName()?.Length > 0)
+        if (WrapperManager.currentWrapper?.GetCurrentExperienceName()?.Length > 0)
         {
-            Logger.WriteLog($"ModeTracker - OnTimerCallback() Active process detected: {WrapperManager.CurrentWrapper?.GetCurrentExperienceName()}", MockConsole.LogLevel.Normal);
+            Logger.WriteLog($"ModeTracker - OnTimerCallback() Active process detected: {WrapperManager.currentWrapper?.GetCurrentExperienceName()}", MockConsole.LogLevel.Normal);
             idleCheck?.Change(Timeout, System.Threading.Timeout.Infinite);
             return;
         }
@@ -64,7 +64,7 @@ public static class ModeTracker
         //MessageController.SendResponse("Android", "Station", "SetValue:status:Idle");
         
         //Exit VR applications
-        WrapperManager.StopVrProcesses();
+        WrapperManager.StopCommonProcesses();
     }
 
     /// <summary>
@@ -81,7 +81,7 @@ public static class ModeTracker
         MessageController.SendResponse("Android", "Station", "SetValue:status:On");
         
         //Start VR applications
-        await WrapperManager.RestartVrProcesses(Helper.GetStationMode().Equals(Helper.STATION_MODE_VR));
+        await WrapperManager.RestartVrProcesses();
         
         OverlayManager.SetText("Waiting for SteamVR");
         

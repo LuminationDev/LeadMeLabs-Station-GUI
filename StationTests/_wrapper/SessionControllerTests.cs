@@ -2,7 +2,8 @@
 using System;
 using System.Threading.Tasks;
 using System.Diagnostics;
-using Station.Components._headsets;
+using Station.Components._profiles;
+using Station.Components._profiles._headsets;
 using Station.MVC.Controller;
 
 namespace StationTests._wrapper;
@@ -20,10 +21,12 @@ public class SessionControllerTests
         Environment.SetEnvironmentVariable("HeadsetType", "VivePro1");
 
         // Act
-        SessionController.SetupHeadsetType();
+        SessionController.SetupStationProfile("Vr");
 
         // Assert
-        Assert.IsType<VivePro1>(SessionController.VrHeadset);
+        // Safe cast for potential vr profile
+        VrProfile? vrProfile = Profile.CastToType<VrProfile>(SessionController.StationProfile);
+        Assert.IsType<VivePro1>(vrProfile?.VrHeadset);
     }
 
     /// <summary>
@@ -37,10 +40,12 @@ public class SessionControllerTests
         Environment.SetEnvironmentVariable("HeadsetType", "VivePro2");
 
         // Act
-        SessionController.SetupHeadsetType();
+        SessionController.SetupStationProfile("Vr");
 
         // Assert
-        Assert.IsType<VivePro2>(SessionController.VrHeadset);
+        // Safe cast for potential vr profile
+        VrProfile? vrProfile = Profile.CastToType<VrProfile>(SessionController.StationProfile);
+        Assert.IsType<VivePro2>(vrProfile?.VrHeadset);
     }
 
     /// <summary>
@@ -55,10 +60,14 @@ public class SessionControllerTests
     public void StartVRSession_Should_Start_Session(string experienceType)
     {
         // Arrange
-        SessionController.VrHeadset = new VivePro1();
+        SessionController.SetupStationProfile("Vr");
+        // Safe cast for potential vr profile
+        VrProfile? vrProfile = Profile.CastToType<VrProfile>(SessionController.StationProfile);
+        if (vrProfile == null) return;
+        vrProfile.VrHeadset = new VivePro1();
 
         // Act
-        SessionController.StartVrSession(experienceType);
+        SessionController.StartSession(experienceType);
 
         // Assert
         Assert.Equal(experienceType, SessionController.ExperienceType);

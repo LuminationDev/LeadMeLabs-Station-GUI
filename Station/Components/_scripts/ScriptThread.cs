@@ -1,6 +1,7 @@
 using System;
 using System.Threading.Tasks;
 using Station.Components._notification;
+using Station.Components._profiles;
 using Station.Components._utils;
 using Station.Components._wrapper.steam;
 using Station.MVC.Controller;
@@ -109,7 +110,11 @@ public class ScriptThread
                 
                 case "devices":
                     //When a tablet connects/reconnects to the NUC, send through the current VR device statuses.
-                    SessionController.VrHeadset?.GetStatusManager().QueryStatuses();
+                    // Safe cast for potential vr profile
+                    VrProfile? vrProfile = Profile.CastToType<VrProfile>(SessionController.StationProfile);
+                    if (vrProfile?.VrHeadset == null) return;
+                    
+                    vrProfile.VrHeadset?.GetStatusManager().QueryStatuses();
                     break;
             }
         }
