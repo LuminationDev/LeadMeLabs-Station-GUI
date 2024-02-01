@@ -5,7 +5,9 @@ using System.Windows;
 using System.Windows.Input;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Station._manager;
 using Station._utils;
+using Station._wrapper;
 
 namespace Station
 {
@@ -70,7 +72,7 @@ namespace Station
         public bool ShowInTaskbar
         {
             get => _showInTaskbar;
-            set => SetProperty(ref _showInTaskbar, value);
+            private set => SetProperty(ref _showInTaskbar, value);
         }
 
         public NotifyIconWrapper.NotifyRequestRecord? NotifyRequest
@@ -84,7 +86,7 @@ namespace Station
             new Task(() =>
             {
                 ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage($"SoftwareState,Shutting down VR processes"), TimeSpan.FromSeconds(1));
-                _ = WrapperManager.RestartVRProcesses(Helper.GetStationMode().Equals(Helper.STATION_MODE_VR));
+                _ = WrapperManager.RestartVrProcesses();
             }).Start();
         }
 

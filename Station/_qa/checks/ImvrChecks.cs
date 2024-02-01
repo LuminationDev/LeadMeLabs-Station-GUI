@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using Station._profiles;
+using Station._wrapper;
 
 namespace Station._qa.checks;
 
@@ -32,7 +34,12 @@ public class ImvrChecks
         }
         
         qaChecks.Add(correctHeadset);
-        qaChecks.AddRange(SessionController.VrHeadset.GetStatusManager().VrQaChecks());
+        
+        // Safe cast and null checks
+        VrProfile? vrProfile = Profile.CastToType<VrProfile>(SessionController.StationProfile);
+        if (vrProfile?.VrHeadset == null) return qaChecks;
+
+        qaChecks.AddRange(vrProfile.VrHeadset.GetStatusManager().VrQaChecks());
         
         return qaChecks;
     }

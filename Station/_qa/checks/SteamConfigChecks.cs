@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using LeadMeLabsLibrary;
+using Station._commandLine;
 
 namespace Station._qa.checks
 {

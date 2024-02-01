@@ -91,7 +91,31 @@ public static class ProcessManager
         var processes = GetRunningProcesses();
         return processes.FirstOrDefault(p => p.Id == id);
     }
+    
+    /// <summary>
+    /// Retrieves the main window titles associated with the specified process name.
+    /// </summary>
+    /// <param name="processName">The name of the process to retrieve window titles for.</param>
+    /// <returns>
+    /// A list of main window titles associated with the specified process name.
+    /// If the process is not running or has no visible main window titles, returns null.
+    /// </returns>
+    public static List<string> GetProcessMainWindowTitle(string processName)
+    {
+        List<string> windowTitles = new List<string>();
 
+        Process[] processes = GetProcessesByName(processName);
+        foreach (Process process in processes)
+        {
+            if (!string.IsNullOrEmpty(process.MainWindowTitle))
+            {
+                windowTitles.Add(process.MainWindowTitle);
+            }
+        }
+
+        return windowTitles;
+    }
+    
     /// <summary>
     /// Provide a list of process names and ids and get a boolean if they are responding
     /// If the process names do not have a running process, they will NOT return false

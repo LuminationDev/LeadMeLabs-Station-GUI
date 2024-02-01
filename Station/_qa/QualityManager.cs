@@ -7,7 +7,12 @@ using LeadMeLabsLibrary;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using NUC._qa.checks;
+using Station._commandLine;
+using Station._manager;
+using Station._models;
+using Station._profiles;
 using Station._qa.checks;
+using Station._wrapper;
 
 namespace Station._qa;
 
@@ -209,10 +214,12 @@ public static class QualityManager
                 response.Add("response", "GetVrStatuses");
                 JObject responseData = new JObject();
                 response.Add("responseData", responseData);
-                responseData.Add("result",
-                    SessionController.VrHeadset == null
-                        ? null
-                        : SessionController.VrHeadset.GetStatusManager().GetStatusesJson());
+                
+                // Safe cast and null checks
+                VrProfile? vrProfile = Profile.CastToType<VrProfile>(SessionController.StationProfile);
+                if (vrProfile?.VrHeadset == null) break;
+
+                responseData.Add("result", vrProfile.VrHeadset?.GetStatusManager().GetStatusesJson());
                 Manager.SendResponse("NUC", "QA", response.ToString());
                 break;
             }

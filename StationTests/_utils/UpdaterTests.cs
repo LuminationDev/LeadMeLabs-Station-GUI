@@ -2,6 +2,7 @@
 using System.Diagnostics;
 using System.IO;
 using System.Reflection;
+using Station._commandLine;
 using Xunit;
 
 namespace StationTests._utils

@@ -6,7 +6,10 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using LeadMeLabsLibrary;
+using Station._commandLine;
+using Station._manager;
 using Station._utils;
+using Station._wrapper;
 
 namespace Station._network;
 
@@ -53,7 +56,7 @@ public class ServerThread
 
             if (Helper.GetStationMode().Equals(Helper.STATION_MODE_VR))
             {
-                SessionController.StartVRSession("steam");
+                SessionController.StartSession("steam");
             }
             
             server.Start();
