@@ -307,7 +307,6 @@ public class WrapperManager {
     /// </summary>
     private static void WaitForSteamProcess()
     {
-        //TODO update in the MODERNUI branch
         string error = "Error: Steam could not open";
         string message = Profile.WaitForSteamLogin() ? "Ready to go" : error;
 
