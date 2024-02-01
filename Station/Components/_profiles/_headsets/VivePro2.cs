@@ -3,14 +3,13 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using Station.Components._commandLine;
-using Station.Components._models;
+using Station.Components._interfaces;
 using Station.Components._utils._steamConfig;
-using Station.Components._wrapper.vive;
 using Station.MVC.Controller;
 
-namespace Station.Components._headsets;
+namespace Station.Components._profiles._headsets;
 
-public class VivePro2 : Headset, IVrHeadset
+public class VivePro2 : IVrHeadset
 {
     private Statuses Statuses { get; } = new();
 
@@ -37,53 +36,27 @@ public class VivePro2 : Headset, IVrHeadset
     {
         return "LhStatusMonitor";
     }
-
-    /// <summary>
-    /// Collect the connection status of the headset from the headset's specific management software. In this case it
-    /// is Vive Console.
-    /// </summary>
-    /// <param name="wrapperType">A string of the Wrapper type that is being launched, required if the process
-    /// needs to restart/start the VR session.</param>
-    /// <returns>A bool representing the connection status.</returns>
-    public bool WaitForConnection(string wrapperType)
-    {
-        return ViveScripts.WaitForVive(wrapperType).Result;
-    }
-
-    public List<string> GetProcessesToQuery()
-    {
-        return new List<string> { "vrmonitor", "steam", "LhStatusMonitor" };
-    }
-
-    private List<string> GetProcessesToMinimize()
-    {
-        return new List<string> { "vrmonitor", "steam", "LhStatusMonitor", "WaveConsole", "steamwebhelper" };
-    }
     
-    /// <summary>
-    /// Minimise the software that handles the headset.
-    /// </summary>
-    /// <param name="attemptLimit"></param>
-    public void MinimizeSoftware(int attemptLimit = 6)
+    public List<string> GetProcesses(ProcessListType type)
     {
-        Minimize(GetProcessesToMinimize(), attemptLimit);
+        switch (type)
+        {
+            case ProcessListType.Query:
+                return new List<string> { "vrmonitor", "steam", "HtcConnectionUtility", "steamwebhelper" };
+            case ProcessListType.Minimize:
+                return new List<string> { "vrmonitor", "steam", "LhStatusMonitor", "WaveConsole", "steamwebhelper" };
+            default:
+                throw new ArgumentException("Invalid process list type.");
+        }
     }
 
     public void StartVrSession()
     {
-        //Bail out if Steam and SteamVR are already running
-        if (QueryMonitorProcesses(GetProcessesToQuery()))
-        {
-            return;
-        }
-
         CommandLine.KillSteamSigninWindow();
         SteamConfig.VerifySteamConfig();
         CommandLine.StartProgram(SessionController.Steam, "-noreactlogin -login " +
             Environment.GetEnvironmentVariable("SteamUserName", EnvironmentVariableTarget.Process) + " " +
             Environment.GetEnvironmentVariable("SteamPassword", EnvironmentVariableTarget.Process) + " steam://rungameid/1635730"); //Open up steam and run vive console
-
-        MinimizeSoftware();
     }
 
     public void MonitorVrConnection()

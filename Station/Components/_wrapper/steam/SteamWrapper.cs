@@ -7,11 +7,13 @@ using System.Threading.Tasks;
 using System.Timers;
 using Newtonsoft.Json.Linq;
 using Station.Components._commandLine;
+using Station.Components._interfaces;
 using Station.Components._models;
 using Station.Components._monitoring;
 using Station.Components._notification;
 using Station.Components._openvr;
 using Station.Components._overlay;
+using Station.Components._profiles;
 using Station.Components._utils;
 using Station.Components._wrapper.vive;
 using Station.MVC.Controller;
@@ -26,15 +28,15 @@ public class SteamWrapper : IWrapper
     private static readonly string LaunchParams = "-noreactlogin -login " + 
        Environment.GetEnvironmentVariable("SteamUserName", EnvironmentVariableTarget.Process) + " " + 
        Environment.GetEnvironmentVariable("SteamPassword", EnvironmentVariableTarget.Process) + " steam://rungameid/";
-    public static string? experienceName = null;
-    private static string? installDir = null;
+    public static string? experienceName;
+    private static string? installDir;
     private static Experience lastExperience;
     private bool _launchWillHaveFailedFromOpenVrTimeout = true;
 
     /// <summary>
     /// Track if an experience is being launched.
     /// </summary>
-    private static bool launchingExperience = false;
+    private static bool launchingExperience;
 
     public Experience? GetLastExperience()
     {
@@ -71,7 +73,7 @@ public class SteamWrapper : IWrapper
         return SteamScripts.LoadAvailableGames();
     }
 
-    public void CollectHeaderImage(string experienceName)
+    public void CollectHeaderImage(string experienceNameToCollect)
     {
         throw new NotImplementedException();
     }
@@ -84,10 +86,7 @@ public class SteamWrapper : IWrapper
 
     public void SetCurrentProcess(Process process)
     {
-        if (currentProcess != null)
-        {
-            currentProcess.Kill(true);
-        }
+        currentProcess?.Kill(true);
 
         _launchWillHaveFailedFromOpenVrTimeout = false;
         currentProcess = process;
@@ -96,6 +95,9 @@ public class SteamWrapper : IWrapper
 
     public string WrapProcess(Experience experience)
     {
+        // Safe cast for potential vr profile
+        VrProfile? vrProfile = Profile.CastToType<VrProfile>(SessionController.StationProfile);
+        
         _launchWillHaveFailedFromOpenVrTimeout = false;
         if (experience.Id == null)
         {
@@ -103,7 +105,7 @@ public class SteamWrapper : IWrapper
             return $"MessageToAndroid,GameLaunchFailed:Unknown experience";
         }
 
-        if (SessionController.VrHeadset == null && experience.IsVr)
+        if (vrProfile?.VrHeadset == null && experience.IsVr)
         {
             SessionController.PassStationMessage("No VR headset set.");
             return "No VR headset set.";
@@ -124,17 +126,32 @@ public class SteamWrapper : IWrapper
         //Start the external processes to handle SteamVR
         if (experience.IsVr)
         {
-            SessionController.StartVrSession(WrapperType);
+            SessionController.StartSession(WrapperType);
         }
 
         //Begin monitoring the different processes
         WrapperMonitoringThread.InitializeMonitoring(WrapperType, experience.IsVr);
         
+        //Wait for Steam to be signed in
+        if (!Profile.WaitForSteamLogin())
+        {
+            string error = "Error: Steam could not open";
+            ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage($"SoftwareState,{error}"),
+                TimeSpan.FromSeconds(1)); //Wait for steam/other accounts to login
+            return "Error: Steam could not open";
+        }
+        
         //Check if a headset is required from the debugger menu
         if (InternalDebugger.GetHeadsetRequired() && experience.IsVr)
         {
+            // Check the current Station profile
+            if (vrProfile?.VrHeadset == null)
+            {
+                return "Station is not a VR profile or has not VR Headset set and is attempting to launch a VR experience";
+            }
+            
             //Wait for the Headset's connection method to respond
-            if (!SessionController.VrHeadset.WaitForConnection(WrapperType))
+            if (!vrProfile.WaitForConnection(WrapperType))
             {
                 experienceName = null; //Reset for correct headset state
                 return "Could not get headset connection";
@@ -165,7 +182,7 @@ public class SteamWrapper : IWrapper
 
                 //Fall back to the alternate if OpenVR launch fails or is not a registered VR experience in the vrmanifest
                 //Stop any accessory processes before opening a new process
-                SessionController.VrHeadset.StopProcessesBeforeLaunch();
+                vrProfile?.VrHeadset?.StopProcessesBeforeLaunch();
             }
 
             Logger.WriteLog($"SteamWrapper.WrapProcess - Using AlternateLaunchProcess", MockConsole.LogLevel.Normal);
@@ -270,10 +287,8 @@ public class SteamWrapper : IWrapper
             WindowManager.MaximizeProcess(child); //Maximise the process experience
             SessionController.PassStationMessage($"ApplicationUpdate,{experienceName}/{lastExperience.Id}/Steam");
             
-            JObject response = new JObject();
-            response.Add("response", "ExperienceLaunched");
-            JObject responseData = new JObject();
-            responseData.Add("experienceId", lastExperience.Id);
+            JObject response = new JObject { { "response", "ExperienceLaunched" } };
+            JObject responseData = new JObject { { "experienceId", lastExperience.Id } };
             response.Add("responseData", responseData);
             
             MessageController.SendResponse("NUC", "QA", response.ToString());
@@ -282,11 +297,12 @@ public class SteamWrapper : IWrapper
             Logger.WriteLog("Game launch failure: " + lastExperience.Name, MockConsole.LogLevel.Normal);
             UIController.UpdateProcessMessages("reset");
             SessionController.PassStationMessage($"MessageToAndroid,GameLaunchFailed:{lastExperience.Name}");
-            JObject response = new JObject();
-            response.Add("response", "ExperienceLaunchFailed");
-            JObject responseData = new JObject();
-            responseData.Add("experienceId", lastExperience.Id);
-            responseData.Add("message", "Launch timed out, there may be a popup that needs confirmation");
+            JObject response = new JObject { { "response", "ExperienceLaunchFailed" } };
+            JObject responseData = new JObject
+            {
+                { "experienceId", lastExperience.Id },
+                { "message", "Launch timed out, there may be a popup that needs confirmation" }
+            };
             response.Add("responseData", responseData);
             
             MessageController.SendResponse("NUC", "QA", response.ToString());
@@ -300,35 +316,33 @@ public class SteamWrapper : IWrapper
     /// <returns>The launched application process</returns>
     private Process? GetExperienceProcess()
     {
-        if (installDir != null)
+        if (installDir == null) return null;
+        
+        string? activeProcessId = null;
+        string steamPath = "C:\\Program Files (x86)\\Steam\\steamapps\\common\\" + installDir;
+        string? processId = CommandLine.GetProcessIdFromDir(steamPath);
+        if (processId != null)
         {
-            string? activeProcessId = null;
-            string steamPath = "C:\\Program Files (x86)\\Steam\\steamapps\\common\\" + installDir;
-            string? processId = CommandLine.GetProcessIdFromDir(steamPath);
-            if (processId != null)
-            {
-                activeProcessId = processId;
-            }
-
-            steamPath = "S:\\SteamLibrary\\steamapps\\common\\" + installDir;
-            processId = CommandLine.GetProcessIdFromDir(steamPath);
-            if (processId != null)
-            {
-                Logger.WriteLog("A proccess ID was found: " + processId, MockConsole.LogLevel.Normal);
-                activeProcessId = processId;
-            }
-            if (activeProcessId != null)
-            {
-                Process? proc = ProcessManager.GetProcessById(Int32.Parse(activeProcessId));
-                Logger.WriteLog($"Application found: {proc.MainWindowTitle}/{proc.Id}", MockConsole.LogLevel.Debug);
-                
-                // Update the home page UI
-                UIController.UpdateProcessMessages("processName", proc.MainWindowTitle);
-                UIController.UpdateProcessMessages("processStatus", "Running");
-                return proc;
-            }
+            activeProcessId = processId;
         }
-        return null;
+
+        steamPath = "S:\\SteamLibrary\\steamapps\\common\\" + installDir;
+        processId = CommandLine.GetProcessIdFromDir(steamPath);
+        if (processId != null)
+        {
+            Logger.WriteLog("A proccess ID was found: " + processId, MockConsole.LogLevel.Normal);
+            activeProcessId = processId;
+        }
+
+        if (activeProcessId == null) return null;
+        
+        Process? proc = ProcessManager.GetProcessById(Int32.Parse(activeProcessId));
+        Logger.WriteLog($"Application found: {proc?.MainWindowTitle}/{proc?.Id}", MockConsole.LogLevel.Debug);
+                
+        // Update the home page UI
+        UIController.UpdateProcessMessages("processName", proc?.MainWindowTitle);
+        UIController.UpdateProcessMessages("processStatus", "Running");
+        return proc;
     }
     #endregion
 

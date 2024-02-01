@@ -5,11 +5,13 @@ using System.IO;
 using System.Threading.Tasks;
 using LeadMeLabsLibrary;
 using Station.Components._commandLine;
+using Station.Components._interfaces;
 using Station.Components._models;
 using Station.Components._monitoring;
 using Station.Components._network;
 using Station.Components._notification;
 using Station.Components._openvr;
+using Station.Components._profiles;
 using Station.Components._utils;
 using Station.Components._wrapper.steam;
 using Station.Components._wrapper.vive;
@@ -110,6 +112,9 @@ public class ReviveWrapper : IWrapper
 
     public string WrapProcess(Experience experience)
     {
+        // Safe cast for potential vr profile
+        VrProfile? vrProfile = Profile.CastToType<VrProfile>(SessionController.StationProfile);
+        
         _launchWillHaveFailedFromOpenVrTimeout = false;
         if (experience.Id == null)
         {
@@ -117,7 +122,7 @@ public class ReviveWrapper : IWrapper
             return $"MessageToAndroid,GameLaunchFailed:Unknown experience";
         }
 
-        if (SessionController.VrHeadset == null)
+        if (vrProfile?.VrHeadset == null)
         {
             SessionController.PassStationMessage("No VR headset set.");
             return "No VR headset set.";
@@ -136,7 +141,7 @@ public class ReviveWrapper : IWrapper
         MockConsole.WriteLine($"Wrapping: {experienceName}", MockConsole.LogLevel.Debug);
 
         //Start the external processes to handle SteamVR
-        SessionController.StartVrSession(WrapperType);
+        SessionController.StartSession(WrapperType);
 
         //Begin monitoring the different processes
         WrapperMonitoringThread.InitializeMonitoring(WrapperType, experience.IsVr);
@@ -146,7 +151,7 @@ public class ReviveWrapper : IWrapper
         if (InternalDebugger.GetHeadsetRequired())
         {
             //Wait for the Headset's connection method to respond
-            if (!SessionController.VrHeadset.WaitForConnection(WrapperType))
+            if (!vrProfile.WaitForConnection(WrapperType))
             {
                 experienceName = null; //Reset for correct headset state
                 return "Could not get headset connection";

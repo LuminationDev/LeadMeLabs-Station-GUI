@@ -49,10 +49,6 @@ public static class StationScripts
             MessageController.SendResponse(source, "Station", "SetValue:gameName:" + url);
             MessageController.SendResponse("Android", "Station", "SetValue:gameId:");
         }
-        else if (additionalData.Equals("StartVR"))
-        {
-            //startVRSession();
-        }
         else if (additionalData.Equals("RestartVR"))
         {
             RestartVrSession();

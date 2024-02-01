@@ -1,7 +1,8 @@
 ﻿using System.Collections.Generic;
 using System.Diagnostics;
+using Station.Components._models;
 
-namespace Station.Components._models;
+namespace Station.Components._interfaces;
 
 public interface IWrapper
 {

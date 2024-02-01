@@ -10,6 +10,7 @@ using Station.Components._network;
 using Station.Components._notification;
 using Station.Components._openvr;
 using Station.Components._organisers;
+using Station.Components._profiles;
 using Station.Components._utils;
 using Station.Components._utils._steamConfig;
 using Station.Components._wrapper;
@@ -69,6 +70,8 @@ public static class MainController
 
     public static bool isNucUtf8 = true;
     
+    //TODO non-VR stations never get past the Loading experiences message
+    
     /// <summary>
     /// Starts the server running on the local machine
     /// </summary>
@@ -98,6 +101,9 @@ public static class MainController
             UIController.UpdateCurrentState("No config...");
             return;
         }
+        
+        // Update the Station mode (this controls the VR status view on the home page)
+        UIController.UpdateStationMode(Helper.GetStationMode().Equals(Helper.STATION_MODE_VR));
 
         // Set the Id of the Station for UI binding
         UIController.UpdateStationId(Environment.GetEnvironmentVariable("stationId", EnvironmentVariableTarget.Process) ?? "");
@@ -189,7 +195,14 @@ public static class MainController
         
         if (Helper.GetStationMode().Equals(Helper.STATION_MODE_APPLIANCE)) return;
         MessageController.InitialStartUp();
-        new Thread(() => SteamConfig.VerifySteamConfig(true)).Start();
+        
+        // Safe cast for potential content profile
+        ContentProfile? contentProfile = Profile.CastToType<ContentProfile>(SessionController.StationProfile);
+        if (Helper.GetStationMode().Equals(Helper.STATION_MODE_VR) ||
+            (contentProfile != null && contentProfile.DoesProfileHaveAccount("Steam")))
+        {
+            new Thread(() => SteamConfig.VerifySteamConfig(true)).Start();
+        }
     }
 
     /// <summary>

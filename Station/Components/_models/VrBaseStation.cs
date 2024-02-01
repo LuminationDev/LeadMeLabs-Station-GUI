@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Linq;
-using Station.Components._headsets;
+using Station.Components._interfaces;
 using Station.Components._notification;
+using Station.Components._profiles;
+using Station.Components._profiles._headsets;
 using Station.MVC.Controller;
 
 namespace Station.Components._models;
@@ -10,7 +12,7 @@ public class VrBaseStation
 {
     private readonly string _serialNumber;
 
-    private bool _firmwareUpdateRequired = false;
+    private bool _firmwareUpdateRequired;
     
     public bool FirmwareUpdateRequired()
     {
@@ -30,10 +32,7 @@ public class VrBaseStation
             
             OnTrackingChanged(value.ToString());
         }
-        get
-        {
-            return _tracking;
-        }
+        get => _tracking;
     }
 
     public event EventHandler<GenericEventArgs<string>>? TrackingChanged;
@@ -53,7 +52,12 @@ public class VrBaseStation
     public VrBaseStation(string serialNumber)
     {
         this._serialNumber = serialNumber;
-        TrackingChanged += SessionController.VrHeadset.GetStatusManager().HandleValueChanged;
+
+        // Safe cast for potential vr profile
+        VrProfile? vrProfile = Profile.CastToType<VrProfile>(SessionController.StationProfile);
+        if (vrProfile?.VrHeadset == null) return;
+        
+        TrackingChanged += vrProfile.VrHeadset.GetStatusManager().HandleValueChanged;
     }
 
     /// <summary>
@@ -71,7 +75,7 @@ public class VrBaseStation
                     "Invalid tracking value");
                 break;
             case "firmware_update_required":
-                this._firmwareUpdateRequired = (bool) value;
+                _firmwareUpdateRequired = (bool) value;
                 break;
 
             default:

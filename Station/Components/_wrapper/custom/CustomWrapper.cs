@@ -7,11 +7,13 @@ using leadme_api;
 using LeadMeLabsLibrary;
 using Newtonsoft.Json.Linq;
 using Station.Components._commandLine;
+using Station.Components._interfaces;
 using Station.Components._models;
 using Station.Components._monitoring;
 using Station.Components._network;
 using Station.Components._notification;
 using Station.Components._openvr;
+using Station.Components._profiles;
 using Station.Components._utils;
 using Station.MVC.Controller;
 
@@ -134,6 +136,9 @@ internal class CustomWrapper : IWrapper
 
     public string WrapProcess(Experience experience)
     {
+        // Safe cast for potential vr profile
+        VrProfile? vrProfile = Profile.CastToType<VrProfile>(SessionController.StationProfile);
+        
         _launchWillHaveFailedFromOpenVrTimeout = false;
         if(CommandLine.StationLocation == null)
         {
@@ -141,7 +146,7 @@ internal class CustomWrapper : IWrapper
             return "Cannot find working directory";
         }
 
-        if (SessionController.VrHeadset == null && experience.IsVr)
+        if (vrProfile == null && experience.IsVr)
         {
             SessionController.PassStationMessage("No VR headset set.");
             return "No VR headset set.";
@@ -168,8 +173,14 @@ internal class CustomWrapper : IWrapper
         //Check if a headset is required from the debugger menu
         if (InternalDebugger.GetHeadsetRequired() && experience.IsVr)
         {
+            // Check the current Station profile
+            if (vrProfile?.VrHeadset == null)
+            {
+                return "Station is not a VR profile or has no VR Headset set and is attempting to launch a VR experience";
+            }
+            
             //Wait for the Headset's connection method to respond
-            if (!SessionController.VrHeadset.WaitForConnection(WrapperType))
+            if (!vrProfile.WaitForConnection(WrapperType))
             {
                 lastExperience.Name = null; //Reset for correct headset state
                 return "Could not get headset connection";
@@ -200,7 +211,7 @@ internal class CustomWrapper : IWrapper
                 _launchWillHaveFailedFromOpenVrTimeout = false;
 
                 //Stop any accessory processes before opening a new process
-                SessionController.VrHeadset.StopProcessesBeforeLaunch();
+                vrProfile?.VrHeadset?.StopProcessesBeforeLaunch();
             }
 
             //Fall back to the alternate if it fails or is not a registered VR experience in the vrmanifest

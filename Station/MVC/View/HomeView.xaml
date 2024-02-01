@@ -3,9 +3,14 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:converters="clr-namespace:Station.Converters"
              mc:Ignorable="d"
              Background="Transparent"
              d:DesignHeight="560" d:DesignWidth="700">
+    
+    <UserControl.Resources>
+        <converters:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
+    </UserControl.Resources>
     
     <DockPanel Margin="10, 0, 0, 0">
         <Grid DockPanel.Dock="Top">
@@ -88,8 +93,9 @@
                     </StackPanel>
                 </Border>
                 
-                <!--VR Status-->
-                <Border Margin="50, 0, 0, 0" Width="300" Height="250">
+                <!--VR Status (for VR stations only)-->
+                <Border Margin="50, 0, 0, 0" Width="300" Height="250" 
+                        Visibility="{Binding IsVr, Converter={StaticResource BooleanToVisibilityConverter}}">
                     <Border.Background>
                         <LinearGradientBrush StartPoint="0,0" EndPoint="1,2">
                             <GradientStop Color="#d08fff" Offset="0.0"/>

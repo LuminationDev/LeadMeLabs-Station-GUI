@@ -7,10 +7,12 @@ using leadme_api;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Station.Components._commandLine;
+using Station.Components._interfaces;
 using Station.Components._models;
 using Station.Components._monitoring;
 using Station.Components._notification;
 using Station.Components._organisers;
+using Station.Components._profiles;
 using Station.Components._utils;
 using Station.Components._utils._steamConfig;
 using Station.Components._wrapper.custom;
@@ -25,16 +27,16 @@ namespace Station.Components._wrapper;
 
 public class WrapperManager {
     //Store each wrapper class
-    private static readonly CustomWrapper customWrapper = new ();
-    private static readonly SteamWrapper steamWrapper = new ();
-    private static readonly ViveWrapper viveWrapper = new ();
-    private static readonly ReviveWrapper reviveWrapper = new ();
+    private static readonly CustomWrapper CustomWrapper = new ();
+    private static readonly SteamWrapper SteamWrapper = new ();
+    private static readonly ViveWrapper ViveWrapper = new ();
+    private static readonly ReviveWrapper ReviveWrapper = new ();
 
     //Used for multiple 'internal' applications, operations are separate from the other wrapper classes
     private static readonly InternalWrapper InternalWrapper = new();
 
     //Track the currently wrapper experience
-    public static IWrapper? CurrentWrapper;
+    public static IWrapper? currentWrapper;
     private static bool alreadyCollecting;
 
     //Store the list of applications (key = ID: [[0] = wrapper type, [1] = application name, [2] = launch params (nullable)])
@@ -48,7 +50,7 @@ public class WrapperManager {
     {
         ValidateManifestFiles();
         StartPipeServer();
-        SessionController.SetupHeadsetType();
+        SessionController.SetupStationProfile(Helper.GetStationMode());
         ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage($"SoftwareState,Loading experiences"), TimeSpan.FromSeconds(2));
         Task.Factory.StartNew(CollectAllApplications);
     }
@@ -70,7 +72,7 @@ public class WrapperManager {
     public void ShutDownWrapper()
     {
         ParentPipeServer.Close();
-        CurrentWrapper?.StopCurrentProcess();
+        currentWrapper?.StopCurrentProcess();
         SessionController.EndVrSession();
     }
 
@@ -132,14 +134,14 @@ public class WrapperManager {
     /// Guarantee that the name of the details being received is the same as the experience that is currently
     /// launched.
     /// </summary>
-    /// <param name="jsonMessage">A modified, stringified JSON string with an updated name if it is available</param>
+    /// <param name="jsonMessage">A modified, stringify JSON string with an updated name if it is available</param>
     private static string CheckExperienceName(string jsonMessage)
     {
         // Parse JSON string to JObject
         JObject details = JObject.Parse(jsonMessage);
 
-        if (CurrentWrapper == null) return jsonMessage;
-        string? experienceName = CurrentWrapper.GetCurrentExperienceName();
+        if (currentWrapper == null) return jsonMessage;
+        string? experienceName = currentWrapper.GetCurrentExperienceName();
         if (experienceName == null) return jsonMessage;
 
         // Check the value of the name against what is currently running
@@ -166,28 +168,34 @@ public class WrapperManager {
 
         alreadyCollecting = true;
 
-        List<string>? customApplications = customWrapper.CollectApplications();
+        List<string>? customApplications = CustomWrapper.CollectApplications();
         if (customApplications != null)
         {
             applications.AddRange(customApplications);
         }
 
-        List<string>? steamApplications = steamWrapper.CollectApplications();
-        if (steamApplications != null)
-        {
-            applications.AddRange(steamApplications);
-        }
-
-        List<string>? viveApplications = viveWrapper.CollectApplications();
+        List<string>? viveApplications = ViveWrapper.CollectApplications();
         if (viveApplications != null)
         {
             applications.AddRange(viveApplications);
         }
         
-        List<string>? reviveApplications = reviveWrapper.CollectApplications();
+        List<string>? reviveApplications = ReviveWrapper.CollectApplications();
         if (reviveApplications != null)
         {
             applications.AddRange(reviveApplications);
+        }
+        
+        // Check if there are steam details as the Station may be non-VR without a Steam account
+        ContentProfile? contentProfile = Profile.CastToType<ContentProfile>(SessionController.StationProfile);
+        if (Helper.GetStationMode().Equals(Helper.STATION_MODE_VR) ||
+            (contentProfile != null && contentProfile.DoesProfileHaveAccount("Steam")))
+        {
+            List<string>? steamApplications = SteamWrapper.CollectApplications();
+            if (steamApplications != null)
+            {
+                applications.AddRange(steamApplications);
+            }
         }
 
         string response = string.Join('/', applications);
@@ -198,14 +206,14 @@ public class WrapperManager {
 
         alreadyCollecting = false;
 
-        _ = RestartVrProcesses(Helper.GetStationMode().Equals(Helper.STATION_MODE_VR));
+        _ = RestartVrProcesses();
         return applications;
     }
 
     /// <summary>
     /// Stop any and all processes associated with the VR headset type.
     /// </summary>
-    public static void StopVrProcesses()
+    public static void StopCommonProcesses()
     {
         List<string> combinedProcesses = new List<string>();
         combinedProcesses.AddRange(WrapperMonitoringThread.SteamProcesses);
@@ -213,51 +221,59 @@ public class WrapperManager {
         combinedProcesses.AddRange(WrapperMonitoringThread.ViveProcesses);
         combinedProcesses.AddRange(WrapperMonitoringThread.ReviveProcesses);
 
-        CommandLine.QueryVRProcesses(combinedProcesses, true);
+        CommandLine.QueryProcesses(combinedProcesses, true);
     }
 
     /// <summary>
     /// Start or restart the VR session associated with the VR headset type
     /// </summary>
-    public static async Task RestartVrProcesses(bool isVr)
+    public static async Task RestartVrProcesses()
     {
-        RoomSetup.CompareRoomSetup();
-
-        StopVrProcesses();
-        await SessionController.PutTaskDelay(2000);
-
-        //have to add a waiting time to make sure it has exited
-        int attempts = 0;
-
-        if (SessionController.VrHeadset == null)
+        bool isVr = SessionController.StationProfile?.GetVariant() == Variant.Vr;
+        if (isVr)
         {
-            SessionController.PassStationMessage("No headset type specified.");
+            // This must be checked before the VR processes are restarted
+            RoomSetup.CompareRoomSetup();
+        }
+        
+        StopCommonProcesses();
+        if (SessionController.StationProfile == null)
+        {
+            SessionController.PassStationMessage("No profile type specified.");
             SessionController.PassStationMessage("Processing,false");
             return;
         }
-
-        if (isVr)
+        
+        // Add a waiting time to make sure it has exited
+        await SessionController.PutTaskDelay(2000);
+        
+        // Check that the processes have all stopped
+        int attempts = 0;
+        List<string> processesToQuery = SessionController.StationProfile.GetProcessesToQuery();
+        while (CommandLine.QueryProcesses(processesToQuery))
         {
-            List<string> processesToQuery = SessionController.VrHeadset.GetProcessesToQuery();
-            while (CommandLine.QueryVRProcesses(processesToQuery))
+            await SessionController.PutTaskDelay(1000);
+            if (attempts > 20)
             {
-                await SessionController.PutTaskDelay(1000);
-                if (attempts > 20)
-                {
-                    SessionController.PassStationMessage("MessageToAndroid,FailedRestart");
-                    SessionController.PassStationMessage("Processing,false");
-                    return;
-                }
-
-                attempts++;
+                SessionController.PassStationMessage("MessageToAndroid,FailedRestart");
+                SessionController.PassStationMessage("Processing,false");
+                return;
             }
 
-            //Reset the VR device statuses
-            SessionController.VrHeadset.GetStatusManager().ResetStatuses();
+            attempts++;
         }
-
+        
+        if (isVr)
+        {
+            // Safe cast and null checks
+            VrProfile? vrProfile = Profile.CastToType<VrProfile>(SessionController.StationProfile);
+            if (vrProfile?.VrHeadset == null) return;
+            
+            //Reset the VR device statuses
+            vrProfile.VrHeadset.GetStatusManager().ResetStatuses();
+        }
+        
         await SessionController.PutTaskDelay(5000);
-
         SessionController.PassStationMessage("Processing,false");
 
         if (!InternalDebugger.GetAutoStart())
@@ -266,21 +282,22 @@ public class WrapperManager {
             return;
         }
         
-        if (!isVr)
+        SessionController.StationProfile.StartSession();
+        
+        // Check if there are steam details as the Station may be non-VR without a Steam account
+        ContentProfile? contentProfile = Profile.CastToType<ContentProfile>(SessionController.StationProfile);
+        if (contentProfile != null && contentProfile.DoesProfileHaveAccount("Steam"))
         {
-            CommandLine.KillSteamSigninWindow();
-            SteamConfig.VerifySteamConfig();
-            CommandLine.StartProgram(SessionController.Steam, "-noreactlogin -login " +
-                                                              Environment.GetEnvironmentVariable("SteamUserName", EnvironmentVariableTarget.Process) + " " +
-                                                              Environment.GetEnvironmentVariable("SteamPassword", EnvironmentVariableTarget.Process));
-            ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage($"SoftwareState,Starting processes"), TimeSpan.FromSeconds(0));
             WaitForSteamProcess();
+        }
+        else if (isVr)
+        {
+            WaitForVrProcesses();
         }
         else
         {
-            ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage($"SoftwareState,Starting VR processes"), TimeSpan.FromSeconds(0));
-            SessionController.VrHeadset.StartVrSession();
-            WaitForVrProcesses();
+            ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage($"SoftwareState,Ready to go"),
+                TimeSpan.FromSeconds(1));
         }
     }
     
@@ -290,23 +307,11 @@ public class WrapperManager {
     /// </summary>
     private static void WaitForSteamProcess()
     {
-        int count = 0;
-        do
-        {
-            Task.Delay(3000).Wait();
-            count++;
-        } while ((ProcessManager.GetProcessesByName("steam").Length == 0) && count <= 60);
-
-        string error = "";
-        if (ProcessManager.GetProcessesByName("steam").Length == 0)
-        {
-            error = "Error: Steam could not open";
-        }
-
-        string message = count <= 60 ? "Ready to go" : error;
+        string error = "Error: Steam could not open";
+        string message = Profile.WaitForSteamLogin() ? "Ready to go" : error;
 
         ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage($"SoftwareState,{message}"),
-            TimeSpan.FromSeconds(1));
+            TimeSpan.FromSeconds(1)); //Wait for steam/other accounts to login
         ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage("MessageToAndroid,SetValue:session:Restarted"), TimeSpan.FromSeconds(1));
     }
 
@@ -316,15 +321,19 @@ public class WrapperManager {
     /// </summary>
     private static void WaitForVrProcesses()
     {
+        // Safe cast and null checks
+        VrProfile? vrProfile = Profile.CastToType<VrProfile>(SessionController.StationProfile);
+        if (vrProfile?.VrHeadset == null) return;
+        
         int count = 0;
         do
         {
             Task.Delay(3000).Wait();
             count++;
-        } while ((ProcessManager.GetProcessesByName(SessionController.VrHeadset?.GetHeadsetManagementProcessName()).Length == 0) && count <= 60);
+        } while ((ProcessManager.GetProcessesByName(vrProfile.VrHeadset?.GetHeadsetManagementProcessName()).Length == 0) && count <= 60);
 
         string error = "";
-        if (ProcessManager.GetProcessesByName(SessionController.VrHeadset?.GetHeadsetManagementProcessName()).Length == 0)
+        if (ProcessManager.GetProcessesByName(vrProfile.VrHeadset?.GetHeadsetManagementProcessName()).Length == 0)
         {
             error = "Error: Vive could not open";
         }
@@ -332,8 +341,8 @@ public class WrapperManager {
         string message = count <= 60 ? "Awaiting headset connection..." : error;
 
         //Only send the message if the headset is not yet connected
-        if (SessionController.VrHeadset?.GetStatusManager().SoftwareStatus != DeviceStatus.Connected ||
-            SessionController.VrHeadset.GetStatusManager().OpenVRStatus != DeviceStatus.Connected)
+        if (vrProfile.VrHeadset?.GetStatusManager().SoftwareStatus != DeviceStatus.Connected ||
+            vrProfile.VrHeadset.GetStatusManager().OpenVRStatus != DeviceStatus.Connected)
         {
             ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage($"SoftwareState,{message}"),
                 TimeSpan.FromSeconds(1));
@@ -350,7 +359,7 @@ public class WrapperManager {
     /// <param name="id">A string of the unique ID of an application</param>
     /// <param name="name">A string representing the Name of the application, this is what will appear on the LeadMe Tablet</param>
     /// <param name="isVr"></param>
-    /// <param name="launchParameters">A stringified list of any parameters required at launch.</param>
+    /// <param name="launchParameters">A stringify list of any parameters required at launch.</param>
     /// <param name="altPath"></param>
     public static void StoreApplication(string wrapperType, string id, string name, bool isVr = true, string? launchParameters = null, string? altPath = null)
     {
@@ -393,10 +402,10 @@ public class WrapperManager {
             switch(appTokens[0])
             {
                 case "Custom":
-                    customWrapper.CollectHeaderImage(appTokens[1]);
+                    CustomWrapper.CollectHeaderImage(appTokens[1]);
                     break;
                 case "Revive":
-                    reviveWrapper.CollectHeaderImage(appTokens[1]);
+                    ReviveWrapper.CollectHeaderImage(appTokens[1]);
                     break;
                 case "Steam":
                     LogHandler("CollectHeaderImages not implemented for type: Steam.");
@@ -451,14 +460,14 @@ public class WrapperManager {
 
         //Determine the wrapper to use
         LoadWrapper(experience.Type);
-        if (CurrentWrapper == null)
+        if (currentWrapper == null)
         {
             SessionController.PassStationMessage("No process wrapper created.");
             return "No process wrapper created.";
         }
 
         //Stop any current processes (regular or 'visible' internal) before trying to launch a new one
-        CurrentWrapper.StopCurrentProcess();
+        currentWrapper.StopCurrentProcess();
         InternalWrapper.StopCurrentProcess();
 
         //Update the experience UI
@@ -477,7 +486,7 @@ public class WrapperManager {
                 case "Custom":
                 case "Revive":
                 case "Steam":
-                    return CurrentWrapper.WrapProcess(experience);
+                    return currentWrapper.WrapProcess(experience);
                 case "Vive":
                     throw new NotImplementedException();
                 default:
@@ -497,16 +506,16 @@ public class WrapperManager {
         switch (type)
         {
             case "Custom":
-                CurrentWrapper = customWrapper;
+                currentWrapper = CustomWrapper;
                 break;
             case "Revive":
-                CurrentWrapper = reviveWrapper;
+                currentWrapper = ReviveWrapper;
                 break;
             case "Steam":
-                CurrentWrapper = steamWrapper;
+                currentWrapper = SteamWrapper;
                 break;
             case "Vive":
-                CurrentWrapper = viveWrapper;
+                currentWrapper = ViveWrapper;
                 break;
         }
     }
@@ -516,13 +525,13 @@ public class WrapperManager {
     /// </summary>
     private void CheckAProcess()
     {
-        if (CurrentWrapper == null)
+        if (currentWrapper == null)
         {
             SessionController.PassStationMessage("No process wrapper present.");
             return;
         }
 
-        Task.Factory.StartNew(() => CurrentWrapper.CheckCurrentProcess());
+        Task.Factory.StartNew(() => currentWrapper.CheckCurrentProcess());
     }
 
     /// <summary>
@@ -530,7 +539,7 @@ public class WrapperManager {
     /// </summary>
     private void PassAMessageToProcess(string message)
     {
-        if (CurrentWrapper == null)
+        if (currentWrapper == null)
         {
             SessionController.PassStationMessage("No process wrapper present, checking internal.");
 
@@ -544,7 +553,7 @@ public class WrapperManager {
             return;
         }
 
-        Task.Factory.StartNew(() => CurrentWrapper.PassMessageToProcess(message));
+        Task.Factory.StartNew(() => currentWrapper.PassMessageToProcess(message));
     }
 
     /// <summary>
@@ -552,7 +561,7 @@ public class WrapperManager {
     /// </summary>
     private void RestartAProcess()
     {
-        if (CurrentWrapper == null)
+        if (currentWrapper == null)
         {
             SessionController.PassStationMessage("No process wrapper present.");
             
@@ -565,7 +574,7 @@ public class WrapperManager {
             SessionController.PassStationMessage("No internal wrapper present.");
             return;
         }
-        Task.Factory.StartNew(() => CurrentWrapper.RestartCurrentExperience());
+        Task.Factory.StartNew(() => currentWrapper.RestartCurrentExperience());
     }
 
     /// <summary>
@@ -576,7 +585,7 @@ public class WrapperManager {
         //Stop looking for Vive headset regardless
         ViveScripts.StopMonitoring();
 
-        if (CurrentWrapper == null)
+        if (currentWrapper == null)
         {
             SessionController.PassStationMessage("No process wrapper present.");
             
@@ -591,7 +600,7 @@ public class WrapperManager {
         }
 
         UIController.UpdateProcessMessages("reset");
-        CurrentWrapper.StopCurrentProcess();
+        currentWrapper.StopCurrentProcess();
         WrapperMonitoringThread.StopMonitoring();
     }
 
