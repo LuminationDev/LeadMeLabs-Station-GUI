@@ -132,6 +132,15 @@ public class SteamWrapper : IWrapper
         //Begin monitoring the different processes
         WrapperMonitoringThread.InitializeMonitoring(WrapperType, experience.IsVr);
         
+        //Wait for Steam to be signed in
+        if (!Profile.WaitForSteamLogin())
+        {
+            string error = "Error: Steam could not open";
+            ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage($"SoftwareState,{error}"),
+                TimeSpan.FromSeconds(1)); //Wait for steam/other accounts to login
+            return "Error: Steam could not open";
+        }
+        
         //Check if a headset is required from the debugger menu
         if (InternalDebugger.GetHeadsetRequired() && experience.IsVr)
         {

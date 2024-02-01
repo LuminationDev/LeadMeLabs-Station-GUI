@@ -307,23 +307,12 @@ public class WrapperManager {
     /// </summary>
     private static void WaitForSteamProcess()
     {
-        int count = 0;
-        do
-        {
-            Task.Delay(3000).Wait();
-            count++;
-        } while ((ProcessManager.GetProcessesByName("steam").Length == 0) && count <= 60);
-
-        string error = "";
-        if (ProcessManager.GetProcessesByName("steam").Length == 0)
-        {
-            error = "Error: Steam could not open";
-        }
-
-        string message = count <= 60 ? "Ready to go" : error;
+        //TODO update in the MODERNUI branch
+        string error = "Error: Steam could not open";
+        string message = Profile.WaitForSteamLogin() ? "Ready to go" : error;
 
         ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage($"SoftwareState,{message}"),
-            TimeSpan.FromSeconds(10)); //Wait for steam/other accounts to login
+            TimeSpan.FromSeconds(1)); //Wait for steam/other accounts to login
         ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage("MessageToAndroid,SetValue:session:Restarted"), TimeSpan.FromSeconds(1));
     }
 

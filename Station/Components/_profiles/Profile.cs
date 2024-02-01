@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Threading.Tasks;
 using System.Timers;
 using Station.Components._commandLine;
 using Station.Components._notification;
@@ -86,6 +87,22 @@ public class Profile
         }
 
         return list.Count == processes.Count;
+    }
+    
+    /// <summary>
+    /// Wait for Steam, bail out after 3 minutes. Send the outcome to the tablet. 'steamwebhelper' will have a window
+    /// title of 'Steam' when it has logged in, before that it will be 'Sign in to Steam'.
+    /// </summary>
+    public static bool WaitForSteamLogin()
+    {
+        int count = 0;
+        do
+        {
+            Task.Delay(3000).Wait();
+            count++;
+        } while (!ProcessManager.GetProcessMainWindowTitle("steamwebhelper").Contains("Steam") && count <= 60);
+        
+        return ProcessManager.GetProcessesByName("steam").Length != 0 || count > 60;
     }
     
     /// <summary>
