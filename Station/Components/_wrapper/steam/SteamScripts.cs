@@ -6,6 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using LeadMeLabsLibrary.Station;
 using Station.Components._commandLine;
+using Station.Components._models;
 using Station.Components._monitoring;
 using Station.Components._notification;
 using Station.Components._utils;
@@ -123,69 +124,77 @@ public static class SteamScripts
     }
 
     /// <summary>
-    /// Filter through the steam command output to select the Application IDs and names.
-    /// Joining them together with specific delimiters to enable the Android tablet to
-    /// decipher them.
+    /// Loads available experiences of a generic type, T. Closes Steam processes if open, then checks network connection.
+    /// If connected to the internet, loads available games using an internet connection; otherwise, loads available games without using an internet connection.
     /// </summary>
-    /// <returns>A string of IDs and names of installed applications</returns>
-    public static List<string>? LoadAvailableGames()
+    /// <typeparam name="T">The type of experiences to load.</typeparam>
+    /// <returns>A list of available experiences of type T, or null if no experiences are available.</returns>
+    public static List<T>? LoadAvailableExperiences<T>()
     {
         //Close Steam if it is open
         CommandLine.QueryProcesses(WrapperMonitoringThread.SteamProcesses, true);
         CommandLine.QueryProcesses(WrapperMonitoringThread.SteamVrProcesses, true);
 
-        if (!Network.CheckIfConnectedToInternet())
-        {
-            return LoadAvailableGamesWithoutUsingInternetConnection();
-        }
-        else
-        {
-            return LoadAvailableGamesUsingInternetConnection();
-        }
+        return !Network.CheckIfConnectedToInternet() ? LoadAvailableGamesWithoutUsingInternetConnection<T>() : LoadAvailableGamesUsingInternetConnection<T>();
     }
 
-    private static List<string> AddInstalledSteamApplicationsFromDirectoryToList(List<string> list, string directoryPath)
+    private static List<T> AddInstalledSteamApplicationsFromDirectoryToList<T>(List<T> list, string directoryPath)
     {
         List<string> blacklistedGames = new List<string>();
         List<string> approvedGames = GetParentalApprovedGames();
         Logger.WriteLog("Approved games length: " + approvedGames.Count, MockConsole.LogLevel.Debug);
         blacklistedGames.Add("1635730"); // vive console // todo this needs to be abstracted
-        if (Directory.Exists(directoryPath))
+        if (!Directory.Exists(directoryPath)) return list;
+
+        DirectoryInfo directoryInfo = new DirectoryInfo(directoryPath);
+        foreach (var file in directoryInfo.GetFiles("appmanifest_*.acf"))
         {
-            DirectoryInfo directoryInfo = new DirectoryInfo(directoryPath);
-            foreach (var file in directoryInfo.GetFiles("appmanifest_*.acf"))
+            AcfReader acfReader = new AcfReader(file.FullName, true);
+            acfReader.ACFFileToStruct();
+            if (acfReader.gameName == null || acfReader.appId == null) continue;
+
+            if (blacklistedGames.Contains(acfReader.appId))
             {
-                AcfReader acfReader = new AcfReader(file.FullName, true);
-                acfReader.ACFFileToStruct();
-                if (acfReader.gameName == null || acfReader.appId == null) continue;
-                if (blacklistedGames.Contains(acfReader.appId)) continue;
-                if (approvedGames.Count != 0 && !approvedGames.Contains(acfReader.appId)) continue;
-                
-                bool isVr = steamManifestApplicationList.IsApplicationInstalledAndVrCompatible("steam.app." + acfReader.appId);
-                WrapperManager.StoreApplication(SteamWrapper.WrapperType, acfReader.appId, acfReader.gameName, isVr); // todo, I don't like this line here as it's a side-effect to the function
-                if (Helper.GetStationMode().Equals(Helper.STATION_MODE_VR) || !isVr)
-                {
-                    list.Add($"{SteamWrapper.WrapperType}|{acfReader.appId}|{acfReader.gameName}");
-                }
+                continue;
+            }
+
+            if (approvedGames.Count != 0 && !approvedGames.Contains(acfReader.appId)) continue;
+
+            bool isVr =
+                steamManifestApplicationList.IsApplicationInstalledAndVrCompatible("steam.app." + acfReader.appId);
+            WrapperManager.StoreApplication(SteamWrapper.WrapperType, acfReader.appId, acfReader.gameName, isVr); // todo, I don't like this line here as it's a side-effect to the function
+            if (!Helper.GetStationMode().Equals(Helper.STATION_MODE_VR) && isVr) continue;
+
+            // Basic application requirements
+            if (typeof(T) == typeof(ExperienceDetails))
+            {
+                ExperienceDetails experience = new ExperienceDetails(SteamWrapper.WrapperType, acfReader.gameName, acfReader.appId, isVr);
+                list.Add((T)(object)experience);
+            }
+            else if (typeof(T) == typeof(string))
+            {
+                string application =
+                    $"{SteamWrapper.WrapperType}|{acfReader.appId}|{acfReader.gameName}";
+                list.Add((T)(object)application);
             }
         }
 
         return list;
     }
 
-    private static List<string>? LoadAvailableGamesWithoutUsingInternetConnection()
+    private static List<T>? LoadAvailableGamesWithoutUsingInternetConnection<T>()
     {
-        List<string> installedGames = new List<string>();
+        List<T> installedGames = new List<T>();
 
         installedGames =
-            AddInstalledSteamApplicationsFromDirectoryToList(installedGames, "S:\\SteamLibrary\\steamapps");
+            AddInstalledSteamApplicationsFromDirectoryToList<T>(installedGames, "S:\\SteamLibrary\\steamapps");
         installedGames =
-            AddInstalledSteamApplicationsFromDirectoryToList(installedGames, "C:\\Program Files (x86)\\Steam\\steamapps");
+            AddInstalledSteamApplicationsFromDirectoryToList<T>(installedGames, "C:\\Program Files (x86)\\Steam\\steamapps");
 
         return installedGames;
     }
 
-    private static List<string>? LoadAvailableGamesUsingInternetConnection()
+    private static List<T>? LoadAvailableGamesUsingInternetConnection<T>()
     {
         //Check if SteamCMD has been initialised
         string filePath = CommandLine.StationLocation + @"\external\steamcmd\steamerrorreporter.exe";
@@ -227,7 +236,7 @@ public static class SteamScripts
             return null;
         }
 
-        List<string> apps = new List<string>();
+        List<T> apps = new List<T>();
         List<string> availableLicenses = new List<string>();
         List<string> approvedGames = GetParentalApprovedGames();
         Logger.WriteLog("Approved games length: " + approvedGames.Count, MockConsole.LogLevel.Debug);
@@ -244,47 +253,50 @@ public static class SteamScripts
 
         Logger.WriteLog("Within loadAvailableGames", MockConsole.LogLevel.Debug);
 
-        foreach (var line in installedGames)
+        foreach (var line in installedGames.Where(line => line.StartsWith("AppID")))
         {
-            if (line.StartsWith("AppID"))
+            Logger.WriteLog(line, MockConsole.LogLevel.Debug);
+
+            List<string> filter = line.Split(":").ToList();
+            string id = filter[0].Replace("AppID", "").Trim();
+
+            if (!availableLicenses.Contains(id)) continue;
+            if (blacklistedGames.Contains(id) ||
+                (approvedGames.Count != 0 && !approvedGames.Contains(id))) continue; // if count is zero then all games are approved
+
+            filter.RemoveAt(0);
+            filter.RemoveAt(filter.Count - 1); // remove file location
+            filter.RemoveAt(filter.Count - 1); // remove drive name
+            string name = string.Join(":", filter.ToArray()).Replace("\\", "").Trim();
+            name = name.Replace("\"", "").Trim();
+
+            if (name.Contains("appid_")) // as a backup if steamcmd doesn't load the game name, we get it from the acf file
             {
-                Logger.WriteLog(line, MockConsole.LogLevel.Debug);
-
-                List<string> filter = line.Split(":").ToList();
-                string ID = filter[0].Replace("AppID", "").Trim();
-
-                if (availableLicenses.Contains(ID))
+                AcfReader acfReader = new AcfReader(id);
+                acfReader.ACFFileToStruct();
+                if (acfReader.gameName != null)
                 {
-                    if (!blacklistedGames.Contains(ID) && (approvedGames.Count == 0 || approvedGames.Contains(ID))) // if count is zero then all games are approved
-                    {
-                        filter.RemoveAt(0);
-                        filter.RemoveAt(filter.Count - 1); // remove file location
-                        filter.RemoveAt(filter.Count - 1); // remove drive name
-                        string name = string.Join(":", filter.ToArray()).Replace("\\", "").Trim();
-                        if (name.Contains("appid_")) // as a backup if steamcmd doesn't load the game name, we get it from the acf file
-                        {
-                            AcfReader acfReader = new AcfReader(ID);
-                            acfReader.ACFFileToStruct();
-                            if (acfReader.gameName != null)
-                            {
-                                name = acfReader.gameName;
-                            }
-                        }
-                        
-                        //Determine if it is a VR experience
-                        bool isVr = steamManifestApplicationList.IsApplicationInstalledAndVrCompatible("steam.app." + ID);
-                        
-                        //Basic application requirements
-                        string application = $"{SteamWrapper.WrapperType}|{ID}|{name}|{isVr}";
-
-                        //item.parameters may be null here
-                        WrapperManager.StoreApplication(SteamWrapper.WrapperType, ID, name, isVr);
-                        if (Helper.GetStationMode().Equals(Helper.STATION_MODE_VR) || !isVr)
-                        {
-                            apps.Add(application);
-                        }
-                    }
+                    name = acfReader.gameName;
                 }
+            }
+
+            //Determine if it is a VR experience
+            bool isVr = steamManifestApplicationList.IsApplicationInstalledAndVrCompatible("steam.app." + id);
+            if (!Helper.GetStationMode().Equals(Helper.STATION_MODE_VR) && isVr) continue;
+
+            //item.parameters may be null here
+            WrapperManager.StoreApplication(SteamWrapper.WrapperType, id, name, isVr);
+
+            // Basic application requirements
+            if (typeof(T) == typeof(ExperienceDetails))
+            {
+                ExperienceDetails experience = new ExperienceDetails(SteamWrapper.WrapperType, name, id, isVr);
+                apps.Add((T)(object)experience);
+            }
+            else if (typeof(T) == typeof(string))
+            {
+                string application = $"{SteamWrapper.WrapperType}|{id}|{name}|{isVr}";
+                apps.Add((T)(object)application);
             }
         }
 
@@ -297,7 +309,7 @@ public static class SteamScripts
         var directory = new DirectoryInfo(@"C:\Program Files (x86)\Steam\logs");
         var files = directory.GetFiles("parental_log.txt")
             .OrderByDescending(f => f.LastWriteTime);
-        if (!files.Any())
+        if (files != null && !files.Any())
         {
             return approvedGames;
         }

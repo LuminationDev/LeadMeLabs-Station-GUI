@@ -157,57 +157,88 @@ public class WrapperManager {
     /// Cycle through the different wrappers and collect all the applications installed. Do
     /// not attempt to collect if already part way through.
     /// </summary>
-    private static List<string> CollectAllApplications()
+    private static void CollectAllApplications()
     {
-        List<string> applications = new();
         if (alreadyCollecting)
         {
             SessionController.PassStationMessage("Already collecting applications");
-            return applications;
+            return;
         }
-
+        
         alreadyCollecting = true;
+        
+        //NEW METHOD
+        CollectApplications<ExperienceDetails>(experiences => new JArray(experiences.Select(experience => experience.ToJObject())), "ApplicationJson");
 
-        List<string>? customApplications = CustomWrapper.CollectApplications();
+        //BACKWARDS COMPATABILITY
+        CollectApplications<string>( apps => string.Join("/", apps), "ApplicationList");
+
+        alreadyCollecting = false;
+
+        _ = RestartVrProcesses();
+    }
+    
+    /// <summary>
+    /// Collects applications of type T from various sources, converts them to the desired format, and sends them as JSON messages.
+    /// </summary>
+    /// <typeparam name="T">The type of applications to collect.</typeparam>
+    /// <param name="convertFunc">A function to convert applications to the desired format.</param>
+    /// <param name="messageType">The type of message (namespace) that is sent to the NUC.</param>
+    private static void CollectApplications<T>(Func<List<T>, object> convertFunc, string messageType)
+    {
+        List<T> applications = new List<T>();
+
+        List<T>? customApplications = CustomWrapper.CollectApplications<T>();
         if (customApplications != null)
         {
             applications.AddRange(customApplications);
         }
 
-        List<string>? viveApplications = ViveWrapper.CollectApplications();
+        List<T>? viveApplications = ViveWrapper.CollectApplications<T>();
         if (viveApplications != null)
         {
             applications.AddRange(viveApplications);
         }
-        
-        List<string>? reviveApplications = ReviveWrapper.CollectApplications();
+
+        List<T>? reviveApplications = ReviveWrapper.CollectApplications<T>();
         if (reviveApplications != null)
         {
             applications.AddRange(reviveApplications);
         }
-        
+
         // Check if there are steam details as the Station may be non-VR without a Steam account
         ContentProfile? contentProfile = Profile.CastToType<ContentProfile>(SessionController.StationProfile);
         if (Helper.GetStationMode().Equals(Helper.STATION_MODE_VR) ||
             (contentProfile != null && contentProfile.DoesProfileHaveAccount("Steam")))
         {
-            List<string>? steamApplications = SteamWrapper.CollectApplications();
+            List<T>? steamApplications = SteamWrapper.CollectApplications<T>();
             if (steamApplications != null)
             {
                 applications.AddRange(steamApplications);
             }
         }
 
-        string response = string.Join('/', applications);
-
+        // Convert applications to desired format
+        object convertedApplications = convertFunc(applications);
+        
         //Check for any missing thumbnails in the cache folder
-        Task.Factory.StartNew(() => ThumbnailOrganiser.CheckCache(response));
-        SessionController.PassStationMessage($"ApplicationList,{response}");
+        if (typeof(T) == typeof(string))
+        {
+            Task.Factory.StartNew(() => ThumbnailOrganiser.CheckCache<string>((string)convertedApplications));
+        }
+        else if (typeof(T) == typeof(ExperienceDetails))
+        {
+            Task.Factory.StartNew(() => ThumbnailOrganiser.CheckCache<ExperienceDetails>(convertedApplications.ToString()));
+        }
 
-        alreadyCollecting = false;
+        // Send the JSON message here as the PassStationMessage method splits the supplied message by ','
+        if (messageType.Equals("ApplicationJson"))
+        {
+            MessageController.SendResponse("Android", "Station", "SetValue:installedJsonApplications:" + convertedApplications);
+            return;
+        }
 
-        _ = RestartVrProcesses();
-        return applications;
+        SessionController.PassStationMessage($"{messageType},{convertedApplications}");
     }
 
     /// <summary>

@@ -39,7 +39,7 @@ public interface IWrapper
     /// Collect all the applications associated with the type of wrapper.
     /// </summary>
     /// <returns>A list of all applications associated with the wrapper type.</returns>
-    List<string>? CollectApplications();
+    List<T>? CollectApplications<T>();
 
     /// <summary>
     /// Search the experience folder for the supplied header image, transferring it across

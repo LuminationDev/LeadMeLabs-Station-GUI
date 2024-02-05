@@ -5,7 +5,9 @@ using System.Linq;
 using System.Net.Http;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
+using Newtonsoft.Json;
 using Station.Components._commandLine;
+using Station.Components._models;
 using Station.Components._notification;
 using Station.Components._utils;
 
@@ -72,81 +74,148 @@ public static class ThumbnailOrganiser
     }
 
     /// <summary>
-    /// Search the local cache folder for the thumbnail that is associated with the supplied
-    /// experience name. The method is synchronised so that the files are not accessed at the
-    /// same time.
+    /// Checks the local cache for files of a specified type and initiates thumbnail retrieval processes.
     /// </summary>
-    /// <param name="list">A string list of the experiences to search for.</param>
-    /// <returns>A bool if the thumbnail exists locally</returns>
+    /// <typeparam name="T">The type of experiences in the cache.</typeparam>
+    /// <param name="list">The string representation of the list of experiences.</param>
     [MethodImpl(MethodImplOptions.Synchronized)]
-    public static void CheckCache(string list)
+    public static void CheckCache<T>(string? list)
     {
-        Logger.WriteLog("Checking Local Cache for files.", MockConsole.LogLevel.Error);
+        if (list == null) return;
+        
+        Logger.WriteLog($"Checking Local Cache for files - {typeof(T).Name} method.", MockConsole.LogLevel.Error);
 
-        List<string> localExperiences = GetExperiencesOfType(list, "Custom");
-        List<string> reviveExperiences = GetExperiencesOfType(list, "Revive");
-        List<string> steamExperiences = GetExperiencesOfType(list, "Steam");
+        List<T>? experiences;
+        if (typeof(T) == typeof(string))
+        {
+            experiences = list.Split('/').Cast<T>().ToList();
+        }
+        else if (typeof(T) == typeof(ExperienceDetails))
+        {
+            experiences = JsonConvert.DeserializeObject<List<ExperienceDetails>>(list)?.Cast<T>().ToList();
+        }
+        else
+        {
+            Logger.WriteLog($"Thumbnail conversion for type: {typeof(T)} is unsupported.", MockConsole.LogLevel.Normal);
+            return;
+        }
 
+        if (experiences == null) return;
+        
+        List<T> localExperiences = GetExperiencesOfType(experiences, "Custom");
+        localExperiences.AddRange(GetExperiencesOfType(experiences, "Revive"));
+        List<T> steamExperiences = GetExperiencesOfType(experiences, "Steam");
+        
         LocalThumbnail(localExperiences);
-        ReviveThumbnail(reviveExperiences);
+        ReviveThumbnail(localExperiences);
         SteamThumbnail(steamExperiences);
     }
 
     /// <summary>
     /// Retrieves the experiences of a specific type from the given list.
     /// </summary>
+    /// <typeparam name="T">The type of experiences in the list.</typeparam>
     /// <param name="list">The list of experiences.</param>
     /// <param name="type">The type of experiences to retrieve.</param>
     /// <returns>The experiences of the specified type.</returns>
-    private static List<string> GetExperiencesOfType(string list, string type)
+    private static List<T> GetExperiencesOfType<T>(List<T> list, string type)
     {
-        return list.Split('/')
-            .Where(experience => experience.StartsWith(type + "|"))
-            .ToList();
+        if (typeof(T) == typeof(string))
+        {
+            return list
+                .Where(experience => experience != null && ((string)(object)experience).StartsWith(type + "|"))
+                .ToList();
+        }
+
+        if (typeof(T) == typeof(ExperienceDetails))
+        {
+            return list
+                .Where(experience => experience != null && ((ExperienceDetails)(object)experience).WrapperType.Equals(type))
+                .ToList();
+        }
+
+        Logger.WriteLog($"Thumbnail for type: {type} is unsupported.", MockConsole.LogLevel.Normal);
+        return new List<T>();
     }
 
     /// <summary>
-    /// Finds the missing thumbnails in the given list of experiences.
+    /// Finds missing thumbnails for a list of experiences and adds them to the list of images to retrieve.
     /// </summary>
+    /// <typeparam name="T">The type of experiences in the list.</typeparam>
     /// <param name="experiences">The list of experiences to check for missing thumbnails.</param>
     /// <returns>A list of missing thumbnails.</returns>
-    private static List<string> FindMissingThumbnails(List<string> experiences)
+    private static List<string> FindMissingThumbnails<T>(List<T> experiences)
     {
         List<string> missingThumbnails = new();
 
-        foreach (string experience in experiences)
+        foreach (var experience in experiences)
         {
-            string[] appTokens = experience.Split('|');
+            if (experience == null) continue;
+            
+            string? id = GetIdFromExperience(experience);
 
-            if (appTokens.Length < 3)
+            if (id == null) continue;
+
+            if (ImagesToRetrieve.Contains(id))
             {
+                Logger.WriteLog($"Thumbnail for {id} already awaiting transfer.", MockConsole.LogLevel.Normal);
                 continue;
             }
 
-            if (ImagesToRetrieve.Contains(appTokens[2]))
+            string fileName = $"{id.Replace(":", "")}_header.jpg";
+
+            if (LocalImages.Contains(fileName)) continue;
+            
+            ImagesToRetrieve.Add(id);
+
+            if (typeof(T) == typeof(string))
             {
-                Logger.WriteLog($"Thumbnail for {appTokens[2]} already awaiting transfer.", MockConsole.LogLevel.Normal);
-                continue;
+                missingThumbnails.Add((string)(object)experience);
             }
-
-            string fileName = $"{appTokens[2].Replace(":", "")}_header.jpg";
-
-            if (!LocalImages.Contains(fileName))
+            else if (typeof(T) == typeof(ExperienceDetails))
             {
-                ImagesToRetrieve.Add(appTokens[2]);
-                missingThumbnails.Add(experience);
+                ExperienceDetails temp = (ExperienceDetails)(object)experience;
+                missingThumbnails.Add($"{temp.WrapperType}|{temp.Id}|{temp.Name}");
             }
         }
 
         return missingThumbnails;
     }
+    
+    /// <summary>
+    /// Extracts the ID from an experience object of type T.
+    /// </summary>
+    /// <typeparam name="T">The type of the experience object.</typeparam>
+    /// <param name="experience">The experience object.</param>
+    /// <returns>The ID of the experience.</returns>
+    private static string? GetIdFromExperience<T>(T experience)
+    {
+        if (typeof(T) == typeof(string))
+        {
+            if (experience == null) return null;
+            
+            string[]? appTokens = ((string)(object)experience)?.Split('|');
+            if (appTokens?.Length >= 3) return appTokens[2];
+        }
+        else if (typeof(T) == typeof(ExperienceDetails))
+        {
+            if (experience != null) return ((ExperienceDetails)(object)experience)?.Id;
+        }
+        else
+        {
+            Logger.WriteLog($"Thumbnail conversion for type: {typeof(T)} is unsupported.", MockConsole.LogLevel.Normal);
+        }
+
+        return null;
+    }
 
 
     /// <summary>
-    /// Checks for missing thumbnails associated with Steam experiences and attempts to download them in batch.
+    /// Checks for missing thumbnails for a list of experiences and attempts to download them in batch.
     /// </summary>
-    /// <param name="experiences">A list of experiences to check for missing thumbnails.</param>
-    private static void SteamThumbnail(List<string> experiences)
+    /// <typeparam name="T">The type of experiences in the list.</typeparam>
+    /// <param name="experiences">The list of experiences to check for missing thumbnails.</param>
+    private static void SteamThumbnail<T>(List<T> experiences)
     {
         List<string> missingThumbnails = FindMissingThumbnails(experiences);
 
@@ -161,8 +230,9 @@ public static class ThumbnailOrganiser
     /// Checks for missing thumbnails in the provided list of experiences and sends requests for the missing
     /// thumbnails. These thumbnails exist on the Station themselves but in the Revive directory.
     /// </summary>
+    /// <typeparam name="T">The type of the experience object.</typeparam>
     /// <param name="experiences">The list of experiences to process.</param>
-    private static void ReviveThumbnail(List<string> experiences)
+    private static void ReviveThumbnail<T>(List<T> experiences)
     {
         List<string> missingThumbnails = FindMissingThumbnails(experiences);
 
@@ -177,8 +247,9 @@ public static class ThumbnailOrganiser
     /// Checks for missing thumbnails in the provided list of experiences and sends requests for the missing
     /// thumbnails. These thumbnails exist on the Station themselves hence 'local' thumbnails.
     /// </summary>
+    /// <typeparam name="T">The type of the experience object.</typeparam>
     /// <param name="experiences">The list of experiences to process.</param>
-    private static void LocalThumbnail(List<string> experiences)
+    private static void LocalThumbnail<T>(List<T> experiences)
     {
         List<string> missingThumbnails = FindMissingThumbnails(experiences);
 
