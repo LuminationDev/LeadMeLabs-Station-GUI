@@ -35,7 +35,7 @@ internal class ViveWrapper : IWrapper
         return null;
     }
 
-    public List<string>? CollectApplications()
+    public List<T>? CollectApplications<T>()
     {
         return null;
     }

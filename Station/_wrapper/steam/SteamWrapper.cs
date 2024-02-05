@@ -65,10 +65,10 @@ public class SteamWrapper : IWrapper
     {
         return experienceName;
     }
-
-    public List<string>? CollectApplications()
+    
+    public List<T>? CollectApplications<T>()
     {
-        return SteamScripts.LoadAvailableGames();
+        return SteamScripts.LoadAvailableExperiences<T>();
     }
 
     public void CollectHeaderImage(string experienceNameToCollect)
