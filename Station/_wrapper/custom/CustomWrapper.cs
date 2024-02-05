@@ -28,7 +28,7 @@ internal class CustomWrapper : IWrapper
     /// <summary>
     /// Track if an experience is being launched.
     /// </summary>
-    private static bool launchingExperience = false;
+    private static bool launchingExperience;
 
     public Experience? GetLastExperience()
     {
@@ -59,17 +59,17 @@ internal class CustomWrapper : IWrapper
     {
         return lastExperience.Name;
     }
-
-    public List<string>? CollectApplications()
+    
+    public List<T>? CollectApplications<T>()
     {
-        return CustomScripts.LoadAvailableGames();
+        return CustomScripts.LoadAvailableExperiences<T>();
     }
 
-    public void CollectHeaderImage(string experienceID)
+    public void CollectHeaderImage(string experienceId)
     {
         Task.Factory.StartNew(() =>
         {
-            WrapperManager.ApplicationList.TryGetValue(experienceID, out var experience);
+            WrapperManager.ApplicationList.TryGetValue(experienceId, out var experience);
             string? experienceName = experience.Name;
             string? altPath = experience.AltPath;
 
@@ -327,26 +327,29 @@ internal class CustomWrapper : IWrapper
     /// <returns>The launched application process</returns>
     private Process? GetExperienceProcess()
     {
-        string altPathWithoutExe = Path.GetDirectoryName(lastExperience.AltPath);
+        string? altPathWithoutExe = Path.GetDirectoryName(lastExperience.AltPath);
         Logger.WriteLog($"Attempting to get id for " + altPathWithoutExe, MockConsole.LogLevel.Debug);
-        string id = CommandLine.GetProcessIdFromDir(altPathWithoutExe);
-        if (id == null || id == "")
+        if (string.IsNullOrEmpty(altPathWithoutExe))
+        {
+            return null;
+        }
+        
+        string? id = CommandLine.GetProcessIdFromDir(altPathWithoutExe);
+        if (string.IsNullOrEmpty(id))
         {
             return null;
         }
         Process? proc = ProcessManager.GetProcessById(Int32.Parse(id));
 
         //Get the steam process name from the CommandLine function and compare here instead of removing any external child processes
-        if (proc != null)
-        {
-            Logger.WriteLog($"Application found: {proc.MainWindowTitle}/{lastExperience.ID}", MockConsole.LogLevel.Debug);
-            UIUpdater.UpdateProcess(proc.MainWindowTitle);
-            UIUpdater.UpdateStatus("Running...");
+        if (proc == null) return null;
+        
+        Logger.WriteLog($"Application found: {proc.MainWindowTitle}/{lastExperience.ID}", MockConsole.LogLevel.Debug);
+        UIUpdater.UpdateProcess(proc.MainWindowTitle);
+        UIUpdater.UpdateStatus("Running...");
             
-            return proc;
-        }
+        return proc;
 
-        return null;
     }
     #endregion
 

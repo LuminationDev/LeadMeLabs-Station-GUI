@@ -1,9 +1,9 @@
 using System.Collections.Generic;
 using Station._manager;
+using Station._models;
 using Station._utils;
-using Station._wrapper.revive;
 
-namespace Station;
+namespace Station._wrapper.revive;
 
 public static class ReviveScripts
 {
@@ -12,15 +12,17 @@ public static class ReviveScripts
     /// <summary>
     /// Read through the revive vr manifest to find what applications are installed.
     /// </summary>
-    /// <returns>A list of applications in string form or null</returns>
-    public static List<string> LoadAvailableGames()
+    /// <typeparam name="T">The type of experiences to load.</typeparam>
+    /// <returns>A list of available experiences of type T, or null if no experiences are available.</returns>
+    public static List<T>? LoadAvailableExperiences<T>()
     {
-        List<string> apps = new ();
         List<(string appKey, string name)> fileData = ManifestReader.CollectKeyAndName(ReviveManifest);
         if (fileData.Count == 0)
         {
-            return apps;
+            return null;
         }
+        
+        List<T> apps = new List<T>();
         
         foreach (var pair in fileData)
         {
@@ -30,12 +32,20 @@ public static class ReviveScripts
             //Trim revive.app. off each ID
             string id = pair.appKey.Replace("revive.app.", "");
             
-            //Load the _reviveManifest
-            string application = $"{ReviveWrapper.WrapperType}|{id}|{name}";
-
+            // Basic application requirements
+            if (typeof(T) == typeof(ExperienceDetails))
+            {
+                ExperienceDetails experience = new ExperienceDetails(ReviveWrapper.WrapperType, name, id, true);
+                apps.Add((T)(object)experience);
+            }
+            else if (typeof(T) == typeof(string))
+            {
+                string application = $"{ReviveWrapper.WrapperType}|{id}|{name}|{true}";
+                apps.Add((T)(object)application);
+            }
+            
             //item.parameters may be null here
             WrapperManager.StoreApplication(ReviveWrapper.WrapperType, id, name, true);
-            apps.Add(application);
         }
         
         return apps;

@@ -12,6 +12,8 @@ using Station._models;
 using Station._profiles;
 using Station._utils;
 using Station._wrapper;
+using Station._wrapper.custom;
+using Station._wrapper.revive;
 using Station._wrapper.steam;
 using Valve.VR;
 
