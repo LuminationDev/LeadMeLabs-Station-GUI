@@ -211,6 +211,7 @@ public static class SessionController
                     CurrentState = tokens[1];
                     break;
 
+                //BACKWARDS COMPATABILITY
                 case "ApplicationList":
                     MessageController.SendResponse("Android", "Station", "SetValue:installedApplications:" + tokens[1]);
                     break;

@@ -44,7 +44,7 @@ public class InternalWrapper : IWrapper
         throw new NotImplementedException();
     }
     
-    public List<string> CollectApplications()
+    public List<T> CollectApplications<T>()
     {
         throw new NotImplementedException();
     }

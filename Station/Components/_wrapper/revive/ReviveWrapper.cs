@@ -62,9 +62,9 @@ public class ReviveWrapper : IWrapper
         return experienceName;
     }
 
-    public List<string> CollectApplications()
+    public List<T>? CollectApplications<T>()
     {
-        return ReviveScripts.LoadAvailableGames();
+        return ReviveScripts.LoadAvailableExperiences<T>();
     }
 
     public void CollectHeaderImage(string experienceKey)
