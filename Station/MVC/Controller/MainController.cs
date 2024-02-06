@@ -71,8 +71,6 @@ public static class MainController
 
     public static bool isNucUtf8 = true;
     
-    //TODO non-VR stations never get past the Loading experiences message
-    
     /// <summary>
     /// Starts the server running on the local machine
     /// </summary>
@@ -124,7 +122,14 @@ public static class MainController
             StartServer();
             
             // Run the local Quality checks before continuing with the setup
-            QualityManager.HandleLocalQualityAssurance(true);
+            try
+            {
+                QualityManager.HandleLocalQualityAssurance(true);
+            }
+            catch (Exception e)
+            {
+                SentrySdk.CaptureException(e);
+            }
             
             ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage($"SoftwareState,Launching Software"), TimeSpan.FromSeconds(0));
             new Thread(Initialisation).Start(); //Call as a new task to stop UI and server start up from hanging whilst reading the files
@@ -229,8 +234,8 @@ public static class MainController
 
             Logger.WriteLog("Re-checking software details after 5 minutes of operation.", MockConsole.LogLevel.Normal);
             Logger.WriteLog("Server IP Address is: " + ip, MockConsole.LogLevel.Normal);
-            Logger.WriteLog("MAC Address is: " + SystemInformation.GetMACAddress() ?? "Unknown", MockConsole.LogLevel.Normal);
-            Logger.WriteLog("Version is: " + Updater.GetVersionNumber() ?? "Unknown", MockConsole.LogLevel.Normal);
+            Logger.WriteLog("MAC Address is: " + SystemInformation.GetMACAddress(), MockConsole.LogLevel.Normal);
+            Logger.WriteLog("Version is: " + Updater.GetVersionNumber(), MockConsole.LogLevel.Normal);
         }
         catch (Exception e)
         {
