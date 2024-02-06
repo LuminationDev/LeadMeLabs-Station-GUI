@@ -333,37 +333,37 @@ public static class QualityManager
             // Parse version number from the first line
             if (lines.Length == 0)
             {
-                Console.WriteLine("File is empty - Uploading.");
+                Logger.WriteLog("HasUploadAlreadyBeenCompleted - File is empty - Uploading.", MockConsole.LogLevel.Normal);
                 return false;
             }
-
+            
             Version fileVersion = new Version(lines[0]);
-
+                
             // Compare version numbers
             int versionComparison = currentVersion.CompareTo(fileVersion);
             switch (versionComparison)
             {
                 case < 0:
-                    Console.WriteLine("File version is greater than current software version - Uploading");
+                    Logger.WriteLog("HasUploadAlreadyBeenCompleted - File version is greater than current software version - Uploading", MockConsole.LogLevel.Normal);
                     return false;
-
+                    
                 case 0 when lines.Length > 1:
                 {
                     // Parse boolean value from the second line
                     if (bool.TryParse(lines[1], out bool isEnabled))
                     {
-                        Console.WriteLine($"Version numbers match. Second line value: {isEnabled}");
+                        Logger.WriteLog($"HasUploadAlreadyBeenCompleted - Version numbers match. Second line value: {isEnabled}", MockConsole.LogLevel.Normal);
                         return isEnabled;
                     }
 
-                    Console.WriteLine("Second line does not contain a valid boolean value - Uploading");
+                    Logger.WriteLog("HasUploadAlreadyBeenCompleted - Second line does not contain a valid boolean value - Uploading", MockConsole.LogLevel.Normal);
                     return false;
                 }
             }
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"An error occurred: {ex.Message}");
+            Logger.WriteLog($"HasUploadAlreadyBeenCompleted - An error occurred: {ex.Message}", MockConsole.LogLevel.Normal);
             return false;
         }
 
