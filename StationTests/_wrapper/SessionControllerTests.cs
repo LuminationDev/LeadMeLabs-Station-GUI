@@ -3,7 +3,9 @@ using Xunit;
 using System;
 using System.Threading.Tasks;
 using System.Diagnostics;
-using Station._headsets;
+using Station._profiles;
+using Station._profiles._headsets;
+using Station._wrapper;
 
 namespace StationTests._wrapper
 {
@@ -20,10 +22,12 @@ namespace StationTests._wrapper
             Environment.SetEnvironmentVariable("HeadsetType", "VivePro1");
 
             // Act
-            SessionController.SetupHeadsetType();
+            SessionController.SetupStationProfile("Vr");
 
             // Assert
-            Assert.IsType<VivePro1>(SessionController.VrHeadset);
+            // Safe cast for potential vr profile
+            VrProfile? vrProfile = Profile.CastToType<VrProfile>(SessionController.StationProfile);
+            Assert.IsType<VivePro1>(vrProfile?.VrHeadset);
         }
 
         /// <summary>
@@ -37,10 +41,12 @@ namespace StationTests._wrapper
             Environment.SetEnvironmentVariable("HeadsetType", "VivePro2");
 
             // Act
-            SessionController.SetupHeadsetType();
+            SessionController.SetupStationProfile("Vr");
 
             // Assert
-            Assert.IsType<VivePro2>(SessionController.VrHeadset);
+            // Safe cast for potential vr profile
+            VrProfile? vrProfile = Profile.CastToType<VrProfile>(SessionController.StationProfile);
+            Assert.IsType<VivePro2>(vrProfile?.VrHeadset);
         }
 
         /// <summary>
@@ -55,10 +61,14 @@ namespace StationTests._wrapper
         public void StartVRSession_Should_Start_Session(string experienceType)
         {
             // Arrange
-            SessionController.VrHeadset = new VivePro1();
+            SessionController.SetupStationProfile("Vr");
+            // Safe cast for potential vr profile
+            VrProfile? vrProfile = Profile.CastToType<VrProfile>(SessionController.StationProfile);
+            if (vrProfile == null) return;
+            vrProfile.VrHeadset = new VivePro1();
 
             // Act
-            SessionController.StartVRSession(experienceType);
+            SessionController.StartSession(experienceType);
 
             // Assert
             Assert.Equal(experienceType, SessionController.ExperienceType);
@@ -102,7 +112,7 @@ namespace StationTests._wrapper
             SessionController.ExperienceType = experienceType;
 
             // Act
-            SessionController.EndVRSession();
+            SessionController.EndVrSession();
 
             // Assert
             Assert.Null(SessionController.ExperienceType);

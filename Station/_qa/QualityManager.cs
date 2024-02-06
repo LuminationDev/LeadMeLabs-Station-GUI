@@ -1,13 +1,23 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Net.Http;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using LeadMeLabsLibrary;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using NUC._qa.checks;
+using Sentry;
+using Station._commandLine;
+using Station._manager;
+using Station._models;
+using Station._profiles;
 using Station._qa.checks;
+using Station._utils;
+using Station._wrapper;
 
 namespace Station._qa;
 
@@ -16,7 +26,7 @@ public static class QualityManager
     private static readonly NetworkChecks NetworkChecks = new();
     private static readonly ImvrChecks ImvrChecks = new();
     private static readonly WindowChecks WindowChecks = new();
-    private static readonly ConfigurationChecks configurationChecks = new();
+    private static readonly ConfigurationChecks ConfigurationChecks = new();
     private static readonly SoftwareChecks SoftwareChecks = new();
     private static readonly ConfigChecks ConfigChecks = new();
     private static readonly SteamConfigChecks SteamConfigChecks = new();
@@ -72,7 +82,7 @@ public static class QualityManager
                         break;
                     
                     case "configuration_checks":
-                        result = JsonConvert.SerializeObject(configurationChecks.RunQa(labType));
+                        result = JsonConvert.SerializeObject(ConfigurationChecks.RunQa(labType));
                         break;
                     
                     case "software_checks":
@@ -209,10 +219,12 @@ public static class QualityManager
                 response.Add("response", "GetVrStatuses");
                 JObject responseData = new JObject();
                 response.Add("responseData", responseData);
-                responseData.Add("result",
-                    SessionController.VrHeadset == null
-                        ? null
-                        : SessionController.VrHeadset.GetStatusManager().GetStatusesJson());
+                
+                // Safe cast and null checks
+                VrProfile? vrProfile = Profile.CastToType<VrProfile>(SessionController.StationProfile);
+                if (vrProfile?.VrHeadset == null) break;
+
+                responseData.Add("result", vrProfile.VrHeadset?.GetStatusManager().GetStatusesJson());
                 Manager.SendResponse("NUC", "QA", response.ToString());
                 break;
             }
@@ -221,5 +233,157 @@ public static class QualityManager
                 MockConsole.WriteLine($"Unknown QA request {additionalData}", MockConsole.LogLevel.Normal);
                 break;
         }
+    }
+    
+    /// <summary>
+    /// Run the requested software checks after an update or other significant event. These details are uploaded to
+    /// Firebase and displayed on the QA UI page.
+    /// </summary>
+    public static async void HandleLocalQualityAssurance(bool upload)
+    {
+        string location = Environment.GetEnvironmentVariable("LabLocation", EnvironmentVariableTarget.Process) ?? "Unknown";
+        
+        // Check if there is a network connection (or if it is Adelaide/Australian Science and Mathematics School)
+        ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage($"SoftwareState,Checking network"), TimeSpan.FromSeconds(0));
+        if (location.ToLower().Contains("science and mathematics school") || !Network.CheckIfConnectedToInternet()) return;
+        
+        // Check if the QA has already been uploaded
+        if (HasUploadAlreadyBeenCompleted()) return;
+        ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage($"SoftwareState,Running QA"), TimeSpan.FromSeconds(0));
+        
+        Dictionary<string, Dictionary<string, QaCheck>> qaCheckDictionary = new();
+
+        // Transform and add checks to the dictionary
+        AddChecksToDictionary("Window Checks", WindowChecks.RunQa(labType));
+        AddChecksToDictionary("Configuration Checks", ConfigurationChecks.RunQa(labType));
+        AddChecksToDictionary("Software Checks", await SoftwareChecks.RunQa(labType));
+        AddChecksToDictionary("Network Checks", NetworkChecks.RunQa(""));
+        AddChecksToDictionary("Steam Config Checks", SteamConfigChecks.RunQa(labType));
+
+        //Upload to Firebase
+        if (upload)
+        {
+            UploadToFirebase(qaCheckDictionary);
+        }
+
+        return;
+
+        // Method to add checks to the dictionary
+        void AddChecksToDictionary(string key, List<QaCheck> checks)
+        {
+            Dictionary<string, QaCheck> checkDictionary = checks.ToDictionary(qaCheck => qaCheck.Id);
+            qaCheckDictionary.Add(key, checkDictionary);
+        }
+    }
+
+    /// <summary>
+    /// Upload a string version of the QA check results list. 
+    /// </summary>
+    /// <param name="qaCheckDictionary">A dictionary of QaChecks, sorted under their type and then id.</param>
+    private static async void UploadToFirebase(Dictionary<string, Dictionary<string, QaCheck>> qaCheckDictionary)
+    {
+        using var httpClient = new HttpClient();
+
+        string stationId = Environment.GetEnvironmentVariable("StationId", EnvironmentVariableTarget.Process) ?? "Unknown";
+        string location = Environment.GetEnvironmentVariable("LabLocation", EnvironmentVariableTarget.Process) ?? "Unknown";
+        string strJson = JsonConvert.SerializeObject(qaCheckDictionary);
+
+        StringContent objData = new StringContent(strJson, Encoding.UTF8, "application/json");
+        var result = await httpClient.PatchAsync(
+            $"https://leadme-labs-default-rtdb.asia-southeast1.firebasedatabase.app/lab_qa_checks/{location}/{stationId}.json",
+            objData
+        );
+
+        if (result.IsSuccessStatusCode)
+        {
+            Logger.WriteLog($"Uploaded QA test results to Firebase.", MockConsole.LogLevel.Normal);
+        }
+        else
+        {
+            Logger.WriteLog($"Qa check capture failed with response code {result.StatusCode}", MockConsole.LogLevel.Normal);
+            SentrySdk.CaptureMessage($"Qa check capture failed with response code {result.StatusCode}");
+        }
+        
+        // Achieve that the upload has either succeed or failed
+        if (CommandLine.stationLocation == null) return;
+
+        string? version = Updater.GetVersionNumber();
+        string details = $"{version}\n{result.IsSuccessStatusCode}";
+        WriteFile(CommandLine.stationLocation, details);
+    }
+
+    /// <summary>
+    /// Checks if the upload process has already been completed based on a stored version number and a boolean flag.
+    /// </summary>
+    /// <returns>
+    /// Returns true if the upload process has already been completed and the software version matches the stored version number,
+    /// or if the stored boolean flag is true. Returns false otherwise.
+    /// </returns>
+    private static bool HasUploadAlreadyBeenCompleted()
+    {
+        string? version = Updater.GetVersionNumber();
+
+        if (CommandLine.stationLocation == null || version == null) return false;
+
+        // Path to the saved file
+        string filePath = $"{CommandLine.stationLocation}\\_logs\\uploaded.txt";
+
+        // Check if the file exists
+        if (!File.Exists(filePath))
+        {
+            return false;
+        }
+
+        // Current version of your software
+        Version? currentVersion = new Version(version);
+
+        try
+        {
+            // Read all lines from the file
+            string[] lines = File.ReadAllLines(filePath);
+
+            // Parse version number from the first line
+            if (lines.Length == 0)
+            {
+                Logger.WriteLog("HasUploadAlreadyBeenCompleted - File is empty - Uploading.", MockConsole.LogLevel.Normal);
+                return false;
+            }
+            
+            Version fileVersion = new Version(lines[0]);
+                
+            // Compare version numbers
+            int versionComparison = currentVersion.CompareTo(fileVersion);
+            switch (versionComparison)
+            {
+                case < 0:
+                    Logger.WriteLog("HasUploadAlreadyBeenCompleted - File version is greater than current software version - Uploading", MockConsole.LogLevel.Normal);
+                    return false;
+                    
+                case 0 when lines.Length > 1:
+                {
+                    // Parse boolean value from the second line
+                    if (bool.TryParse(lines[1], out bool isEnabled))
+                    {
+                        Logger.WriteLog($"HasUploadAlreadyBeenCompleted - Version numbers match. Second line value: {isEnabled}", MockConsole.LogLevel.Normal);
+                        return isEnabled;
+                    }
+
+                    Logger.WriteLog("HasUploadAlreadyBeenCompleted - Second line does not contain a valid boolean value - Uploading", MockConsole.LogLevel.Normal);
+                    return false;
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.WriteLog($"HasUploadAlreadyBeenCompleted - An error occurred: {ex.Message}", MockConsole.LogLevel.Normal);
+            return false;
+        }
+
+        return false;
+    }
+
+    private static void WriteFile(string location, string version)
+    {
+        File.WriteAllText($"{location}\\_logs\\uploaded.txt", version);
     }
 }

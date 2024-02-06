@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Windows;
 using Sentry;
+using Station._commandLine;
+using Station._manager;
 using Station._utils;
 using Application = System.Windows.Application;
 

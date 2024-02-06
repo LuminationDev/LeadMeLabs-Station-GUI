@@ -2,6 +2,7 @@
 using System.IO;
 using System.Threading.Tasks;
 using LeadMeLabsLibrary;
+using Station._commandLine;
 
 namespace Station._config;
 
@@ -24,7 +25,7 @@ public static class DotEnv
             }
 
             //Decrypt the data in the file
-            string? decryptedText = EncryptionHelper.DetectFileEncryption(FilePath);
+            string decryptedText = EncryptionHelper.DetectFileEncryption(FilePath);
             if (string.IsNullOrEmpty(decryptedText))
             {
                 MockConsole.WriteLine($"StationError, Config file empty:{FilePath}", MockConsole.LogLevel.Error);

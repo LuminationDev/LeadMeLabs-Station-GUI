@@ -2,6 +2,8 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Station._commandLine;
+using Station._manager;
+using Station._wrapper;
 
 namespace Station._utils;
 
@@ -32,9 +34,9 @@ public static class ModeTracker
     private static void OnTimerCallback(object? state)
     {
         //An experience is active
-        if (WrapperManager.CurrentWrapper?.GetCurrentExperienceName()?.Length > 0)
+        if (WrapperManager.currentWrapper?.GetCurrentExperienceName()?.Length > 0)
         {
-            Logger.WriteLog($"ModeTracker - OnTimerCallback() Active process detected: {WrapperManager.CurrentWrapper?.GetCurrentExperienceName()}", MockConsole.LogLevel.Normal);
+            Logger.WriteLog($"ModeTracker - OnTimerCallback() Active process detected: {WrapperManager.currentWrapper?.GetCurrentExperienceName()}", MockConsole.LogLevel.Normal);
             idleCheck?.Change(Timeout, System.Threading.Timeout.Infinite);
             return;
         }
@@ -60,7 +62,7 @@ public static class ModeTracker
         // Manager.SendResponse("Android", "Station", "SetValue:status:Idle");
         
         //Exit VR applications
-        WrapperManager.StopVRProcesses();
+        WrapperManager.StopCommonProcesses();
     }
 
     /// <summary>
@@ -79,7 +81,7 @@ public static class ModeTracker
         if (Helper.GetStationMode().Equals(Helper.STATION_MODE_VR))
         {
             //Start VR applications
-            await WrapperManager.RestartVRProcesses(Helper.GetStationMode().Equals(Helper.STATION_MODE_VR));
+            await WrapperManager.RestartVrProcesses();
         
             OverlayManager.SetText("Waiting for SteamVR");
         

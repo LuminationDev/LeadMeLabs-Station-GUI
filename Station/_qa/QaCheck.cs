@@ -56,4 +56,15 @@ public class QaCheck
     {
         return _passedStatus == null;
     }
+    
+    // Methods used for UI
+    [JsonIgnore]
+    public string Id
+    {
+        get => _id;
+        set
+        {
+            _id = value;
+        }
+    }
 }

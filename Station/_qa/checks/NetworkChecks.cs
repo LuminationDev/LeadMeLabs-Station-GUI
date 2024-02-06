@@ -4,6 +4,7 @@ using System.Net;
 using System.Net.Http;
 using System.Net.NetworkInformation;
 using LeadMeLabsLibrary;
+using Station._manager;
 
 namespace Station._qa.checks;
 

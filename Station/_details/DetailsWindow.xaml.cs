@@ -8,6 +8,7 @@ using System.Windows.Media;
 using System.Windows.Media.Animation;
 using LeadMeLabsLibrary;
 using Station._utils;
+using Station._wrapper.steam;
 
 namespace Station._details
 {
