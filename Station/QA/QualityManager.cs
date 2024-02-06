@@ -307,6 +307,13 @@ public static class QualityManager
             Logger.WriteLog($"Qa check capture failed with response code {result.StatusCode}", MockConsole.LogLevel.Normal);
             SentrySdk.CaptureMessage($"Qa check capture failed with response code {result.StatusCode}");
         }
+        
+        // Achieve that the upload has either succeed or failed
+        if (CommandLine.StationLocation == null) return;
+
+        string? version = Updater.GetVersionNumber();
+        string details = $"{version}\n{result.IsSuccessStatusCode}";
+        WriteFile(CommandLine.StationLocation, details);
     }
     
     /// <summary>
