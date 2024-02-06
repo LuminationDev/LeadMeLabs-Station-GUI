@@ -123,7 +123,6 @@ public static class MainController
             ThumbnailOrganiser.LoadCache();
             StartServer();
             
-            //TODO work out how to run only on update/other events?
             // Run the local Quality checks before continuing with the setup
             ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage($"SoftwareState,Running QA"), TimeSpan.FromSeconds(0));
             QualityManager.HandleLocalQualityAssurance(true);
