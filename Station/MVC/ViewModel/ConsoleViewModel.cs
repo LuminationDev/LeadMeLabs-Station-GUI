@@ -20,6 +20,20 @@ public class ConsoleViewModel : ObservableObject
     }
     
     /// <summary>
+    /// Used to display or hide the popout button that opens a new console window.
+    /// </summary>
+    private bool _showPopoutButton = true;
+    public bool ShowPopoutButton
+    {
+        get => _showPopoutButton;
+        set
+        {
+            _showPopoutButton = value;
+            OnPropertyChanged();
+        }
+    }
+    
+    /// <summary>
     /// Used for binding the MainWindow Mock Console
     /// </summary>
     private string _consoleText = "";

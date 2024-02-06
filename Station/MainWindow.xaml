@@ -14,7 +14,8 @@
         ResizeMode="NoResize"
         Background="Transparent"
         AllowsTransparency="True"
-        MouseLeftButtonDown="Window_MouseLeftButtonDown">
+        MouseLeftButtonDown="Window_MouseLeftButtonDown"
+        Title="LeadMe Station">
     
     <Window.DataContext>
         <viewModel:MainViewModel/>
