@@ -3,10 +3,15 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:converters="clr-namespace:Station.Converters"
              mc:Ignorable="d"
              Background="Transparent"
              d:DesignHeight="560" d:DesignWidth="700"
              Loaded="UserControl_Loaded">
+    
+    <UserControl.Resources>
+        <converters:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
+    </UserControl.Resources>
     
     <Grid Margin="10, 0, 0, 0">
         <Grid.RowDefinitions>
@@ -29,21 +34,30 @@
                        HorizontalAlignment="Left"
                        Margin="0, 0, 0, 0"/>
 
-            <!-- Change log levels -->
-            <Button Grid.Column="1"
-                    Style="{StaticResource MainButton}"
-                    Margin="10"
-                    Width="120" 
-                    Height="35"
-                    Command="{Binding ChangeLogCommand}"
-                    ToolTip="Display different amounts of information in the console window.">
-                <Button.Content>
-                    <TextBlock>
-                        <Run Text="Logging: "/>
-                        <Run Text="{Binding CurrentLogLevel}"/>
-                    </TextBlock>
-                </Button.Content>
-            </Button>
+            <!-- Change log levels and open popout -->
+            <WrapPanel Grid.Column="1">
+                <Button Style="{StaticResource MainButton}"
+                        Margin="10"
+                        Width="120" 
+                        Height="35"
+                        Content="Popout"
+                        Click="ShowPopOutWindow_Click"
+                        Visibility="{Binding ShowPopoutButton, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                
+                <Button Style="{StaticResource MainButton}"
+                        Margin="10"
+                        Width="120" 
+                        Height="35"
+                        Command="{Binding ChangeLogCommand}"
+                        ToolTip="Display different amounts of information in the console window.">
+                    <Button.Content>
+                        <TextBlock>
+                            <Run Text="Logging: "/>
+                            <Run Text="{Binding CurrentLogLevel}"/>
+                        </TextBlock>
+                    </Button.Content>
+                </Button>
+            </WrapPanel>
         </Grid>
         
         <!-- Console Window -->
