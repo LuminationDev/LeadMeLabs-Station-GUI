@@ -1,30 +1,41 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Net.Http;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using LeadMeLabsLibrary;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using Sentry;
 using Station.Components._commandLine;
 using Station.Components._notification;
 using Station.Components._profiles;
+using Station.Components._utils;
 using Station.Components._utils._steamConfig;
 using Station.Components._wrapper;
 using Station.MVC.Controller;
+using Station.MVC.ViewModel;
 using Station.QA.checks;
 
 namespace Station.QA;
 
 public static class QualityManager
 {
+    //Background
     private static readonly NetworkChecks NetworkChecks = new();
-    private static readonly ImvrChecks ImvrChecks = new();
     private static readonly WindowChecks WindowChecks = new();
-    private static readonly ConfigurationChecks configurationChecks = new();
+    private static readonly ConfigurationChecks ConfigurationChecks = new();
     private static readonly SoftwareChecks SoftwareChecks = new();
     private static readonly ConfigChecks ConfigChecks = new();
     private static readonly SteamConfigChecks SteamConfigChecks = new();
+    
+    //Foreground - requires devices
+    private static readonly ImvrChecks ImvrChecks = new();
+    
+    //Not applicable
     private static readonly StationConnectionChecks StationConnectionChecks = new();
     
     private static string labType = "Online"; 
@@ -76,7 +87,7 @@ public static class QualityManager
                         break;
                     
                     case "configuration_checks":
-                        result = JsonConvert.SerializeObject(configurationChecks.RunQa(labType));
+                        result = JsonConvert.SerializeObject(ConfigurationChecks.RunQa(labType));
                         break;
                     
                     case "software_checks":
@@ -216,5 +227,160 @@ public static class QualityManager
                 MockConsole.WriteLine($"Unknown QA request {additionalData}", MockConsole.LogLevel.Normal);
                 break;
         }
+    }
+
+    /// <summary>
+    /// Run the requested software checks after an update or other significant event. These details are uploaded to
+    /// Firebase and displayed on the QA UI page.
+    /// </summary>
+    public static async void HandleLocalQualityAssurance(bool upload)
+    {
+        if (HasUploadAlreadyBeenCompleted())
+        {
+            return;
+        }
+        
+        MainViewModel.ViewModelManager.QaViewModel.IsLoading = true;
+        
+        Dictionary<string, Dictionary<string, QaCheck>> qaCheckDictionary = new();
+
+        // Transform and add checks to the dictionary
+        AddChecksToDictionary("Window Checks", WindowChecks.RunQa(labType));
+        AddChecksToDictionary("Configuration Checks", ConfigurationChecks.RunQa(labType));
+        AddChecksToDictionary("Software Checks", await SoftwareChecks.RunQa(labType));
+        AddChecksToDictionary("Network Checks", NetworkChecks.RunQa(""));
+        AddChecksToDictionary("Steam Config Checks", SteamConfigChecks.RunQa(labType));
+
+        // Update the UI
+        // Iterate over each key-value pair in the qaCheckDictionary
+        foreach (var kvp in qaCheckDictionary)
+        {
+            // Iterate over each QaCheck in the nested dictionary
+            foreach (var qaCheckKvp in kvp.Value)
+            {
+                MainViewModel.ViewModelManager.QaViewModel.AddQaCheck(qaCheckKvp.Value);
+            }
+        }
+        
+        MainViewModel.ViewModelManager.QaViewModel.IsLoading = false;
+        
+        //Upload to Firebase
+        if (upload)
+        {
+            UploadToFirebase(qaCheckDictionary);
+        }
+
+        return;
+
+        // Method to add checks to the dictionary
+        void AddChecksToDictionary(string key, List<QaCheck> checks)
+        {
+            Dictionary<string, QaCheck> checkDictionary = checks.ToDictionary(qaCheck => qaCheck.Id);
+            qaCheckDictionary.Add(key, checkDictionary);
+        }
+    }
+
+    /// <summary>
+    /// Upload a string version of the QA check results list. 
+    /// </summary>
+    /// <param name="qaCheckDictionary">A dictionary of QaChecks, sorted under their type and then id.</param>
+    private static async void UploadToFirebase(Dictionary<string, Dictionary<string, QaCheck>> qaCheckDictionary)
+    {
+        using var httpClient = new HttpClient();
+        
+        string stationId = Environment.GetEnvironmentVariable("StationId", EnvironmentVariableTarget.Process) ?? "Unknown";
+        string location = Environment.GetEnvironmentVariable("LabLocation", EnvironmentVariableTarget.Process) ?? "Unknown";
+        string strJson = JsonConvert.SerializeObject(qaCheckDictionary);
+        
+        StringContent objData = new StringContent(strJson, Encoding.UTF8, "application/json");
+        var result = await httpClient.PatchAsync(
+            $"https://leadme-labs-default-rtdb.asia-southeast1.firebasedatabase.app/lab_qa_checks/{location}/{stationId}.json",
+            objData
+        );
+        
+        if (result.IsSuccessStatusCode)
+        {
+            Logger.WriteLog($"Uploaded QA test results to Firebase.", MockConsole.LogLevel.Normal);
+        }
+        else
+        {
+            Logger.WriteLog($"Qa check capture failed with response code {result.StatusCode}", MockConsole.LogLevel.Normal);
+            SentrySdk.CaptureMessage($"Qa check capture failed with response code {result.StatusCode}");
+        }
+    }
+    
+    /// <summary>
+    /// Checks if the upload process has already been completed based on a stored version number and a boolean flag.
+    /// </summary>
+    /// <returns>
+    /// Returns true if the upload process has already been completed and the software version matches the stored version number,
+    /// or if the stored boolean flag is true. Returns false otherwise.
+    /// </returns>
+    private static bool HasUploadAlreadyBeenCompleted()
+    {
+        string? version = Updater.GetVersionNumber();
+        
+        if (CommandLine.StationLocation == null || version == null) return false;
+        
+        // Path to the saved file
+        string filePath = $"{CommandLine.StationLocation}\\_logs\\uploaded.txt";
+
+        // Check if the file exists
+        if (!File.Exists(filePath))
+        {
+            return false;
+        }
+        
+        // Current version of your software
+        Version? currentVersion = new Version(version);
+        
+        try
+        {
+            // Read all lines from the file
+            string[] lines = File.ReadAllLines(filePath);
+
+            // Parse version number from the first line
+            if (lines.Length == 0)
+            {
+                Console.WriteLine("File is empty - Uploading.");
+                return false;
+            }
+            
+            Version fileVersion = new Version(lines[0]);
+                
+            // Compare version numbers
+            int versionComparison = currentVersion.CompareTo(fileVersion);
+            switch (versionComparison)
+            {
+                case < 0:
+                    Console.WriteLine("File version is greater than current software version - Uploading");
+                    return false;
+                    
+                case 0 when lines.Length > 1:
+                {
+                    // Parse boolean value from the second line
+                    if (bool.TryParse(lines[1], out bool isEnabled))
+                    {
+                        Console.WriteLine($"Version numbers match. Second line value: {isEnabled}");
+                        return isEnabled;
+                    }
+
+                    Console.WriteLine("Second line does not contain a valid boolean value - Uploading");
+                    return false;
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"An error occurred: {ex.Message}");
+            return false;
+        }
+
+        return false;
+    }
+    
+    private static void WriteFile(string location, string version)
+    {
+        File.WriteAllText($"{location}\\_logs\\uploaded.txt", version);
     }
 }

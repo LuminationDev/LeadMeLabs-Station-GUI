@@ -14,6 +14,7 @@ using Station.Components._profiles;
 using Station.Components._utils;
 using Station.Components._utils._steamConfig;
 using Station.Components._wrapper;
+using Station.QA;
 
 namespace Station.MVC.Controller;
 
@@ -116,11 +117,21 @@ public static class MainController
         // Collect audio devices before starting the server
         AudioManager.Initialise();
         
-        // Additional tasks
-        ThumbnailOrganiser.LoadCache();
-        StartServer();
-        ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage($"SoftwareState,Launching Software"), TimeSpan.FromSeconds(0));
-        new Thread(Initialisation).Start(); //Call as a new task to stop UI and server start up from hanging whilst reading the files
+        // Additional tasks - Start a new task as to now hold up the UI
+        new Task(() =>
+        {
+            ThumbnailOrganiser.LoadCache();
+            StartServer();
+            
+            //TODO work out how to run only on update/other events?
+            // Run the local Quality checks before continuing with the setup
+            ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage($"SoftwareState,Running QA"), TimeSpan.FromSeconds(0));
+            QualityManager.HandleLocalQualityAssurance(true);
+            
+            ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage($"SoftwareState,Launching Software"), TimeSpan.FromSeconds(0));
+            new Thread(Initialisation).Start(); //Call as a new task to stop UI and server start up from hanging whilst reading the files
+        }).Start();
+        
         ModeTracker.Initialise(); //Start tracking any idle time
     }
     

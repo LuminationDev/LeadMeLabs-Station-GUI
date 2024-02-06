@@ -66,7 +66,7 @@ public class ExperiencesViewModel : ObservableObject
 
         if (item is Experience experience)
         {
-            // Customize your filtering logic here
+            // Customize the filtering logic here
             return experience.Name != null && experience.Name.Contains(SearchText, StringComparison.OrdinalIgnoreCase);
         }
 
