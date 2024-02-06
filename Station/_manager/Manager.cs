@@ -117,7 +117,14 @@ public static class Manager
             StartServer();
             
             // Run the local Quality checks before continuing with the setup
-            QualityManager.HandleLocalQualityAssurance(true);
+            try
+            {
+                QualityManager.HandleLocalQualityAssurance(true);
+            }
+            catch (Exception e)
+            {
+                SentrySdk.CaptureException(e);
+            }
 
             //Cannot be any higher - encryption key does not exist before the DotEnv.Load()
             ScheduledTaskQueue.EnqueueTask(
