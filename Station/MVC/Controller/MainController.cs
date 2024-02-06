@@ -124,7 +124,6 @@ public static class MainController
             StartServer();
             
             // Run the local Quality checks before continuing with the setup
-            ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage($"SoftwareState,Running QA"), TimeSpan.FromSeconds(0));
             QualityManager.HandleLocalQualityAssurance(true);
             
             ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage($"SoftwareState,Launching Software"), TimeSpan.FromSeconds(0));
