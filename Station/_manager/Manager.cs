@@ -9,6 +9,7 @@ using Station._monitoring;
 using Station._network;
 using Station._openvr;
 using Station._profiles;
+using Station._qa;
 using Station._scripts;
 using Station._utils;
 using Station._wrapper;
@@ -110,16 +111,28 @@ public static class Manager
         // Collect audio devices before starting the server
         AudioManager.Initialise();
         
-        StartServer();
-        
-        //Cannot be any higher - encryption key does not exist before the DotEnv.Load()
-        ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage($"SoftwareState,Launching Software"), TimeSpan.FromSeconds(0));
+        // Additional tasks - Start a new task as to now hold up the UI
+        new Task(() =>
+        {
+            StartServer();
+            
+            // Run the local Quality checks before continuing with the setup
+            ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage($"SoftwareState,Running QA"), TimeSpan.FromSeconds(0));
+            QualityManager.HandleLocalQualityAssurance(true);
 
-        App.SetWindowTitle($"Station({Environment.GetEnvironmentVariable("StationId", EnvironmentVariableTarget.Process)}) -- {localEndPoint.Address} -- {macAddress} -- {versionNumber}");
-        Logger.WriteLog("ENV variables loaded", MockConsole.LogLevel.Error);
+            //Cannot be any higher - encryption key does not exist before the DotEnv.Load()
+            ScheduledTaskQueue.EnqueueTask(
+                () => SessionController.PassStationMessage($"SoftwareState,Launching Software"),
+                TimeSpan.FromSeconds(0));
+
+            App.SetWindowTitle(
+                $"Station({Environment.GetEnvironmentVariable("StationId", EnvironmentVariableTarget.Process)}) -- {localEndPoint.Address} -- {macAddress} -- {versionNumber}");
+            Logger.WriteLog("ENV variables loaded", MockConsole.LogLevel.Error);
+
+            //Call as a new task to stop UI and server start up from hanging whilst reading the files
+            new Thread(Initialisation).Start();
+        }).Start();
         
-        //Call as a new task to stop UI and server start up from hanging whilst reading the files
-        new Thread(Initialisation).Start();
         // ModeTracker.Initialise(); //Start tracking any idle time
     }
 
