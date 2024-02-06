@@ -117,7 +117,6 @@ public static class Manager
             StartServer();
             
             // Run the local Quality checks before continuing with the setup
-            ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage($"SoftwareState,Running QA"), TimeSpan.FromSeconds(0));
             QualityManager.HandleLocalQualityAssurance(true);
 
             //Cannot be any higher - encryption key does not exist before the DotEnv.Load()

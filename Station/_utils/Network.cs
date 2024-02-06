@@ -1,35 +1,34 @@
 ﻿using System;
 using System.Net.Http;
 
-namespace Station
-{ 
-    public class Network
+namespace Station._utils;
+
+public static class Network
+{
+    private static bool connected = RunInternetCheck();
+
+    private static bool RunInternetCheck()
     {
-        private static bool connected = RunInternetCheck();
-
-        private static bool RunInternetCheck()
+        try
         {
-            try
-            {
-                using var httpClient = new HttpClient();
-                httpClient.Timeout = TimeSpan.FromSeconds(10);
-                var response = httpClient.GetAsync("http://learninglablauncher.herokuapp.com/program-station-version").GetAwaiter().GetResult();
-                connected = response.IsSuccessStatusCode;
-                return response.IsSuccessStatusCode;
-            }
-            catch
-            {
-                return false;
-            }
+            using var httpClient = new HttpClient();
+            httpClient.Timeout = TimeSpan.FromSeconds(10);
+            var response = httpClient.GetAsync("http://learninglablauncher.herokuapp.com/program-station-version").GetAwaiter().GetResult();
+            connected = response.IsSuccessStatusCode;
+            return response.IsSuccessStatusCode;
         }
-
-        public static bool CheckIfConnectedToInternet(bool refresh = false)
+        catch
         {
-            if (refresh)
-            {
-                RunInternetCheck();
-            }
-            return connected;
+            return false;
         }
+    }
+
+    public static bool CheckIfConnectedToInternet(bool refresh = false)
+    {
+        if (refresh)
+        {
+            RunInternetCheck();
+        }
+        return connected;
     }
 }

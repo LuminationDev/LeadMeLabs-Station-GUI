@@ -241,11 +241,16 @@ public static class QualityManager
     /// </summary>
     public static async void HandleLocalQualityAssurance(bool upload)
     {
-        if (HasUploadAlreadyBeenCompleted())
-        {
-            return;
-        }
-
+        string location = Environment.GetEnvironmentVariable("LabLocation", EnvironmentVariableTarget.Process) ?? "Unknown";
+        
+        // Check if there is a network connection (or if it is Adelaide/Australian Science and Mathematics School)
+        ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage($"SoftwareState,Checking network"), TimeSpan.FromSeconds(0));
+        if (location.ToLower().Contains("science and mathematics school") || !Network.CheckIfConnectedToInternet()) return;
+        
+        // Check if the QA has already been uploaded
+        if (HasUploadAlreadyBeenCompleted()) return;
+        ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage($"SoftwareState,Running QA"), TimeSpan.FromSeconds(0));
+        
         Dictionary<string, Dictionary<string, QaCheck>> qaCheckDictionary = new();
 
         // Transform and add checks to the dictionary
