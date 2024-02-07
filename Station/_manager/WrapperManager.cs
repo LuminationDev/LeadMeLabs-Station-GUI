@@ -652,7 +652,7 @@ public class WrapperManager
     /// <param name="launchType">A string of if the experience is to show on the tablet (visible) or not (hidden)</param>
     /// <param name="path">A string of the absolute path of the executable to run</param>
     /// <param name="parameters">A string to be passed as the process arguments</param>
-    /// <param name="isVr">A string of if the experience is VR or not</param>
+    /// <param name="_isVr">A string of if the experience is VR or not</param>
     public void HandleInternalExecutable(string action, string launchType, string path, string? parameters, string _isVr)
     {
         string name = Path.GetFileNameWithoutExtension(path);
@@ -660,7 +660,7 @@ public class WrapperManager
 
         // Other relates to any processes that are fire and forget, like changing the wall paper. These do not need to be
         // tracked or wait for any other processes.
-        if (launchType.Equals("other"))
+        if (!launchType.Equals("other"))
         {
             // Delay until experiences are collected so that if there are any details to be sent to the tablet it syncs correctly
             do
