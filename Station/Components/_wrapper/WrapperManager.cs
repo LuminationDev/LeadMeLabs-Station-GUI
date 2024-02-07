@@ -60,6 +60,7 @@ public class WrapperManager {
     /// </summary>
     private void ValidateManifestFiles()
     {
+        //TODO a quick fix is making the OculusClient.exe run as administrator
         //TODO remove Oculus/CoreData/Manifests that have steam apps
         
         //Location is hardcoded for now
@@ -684,35 +685,48 @@ public class WrapperManager {
     /// </summary>
     /// <param name="action">A string describing the action to take (Start or Stop)</param>
     /// <param name="launchType">A string of if the experience is to show on the tablet (visible) or not (hidden)</param>
-    /// <param name="isVr"></param>
     /// <param name="path">A string of the absolute path of the executable to run</param>
     /// <param name="parameters">A string to be passed as the process arguments</param>
-    public void HandleInternalExecutable(string action, string launchType, bool isVr, string path, string? parameters)
+    /// <param name="_isVr">A string of if the experience is VR or not</param>
+    public void HandleInternalExecutable(string action, string launchType, string path, string? parameters, string _isVr)
     {
         string name = Path.GetFileNameWithoutExtension(path);
         string id = "NA";
         
-        //Delay until experiences are collected so that if there are any details to be sent to the tablet it syncs correctly
-        do
+        // Other relates to any processes that are fire and forget, like changing the wall paper. These do not need to be
+        // tracked or wait for any other processes.
+        if (!launchType.Equals("other"))
         {
-            MockConsole.WriteLine($"InternalWrapper - WrapProcess: Waiting for the software to collect experiences.", MockConsole.LogLevel.Normal);
-            Task.Delay(2000).Wait();
-        } while (ApplicationList.Count == 0 || alreadyCollecting);
-        
-        //Check if the application is known to the Software and replace the name with the correct one.
-        Dictionary<string, Experience> applicationListCopy = ApplicationList;
-        var matchingApplication = applicationListCopy
-            .FirstOrDefault(kvp => kvp.Value.AltPath == path);
+            // Delay until experiences are collected so that if there are any details to be sent to the tablet it syncs correctly
+            do
+            {
+                MockConsole.WriteLine(
+                    $"InternalWrapper - WrapProcess: Waiting for the software to collect experiences.",
+                    MockConsole.LogLevel.Normal);
+                Task.Delay(2000).Wait();
+            } while (ApplicationList.Count == 0 || alreadyCollecting);
 
-        if (matchingApplication.Key != null)
-        {
-            name = matchingApplication.Value.Name ?? name;
-            id = matchingApplication.Value.Id ?? "NA";
+            // Check if the application is known to the Software and replace the name with the correct one.
+            Dictionary<string, Experience> applicationListCopy = ApplicationList;
+            var matchingApplication = applicationListCopy
+                .FirstOrDefault(kvp => kvp.Value.AltPath == path);
+
+            if (matchingApplication.Key != null)
+            {
+                name = matchingApplication.Value.Name ?? name;
+                id = matchingApplication.Value.Id ?? "NA";
+            }
         }
 
-        //Create a temporary Experience struct to hold the information
-        Experience experience = new("Internal", id, name, name, parameters, path, isVr);
+        // Attempt to convert the string into a boolean or default to false
+        if (!bool.TryParse(_isVr, out var isVr))
+        {
+            isVr = false;
+        }
 
+        // Create a temporary Experience struct to hold the information
+        Experience experience = new("Internal", id, name, name, parameters, path, isVr);
+        
         switch(action)
         {
             case "Start":

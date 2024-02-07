@@ -154,15 +154,16 @@ public class ScriptThread
         string[] split = additionalData.Split(":", 5);
         string action = split[0];
         string launchType = split[1];
-        bool isVr = Convert.ToBoolean(split[2]);
         
         //Convert the path back to absolute (NUC changed it for sending)
-        string safePath = split[3];
+        string safePath = split[2];
         string path = safePath.Replace("%", ":");
-        string safeParameters = split.Length > 4 ? split[4] : "";
+        string safeParameters = split.Length > 3 ? split[3] : "";
         string parameters = safeParameters.Replace("%", ":");
 
-        MainController.wrapperManager?.HandleInternalExecutable(action, launchType, isVr, path, parameters);
+        string isVr = split.Length > 4 ? split[4] : "true";
+
+        MainController.wrapperManager?.HandleInternalExecutable(action, launchType, path, parameters, isVr);
     }
     
     /// <summary>
