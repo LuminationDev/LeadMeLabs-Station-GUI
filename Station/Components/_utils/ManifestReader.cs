@@ -11,7 +11,7 @@ public static class ManifestReader
 {
     public class ManifestApplicationList
     {
-        private readonly JArray _applications = new JArray();
+        private readonly JArray _applications = new();
         public ManifestApplicationList(string filePath)
         {
             JArray? newApplications = CollectApplications(filePath);
@@ -83,7 +83,9 @@ public static class ManifestReader
     /// </returns>
     private static bool IsDataNull(string filePath, JObject? data)
     {
-        if (data != null && data.ContainsKey("applications")) return false;
+        //Check if data or data.ContainsKey is null
+        if (data?.ContainsKey("applications") == null) return true;
+        if (data.ContainsKey("applications") && data["applications"] is JArray) return false;
         
         Logger.WriteLog($"Manifest file is not in the expected format: {filePath}.", MockConsole.LogLevel.Error);
         return true;
