@@ -652,36 +652,50 @@ public class WrapperManager
     /// <param name="launchType">A string of if the experience is to show on the tablet (visible) or not (hidden)</param>
     /// <param name="path">A string of the absolute path of the executable to run</param>
     /// <param name="parameters">A string to be passed as the process arguments</param>
-    public void HandleInternalExecutable(string action, string launchType, string path, string? parameters)
+    /// <param name="isVr">A string of if the experience is VR or not</param>
+    public void HandleInternalExecutable(string action, string launchType, string path, string? parameters, string _isVr)
     {
         string name = Path.GetFileNameWithoutExtension(path);
         string id = "NA";
 
-        //Delay until experiences are collected so that if there are any details to be sent to the tablet it syncs correctly
-        do
+        // Other relates to any processes that are fire and forget, like changing the wall paper. These do not need to be
+        // tracked or wait for any other processes.
+        if (launchType.Equals("other"))
         {
-            MockConsole.WriteLine($"InternalWrapper - WrapProcess: Waiting for the software to collect experiences.", MockConsole.LogLevel.Normal);
-            Task.Delay(2000).Wait();
-        } while (ApplicationList.Count == 0 || alreadyCollecting);
+            // Delay until experiences are collected so that if there are any details to be sent to the tablet it syncs correctly
+            do
+            {
+                MockConsole.WriteLine(
+                    $"InternalWrapper - WrapProcess: Waiting for the software to collect experiences.",
+                    MockConsole.LogLevel.Normal);
+                Task.Delay(2000).Wait();
+            } while (ApplicationList.Count == 0 || alreadyCollecting);
 
-        //Check if the application is known to the Software and replace the name with the correct one.
-        Dictionary<string, Experience> applicationListCopy = ApplicationList;
-        var matchingApplication = applicationListCopy
-            .FirstOrDefault(kvp => kvp.Value.AltPath == path);
+            // Check if the application is known to the Software and replace the name with the correct one.
+            Dictionary<string, Experience> applicationListCopy = ApplicationList;
+            var matchingApplication = applicationListCopy
+                .FirstOrDefault(kvp => kvp.Value.AltPath == path);
 
-        if (matchingApplication.Key != null)
-        {
-            name = matchingApplication.Value.Name ?? name;
-            id = matchingApplication.Value.ID ?? "NA";
+            if (matchingApplication.Key != null)
+            {
+                name = matchingApplication.Value.Name ?? name;
+                id = matchingApplication.Value.ID ?? "NA";
+            }
         }
 
-        //Create a temporary Experience struct to hold the information
-        Experience experience = new("Internal", id, name, name, parameters, path, true);
+        // Attempt to convert the string into a boolean or default to false
+        if (!bool.TryParse(_isVr, out var isVr))
+        {
+            isVr = false;
+        }
+
+        // Create a temporary Experience struct to hold the information
+        Experience experience = new("Internal", id, name, name, parameters, path, isVr);
 
         switch(action)
         {
             case "Start":
-                InternalWrapper.WrapProcess(experience);
+                InternalWrapper.WrapProcess(launchType, experience);
                 break;
             case "Stop":
                 InternalWrapper.StopAProcess(experience);
