@@ -70,7 +70,7 @@ public class InternalWrapper : IWrapper
 
     public string WrapProcess(Experience experience)
     {
-        throw new NotImplementedException();
+        return WrapProcess("hidden", experience);
     }
 
     public string WrapProcess(string launchType, Experience experience)
@@ -104,6 +104,8 @@ public class InternalWrapper : IWrapper
                 }
             };
             newProcess.Start();
+            if (launchType.Equals("other")) return;
+            
             _internalProcesses.Add(experience.Name, newProcess);
             if (launchType.Equals("hidden")) return;
         

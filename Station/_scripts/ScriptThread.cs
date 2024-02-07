@@ -162,7 +162,9 @@ public class ScriptThread
         string safeParameters = split.Length > 3 ? split[3] : "";
         string parameters = safeParameters.Replace("%", ":");
         
-        Manager.wrapperManager?.HandleInternalExecutable(action, launchType, path, parameters);
+        string isVr = split.Length > 4 ? split[4] : "true";
+        
+        Manager.wrapperManager?.HandleInternalExecutable(action, launchType, path, parameters, isVr);
     }
     
     /// <summary>
