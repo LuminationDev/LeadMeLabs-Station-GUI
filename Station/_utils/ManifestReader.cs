@@ -11,26 +11,25 @@ public static class ManifestReader
 
     public class ManifestApplicationList
     {
-        private JArray applications = new JArray();
+        private readonly JArray _applications = new();
         public ManifestApplicationList(string filePath)
         {
             JArray? newApplications = CollectApplications(filePath);
             if (newApplications != null)
             {
-                applications = newApplications;
+                _applications = newApplications;
             }
         }
 
         public bool IsApplicationInstalledAndVrCompatible(string appKey)
         {
-            var specificEntry = applications.FirstOrDefault(app => (((string)app["app_key"])!).Contains(appKey));
+            var specificEntry = _applications.FirstOrDefault(app => (((string)app["app_key"])!).Contains(appKey));
         
             return !String.IsNullOrEmpty(specificEntry?["strings"]?["en_us"]?["name"]?.ToString());
         }
     }
-
-
-/// <summary>
+    
+    /// <summary>
     /// Reads the content of a VR manifest file from the specified file path and converts it to a JObject.
     /// </summary>
     /// <param name="filePath">The path to the VR manifest file.</param>
@@ -84,7 +83,9 @@ public static class ManifestReader
     /// </returns>
     private static bool IsDataNull(string filePath, JObject? data)
     {
-        if (data != null && data.ContainsKey("applications")) return false;
+        //Check if data or data.ContainsKey is null
+        if (data?.ContainsKey("applications") == null) return true;
+        if (data.ContainsKey("applications") && data["applications"] is JArray) return false;
         
         Logger.WriteLog($"Manifest file is not in the expected format: {filePath}.", MockConsole.LogLevel.Error);
         return true;
