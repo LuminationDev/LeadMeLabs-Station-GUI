@@ -48,197 +48,216 @@
             </core:NotifyIconWrapper>
             
             <!--Window Action Panel-->
-            <DockPanel Grid.Row="0" Grid.Column="1">
-                
-                <DockPanel.Background>
-                    <SolidColorBrush Color="#576574" Opacity="0.2"/>
-                </DockPanel.Background>
-                
-                <StackPanel HorizontalAlignment="Right">
-                    <Button Content="x" 
-                            Width="{Binding RelativeSource={x:Static RelativeSource.Self}, Path=ActualHeight}"
-                            FontSize="22"
-                            Margin="0, 0, 5, 0"
-                            Style="{StaticResource CloseButtonTheme}"
-                            Command="{Binding ClosingCommand}"/>
-                </StackPanel>
-            </DockPanel>
+            <Border Grid.Row="0" Grid.Column="1" 
+                    Background="#2d3436" CornerRadius="10">
+                <Border.Clip>
+                    <RectangleGeometry RadiusX="10" RadiusY="10" Rect="-10,0,710,60"/>
+                </Border.Clip>
+
+                <DockPanel>
+                    
+                    <DockPanel.Background>
+                        <SolidColorBrush Color="#576574" Opacity="0.2"/>
+                    </DockPanel.Background>
+                    
+                    <StackPanel HorizontalAlignment="Right">
+                        <Button Content="x" 
+                                Width="{Binding RelativeSource={x:Static RelativeSource.Self}, Path=ActualHeight}"
+                                FontSize="22"
+                                Margin="0, 0, 5, 0"
+                                Style="{StaticResource CloseButtonTheme}"
+                                Command="{Binding ClosingCommand}"/>
+                    </StackPanel>
+                </DockPanel>
+            </Border>
             
             <!--Logo-->
-            <DockPanel Grid.Row="0" Grid.RowSpan="2" Grid.Column="0">
-                <DockPanel.Background>
-                    <SolidColorBrush Color="#576574" Opacity="0.2"/>
-                </DockPanel.Background>
+            <Border Grid.Row="0" Grid.RowSpan="2" Grid.Column="0" Background="#2d3436" CornerRadius="10">
+                <Border.Clip>
+                    <RectangleGeometry RadiusX="10" RadiusY="10" Rect="0,0,210,175"/>
+                </Border.Clip>
                 
-                <TextBlock Text="{Binding Id}"
-                           VerticalAlignment="Center"
-                           HorizontalAlignment="Left"
-                           Foreground="White"
-                           FontSize="35"
-                           FontFamily="Fonts/#Poppins"
-                           Margin="10, 0, 0, 0"/>
-            </DockPanel>
+                <DockPanel >
+                    <DockPanel.Background>
+                        <SolidColorBrush Color="#576574" Opacity="0.2"/>
+                    </DockPanel.Background>
+                    
+                    <TextBlock Text="{Binding Id}"
+                               VerticalAlignment="Center"
+                               HorizontalAlignment="Left"
+                               Foreground="White"
+                               FontSize="35"
+                               FontFamily="Fonts/#Poppins"
+                               Margin="10, 0, 0, 0"/>
+                </DockPanel>
+            </Border>
             
             <!--Menu Panel-->
-            <DockPanel Grid.Row="2" Grid.Column="0" 
-                       LastChildFill="False">
+            <Border Grid.Row="2" Grid.Column="0" 
+                    Background="#2d3436" CornerRadius="10">
+                <Border.Clip>
+                    <RectangleGeometry RadiusX="10" RadiusY="10" Rect="0,-10,210,495"/>
+                </Border.Clip>
                 
-                <DockPanel.Background>
-                    <SolidColorBrush Color="#576574" Opacity="0.2"/>
-                </DockPanel.Background>
+                <DockPanel LastChildFill="False">
                 
-                <StackPanel DockPanel.Dock="Top">
-                
-                    <RadioButton Content="Home"
-                                 Height="50"
-                                 Foreground="White"
-                                 FontSize="14"
-                                 Style="{StaticResource MenuButtonTheme}"
-                                 IsChecked="True"
-                                 Command="{Binding HomeViewCommand}"/>
+                    <DockPanel.Background>
+                        <SolidColorBrush Color="#576574" Opacity="0.2"/>
+                    </DockPanel.Background>
                     
-                    <RadioButton Content="Console"
-                                 Height="50"
-                                 Foreground="White"
-                                 FontSize="14"
-                                 Style="{StaticResource MenuButtonTheme}"
-                                 Command="{Binding ConsoleViewCommand}"/>
+                    <StackPanel DockPanel.Dock="Top">
                     
-                    <RadioButton Content="Experiences"
-                                 Height="50"
-                                 Foreground="White"
-                                 FontSize="14"
-                                 Style="{StaticResource MenuButtonTheme}"
-                                 Command="{Binding ExperiencesViewCommand}"/>
-                    
-                    <RadioButton Content="Debug"
-                                 Height="50"
-                                 Foreground="White"
-                                 FontSize="14"
-                                 Style="{StaticResource MenuButtonTheme}"
-                                 Command="{Binding DebugViewCommand}"/>
-                    
-                    <RadioButton Content="Logs"
-                                 Height="50"
-                                 Foreground="White"
-                                 FontSize="14"
-                                 Style="{StaticResource MenuButtonTheme}"
-                                 Command="{Binding LogsViewCommand}"/>
-                    
-                    <RadioButton Content="QA"
-                                 Height="50"
-                                 Foreground="White"
-                                 FontSize="14"
-                                 Style="{StaticResource MenuButtonTheme}"
-                                 Command="{Binding QaViewCommand}"/>
-                    
-                </StackPanel>
-                
-                <!--Action Buttons-->
-                <DockPanel DockPanel.Dock="Bottom"
-                            HorizontalAlignment="Stretch"
-                            Height="75">
-                    
-                    <!-- Control buttons to wake up/turn off/restart the computer -->
-                    <Button Command="{Binding PowerCommand}"
-                            HorizontalAlignment="Left"
-                            Cursor="Hand"
-                            ToolTip="Power On/Off the NUC"
-                            Margin="20, 0, 0, 0">
-
-                        <Button.Template>
-                            <ControlTemplate TargetType="Button">
-                                <Border Width="50" Height="50">
-                                    <Border.Style>
-                                        <Style TargetType="Border">
-                                            <Style.Setters>
-                                                <Setter Property="CornerRadius" Value="50"/>
-                                                <Setter Property="BorderThickness" Value="0"/>
-                                                <Setter Property="Background" Value="Green"/>
-                                            </Style.Setters>
-
-                                            <Style.Triggers>
-                                                <DataTrigger Binding="{Binding Status}" Value="Off">
-                                                    <Setter Property="Background" Value="PaleVioletRed"/>
-                                                </DataTrigger>
-                                                <DataTrigger Binding="{Binding Status}" Value="On">
-                                                    <Setter Property="Background" Value="Green"/>
-                                                </DataTrigger>
-                                                <MultiDataTrigger>
-                                                    <MultiDataTrigger.Conditions>
-                                                        <Condition Binding="{Binding Status}" Value="Off"/>
-                                                        <Condition Binding="{Binding IsMouseOver, RelativeSource={RelativeSource Self}}" Value="True"/>
-                                                    </MultiDataTrigger.Conditions>
-                                                    <Setter Property="Background" Value="Green"/>
-                                                </MultiDataTrigger>
-                                                <MultiDataTrigger>
-                                                    <MultiDataTrigger.Conditions>
-                                                        <Condition Binding="{Binding Status}" Value="On"/>
-                                                        <Condition Binding="{Binding IsMouseOver, RelativeSource={RelativeSource Self}}" Value="True"/>
-                                                    </MultiDataTrigger.Conditions>
-                                                    <Setter Property="Background" Value="PaleVioletRed"/>
-                                                </MultiDataTrigger>
-                                                <Trigger Property="IsMouseOver" Value="True">
-                                                    <Setter Property="Cursor" Value="Hand"/>
-                                                </Trigger>
-                                            </Style.Triggers>
-                                        </Style>
-                                    </Border.Style>
-                                    <Image Source="../Assets/Icons/power_software.png" Width="50" Height="50"/>
-                                </Border>
-                            </ControlTemplate>
-                        </Button.Template>
-                    </Button>
-                    
-                    <Button Command="{Binding RestartCommand}"
-                            HorizontalAlignment="Right"
-                            Cursor="Hand"
-                            ToolTip="Restart the NUC"
-                            Margin="0, 0, 20, 0">
+                        <RadioButton Content="Home"
+                                     Height="50"
+                                     Foreground="White"
+                                     FontSize="14"
+                                     Style="{StaticResource MenuButtonTheme}"
+                                     IsChecked="True"
+                                     Command="{Binding HomeViewCommand}"/>
                         
-                        <Button.Template>
-                            <ControlTemplate TargetType="Button">
-                                <Border Width="50" Height="50">
-                                    <Border.Style>
-                                        <Style TargetType="Border">
-                                            <Style.Setters>
-                                                <Setter Property="CornerRadius" Value="50"/>
-                                                <Setter Property="BorderThickness" Value="0"/>
-                                                <Setter Property="Background" Value="LightCyan"/>
-                                            </Style.Setters>
+                        <RadioButton Content="Console"
+                                     Height="50"
+                                     Foreground="White"
+                                     FontSize="14"
+                                     Style="{StaticResource MenuButtonTheme}"
+                                     Command="{Binding ConsoleViewCommand}"/>
+                        
+                        <RadioButton Content="Experiences"
+                                     Height="50"
+                                     Foreground="White"
+                                     FontSize="14"
+                                     Style="{StaticResource MenuButtonTheme}"
+                                     Command="{Binding ExperiencesViewCommand}"/>
+                        
+                        <RadioButton Content="Debug"
+                                     Height="50"
+                                     Foreground="White"
+                                     FontSize="14"
+                                     Style="{StaticResource MenuButtonTheme}"
+                                     Command="{Binding DebugViewCommand}"/>
+                        
+                        <RadioButton Content="Logs"
+                                     Height="50"
+                                     Foreground="White"
+                                     FontSize="14"
+                                     Style="{StaticResource MenuButtonTheme}"
+                                     Command="{Binding LogsViewCommand}"/>
+                        
+                        <RadioButton Content="QA"
+                                     Height="50"
+                                     Foreground="White"
+                                     FontSize="14"
+                                     Style="{StaticResource MenuButtonTheme}"
+                                     Command="{Binding QaViewCommand}"/>
+                        
+                    </StackPanel>
+                    
+                    <!--Action Buttons-->
+                    <DockPanel DockPanel.Dock="Bottom"
+                                HorizontalAlignment="Stretch"
+                                Height="75">
+                        
+                        <!-- Control buttons to wake up/turn off/restart the computer -->
+                        <Button Command="{Binding PowerCommand}"
+                                HorizontalAlignment="Left"
+                                Cursor="Hand"
+                                ToolTip="Power On/Off the NUC"
+                                Margin="20, 0, 0, 0">
 
-                                            <Style.Triggers>
-                                                <DataTrigger Binding="{Binding Status}" Value="Off">
-                                                    <Setter Property="Background" Value="LightSkyBlue"/>
-                                                </DataTrigger>
-                                                <DataTrigger Binding="{Binding Status}" Value="On">
-                                                    <Setter Property="Background" Value="LightSkyBlue"/>
-                                                </DataTrigger>
-                                                <MultiDataTrigger>
-                                                    <MultiDataTrigger.Conditions>
-                                                        <Condition Binding="{Binding Status}" Value="Off"/>
-                                                        <Condition Binding="{Binding IsMouseOver, RelativeSource={RelativeSource Self}}" Value="True"/>
-                                                    </MultiDataTrigger.Conditions>
+                            <Button.Template>
+                                <ControlTemplate TargetType="Button">
+                                    <Border Width="50" Height="50">
+                                        <Border.Style>
+                                            <Style TargetType="Border">
+                                                <Style.Setters>
+                                                    <Setter Property="CornerRadius" Value="50"/>
+                                                    <Setter Property="BorderThickness" Value="0"/>
+                                                    <Setter Property="Background" Value="Green"/>
+                                                </Style.Setters>
+
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding Status}" Value="Off">
+                                                        <Setter Property="Background" Value="PaleVioletRed"/>
+                                                    </DataTrigger>
+                                                    <DataTrigger Binding="{Binding Status}" Value="On">
+                                                        <Setter Property="Background" Value="Green"/>
+                                                    </DataTrigger>
+                                                    <MultiDataTrigger>
+                                                        <MultiDataTrigger.Conditions>
+                                                            <Condition Binding="{Binding Status}" Value="Off"/>
+                                                            <Condition Binding="{Binding IsMouseOver, RelativeSource={RelativeSource Self}}" Value="True"/>
+                                                        </MultiDataTrigger.Conditions>
+                                                        <Setter Property="Background" Value="Green"/>
+                                                    </MultiDataTrigger>
+                                                    <MultiDataTrigger>
+                                                        <MultiDataTrigger.Conditions>
+                                                            <Condition Binding="{Binding Status}" Value="On"/>
+                                                            <Condition Binding="{Binding IsMouseOver, RelativeSource={RelativeSource Self}}" Value="True"/>
+                                                        </MultiDataTrigger.Conditions>
+                                                        <Setter Property="Background" Value="PaleVioletRed"/>
+                                                    </MultiDataTrigger>
+                                                    <Trigger Property="IsMouseOver" Value="True">
+                                                        <Setter Property="Cursor" Value="Hand"/>
+                                                    </Trigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Border.Style>
+                                        <Image Source="../Assets/Icons/power_software.png" Width="50" Height="50"/>
+                                    </Border>
+                                </ControlTemplate>
+                            </Button.Template>
+                        </Button>
+                        
+                        <Button Command="{Binding RestartCommand}"
+                                HorizontalAlignment="Right"
+                                Cursor="Hand"
+                                ToolTip="Restart the NUC"
+                                Margin="0, 0, 20, 0">
+                            
+                            <Button.Template>
+                                <ControlTemplate TargetType="Button">
+                                    <Border Width="50" Height="50">
+                                        <Border.Style>
+                                            <Style TargetType="Border">
+                                                <Style.Setters>
+                                                    <Setter Property="CornerRadius" Value="50"/>
+                                                    <Setter Property="BorderThickness" Value="0"/>
                                                     <Setter Property="Background" Value="LightCyan"/>
-                                                </MultiDataTrigger>
-                                                <MultiDataTrigger>
-                                                    <MultiDataTrigger.Conditions>
-                                                        <Condition Binding="{Binding Status}" Value="On"/>
-                                                        <Condition Binding="{Binding IsMouseOver, RelativeSource={RelativeSource Self}}" Value="True"/>
-                                                    </MultiDataTrigger.Conditions>
-                                                    <Setter Property="Background" Value="LightCyan"/>
-                                                </MultiDataTrigger>
-                                            </Style.Triggers>
-                                        </Style>
-                                    </Border.Style>
-                                    <Image Source="../Assets/Icons/power_restart.png" Width="50" Height="50"/>
-                                </Border>
-                            </ControlTemplate>
-                        </Button.Template>
-                    </Button>
+                                                </Style.Setters>
+
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding Status}" Value="Off">
+                                                        <Setter Property="Background" Value="LightSkyBlue"/>
+                                                    </DataTrigger>
+                                                    <DataTrigger Binding="{Binding Status}" Value="On">
+                                                        <Setter Property="Background" Value="LightSkyBlue"/>
+                                                    </DataTrigger>
+                                                    <MultiDataTrigger>
+                                                        <MultiDataTrigger.Conditions>
+                                                            <Condition Binding="{Binding Status}" Value="Off"/>
+                                                            <Condition Binding="{Binding IsMouseOver, RelativeSource={RelativeSource Self}}" Value="True"/>
+                                                        </MultiDataTrigger.Conditions>
+                                                        <Setter Property="Background" Value="LightCyan"/>
+                                                    </MultiDataTrigger>
+                                                    <MultiDataTrigger>
+                                                        <MultiDataTrigger.Conditions>
+                                                            <Condition Binding="{Binding Status}" Value="On"/>
+                                                            <Condition Binding="{Binding IsMouseOver, RelativeSource={RelativeSource Self}}" Value="True"/>
+                                                        </MultiDataTrigger.Conditions>
+                                                        <Setter Property="Background" Value="LightCyan"/>
+                                                    </MultiDataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Border.Style>
+                                        <Image Source="../Assets/Icons/power_restart.png" Width="50" Height="50"/>
+                                    </Border>
+                                </ControlTemplate>
+                            </Button.Template>
+                        </Button>
+                    </DockPanel>
+                    
                 </DockPanel>
-                
-            </DockPanel>
+            </Border>
             
             <!--View Area-->
             <ContentControl Grid.Row="1" Grid.RowSpan="2" Grid.Column="1"
