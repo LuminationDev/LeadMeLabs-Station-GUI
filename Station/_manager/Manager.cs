@@ -105,12 +105,12 @@ public static class Manager
             Logger.WriteLog("Failed loading ENV variables", MockConsole.LogLevel.Error);
             return;
         }
-
+        SetRemoteEndPoint();
+        
         ValidateInstall("Station");
         
         // Collect audio devices before starting the server
         AudioManager.Initialise();
-        SetRemoteEndPoint();
         
         // Additional tasks - Start a new task as to now hold up the UI
         new Task(() =>
