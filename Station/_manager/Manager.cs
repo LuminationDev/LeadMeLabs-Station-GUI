@@ -110,6 +110,7 @@ public static class Manager
         
         // Collect audio devices before starting the server
         AudioManager.Initialise();
+        SetRemoteEndPoint();
         
         // Additional tasks - Start a new task as to now hold up the UI
         new Task(() =>
@@ -175,7 +176,6 @@ public static class Manager
         }
         
         Logger.WriteLog($"Expected NUC address: {Environment.GetEnvironmentVariable("NucAddress", EnvironmentVariableTarget.Process)}", MockConsole.LogLevel.Normal);
-        SetRemoteEndPoint();
         if (Helper.GetStationMode().Equals(Helper.STATION_MODE_APPLIANCE)) return;
         InitialStartUp();
         
