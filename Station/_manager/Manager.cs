@@ -105,7 +105,8 @@ public static class Manager
             Logger.WriteLog("Failed loading ENV variables", MockConsole.LogLevel.Error);
             return;
         }
-
+        SetRemoteEndPoint();
+        
         ValidateInstall("Station");
         
         // Collect audio devices before starting the server
@@ -175,7 +176,6 @@ public static class Manager
         }
         
         Logger.WriteLog($"Expected NUC address: {Environment.GetEnvironmentVariable("NucAddress", EnvironmentVariableTarget.Process)}", MockConsole.LogLevel.Normal);
-        SetRemoteEndPoint();
         if (Helper.GetStationMode().Equals(Helper.STATION_MODE_APPLIANCE)) return;
         InitialStartUp();
         
