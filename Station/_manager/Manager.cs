@@ -68,6 +68,7 @@ public static class Manager
     private static Timer? variableCheck;
 
     public static bool isNucUtf8 = true;
+    public static bool isNucJsonEnabled = false;
 
     /// <summary>
     /// Starts the server running on the local machine
@@ -106,7 +107,7 @@ public static class Manager
             return;
         }
         SetRemoteEndPoint();
-        
+
         ValidateInstall("Station");
         
         // Collect audio devices before starting the server

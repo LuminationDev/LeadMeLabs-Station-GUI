@@ -33,7 +33,7 @@ public class ServerThread
     /// <summary>
     /// Track whether an initial connection message has been sent to the NUC.
     /// </summary>
-    private static bool connectionMessage = false;
+    private static bool connectionMessage;
 
     public ServerThread()
     {
@@ -174,6 +174,7 @@ public class ServerThread
         {
             connectionMessage = true;
             Manager.SendResponse("NUC", "MessageType", "Station:Unicode");
+            Manager.SendResponse("NUC", "MessageType", "Station:Json");
         }
         
         try
@@ -236,9 +237,9 @@ public class ServerThread
         {
             data = EncryptionHelper.UnicodeDecrypt(data, key);
         }
-
+        
         //Data should never be null at this point
-        Logger.WriteLog($"From {endPoint}, Decrypted Text received : {data}", MockConsole.LogLevel.Debug, !data.Contains(":Ping:"));
+        Logger.WriteLog($"From {endPoint}, Decrypted Text received: {data}", MockConsole.LogLevel.Debug, !data.Contains(":Ping:"));
 
         //If the data is not a ping run the additional tasks
         if (data.Contains(":Ping:")) return;

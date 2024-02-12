@@ -1,5 +1,6 @@
 using System;
 using System.Threading.Tasks;
+using Newtonsoft.Json.Linq;
 using Station._manager;
 using Station._profiles;
 using Station._qa;
@@ -11,20 +12,20 @@ namespace Station._scripts;
 
 public class ScriptThread
 {
-    private readonly string data;
-    private readonly string source;
-    private readonly string destination;
-    private readonly string actionNamespace;
-    private readonly string? additionalData;
+    private readonly string _data;
+    private readonly string _source;
+    private readonly string _destination;
+    private readonly string _actionNamespace;
+    private readonly string? _additionalData;
 
     public ScriptThread(string data)
     {
-        this.data = data;
+        this._data = data;
         string[] dataParts = data.Split(":", 4);
-        source = dataParts[0];
-        destination = dataParts[1];
-        actionNamespace = dataParts[2];
-        additionalData = dataParts.Length > 3 ? dataParts[3] : null;
+        _source = dataParts[0];
+        _destination = dataParts[1];
+        _actionNamespace = dataParts[2];
+        _additionalData = dataParts.Length > 3 ? dataParts[3] : null;
     }
 
     /// <summary>
@@ -35,41 +36,51 @@ public class ScriptThread
     {
         //Based on the data, build/run a script and then send the output back to the client
         //Everything below is just for testing - definitely going to need something better to determine in the future
-        if (actionNamespace == "Connection")
+        if (_actionNamespace == "Connection")
         {
-            HandleConnection(additionalData);
+            HandleConnection(_additionalData);
         }
 
-        if (additionalData == null) return;
-
-        switch (actionNamespace)
+        if (_additionalData == null)
         {
+            return;
+        }
+
+        switch (_actionNamespace)
+        {
+            case "MessageType":
+                if (_additionalData.Contains("Json"))
+                {
+                    Manager.isNucJsonEnabled = true;
+                }
+                break;
+            
             case "CommandLine":
-                StationScripts.Execute(source, additionalData);
+                StationScripts.Execute(_source, _additionalData);
                 break;
 
             case "Station":
-                HandleStation(additionalData);
+                HandleStation(_additionalData);
                 break;
 
             case "HandleExecutable":
-                HandleExecutable(additionalData);
+                HandleExecutable(_additionalData);
                 break;
             
             case "DisplayChange":
-                HandleDisplayChange(additionalData);
+                HandleDisplayChange(_additionalData);
                 break;
-
-            case "Experience":
-                HandleExperience(additionalData);
-                break;
-
+            
             case "LogFiles":
-                HandleLogFiles(additionalData);
+                HandleLogFiles(_additionalData);
+                break;
+            
+            case "Experience":
+                HandleExperience(_additionalData);
                 break;
             
             case "QA":
-                QualityManager.HandleQualityAssurance(additionalData);
+                QualityManager.HandleQualityAssurance(_additionalData);
                 break;
         }
     }
@@ -79,9 +90,9 @@ public class ScriptThread
         if (additionalData == null) return;
         if (additionalData.Contains("Connect"))
         {
-            Manager.SendResponse(source, "Station", "SetValue:status:On");
-            Manager.SendResponse(source, "Station", $"SetValue:state:{SessionController.CurrentState}");
-            Manager.SendResponse(source, "Station", "SetValue:gameName:");
+            Manager.SendResponse(_source, "Station", "SetValue:status:On");
+            Manager.SendResponse(_source, "Station", $"SetValue:state:{SessionController.CurrentState}");
+            Manager.SendResponse(_source, "Station", "SetValue:gameName:");
             Manager.SendResponse("Android", "Station", "SetValue:gameId:");
             AudioManager.Initialise();
         }
@@ -101,12 +112,12 @@ public class ScriptThread
 
                 case "volume":
                     string currentVolume = await AudioManager.GetVolume();
-                    Manager.SendResponse(source, "Station", "SetValue:" + key + ":" + currentVolume);
+                    Manager.SendResponse(_source, "Station", "SetValue:" + key + ":" + currentVolume);
                     break;
 
                 case "muted":
                     string isMuted = await AudioManager.GetMuted();
-                    Manager.SendResponse(source, "Station", "SetValue:" + key + ":" + isMuted);
+                    Manager.SendResponse(_source, "Station", "SetValue:" + key + ":" + isMuted);
                     break;
 
                 case "devices":
@@ -124,7 +135,7 @@ public class ScriptThread
         {
             string[] keyValue = additionalData.Split(":", 3);
             string key = keyValue[1];
-            string? value = keyValue[2];
+            string value = keyValue[2];
             
             switch (key)
             {
@@ -198,45 +209,7 @@ public class ScriptThread
         DisplayController.ChangeDisplaySettings(width, height, 32);
         Logger.WriteLog($"Changed display settings to Height: {heightString}, Width: {widthString}", MockConsole.LogLevel.Debug);
     }
-
-    /// <summary>
-    /// Utilises the pipe server to send the incoming message into an active experience.
-    /// </summary>
-    private async void HandleExperience(string additionalData)
-    {
-        if (additionalData.StartsWith("Refresh"))
-        {
-            Manager.wrapperManager?.ActionHandler("CollectApplications");
-        }
-
-        if (additionalData.StartsWith("Restart"))
-        {
-            Manager.wrapperManager?.ActionHandler("Restart");
-        }
-
-        if (additionalData.StartsWith("Thumbnails"))
-        {
-            string[] split = additionalData.Split(":", 2);
-            Manager.wrapperManager?.ActionHandler("CollectHeaderImages", split[1]);
-        }
-
-        if (additionalData.StartsWith("Launch"))
-        {
-            string id = additionalData.Split(":")[1]; // todo - tidy this up
-            Manager.wrapperManager?.ActionHandler("Stop");
-
-            await Task.Delay(2000);
-
-            Manager.wrapperManager?.ActionHandler("Start", id);
-        }
-
-        if (additionalData.StartsWith("PassToExperience"))
-        {
-            string[] split = additionalData.Split(":", 2);
-            Manager.wrapperManager?.ActionHandler("Message", split[1]);
-        }
-    }
-
+    
     /// <summary>
     /// The NUC has requested that the log files be transferred over the network.
     /// </summary>
@@ -246,6 +219,68 @@ public class ScriptThread
         {
             string[] split = additionalData.Split(":", 2);
             Logger.LogRequest(int.Parse(split[1]));
+        }
+    }
+    
+    // This function now handles JSON messages
+    /// <summary>
+    /// Utilises the pipe server to send the incoming message into an active experience.
+    /// </summary>
+    /// <param name="jObjectData">A JObject in string form</param>
+    private async void HandleExperience(string jObjectData)
+    {
+        if (!Manager.isNucJsonEnabled)
+        {
+            LegacyMessage.HandleExperienceString(jObjectData);
+            return;
+        }
+
+        // Handle a Json message
+        JObject? experienceData;
+        try
+        {
+            experienceData = JObject.Parse(jObjectData);
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+            return;
+        }
+
+        string? action = experienceData.GetValue("Action")?.ToString();
+        switch (action)
+        {
+            case "Refresh":
+                Manager.wrapperManager?.ActionHandler("CollectApplications");
+                break;
+            
+            case "Restart":
+                Manager.wrapperManager?.ActionHandler("Restart");
+                break;
+            
+            case "Thumbnails":
+                string? required = experienceData.GetValue("ImagesRequired")?.ToString();
+                if (required == null) return;
+                
+                Manager.wrapperManager?.ActionHandler("CollectHeaderImages", required);
+                break;
+            
+            case "Launch":
+                string? id = experienceData.GetValue("ExperienceId")?.ToString();
+                if (id == null) return;
+                
+                Manager.wrapperManager?.ActionHandler("Stop");
+                
+                await Task.Delay(2000);
+
+                Manager.wrapperManager?.ActionHandler("Start", id);
+                break;
+            
+            case "PassToExperience":
+                string? trigger = experienceData.GetValue("Trigger")?.ToString();
+                if (trigger == null) return;
+                Manager.wrapperManager?.ActionHandler("Message", trigger);
+                break;
         }
     }
 }
