@@ -68,6 +68,7 @@ public static class Manager
     private static Timer? variableCheck;
 
     public static bool isNucUtf8 = true;
+    public static bool isNucJsonEnabled = false;
 
     /// <summary>
     /// Starts the server running on the local machine
@@ -105,6 +106,7 @@ public static class Manager
             Logger.WriteLog("Failed loading ENV variables", MockConsole.LogLevel.Error);
             return;
         }
+        SetRemoteEndPoint();
 
         ValidateInstall("Station");
         
@@ -175,7 +177,6 @@ public static class Manager
         }
         
         Logger.WriteLog($"Expected NUC address: {Environment.GetEnvironmentVariable("NucAddress", EnvironmentVariableTarget.Process)}", MockConsole.LogLevel.Normal);
-        SetRemoteEndPoint();
         if (Helper.GetStationMode().Equals(Helper.STATION_MODE_APPLIANCE)) return;
         InitialStartUp();
         
