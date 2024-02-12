@@ -70,6 +70,7 @@ public static class MainController
     private static Timer? variableCheck;
 
     public static bool isNucUtf8 = true;
+    public static bool isNucJsonEnabled = false;
     
     /// <summary>
     /// Starts the server running on the local machine
@@ -110,6 +111,9 @@ public static class MainController
         // Continue with additional tasks if environment variables are loaded successfully
         MockConsole.WriteLine("ENV variables loaded", MockConsole.LogLevel.Error);
 
+        // Set the end point before attempting an outgiong messages
+        SetRemoteEndPoint();
+        
         ValidateInstall("Station");
         
         // Collect audio devices before starting the server
@@ -205,7 +209,6 @@ public static class MainController
         }
         
         Logger.WriteLog($"Expected NUC address: {Environment.GetEnvironmentVariable("NucAddress", EnvironmentVariableTarget.Process)}", MockConsole.LogLevel.Normal);
-        SetRemoteEndPoint();
         
         if (Helper.GetStationMode().Equals(Helper.STATION_MODE_APPLIANCE)) return;
         MessageController.InitialStartUp();

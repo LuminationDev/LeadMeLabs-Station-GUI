@@ -33,7 +33,7 @@ public class ServerThread
     /// <summary>
     /// Track whether an initial connection message has been sent to the NUC.
     /// </summary>
-    private static bool connectionMessage = false;
+    private static bool connectionMessage;
 
     public ServerThread()
     {
@@ -174,6 +174,7 @@ public class ServerThread
         {
             connectionMessage = true;
             MessageController.SendResponse("NUC", "MessageType", "Station:Unicode");
+            MessageController.SendResponse("NUC", "MessageType", "Station:Json");
         }
         
         try

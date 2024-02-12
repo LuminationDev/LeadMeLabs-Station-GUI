@@ -1,5 +1,8 @@
 using System;
 using System.Threading.Tasks;
+using Newtonsoft.Json.Linq;
+using Sentry;
+using Station.Components._legacy;
 using Station.Components._notification;
 using Station.Components._profiles;
 using Station.Components._utils;
@@ -60,12 +63,12 @@ public class ScriptThread
                 HandleDisplayChange(_additionalData);
                 break;
 
-            case "Experience":
-                HandleExperience(_additionalData);
-                break;
-
             case "LogFiles":
                 HandleLogFiles(_additionalData);
+                break;
+            
+            case "Experience":
+                HandleExperience(_additionalData);
                 break;
             
             case "QA":
@@ -196,45 +199,7 @@ public class ScriptThread
         DisplayController.ChangeDisplaySettings(width, height, 32);
         Logger.WriteLog($"Changed display settings to Height: {heightString}, Width: {widthString}", MockConsole.LogLevel.Debug);
     }
-
-    /// <summary>
-    /// Utilises the pipe server to send the incoming message into an active experience.
-    /// </summary>
-    private async void HandleExperience(string additionalData)
-    {
-        if (additionalData.StartsWith("Refresh"))
-        {
-            MainController.wrapperManager?.ActionHandler("CollectApplications");
-        }
-
-        if (additionalData.StartsWith("Restart"))
-        {
-            MainController.wrapperManager?.ActionHandler("Restart");
-        }
-
-        if (additionalData.StartsWith("Thumbnails"))
-        {
-            string[] split = additionalData.Split(":", 2);
-            MainController.wrapperManager?.ActionHandler("CollectHeaderImages", split[1]);
-        }
-
-        if (additionalData.StartsWith("Launch"))
-        {
-            string id = additionalData.Split(":")[1]; // todo - tidy this up
-            MainController.wrapperManager?.ActionHandler("Stop");
-
-            await Task.Delay(2000);
-
-            MainController.wrapperManager?.ActionHandler("Start", id);
-        }
-
-        if (additionalData.StartsWith("PassToExperience"))
-        {
-            string[] split = additionalData.Split(":", 2);
-            MainController.wrapperManager?.ActionHandler("Message", split[1]);
-        }
-    }
-
+    
     /// <summary>
     /// The NUC has requested that the log files be transferred over the network.
     /// </summary>
@@ -244,6 +209,68 @@ public class ScriptThread
         {
             string[] split = additionalData.Split(":", 2);
             Logger.LogRequest(int.Parse(split[1]));
+        }
+    }
+
+    // This function now handles JSON messages
+    /// <summary>
+    /// Utilises the pipe server to send the incoming message into an active experience.
+    /// </summary>
+    /// <param name="jObjectData">A JObject in string form</param>
+    private async void HandleExperience(string jObjectData)
+    {
+        if (!MainController.isNucJsonEnabled)
+        {
+            LegacyMessage.HandleExperienceString(jObjectData);
+            return;
+        }
+
+        // Handle a Json message
+        JObject? experienceData;
+        try
+        {
+            experienceData = JObject.Parse(jObjectData);
+        }
+        catch (Exception e)
+        {
+            SentrySdk.CaptureException(e);
+            return;
+        }
+
+        string? action = experienceData.GetValue("Action")?.ToString();
+        switch (action)
+        {
+            case "Refresh":
+                MainController.wrapperManager?.ActionHandler("CollectApplications");
+                break;
+
+            case "Restart":
+                MainController.wrapperManager?.ActionHandler("Restart");
+                break;
+
+            case "Thumbnails":
+                string? required = experienceData.GetValue("ImagesRequired")?.ToString();
+                if (required == null) return;
+
+                MainController.wrapperManager?.ActionHandler("CollectHeaderImages", required);
+                break;
+
+            case "Launch":
+                string? id = experienceData.GetValue("ExperienceId")?.ToString();
+                if (id == null) return;
+
+                MainController.wrapperManager?.ActionHandler("Stop");
+
+                await Task.Delay(2000);
+
+                MainController.wrapperManager?.ActionHandler("Start", id);
+                break;
+
+            case "PassToExperience":
+                string? trigger = experienceData.GetValue("Trigger")?.ToString();
+                if (trigger == null) return;
+                MainController.wrapperManager?.ActionHandler("Message", trigger);
+                break;
         }
     }
 }
