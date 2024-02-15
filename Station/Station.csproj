@@ -102,11 +102,11 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
     <None Remove="Embedded\embeddedapps.vrmanifest" />
-    <Content Include="embedded\embeddedapps.vrmanifest">
+    <Content Include="_embedded\embeddedapps.vrmanifest">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <None Remove="Embedded\manifest.json" />
-    <Content Include="embedded\manifest.json">
+    <Content Include="_embedded\manifest.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Update="embedded\.gitkeep">

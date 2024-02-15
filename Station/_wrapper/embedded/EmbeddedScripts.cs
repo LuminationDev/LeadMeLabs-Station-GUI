@@ -14,10 +14,10 @@ namespace Station._wrapper.embedded;
 
 public static class EmbeddedScripts
 {
-    private static readonly string EmbeddedManifest = Path.GetFullPath(Path.Combine(CommandLine.stationLocation, "embedded", "manifest.json"));
-    private static readonly string EmbeddedDirectory = Path.GetFullPath(Path.Combine(CommandLine.stationLocation, "embedded"));
+    private static readonly string EmbeddedManifest = Path.GetFullPath(Path.Combine(CommandLine.stationLocation, "_embedded", "manifest.json"));
+    private static readonly string EmbeddedDirectory = Path.GetFullPath(Path.Combine(CommandLine.stationLocation, "_embedded"));
     
-    public static readonly string EmbeddedVrManifest = Path.GetFullPath(Path.Combine(CommandLine.stationLocation, @"embedded\embeddedapps.vrmanifest"));
+    public static readonly string EmbeddedVrManifest = Path.GetFullPath(Path.Combine(CommandLine.stationLocation, @"_embedded\embeddedapps.vrmanifest"));
     private static ManifestReader.ManifestApplicationList? embeddedManifestApplicationList;
     
     /// <summary>
