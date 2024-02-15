@@ -13,6 +13,7 @@ using Station._profiles;
 using Station._utils;
 using Station._wrapper;
 using Station._wrapper.custom;
+using Station._wrapper.embedded;
 using Station._wrapper.revive;
 using Station._wrapper.steam;
 using Valve.VR;
@@ -128,9 +129,11 @@ public class OpenVRManager
 
         // Force reset of the Steam & Custom VR manifest lists for guaranteed up to date. 
         OpenVR.Applications.RemoveApplicationManifest(CustomScripts.CustomManifest);
+        OpenVR.Applications.RemoveApplicationManifest(EmbeddedScripts.EmbeddedVrManifest);
         OpenVR.Applications.RemoveApplicationManifest(SteamScripts.SteamManifest);
         OpenVR.Applications.RemoveApplicationManifest(ReviveScripts.ReviveManifest);
         OpenVR.Applications.AddApplicationManifest(CustomScripts.CustomManifest, true);
+        OpenVR.Applications.AddApplicationManifest(EmbeddedScripts.EmbeddedVrManifest, true);
         OpenVR.Applications.AddApplicationManifest(SteamScripts.SteamManifest, true);
         OpenVR.Applications.AddApplicationManifest(ReviveScripts.ReviveManifest, true);
 

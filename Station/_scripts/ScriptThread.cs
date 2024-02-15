@@ -1,7 +1,9 @@
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Newtonsoft.Json.Linq;
 using Station._manager;
+using Station._models;
 using Station._profiles;
 using Station._qa;
 using Station._utils;
@@ -243,7 +245,7 @@ public class ScriptThread
         }
         catch (Exception e)
         {
-            Console.WriteLine(e);
+            MockConsole.WriteLine(e.ToString(), MockConsole.LogLevel.Error);
             return;
         }
 
@@ -272,6 +274,20 @@ public class ScriptThread
                 Manager.wrapperManager?.ActionHandler("Stop");
                 
                 await Task.Delay(2000);
+                
+                string? parameters = experienceData.GetValue("Parameters")?.ToString();
+                if (parameters != null)
+                {
+                    // Update the underlying experience model
+                    Experience experience = WrapperManager.ApplicationList.GetValueOrDefault(id);
+                    experience.UpdateParameters(parameters);
+                    WrapperManager.ApplicationList[id] = experience;
+                    
+                    // Update the associated .vrmanifest with the supplied parameters
+                    ManifestReader.ModifyApplicationArguments(id, parameters);
+                    
+                    await Task.Delay(2000);
+                }
 
                 Manager.wrapperManager?.ActionHandler("Start", id);
                 break;

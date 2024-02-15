@@ -3,6 +3,13 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Newtonsoft.Json.Linq;
+using Station._manager;
+using Station._models;
+using Station._wrapper.custom;
+using Station._wrapper.embedded;
+using Station._wrapper.revive;
+using Station._wrapper.steam;
+using Valve.VR;
 
 namespace Station._utils;
 
@@ -11,26 +18,25 @@ public static class ManifestReader
 
     public class ManifestApplicationList
     {
-        private JArray applications = new JArray();
+        private readonly JArray _applications = new();
         public ManifestApplicationList(string filePath)
         {
             JArray? newApplications = CollectApplications(filePath);
             if (newApplications != null)
             {
-                applications = newApplications;
+                _applications = newApplications;
             }
         }
 
         public bool IsApplicationInstalledAndVrCompatible(string appKey)
         {
-            var specificEntry = applications.FirstOrDefault(app => (((string)app["app_key"])!).Contains(appKey));
+            var specificEntry = _applications.FirstOrDefault(app => (((string)app["app_key"])!).Contains(appKey));
         
             return !String.IsNullOrEmpty(specificEntry?["strings"]?["en_us"]?["name"]?.ToString());
         }
     }
-
-
-/// <summary>
+    
+    /// <summary>
     /// Reads the content of a VR manifest file from the specified file path and converts it to a JObject.
     /// </summary>
     /// <param name="filePath">The path to the VR manifest file.</param>
@@ -68,6 +74,21 @@ public static class ManifestReader
     {
         var data = ReadManifestFile(filePath);
         if (IsDataNull(filePath, data)) return null;
+
+        //Check if Steam -> steamapps.vrmanifest has become corrupted
+        try
+        {
+            JArray.Parse(data?["applications"].ToString());
+        }
+        catch (Exception)
+        {
+            //Send a message to the Tablet with the following instructions.
+            // - Steam application list has become corrupted
+            // - Connect a headset to the computer (steamapps.vrmanifest will refresh)
+            // - Restart the VR system
+            Manager.SendResponse("Android", "Station", "SteamappsCorrupted");
+            return null;
+        }
 
         var applications = (JArray)data?["applications"]!;
         return applications;
@@ -165,5 +186,184 @@ public static class ManifestReader
         }
 
         File.WriteAllText(filePath, data?.ToString());
+    }
+
+    /// <summary>
+    /// Clear the entire applications array, leaving an empty array in its place.
+    /// </summary>
+    /// <param name="filePath">The path to the manifest file.</param>
+    public static void ClearApplicationList(string filePath)
+    {
+        JObject? data = ReadManifestFile(filePath);
+        if (IsDataNull(filePath, data)) return;
+        
+        JArray applications = (JArray)data?["applications"]!;
+        applications.RemoveAll();
+        
+        File.WriteAllText(filePath, data?.ToString());
+    }
+
+    /// <summary>
+    /// Creates or updates an application entry in a manifest file. If an entry with the same app_key already exists,
+    /// it updates the existing entry with the provided details. Otherwise, it creates a new entry with the provided
+    /// details.
+    /// </summary>
+    /// <param name="filePath">The path to the manifest file.</param>
+    /// <param name="appType">The type of the application.</param>
+    /// <param name="details">The details of the application to be added or updated.</param>
+    public static void CreateOrUpdateApplicationEntry(string filePath, string appType, JObject details)
+    {
+        JObject? data = ReadManifestFile(filePath);
+        if (IsDataNull(filePath, data)) return;
+
+        JArray applications = (JArray)data?["applications"]!;
+
+        string appKey = $"{appType}.app.{details.GetValue("id")}";
+    
+        // Search for an existing entry with the same app_key
+        JObject? existingEntry = applications.Children<JObject>()
+            .FirstOrDefault(app => app["app_key"]?.ToString() == appKey);
+
+        if (existingEntry != null)
+        {
+            // Update the existing entry
+            existingEntry["launch_type"] = "binary";
+            existingEntry["binary_path_windows"] = details.GetValue("altPath");
+            existingEntry["is_dashboard_overlay"] = true;
+
+            if (details.GetValue("parameters") != null)
+            {
+                existingEntry["arguments"] = details.GetValue("parameters");
+            }
+
+            JObject language = new JObject { { "name", details.GetValue("name") } };
+            JObject strings = new JObject { { "en_us", language } };
+            existingEntry["strings"] = strings;
+        }
+        else
+        {
+            // Create a new entry if not found
+            JObject temp = new JObject
+            {
+                { "app_key", appKey },
+                { "launch_type", "binary" },
+                { "binary_path_windows", details.GetValue("altPath") },
+                { "is_dashboard_overlay", true }
+            };
+
+            if (details.GetValue("parameters") != null)
+            {
+                temp.Add("arguments", details.GetValue("parameters"));
+            }
+        
+            JObject language = new JObject { { "name", details.GetValue("name") } };
+            JObject strings = new JObject { { "en_us", language } };
+            temp.Add("strings", strings);
+        
+            applications.Add(temp);
+        }
+
+        File.WriteAllText(filePath, data?.ToString());
+    }
+    
+    /// <summary>
+    /// Modifies the arguments for a specified application in a VR manifest file.
+    /// in case the 
+    /// </summary>
+    /// <param name="appId">The ID of the application.</param>
+    /// <param name="arguments">The new arguments to be set for the application.</param>
+    public static void ModifyApplicationArguments(string appId, string arguments)
+    {
+        //Is this the best spot???
+        //Need to know the wrapper type, appId and parameters
+        Experience experience = WrapperManager.ApplicationList.GetValueOrDefault(appId);
+        if (experience.IsNull())
+        {
+            MockConsole.WriteLine($"No application found: {appId}", MockConsole.LogLevel.Normal);
+            return;
+        }
+
+        if(experience.Type == null)
+        {
+            MockConsole.WriteLine($"No wrapper associated with experience {appId}.", MockConsole.LogLevel.Normal);
+            return;
+        }
+        
+        //No manifest to update if the experience is not VR enabled
+        if(experience.IsVr == false)
+        {
+            return;
+        }
+        
+        string? filePath = null;
+        string? keyPrefix = null;
+        switch (experience.Type)
+        {
+            case "Custom":
+                filePath = CustomScripts.CustomManifest;
+                keyPrefix = "custom.app";
+                break;
+            
+            case "Embedded":
+                filePath = EmbeddedScripts.EmbeddedVrManifest;
+                keyPrefix = "embedded.app";
+                break;
+            
+            case "Steam":
+                filePath = SteamScripts.SteamManifest;
+                keyPrefix = "steam.app";
+                break;
+            
+            case "Revive":
+                filePath = ReviveScripts.ReviveManifest;
+                keyPrefix = "revive.app";
+                break;
+        }
+        
+        if (filePath == null) return;
+        
+        JObject? data = ReadManifestFile(filePath);
+        if (IsDataNull(filePath, data)) return;
+        
+        JArray applications = (JArray)data?["applications"]!;
+        foreach (var app in applications)
+        {
+            if (app["app_key"] == null || !app["app_key"]!.ToString().Equals($"{keyPrefix}.{appId}")) continue;
+            
+            string? type = experience.Subtype?.GetValue("category")?.ToString();
+            if (type is "shareCode")
+            {
+                //[0] -app
+                //[1] (typeValue)
+                //[2] -code
+                //[3] (codeValue)
+                List<string> split = new List<string>(app["arguments"]?.ToString().Split(" ") ?? Array.Empty<string>());
+                if (split.Count == 0) return;
+
+                // Replace the codeValue or add it for the first time
+                if (split.Count >= 4)
+                {
+                    split[3] = arguments;
+                }
+                else
+                {
+                    split.Add(arguments);
+                }
+
+                // Join the arguments with a space between
+                app["arguments"] = string.Join(" ", split);
+            }
+            else
+            {
+                app["arguments"] = arguments;
+            }
+        }
+        if (data == null) return;
+
+        File.WriteAllText(filePath, data.ToString());
+        
+        //Reload the VR manifest
+        OpenVR.Applications.RemoveApplicationManifest(filePath);
+        OpenVR.Applications.AddApplicationManifest(filePath, true);
     }
 }
