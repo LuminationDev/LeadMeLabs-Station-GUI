@@ -1,11 +1,14 @@
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Newtonsoft.Json.Linq;
 using Sentry;
 using Station.Components._legacy;
+using Station.Components._models;
 using Station.Components._notification;
 using Station.Components._profiles;
 using Station.Components._utils;
+using Station.Components._wrapper;
 using Station.Components._wrapper.steam;
 using Station.MVC.Controller;
 using Station.QA;
@@ -233,6 +236,7 @@ public class ScriptThread
         }
         catch (Exception e)
         {
+            MockConsole.WriteLine(e.ToString(), MockConsole.LogLevel.Error);
             SentrySdk.CaptureException(e);
             return;
         }
@@ -262,6 +266,20 @@ public class ScriptThread
                 MainController.wrapperManager?.ActionHandler("Stop");
 
                 await Task.Delay(2000);
+                
+                string? parameters = experienceData.GetValue("Parameters")?.ToString();
+                if (parameters != null)
+                {
+                    // Update the underlying experience model
+                    Experience experience = WrapperManager.ApplicationList.GetValueOrDefault(id);
+                    experience.UpdateParameters(parameters);
+                    WrapperManager.ApplicationList[id] = experience;
+
+                    // Update the associated .vrmanifest with the supplied parameters
+                    ManifestReader.ModifyApplicationArguments(id, parameters);
+
+                    await Task.Delay(2000);
+                }
 
                 MainController.wrapperManager?.ActionHandler("Start", id);
                 break;

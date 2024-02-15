@@ -1,8 +1,10 @@
 using System;
 using System.Globalization;
+using System.IO;
 using System.Windows.Data;
 using System.Windows.Media.Imaging;
 using Station.Components._organisers;
+using Station.Components._wrapper;
 
 namespace Station.Converters;
 
@@ -27,6 +29,17 @@ public class ImageUrlConverter : IMultiValueConverter
 
                 case "Custom":
                     return new BitmapImage(new Uri("pack://application:,,,/Assets/Images/default_header.jpg"));
+                
+                case "Embedded":
+                    string? id = values[1].ToString();
+                    if (id == null)
+                    {
+                        return new BitmapImage(new Uri("pack://application:,,,/Assets/Images/default_header.jpg"));
+                    }
+                    
+                    WrapperManager.ApplicationList.TryGetValue(id, out var experience);
+                    string filePath = experience.HeaderPath ?? Path.GetFullPath(Path.Combine(experience.AltPath, "..", "header.jpg"));
+                    return !File.Exists(filePath) ? new BitmapImage(new Uri("pack://application:,,,/Assets/Images/default_header.jpg")) : new BitmapImage(new Uri(filePath));
 
                 case "Vive":
                     return new BitmapImage(new Uri("pack://application:,,,/Assets/Images/default_header.jpg"));

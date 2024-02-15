@@ -11,6 +11,10 @@ using Station.MVC.Controller;
 
 namespace Station.Components._wrapper.@internal;
 
+/// <summary>
+/// A basic wrapper designed to deal with launching executables from scenes or background programs that do not
+/// influence the running of the station.
+/// </summary>
 public class InternalWrapper : IWrapper
 {
     public const string WrapperType = "Internal";

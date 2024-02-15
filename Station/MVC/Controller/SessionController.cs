@@ -51,12 +51,12 @@ public static class SessionController
     /// </summary>
     public static void SetupStationProfile(string profile)
     {
-        switch (profile)
+        switch (profile.ToLower())
         {
-            case "Vr":
+            case "vr":
                 StationProfile = new VrProfile();
                 break;
-            case "Content":
+            case "content":
                 StationProfile = new ContentProfile();
                 break;
             default:
@@ -78,6 +78,7 @@ public static class SessionController
         switch (ExperienceType)
         {
             case "Custom":
+            case "Embedded":
             case "Steam":
             case "Revive":
                 StationProfile?.StartSession();
@@ -108,6 +109,7 @@ public static class SessionController
         switch (ExperienceType)
         {
             case "Custom":
+            case "Embedded":
                 MockConsole.WriteLine("restartVRSession not implemented for type: Custom.", MockConsole.LogLevel.Error);
                 break;
             case "Revive":
@@ -137,6 +139,7 @@ public static class SessionController
         switch (ExperienceType)
         {
             case "Custom":
+            case "Embedded":
                 MockConsole.WriteLine("endVRSession not implemented for type: Custom.", MockConsole.LogLevel.Error);
                 break;
             case "Revive":
