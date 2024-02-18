@@ -14,6 +14,7 @@ using Station._profiles;
 using Station._utils;
 using Station._wrapper;
 using Station._wrapper.custom;
+using Station._wrapper.embedded;
 using Station._wrapper.@internal;
 using Station._wrapper.revive;
 using Station._wrapper.steam;
@@ -25,6 +26,7 @@ public class WrapperManager
 {
     //Store each wrapper class
     private static readonly CustomWrapper CustomWrapper = new ();
+    private static readonly EmbeddedWrapper EmbeddedWrapper = new ();
     private static readonly SteamWrapper SteamWrapper = new ();
     private static readonly ViveWrapper ViveWrapper = new ();
     private static readonly ReviveWrapper ReviveWrapper = new ();
@@ -189,6 +191,12 @@ public class WrapperManager
         if (customApplications != null)
         {
             applications.AddRange(customApplications);
+        }
+        
+        List<T>? embeddedApplications = EmbeddedWrapper.CollectApplications<T>();
+        if (embeddedApplications != null)
+        {
+            applications.AddRange(embeddedApplications);
         }
 
         List<T>? viveApplications = ViveWrapper.CollectApplications<T>();
@@ -379,7 +387,9 @@ public class WrapperManager
     /// <param name="isVr">A bool representing if the experience is VR or not.</param>
     /// <param name="launchParameters">A stringify list of any parameters required at launch.</param>
     /// <param name="altPath">A string of the absolute path to an executable (optional).</param>
-    public static void StoreApplication(string wrapperType, string id, string name, bool isVr = true, string? launchParameters = null, string? altPath = null)
+    /// <param name="subtype">A JObject containing more specific information about an experience (optional).</param>
+    /// <param name="headerPath">A different path to the header image (optional).</param>
+    public static void StoreApplication(string wrapperType, string id, string name, bool isVr = true, string? launchParameters = null, string? altPath = null, JObject? subtype = null, string? headerPath = null)
     {
         if (!Helper.GetStationMode().Equals(Helper.STATION_MODE_VR) && isVr)
         {
@@ -387,8 +397,7 @@ public class WrapperManager
         }
 
         var exeName = altPath != null ? Path.GetFileName(altPath) : name;
-
-        ApplicationList.TryAdd(id, new Experience(wrapperType, id, name, exeName, launchParameters, altPath, isVr));
+        ApplicationList.TryAdd(id, new Experience(wrapperType, id, name, exeName, launchParameters, altPath, isVr, subtype, headerPath));
     }
 
     /// <summary>
@@ -406,6 +415,9 @@ public class WrapperManager
             {
                 case "Custom":
                     CustomWrapper.CollectHeaderImage(appTokens[1]);
+                    break;
+                case "Embedded":
+                    EmbeddedWrapper.CollectHeaderImage(appTokens[1]);
                     break;
                 case "Revive":
                     ReviveWrapper.CollectHeaderImage(appTokens[1]);
@@ -483,6 +495,7 @@ public class WrapperManager
             switch (experience.Type)
             {
                 case "Custom":
+                case "Embedded":
                 case "Revive":
                 case "Steam":
                     return currentWrapper.WrapProcess(experience);
@@ -506,6 +519,9 @@ public class WrapperManager
         {
             case "Custom":
                 currentWrapper = CustomWrapper;
+                break;
+            case "Embedded":
+                currentWrapper = EmbeddedWrapper;
                 break;
             case "Revive":
                 currentWrapper = ReviveWrapper;

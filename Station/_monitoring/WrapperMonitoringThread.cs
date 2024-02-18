@@ -61,6 +61,10 @@ public static class WrapperMonitoringThread
             case "Custom":
                 timer.Elapsed += (sender, e) => CallCustomCheck(sender, e, isVr);
                 break;
+            
+            case "Embedded":
+                timer.Elapsed += (sender, e) => CallCustomCheck(sender, e, isVr);
+                break;
 
             case "Steam":
                 timer.Elapsed += (sender, e) => CallSteamCheck(sender, e, isVr);

@@ -75,6 +75,7 @@ public static class SessionController
         switch (ExperienceType)
         {
             case "Custom":
+            case "Embedded":
             case "Steam":
             case "Revive":
                 StationProfile?.StartSession();
@@ -105,6 +106,7 @@ public static class SessionController
         switch (ExperienceType)
         {
             case "Custom":
+            case "Embedded":
                 MockConsole.WriteLine("restartVRSession not implemented for type: Custom.", MockConsole.LogLevel.Error);
                 break;
             case "Revive":
@@ -134,6 +136,7 @@ public static class SessionController
         switch (ExperienceType)
         {
             case "Custom":
+            case "Embedded":
                 MockConsole.WriteLine("endVRSession not implemented for type: Custom.", MockConsole.LogLevel.Error);
                 break;
             case "Revive":
