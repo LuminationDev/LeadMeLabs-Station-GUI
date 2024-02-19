@@ -245,14 +245,14 @@ public static class QualityManager
         
         // Check if there is a network connection (or if it is Adelaide/Australian Science and Mathematics School)
         ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage($"SoftwareState,Checking network"), TimeSpan.FromSeconds(0));
-        if (location.ToLower().Contains("science and mathematics school") || !Network.CheckIfConnectedToInternet()) return;
+        if (location.ToLower().Contains("science and mathematics school") || !Network.CheckIfConnectedToInternet(true)) return;
         
         // Check if the QA has already been uploaded
         if (HasUploadAlreadyBeenCompleted()) return;
         ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage($"SoftwareState,Running QA"), TimeSpan.FromSeconds(0));
         
         Dictionary<string, Dictionary<string, QaCheck>> qaCheckDictionary = new();
-
+        
         // Transform and add checks to the dictionary
         AddChecksToDictionary("Window Checks", WindowChecks.RunQa(labType));
         AddChecksToDictionary("Configuration Checks", ConfigurationChecks.RunQa(labType));
@@ -260,10 +260,23 @@ public static class QualityManager
         AddChecksToDictionary("Network Checks", NetworkChecks.RunQa(""));
         AddChecksToDictionary("Steam Config Checks", SteamConfigChecks.RunQa(labType));
 
-        //Upload to Firebase
+        // Convert to JObject
+        JObject jsonObject = JObject.FromObject(qaCheckDictionary);
+        
+        // Get the current timestamp
+        DateTimeOffset timestamp = DateTimeOffset.Now;
+        // Convert the timestamp to the local time zone
+        DateTimeOffset localTime = timestamp.ToLocalTime();
+        // Convert the DateTimeOffset to a human-readable string format
+        string readableTime = localTime.ToString("dddd, MMMM dd, yyyy 'at' h:mm:ss tt");
+        
+        // Add it with an '_' so it will always be in the same position on Firebase
+        jsonObject.Add("_Timestamp", readableTime);
+        
+        // Upload to Firebase
         if (upload)
         {
-            UploadToFirebase(qaCheckDictionary);
+            UploadToFirebase(jsonObject);
         }
 
         return;
@@ -279,18 +292,19 @@ public static class QualityManager
     /// <summary>
     /// Upload a string version of the QA check results list. 
     /// </summary>
-    /// <param name="qaCheckDictionary">A dictionary of QaChecks, sorted under their type and then id.</param>
-    private static async void UploadToFirebase(Dictionary<string, Dictionary<string, QaCheck>> qaCheckDictionary)
+    /// <param name="qaCheckObject">A JObject of QaChecks, sorted under their type and then id.</param>
+    private static async void UploadToFirebase(JObject qaCheckObject)
     {
         using var httpClient = new HttpClient();
 
+        string versionNumber = Updater.GetVersionNumberHyphen();
         string stationId = Environment.GetEnvironmentVariable("StationId", EnvironmentVariableTarget.Process) ?? "Unknown";
         string location = Environment.GetEnvironmentVariable("LabLocation", EnvironmentVariableTarget.Process) ?? "Unknown";
-        string strJson = JsonConvert.SerializeObject(qaCheckDictionary);
-
+        string strJson = JsonConvert.SerializeObject(qaCheckObject);
+ 
         StringContent objData = new StringContent(strJson, Encoding.UTF8, "application/json");
         var result = await httpClient.PatchAsync(
-            $"https://leadme-labs-default-rtdb.asia-southeast1.firebasedatabase.app/lab_qa_checks/{location}/{stationId}.json",
+            $"https://leadme-labs-default-rtdb.asia-southeast1.firebasedatabase.app/lab_qa_checks/{location}/{versionNumber}/{stationId}.json",
             objData
         );
 

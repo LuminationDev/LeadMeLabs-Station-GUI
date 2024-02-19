@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Reflection;
 using Station._commandLine;
+using Station._utils;
 using Xunit;
 
 namespace StationTests._utils
