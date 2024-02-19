@@ -13,17 +13,39 @@ public static class Updater
 	/// <summary>
 	/// Query the program to get the current version number of the software that is running.
 	/// </summary>
-	/// <returns>A string of the version number in the format X.X.X.X</returns>
-	public static string? GetVersionNumber()
+	/// <returns>The current Version object or null</returns>
+	private static Version? GetVersion()
 	{
 		Assembly? assembly = Assembly.GetExecutingAssembly();
-		if (assembly == null) return "N/A";
+		if (assembly == null) return null;
 
 		Version? version = assembly.GetName().Version;
-		if (version == null) return "N/A";
+		if (version == null) return null;
 
+		return version;
+	}
+	
+	/// <summary>
+	/// Query the program to get the current version number of the software that is running.
+	/// </summary>
+	/// <returns>A string of the version number in the format X.X.X</returns>
+	public static string GetVersionNumber()
+	{
+		Version? version = GetVersion();
+		
 		// Format the version number as Major.Minor.Build
-		return $"{version.Major}.{version.Minor}.{version.Build}";
+		return version == null ? "Unknown" : $"{version.Major}.{version.Minor}.{version.Build}";
+	}
+	
+	/// <summary>
+	/// Query the program to get the current version number of the software that is running.
+	/// </summary>
+	/// <returns>A string of the version number in the format X-X-X</returns>
+	public static string GetVersionNumberHyphen()
+	{
+		Version? version = GetVersion();
+		// Format the version number as Major.Minor.Build
+		return version == null ? "Unknown" : $"{version.Major}-{version.Minor}-{version.Build}";
 	}
 
 	/// <summary>

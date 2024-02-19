@@ -267,12 +267,25 @@ public static class QualityManager
             }
         }
         
+        // Convert to JObject
+        JObject jsonObject = JObject.FromObject(qaCheckDictionary);
+        
+        // Get the current timestamp
+        DateTimeOffset timestamp = DateTimeOffset.Now;
+        // Convert the timestamp to the local time zone
+        DateTimeOffset localTime = timestamp.ToLocalTime();
+        // Convert the DateTimeOffset to a human-readable string format
+        string readableTime = localTime.ToString("dddd, MMMM dd, yyyy 'at' h:mm:ss tt");
+        
+        // Add it with an '_' so it will always be in the same position on Firebase
+        jsonObject.Add("_Timestamp", readableTime);
+        
         MainViewModel.ViewModelManager.QaViewModel.IsLoading = false;
         
         //Upload to Firebase
         if (upload)
         {
-            UploadToFirebase(qaCheckDictionary);
+            UploadToFirebase(jsonObject);
         }
 
         return;
@@ -288,18 +301,19 @@ public static class QualityManager
     /// <summary>
     /// Upload a string version of the QA check results list. 
     /// </summary>
-    /// <param name="qaCheckDictionary">A dictionary of QaChecks, sorted under their type and then id.</param>
-    private static async void UploadToFirebase(Dictionary<string, Dictionary<string, QaCheck>> qaCheckDictionary)
+    /// <param name="qaCheckObject">A dictionary of QaChecks, sorted under their type and then id.</param>
+    private static async void UploadToFirebase(JObject qaCheckObject)
     {
         using var httpClient = new HttpClient();
         
+        string versionNumber = Updater.GetVersionNumberHyphen();
         string stationId = Environment.GetEnvironmentVariable("StationId", EnvironmentVariableTarget.Process) ?? "Unknown";
         string location = Environment.GetEnvironmentVariable("LabLocation", EnvironmentVariableTarget.Process) ?? "Unknown";
-        string strJson = JsonConvert.SerializeObject(qaCheckDictionary);
+        string strJson = JsonConvert.SerializeObject(qaCheckObject);
         
         StringContent objData = new StringContent(strJson, Encoding.UTF8, "application/json");
         var result = await httpClient.PatchAsync(
-            $"https://leadme-labs-default-rtdb.asia-southeast1.firebasedatabase.app/lab_qa_checks/{location}/{stationId}.json",
+            $"https://leadme-labs-default-rtdb.asia-southeast1.firebasedatabase.app/lab_qa_checks/{location}/{versionNumber}/{stationId}.json",
             objData
         );
         
