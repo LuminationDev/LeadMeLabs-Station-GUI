@@ -122,7 +122,7 @@ public class SteamWrapper : IWrapper
         }
 
         MockConsole.WriteLine($"Wrapping: {experienceName}", MockConsole.LogLevel.Debug);
-
+        
         //Start the external processes to handle SteamVR
         if (experience.IsVr)
         {

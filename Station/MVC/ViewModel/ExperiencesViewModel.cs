@@ -88,6 +88,19 @@ public class ExperiencesViewModel : ObservableObject
             ExperienceCollectionView.Refresh();
         });
     }
+
+    /**
+     * Clear all the experiences in the current list.
+     */
+    public void ClearExperiences()
+    {
+        //Needs to be added using the main UI thread to reflect in real-time
+        Application.Current.Dispatcher.Invoke(() =>
+        {
+            Experiences.Clear();
+            ExperienceCollectionView.Refresh();
+        });
+    }
     
     /**
      * Update a field within the Station Observable collection.

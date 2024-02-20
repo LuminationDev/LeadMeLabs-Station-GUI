@@ -7,6 +7,7 @@ using Station.Components._models;
 using Station.Components._notification;
 using Station.Components._utils;
 using Station.Components._wrapper;
+using Station.Components._wrapper.steam;
 using Station.MVC.Controller;
 using Station.QA;
 
@@ -46,6 +47,11 @@ public class Statuses
      
                  OnSoftwareTrackingChanged(value.ToString());
                  _softwareStatus = value;
+                 //Silently collect the applications again if the Steam manifest was corrupted
+                 if (value == DeviceStatus.Connected && WrapperManager.steamManifestCorrupted)
+                 {
+                     WrapperManager.SilentlyCollectApplications();
+                 }
                  UIController.UpdateVrConnection("thirdParty", Enum.GetName(typeof(DeviceStatus), value) ?? "Unknown");
              }
              get => _softwareStatus;
