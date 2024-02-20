@@ -352,8 +352,6 @@ public static class SteamScripts
             }
             if (current.Contains("Custom list"))
             {
-                Logger.WriteLog("Reached end of parental approved list", MockConsole.LogLevel.Error);
-
                 // check for if family mode is not enabled
                 enumerator.MoveNext();
                 enumerator.MoveNext();
