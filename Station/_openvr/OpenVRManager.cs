@@ -173,7 +173,12 @@ public class OpenVRManager
             await Task.Delay(3000);
 
             bool steamvr = await Helper.MonitorLoop(() => ProcessManager.GetProcessesByName("vrmonitor").Length == 0, 10);
-            if (!steamvr) return false;
+            if (!steamvr)
+            {
+                // Connection bailed out, send a failure message
+                SessionController.PassStationMessage("MessageToAndroid,HeadsetTimeout");
+                return false;
+            }
 
             Logger.WriteLog($"OpenVRManager.WaitForOpenVR - Vive status: {vrProfile.VrHeadset.GetHeadsetManagementSoftwareStatus()}, " +
                 $"SteamVR restarted successfully", MockConsole.LogLevel.Normal);

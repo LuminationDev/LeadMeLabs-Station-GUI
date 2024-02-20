@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using LeadMeLabsLibrary.Station;
+using Newtonsoft.Json.Linq;
 using Station._commandLine;
 using Station._manager;
 using Station._models;
@@ -34,8 +35,18 @@ public static class SteamScripts
     public static string steamCMDConfigured = "Missing";
 
     private static int restartAttempts = 0; //Track how many times SteamVR has failed in a Station session
+    
+    //Experience constants and lists
+    private static List<string> steamCmdInstalledGames = new();
+    private static readonly List<string> BlacklistedGames = new() {"1635730"}; // vive console
+    private static readonly List<string> AvailableLicenses = new();
+    private static List<string> approvedGames = new();
 
     private static ManifestReader.ManifestApplicationList steamManifestApplicationList = new (SteamManifest);
+    public static void RefreshVrManifest()
+    {
+        steamManifestApplicationList = new ManifestReader.ManifestApplicationList(SteamManifest);   
+    }
 
     /// <summary>
     /// If the vrmonitor process is running but OpenVR has not established a connection, check Steam's vrserver logs
@@ -141,10 +152,9 @@ public static class SteamScripts
 
     private static List<T> AddInstalledSteamApplicationsFromDirectoryToList<T>(List<T> list, string directoryPath)
     {
-        List<string> blacklistedGames = new List<string>();
-        List<string> approvedGames = GetParentalApprovedGames();
+        approvedGames = GetParentalApprovedGames();
+        
         Logger.WriteLog("Approved games length: " + approvedGames.Count, MockConsole.LogLevel.Debug);
-        blacklistedGames.Add("1635730"); // vive console // todo this needs to be abstracted
         if (!Directory.Exists(directoryPath)) return list;
         
         DirectoryInfo directoryInfo = new DirectoryInfo(directoryPath);
@@ -154,7 +164,7 @@ public static class SteamScripts
             acfReader.ACFFileToStruct();
             if (acfReader.gameName == null || acfReader.appId == null) continue;
                 
-            if (blacklistedGames.Contains(acfReader.appId))
+            if (BlacklistedGames.Contains(acfReader.appId))
             {
                 continue;
             }
@@ -220,7 +230,7 @@ public static class SteamScripts
             return null;
         }
 
-        List<string> installedGames = steamResponse.Split('\n').ToList();
+        steamCmdInstalledGames = steamResponse.Split('\n').ToList();
 
         if (Directory.Exists("S:\\SteamLibrary\\steamapps"))
         {
@@ -230,7 +240,7 @@ public static class SteamScripts
                 return null;
             }
             List<string> additionalInstalledGames = additionalSteamResponse.Split('\n').ToList();
-            installedGames.AddRange(additionalInstalledGames);
+            steamCmdInstalledGames.AddRange(additionalInstalledGames);
         }
 
         List<string>? licenseList = CommandLine.ExecuteSteamCommand(LoginUser + Licenses + Quit)?.Split('\n').ToList();
@@ -238,41 +248,50 @@ public static class SteamScripts
         {
             return null;
         }
-
-        List<T> apps = new List<T>();
-        List<string> availableLicenses = new List<string>();
-        List<string> approvedGames = GetParentalApprovedGames();
-        Logger.WriteLog("Approved games length: " + approvedGames.Count, MockConsole.LogLevel.Debug);
-        List<string> blacklistedGames = new List<string>();
-        blacklistedGames.Add("1635730"); // vive console
-
+        
         foreach (var line in licenseList)
         {
             if (line.StartsWith(" - Apps"))
             {
-                availableLicenses.Add(line.Substring(10).Split(',')[0]);
+                AvailableLicenses.Add(line.Substring(10).Split(',')[0]);
             }
         }
 
+        return FilterAvailableExperiences<T>();
+    }
+
+    /// <summary>
+    /// Filter through the raw string that was provided by the steamCMD command for the install applications.
+    /// 
+    /// NOTE: This can be used if the steamapps.vrmanifest was corrupted when initially read. If a headset is connected,
+    /// the manifest would have refreshed so re-scan it using the application list collected by steamCMD at start up,
+    /// collecting them without having to re-open steamCMD and disconnect Steam.
+    /// Overwrite the stored applications and send the new list.
+    /// </summary>
+    public static List<T> FilterAvailableExperiences<T>()
+    {
+         List<T> apps = new List<T>();
+        approvedGames = GetParentalApprovedGames();
+        Logger.WriteLog("Approved games length: " + approvedGames.Count, MockConsole.LogLevel.Debug);
+
         Logger.WriteLog("Within loadAvailableGames", MockConsole.LogLevel.Debug);
 
-        foreach (var line in installedGames.Where(line => line.StartsWith("AppID")))
+        foreach (var line in steamCmdInstalledGames.Where(line => line.StartsWith("AppID")))
         {
             Logger.WriteLog(line, MockConsole.LogLevel.Debug);
 
             List<string> filter = line.Split(":").ToList();
             string id = filter[0].Replace("AppID", "").Trim();
 
-            if (!availableLicenses.Contains(id)) continue;
-            if (blacklistedGames.Contains(id) ||
+            if (!AvailableLicenses.Contains(id)) continue;
+            if (BlacklistedGames.Contains(id) ||
                 (approvedGames.Count != 0 && !approvedGames.Contains(id))) continue; // if count is zero then all games are approved
-                    
+
             filter.RemoveAt(0);
             filter.RemoveAt(filter.Count - 1); // remove file location
             filter.RemoveAt(filter.Count - 1); // remove drive name
             string name = string.Join(":", filter.ToArray()).Replace("\\", "").Trim();
             name = name.Replace("\"", "").Trim();
-            
             if (name.Contains("appid_")) // as a backup if steamcmd doesn't load the game name, we get it from the acf file
             {
                 AcfReader acfReader = new AcfReader(id);
@@ -282,14 +301,11 @@ public static class SteamScripts
                     name = acfReader.gameName;
                 }
             }
-                        
             //Determine if it is a VR experience
             bool isVr = steamManifestApplicationList.IsApplicationInstalledAndVrCompatible("steam.app." + id);
             if (!Helper.GetStationMode().Equals(Helper.STATION_MODE_VR) && isVr) continue;
-            
             //item.parameters may be null here
             WrapperManager.StoreApplication(SteamWrapper.WrapperType, id, name, isVr);
-            
             // Basic application requirements
             if (typeof(T) == typeof(ExperienceDetails))
             {
@@ -302,7 +318,7 @@ public static class SteamScripts
                 apps.Add((T)(object)application);
             }
         }
-
+        
         return apps;
     }
 
@@ -364,5 +380,75 @@ public static class SteamScripts
         } while (enumerator.MoveNext());
         enumerator.Dispose();
         return approvedGames;
+    }
+    
+    //TODO create (wait for designer) an image for the home screen
+    /// <summary>
+    /// Checks and updates the SteamVR home background image and deletes the Vive Business Streaming image if necessary.
+    /// </summary>
+    public static void CheckSteamVrHomeImage()
+    {
+        // Define the path to the local lumination_home.png image
+        string luminationHome = CommandLine.stationLocation + @"\assets\Images\lumination_home.png";
+
+        // If the local file does not exist, exit the function
+        if (!File.Exists(luminationHome))
+        {
+            MockConsole.WriteLine($"No custom home image detected: {luminationHome}", MockConsole.LogLevel.Normal);
+            return;
+        }
+
+        // Read the SteamVR settings file
+        string steamVrSettingsFilePath = @"C:\Program Files (x86)\Steam\config\steamvr.vrsettings";
+        try
+        {
+            // Read the JSON file
+            string json = File.ReadAllText(steamVrSettingsFilePath);
+
+            // Parse the JSON string into a JObject
+            JObject jObject = JObject.Parse(json);
+
+            // Check if the "steamvr" section and "background" field exist
+            if (jObject["steamvr"]?["background"] == null) return;
+
+            // The background has already been set
+            if ((string?)jObject["steamvr"]?["background"] == luminationHome)
+            {
+                return;
+            }
+
+            // Replace the current background image with the local one
+            jObject["steamvr"]!["background"] = luminationHome;
+
+            // Convert the JObject back to a JSON string and save it
+            string modifiedJson = jObject.ToString();
+            File.WriteAllText(steamVrSettingsFilePath, modifiedJson);
+        }
+        catch (Exception e)
+        {
+            Logger.WriteLog($"Unable to read steamvr.vrsettings: {e}", MockConsole.LogLevel.Normal);
+        }
+
+        // Delete the ViveBusinessStreaming image file
+        string viveBusinessStreamingImagePath = @"C:\Program Files (x86)\Steam\steamapps\common\SteamVR\resources\backgrounds\ViveBusinessStreaming.png";
+        try
+        {
+            // Check if the file exists before attempting to delete it
+            if (File.Exists(viveBusinessStreamingImagePath))
+            {
+                // Delete the file
+                File.Delete(viveBusinessStreamingImagePath);
+                MockConsole.WriteLine("Image deleted successfully.", MockConsole.LogLevel.Normal);
+            }
+            else
+            {
+                MockConsole.WriteLine("The specified image file does not exist.", MockConsole.LogLevel.Normal);
+            }
+        }
+        catch (Exception ex)
+        {
+            // Handle any exceptions that may occur during the deletion process
+            Logger.WriteLog($"An error occurred while deleting the image: {ex.Message}", MockConsole.LogLevel.Error);
+        }
     }
 }

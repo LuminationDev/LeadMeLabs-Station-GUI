@@ -13,6 +13,7 @@ using Station._qa;
 using Station._scripts;
 using Station._utils;
 using Station._wrapper;
+using Station._wrapper.steam;
 
 namespace Station._manager;
 
@@ -158,6 +159,8 @@ public static class Manager
         {
             if (Helper.GetStationMode().Equals(Helper.STATION_MODE_VR))
             {
+                // Check SteamVRs background image
+                SteamScripts.CheckSteamVrHomeImage();
                 openVRManager = new OpenVRManager();
             }
 
