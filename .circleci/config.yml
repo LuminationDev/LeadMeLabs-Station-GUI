@@ -93,13 +93,11 @@ jobs:
           buildType: <<parameters.buildType>>
 
   commit-and-push:
-    machine: true
-    resource_class: luminationdev/darragh-comp
+    docker:
+      - image: cimg/base:stable
     parameters:
       branch:
         type: string
-    executor:
-      name: windows/default
     steps:
       - clone_hosting
       - attach_workspace:
