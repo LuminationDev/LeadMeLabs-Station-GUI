@@ -14,6 +14,7 @@ using Station.Components._profiles;
 using Station.Components._utils;
 using Station.Components._utils._steamConfig;
 using Station.Components._wrapper;
+using Station.Components._wrapper.steam;
 using Station.QA;
 
 namespace Station.MVC.Controller;
@@ -190,6 +191,8 @@ public static class MainController
         {
             if (Helper.GetStationMode().Equals(Helper.STATION_MODE_VR))
             {
+                // Check SteamVRs background image
+                SteamScripts.CheckSteamVrHomeImage();
                 openVrManager = new OpenVRManager();
             }
             

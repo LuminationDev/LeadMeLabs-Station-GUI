@@ -50,6 +50,14 @@ public class ScriptThread
 
         switch (_actionNamespace)
         {
+            case "MessageType":
+                if (_additionalData.Contains("Json"))
+                {
+                    MainController.isNucJsonEnabled = true;
+                }
+                break;
+
+            
             case "CommandLine":
                 StationScripts.Execute(_source, _additionalData);
                 break;

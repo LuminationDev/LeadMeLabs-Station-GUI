@@ -43,6 +43,8 @@ public class WrapperManager {
 
     //Store the list of applications (key = ID: [[0] = wrapper type, [1] = application name, [2] = launch params (nullable)])
     public static readonly Dictionary<string, Experience> ApplicationList = new();
+    
+    public static bool steamManifestCorrupted = false;
 
     /// <summary>
     /// Open the pipe server for message to and from external applications (Steam, Custom, etc..) and setup
@@ -180,6 +182,39 @@ public class WrapperManager {
 
         _ = RestartVrProcesses();
     }
+
+    /// <summary>
+    /// Clear the current experience lists and recollect them without using SteamCMD. This function runs when the Steam
+    /// VR manifest was corrupted on start up, after a headset is connected it fixes itself and can be used to detect
+    /// what experiences are VR enabled.
+    /// </summary>
+    public static void SilentlyCollectApplications()
+    {
+        if (alreadyCollecting)
+        {
+            SessionController.PassStationMessage("Already collecting applications");
+            return;
+        }
+        
+        // Clear the ApplicationList
+        ApplicationList.Clear();
+
+        // Clear the ExperienceViewModel's application list
+        MainViewModel.ViewModelManager.ExperiencesViewModel.ClearExperiences();
+
+        // Reload the new vr manifest
+        SteamScripts.RefreshVrManifest();
+        
+        alreadyCollecting = true;
+        
+        //NEW METHOD
+        CollectApplications<ExperienceDetails>(experiences => new JArray(experiences.Select(experience => experience.ToJObject())), "ApplicationJson", true);
+
+        //BACKWARDS COMPATABILITY
+        CollectApplications<string>( apps => string.Join("/", apps), "ApplicationList", true);
+
+        alreadyCollecting = false;
+    }
     
     /// <summary>
     /// Collects applications of type T from various sources, converts them to the desired format, and sends them as JSON messages.
@@ -187,7 +222,8 @@ public class WrapperManager {
     /// <typeparam name="T">The type of applications to collect.</typeparam>
     /// <param name="convertFunc">A function to convert applications to the desired format.</param>
     /// <param name="messageType">The type of message (namespace) that is sent to the NUC.</param>
-    private static void CollectApplications<T>(Func<List<T>, object> convertFunc, string messageType)
+    /// <param name="silently">A bool for if the function should use the saved experiences (hence not interfering with the current operation).</param>
+    private static void CollectApplications<T>(Func<List<T>, object> convertFunc, string messageType, bool silently = false)
     {
         List<T> applications = new List<T>();
 
@@ -220,7 +256,7 @@ public class WrapperManager {
         if (Helper.GetStationMode().Equals(Helper.STATION_MODE_VR) ||
             (contentProfile != null && contentProfile.DoesProfileHaveAccount("Steam")))
         {
-            List<T>? steamApplications = SteamWrapper.CollectApplications<T>();
+            List<T>? steamApplications = silently ? SteamScripts.FilterAvailableExperiences<T>() : SteamWrapper.CollectApplications<T>();
             if (steamApplications != null)
             {
                 applications.AddRange(steamApplications);
@@ -249,7 +285,7 @@ public class WrapperManager {
 
         SessionController.PassStationMessage($"{messageType},{convertedApplications}");
     }
-
+    
     /// <summary>
     /// Stop any and all processes associated with the VR headset type.
     /// </summary>
@@ -488,6 +524,21 @@ public class WrapperManager {
     /// </summary>
     public static async Task<string> StartAProcess(string appId)
     {
+        //Check if steamapps.vrmanifest was corrupted and wait for the fix
+        bool wasCorrupted = steamManifestCorrupted;
+        bool manifestCorrupted = await Helper.MonitorLoop(() => steamManifestCorrupted, 10);
+        if (!manifestCorrupted)
+        {
+            MessageController.SendResponse("Android", "Station", "SteamappsCorrupted");
+            return "Error: Steam manifest corrupted";
+        }
+        
+        //Wait a little bit longer if the manifest was corrupted so that the experiences all update correctly
+        if (wasCorrupted)
+        {
+            await Task.Delay(5000);
+        }
+        
         //Get the type from the application dictionary
         //entry [application type, application name, application launch parameters]
         Experience experience = ApplicationList.GetValueOrDefault(appId);

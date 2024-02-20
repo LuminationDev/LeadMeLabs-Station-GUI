@@ -53,13 +53,6 @@ public static class Helper
             await Task.Delay(delay);
         } while (conditionChecker.Invoke() && monitorAttempts < attemptLimit);
 
-        // Connection bailed out, send a failure message
-        if (monitorAttempts == attemptLimit)
-        {
-            SessionController.PassStationMessage("MessageToAndroid,HeadsetTimeout");
-            return false;
-        }
-
         return true;
     }
 }
