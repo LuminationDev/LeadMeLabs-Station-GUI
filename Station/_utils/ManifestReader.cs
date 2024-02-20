@@ -79,6 +79,10 @@ public static class ManifestReader
         try
         {
             JArray.Parse(data?["applications"].ToString());
+            if (filePath.Equals(SteamScripts.SteamManifest))
+            {
+                WrapperManager.steamManifestCorrupted = false;
+            }
         }
         catch (Exception)
         {
@@ -90,7 +94,7 @@ public static class ManifestReader
             return null;
         }
 
-        var applications = (JArray)data?["applications"]!;
+        JArray applications = (JArray)data["applications"]!;
         return applications;
     }
 
@@ -105,7 +109,25 @@ public static class ManifestReader
     /// </returns>
     private static bool IsDataNull(string filePath, JObject? data)
     {
-        if (data != null && data.ContainsKey("applications")) return false;
+        //Check if data or data.ContainsKey is null
+        if (data?.ContainsKey("applications") == null) return true;
+        if (data.ContainsKey("applications") && data["applications"] is JArray) return false;
+
+        switch (filePath)
+        {
+            //The automated action has not worked, get the user to manually restart the VR system.
+            case SteamScripts.SteamManifest when WrapperManager.steamManifestCorrupted:
+                //Send a message to the Tablet that displays the following instructions.
+                // - Steam application list has become corrupted
+                // - Connect a headset to the computer (steamapps.vrmanifest will refresh)
+                // - Restart the VR system
+                Manager.SendResponse("Android", "Station", "SteamappsCorrupted");
+                break;
+
+            case SteamScripts.SteamManifest:
+                WrapperManager.steamManifestCorrupted = true;
+                break;
+        }
         
         Logger.WriteLog($"Manifest file is not in the expected format: {filePath}.", MockConsole.LogLevel.Error);
         return true;

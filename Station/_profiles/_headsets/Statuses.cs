@@ -45,6 +45,11 @@ public class Statuses
 
             OnSoftwareTrackingChanged(value.ToString());
             _softwareStatus = value;
+            //Silently collect the applications again if the Steam manifest was corrupted
+            if (value == DeviceStatus.Connected && WrapperManager.steamManifestCorrupted)
+            {
+                WrapperManager.SilentlyCollectApplications();
+            }
         }
         get => _softwareStatus;
     }
