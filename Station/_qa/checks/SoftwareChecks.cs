@@ -436,6 +436,15 @@ public class SoftwareChecks
             qaCheck.SetPassed("Could not find NVIDIA");
             return qaCheck;
         }
+
+        if (output.Count == 1)
+        {
+            if ((output[0].Properties.First(info => (info.Name.Contains("App Path") || info.Name.Contains("UninstallString")))).Value.ToString().Contains("C:\\Windows\\SysWOW64\\RunDll32.EXE"))
+            {
+                qaCheck.SetPassed("Found allowlisted RunDll32.exe");
+                return qaCheck;
+            }
+        }
         qaCheck.SetFailed("Found NVIDIA at location: " + output[0].Properties.Where(info => (info.Name.Contains("App Path") || info.Name.Contains("UninstallString"))).First()?.Value);
         return qaCheck;
     }
