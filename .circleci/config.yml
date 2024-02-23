@@ -9,18 +9,19 @@ commands:
       - add_ssh_keys:
           fingerprints:
             - "bd:dc:58:24:df:b4:3f:8e:66:69:b9:9c:3b:73:2e:3e"
+      - run: mkdir -p ~/circleci-working/<<pipeline.id>>
       - run:
           name: Setup git config
-          command: git config --global user.name "CircleCI" && git config --global user.email "CircleCI@lumination.com.au"
+          command: git config --global user.name "CircleCI"; git config --global user.email "CircleCI@lumination.com.au"
       - run:
           name: Add github to known hosts
           command: ssh-keyscan github.com >> ~/.ssh/known_hosts
       - run:
           name: Write ssh config file
-          command: echo "Host github.com" > ~/.ssh/config && echo "  IdentitiesOnly yes" >> ~/.ssh/config && echo "  IdentityFile ~/.ssh/id_rsa_bddc5824dfb43f8e6669b99c3b732e3e" >> ~/.ssh/config
+          command: echo "Host github.com" > ~/.ssh/config; echo "  IdentitiesOnly yes" >> ~/.ssh/config && echo "  IdentityFile ~/.ssh/id_rsa_bddc5824dfb43f8e6669b99c3b732e3e" >> ~/.ssh/config
       - run:
           name: Clone hosting server
-          command: cd ~/circleci-working/<<pipeline.id>> && git clone git@github.com:LuminationDev/LeadMeLabs---HostingServer.git
+          command: cd ~/circleci-working/<<pipeline.id>>; git clone git@github.com:LuminationDev/LeadMeLabs---HostingServer.git
 
   copy_and_push:
     parameters:
@@ -29,41 +30,49 @@ commands:
     steps:
       - run:
           name: Checkout <<parameters.branch>>
-          command: cd ~/circleci-working/<<pipeline.id>>/LeadMeLabs---HostingServer && git checkout <<parameters.branch>>
+          command: cd ~/circleci-working/<<pipeline.id>>/LeadMeLabs---HostingServer; git checkout <<parameters.branch>>
       - run:
           name: Copy Station.zip to git repository
           command: cp ~/circleci-working/<<pipeline.id>>/Station/Station.zip ~/circleci-working/<<pipeline.id>>/LeadMeLabs---HostingServer/applications
       - run:
           name: Add Station.zip with git
-          command: cd ~/circleci-working/<<pipeline.id>>/LeadMeLabs---HostingServer && git add applications/Station.zip
+          command: cd ~/circleci-working/<<pipeline.id>>/LeadMeLabs---HostingServer; git add applications/Station.zip
       - run:
           name: Commit
-          command: cd ~/circleci-working/<<pipeline.id>>/LeadMeLabs---HostingServer && git commit -m "Updating <<parameters.branch>> Station"
+          command: cd ~/circleci-working/<<pipeline.id>>/LeadMeLabs---HostingServer; git commit -m "Updating <<parameters.branch>> Station"
       - run:
           name: Push
-          command: cd ~/circleci-working/<<pipeline.id>>/LeadMeLabs---HostingServer && git push
-      - run:
-          name: Cleanup
-          command: rm -rf ~/circleci-working/<<pipeline.id>>
+          command: cd ~/circleci-working/<<pipeline.id>>/LeadMeLabs---HostingServer; git push
 
   build:
     parameters:
       buildType:
         type: string
     steps:
-      - run: mkdir <<pipeline.id>>
-      - run: cd <<pipeline.id>>
+      - run: mkdir -p ~/circleci-working/<<pipeline.id>>
       - checkout:
-          path: <<pipeline.id>>
+          path: ~/circleci-working/<<pipeline.id>>
       - run:
           name: "load nuget config"
-          command: cd <<pipeline.id>> && dotnet new nugetconfig && dotnet nuget add source --username $PACKAGE_ACCESS_USERNAME --password $PACKAGE_ACCESS_TOKEN --store-password-in-clear-text --name github "https://nuget.pkg.github.com/LuminationDev/index.json"
+          command: cd ~/circleci-working/<<pipeline.id>>; dotnet new nugetconfig; dotnet nuget add source --username $env:PACKAGE_ACCESS_USERNAME --password $env:PACKAGE_ACCESS_TOKEN --store-password-in-clear-text --name github "https://nuget.pkg.github.com/LuminationDev/index.json"
       - run:
           name: "dotnet restore"
-          command: cd <<pipeline.id>> && dotnet.exe restore
+          command: cd ~/circleci-working/<<pipeline.id>>; dotnet.exe restore
       - run:
           name: "Build dotnet <<parameters.buildType>>"
-          command: cd <<pipeline.id>>/Station && msbuild.exe -v:normal ~/circleci-working/<<pipeline.id>>/Station/Station.csproj -p:Configuration=<<parameters.buildType>>
+          command: cd ~/circleci-working/<<pipeline.id>>; msbuild.exe -v:normal .\Station\Station.csproj -p:Configuration=<<parameters.buildType>>
+      - store_artifacts:
+          path: ~/circleci-working/<<pipeline.id>>/Station/Station.zip
+      - persist_to_workspace:
+          root: ~/circleci-working/<<pipeline.id>>
+          paths:
+            - Station/bin/<<parameters.buildType>>/net6.0-windows/
+  
+  sign:
+    parameters:
+      buildType:
+        type: string
+    steps:
       - run:
           name: "Sign Station.exe"
           command: cd ~/circleci-working/<<pipeline.id>>/Station/bin/<<parameters.buildType>>/net6.0-windows/; signtool.exe sign /fd sha256 /tr http://ts.ssl.com /td sha256 /n "Technology for Education Solutions Pty. Ltd." ".\Station.exe"
@@ -81,8 +90,6 @@ commands:
 
 jobs:
   build:
-    machine: true
-    resource_class: luminationdev/darragh-comp
     parameters:
       buildType:
         type: string
@@ -91,19 +98,31 @@ jobs:
     steps:
       - build:
           buildType: <<parameters.buildType>>
-
-  commit-and-push:
+  
+  sign:
     machine: true
     resource_class: luminationdev/darragh-comp
     parameters:
-      branch:
+      buildType:
         type: string
     executor:
       name: windows/default
     steps:
+      - attach_workspace:
+          at: ~/circleci-working/<<pipeline.id>>
+      - sign:
+          buildType: <<parameters.buildType>>
+
+  commit-and-push:
+    docker:
+      - image: cimg/base:stable
+    parameters:
+      branch:
+        type: string
+    steps:
       - clone_hosting
       - attach_workspace:
-          at: ./
+          at: ~/circleci-working/<<pipeline.id>>
       - copy_and_push:
           branch: <<parameters.branch>>
 
@@ -117,10 +136,14 @@ workflows:
           buildType: "Debug"
           requires:
             - hold
+      - sign:
+          buildType: "Debug"
+          requires:
+            - build
       - commit-and-push:
           branch: "development"
           requires:
-            - build
+            - sign
   build_release:
     jobs:
       - hold:
@@ -134,7 +157,11 @@ workflows:
           buildType: "Release"
           requires:
             - hold
+      - sign:
+          buildType: "Release"
+          requires:
+            - build
       - commit-and-push:
           branch: "main"
           requires:
-            - build
+            - sign
