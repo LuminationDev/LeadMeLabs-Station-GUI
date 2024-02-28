@@ -1,5 +1,4 @@
-﻿using Station._details;
-using System;
+﻿using System;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Drawing;
@@ -8,193 +7,194 @@ using System.Reflection;
 using System.Windows;
 using System.Windows.Forms;
 using Station._commandLine;
+using Station._details;
 using Station._utils;
+using Station._utils._steamConfig;
 using Application = System.Windows.Application;
 
-namespace Station
-{
-    public class NotifyIconWrapper : FrameworkElement, IDisposable
-    {
-        public static NotifyIconWrapper? Instance { get; set; }
+namespace Station._notification;
 
-        public static readonly DependencyProperty TextProperty =
-            DependencyProperty.Register("Text", typeof(string), typeof(NotifyIconWrapper), new PropertyMetadata(
+public class NotifyIconWrapper : FrameworkElement, IDisposable
+{
+    public static NotifyIconWrapper? Instance { get; set; }
+
+    public static readonly DependencyProperty TextProperty =
+        DependencyProperty.Register("Text", typeof(string), typeof(NotifyIconWrapper), new PropertyMetadata(
+            (d, e) =>
+            {
+                var notifyIcon = ((NotifyIconWrapper)d)._notifyIcon;
+                if (notifyIcon == null)
+                    return;
+                notifyIcon.Text = (string)e.NewValue;
+            }));
+
+    private static readonly DependencyProperty NotifyRequestProperty =
+        DependencyProperty.Register("NotifyRequest", typeof(NotifyRequestRecord), typeof(NotifyIconWrapper),
+            new PropertyMetadata(
                 (d, e) =>
                 {
-                    var notifyIcon = ((NotifyIconWrapper)d)._notifyIcon;
-                    if (notifyIcon == null)
-                        return;
-                    notifyIcon.Text = (string)e.NewValue;
+                    var r = (NotifyRequestRecord)e.NewValue;
+                    ((NotifyIconWrapper)d)._notifyIcon?.ShowBalloonTip(r.Duration, r.Title, r.Text, r.Icon);
                 }));
 
-        private static readonly DependencyProperty NotifyRequestProperty =
-            DependencyProperty.Register("NotifyRequest", typeof(NotifyRequestRecord), typeof(NotifyIconWrapper),
-                new PropertyMetadata(
-                    (d, e) =>
-                    {
-                        var r = (NotifyRequestRecord)e.NewValue;
-                        ((NotifyIconWrapper)d)._notifyIcon?.ShowBalloonTip(r.Duration, r.Title, r.Text, r.Icon);
-                    }));
+    private static readonly RoutedEvent OpenSelectedEvent = EventManager.RegisterRoutedEvent("OpenSelected",
+        RoutingStrategy.Direct, typeof(RoutedEventHandler), typeof(NotifyIconWrapper));
 
-        private static readonly RoutedEvent OpenSelectedEvent = EventManager.RegisterRoutedEvent("OpenSelected",
-            RoutingStrategy.Direct, typeof(RoutedEventHandler), typeof(NotifyIconWrapper));
+    private static readonly RoutedEvent ExitSelectedEvent = EventManager.RegisterRoutedEvent("ExitSelected",
+        RoutingStrategy.Direct, typeof(RoutedEventHandler), typeof(NotifyIconWrapper));
 
-        private static readonly RoutedEvent ExitSelectedEvent = EventManager.RegisterRoutedEvent("ExitSelected",
-            RoutingStrategy.Direct, typeof(RoutedEventHandler), typeof(NotifyIconWrapper));
+    private readonly NotifyIcon? _notifyIcon;
+    private string? iconPath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
 
-        private readonly NotifyIcon? _notifyIcon;
-        private string? iconPath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
-
-        public NotifyIconWrapper()
+    public NotifyIconWrapper()
+    {
+        if (DesignerProperties.GetIsInDesignMode(this))
+            return;
+        _notifyIcon = new NotifyIcon
         {
-            if (DesignerProperties.GetIsInDesignMode(this))
-                return;
-            _notifyIcon = new NotifyIcon
-            {
-                Icon = Icon.ExtractAssociatedIcon(iconPath + @"\assets\icon.ico"),
-                Visible = true,
-                Text = "Station",
-                ContextMenuStrip = CreateContextMenu()
-            };
-            _notifyIcon.DoubleClick += OpenItemOnClick;
-            Application.Current.Exit += (obj, args) => { _notifyIcon.Dispose(); };
+            Icon = Icon.ExtractAssociatedIcon(iconPath + @"\assets\icon.ico"),
+            Visible = true,
+            Text = "Station",
+            ContextMenuStrip = CreateContextMenu()
+        };
+        _notifyIcon.DoubleClick += OpenItemOnClick;
+        Application.Current.Exit += (obj, args) => { _notifyIcon.Dispose(); };
 
-            Instance = this;
+        Instance = this;
+    }
+
+    public string Text
+    {
+        get => (string)GetValue(TextProperty);
+        set => SetValue(TextProperty, value);
+    }
+
+    public NotifyRequestRecord NotifyRequest
+    {
+        get => (NotifyRequestRecord)GetValue(NotifyRequestProperty);
+        set => SetValue(NotifyRequestProperty, value);
+    }
+
+    public void Dispose()
+    {
+        _notifyIcon?.Dispose();
+    }
+
+    public event RoutedEventHandler OpenSelected
+    {
+        add => AddHandler(OpenSelectedEvent, value);
+        remove => RemoveHandler(OpenSelectedEvent, value);
+    }
+
+    public event RoutedEventHandler ExitSelected
+    {
+        add => AddHandler(ExitSelectedEvent, value);
+        remove => RemoveHandler(ExitSelectedEvent, value);
+    }
+
+    private ContextMenuStrip CreateContextMenu()
+    {
+        var openItem = new ToolStripMenuItem("Open");
+        openItem.Click += OpenItemOnClick;
+
+        var openDetails = new ToolStripMenuItem("Details");
+        openDetails.Click += OpenDetailsOnClick;
+
+        var roomSetup = new ToolStripMenuItem("Save room setup");
+        roomSetup.Click += SaveRoomSetupClick;
+
+        var goToLogs = new ToolStripMenuItem("Logs");
+        goToLogs.Click += GoToLogsOnClick;
+
+        var exitItem = new ToolStripMenuItem("Exit");
+        exitItem.Click += ExitItemOnClick;
+
+        var contextMenu = new ContextMenuStrip { Items = { openItem, openDetails, roomSetup, goToLogs, exitItem } };
+        return contextMenu;
+    }
+
+    private void OpenItemOnClick(object? sender, EventArgs eventArgs)
+    {
+        var args = new RoutedEventArgs(OpenSelectedEvent);
+        RaiseEvent(args);
+    }
+
+    private void OpenDetailsOnClick(object? sender, EventArgs eventArgs)
+    {
+        DetailsWindow details = new DetailsWindow();
+        details.Show();
+    }
+
+    private void SaveRoomSetupClick(object? sender, EventArgs eventArgs)
+    {
+        string message = RoomSetup.SaveRoomSetup();
+        NotifyRequest = new NotifyRequestRecord
+        {
+            Title = "Room Setup",
+            Text = message,
+            Duration = 5000
+        };
+    }
+
+    private void GoToLogsOnClick(object? sender, EventArgs eventArgs)
+    {
+        string path = Path.GetFullPath(Path.Combine(CommandLine.StationLocation, "_logs"));
+
+        try
+        {
+            Process.Start("explorer.exe", path);
+        }
+        catch (Exception ex)
+        {
+            Logger.WriteLog("An error occurred: " + ex.Message, MockConsole.LogLevel.Error);
+        }
+    }
+
+    private void ExitItemOnClick(object? sender, EventArgs eventArgs)
+    {
+        var args = new RoutedEventArgs(ExitSelectedEvent);
+        RaiseEvent(args);
+    }
+
+    public class NotifyRequestRecord
+    {
+        public string Title { get; set; } = "";
+        public string Text { get; set; } = "";
+        public int Duration { get; set; } = 1000;
+        public ToolTipIcon Icon { get; set; } = ToolTipIcon.Info;
+    }
+
+    /// <summary>
+    /// Update the tray icon and tooltip to represent the current status of the software.
+    /// </summary>
+    /// <param name="status">A string of the current software operating status</param>
+    public void ChangeIcon(string status)
+    {
+        if (_notifyIcon == null || iconPath == null)
+        {
+            return;
         }
 
-        public string Text
+        //Don't continously set the icon if it is the same
+        if (iconPath.Contains(status))
         {
-            get => (string)GetValue(TextProperty);
-            set => SetValue(TextProperty, value);
+            return;
         }
 
-        public NotifyRequestRecord NotifyRequest
+        switch (status)
         {
-            get => (NotifyRequestRecord)GetValue(NotifyRequestProperty);
-            set => SetValue(NotifyRequestProperty, value);
+            case "offline":
+                iconPath = @"\assets\offline.ico";
+                break;
+            case "online":
+                iconPath = @"\assets\online.ico";
+                break;
+            default:
+                iconPath = @"\assets\icon.ico";
+                break;
         }
 
-        public void Dispose()
-        {
-            _notifyIcon?.Dispose();
-        }
-
-        public event RoutedEventHandler OpenSelected
-        {
-            add => AddHandler(OpenSelectedEvent, value);
-            remove => RemoveHandler(OpenSelectedEvent, value);
-        }
-
-        public event RoutedEventHandler ExitSelected
-        {
-            add => AddHandler(ExitSelectedEvent, value);
-            remove => RemoveHandler(ExitSelectedEvent, value);
-        }
-
-        private ContextMenuStrip CreateContextMenu()
-        {
-            var openItem = new ToolStripMenuItem("Open");
-            openItem.Click += OpenItemOnClick;
-
-            var openDetails = new ToolStripMenuItem("Details");
-            openDetails.Click += OpenDetailsOnClick;
-
-            var roomSetup = new ToolStripMenuItem("Save room setup");
-            roomSetup.Click += SaveRoomSetupClick;
-
-            var goToLogs = new ToolStripMenuItem("Logs");
-            goToLogs.Click += GoToLogsOnClick;
-
-            var exitItem = new ToolStripMenuItem("Exit");
-            exitItem.Click += ExitItemOnClick;
-
-            var contextMenu = new ContextMenuStrip { Items = { openItem, openDetails, roomSetup, goToLogs, exitItem } };
-            return contextMenu;
-        }
-
-        private void OpenItemOnClick(object? sender, EventArgs eventArgs)
-        {
-            var args = new RoutedEventArgs(OpenSelectedEvent);
-            RaiseEvent(args);
-        }
-
-        private void OpenDetailsOnClick(object? sender, EventArgs eventArgs)
-        {
-            DetailsWindow details = new DetailsWindow();
-            details.Show();
-        }
-
-        private void SaveRoomSetupClick(object? sender, EventArgs eventArgs)
-        {
-            string message = RoomSetup.SaveRoomSetup();
-            NotifyRequest = new NotifyRequestRecord
-            {
-                Title = "Room Setup",
-                Text = message,
-                Duration = 5000
-            };
-        }
-
-        private void GoToLogsOnClick(object? sender, EventArgs eventArgs)
-        {
-            string path = Path.GetFullPath(Path.Combine(CommandLine.stationLocation, "_logs"));
-
-            try
-            {
-                Process.Start("explorer.exe", path);
-            }
-            catch (Exception ex)
-            {
-                Logger.WriteLog("An error occurred: " + ex.Message, MockConsole.LogLevel.Error);
-            }
-        }
-
-        private void ExitItemOnClick(object? sender, EventArgs eventArgs)
-        {
-            var args = new RoutedEventArgs(ExitSelectedEvent);
-            RaiseEvent(args);
-        }
-
-        public class NotifyRequestRecord
-        {
-            public string Title { get; set; } = "";
-            public string Text { get; set; } = "";
-            public int Duration { get; set; } = 1000;
-            public ToolTipIcon Icon { get; set; } = ToolTipIcon.Info;
-        }
-
-        /// <summary>
-        /// Update the tray icon and tooltip to represent the current status of the software.
-        /// </summary>
-        /// <param name="status">A string of the current software operating status</param>
-        public void ChangeIcon(string status)
-        {
-            if (_notifyIcon == null || iconPath == null)
-            {
-                return;
-            }
-
-            //Don't continously set the icon if it is the same
-            if (iconPath.Contains(status))
-            {
-                return;
-            }
-
-            switch (status)
-            {
-                case "offline":
-                    iconPath = @"\assets\offline.ico";
-                    break;
-                case "online":
-                    iconPath = @"\assets\online.ico";
-                    break;
-                default:
-                    iconPath = @"\assets\icon.ico";
-                    break;
-            }
-
-            _notifyIcon.Icon = Icon.ExtractAssociatedIcon(CommandLine.stationLocation + iconPath);
-            _notifyIcon.Text = $"Station - {status}";
-        }
+        _notifyIcon.Icon = Icon.ExtractAssociatedIcon(CommandLine.StationLocation + iconPath);
+        _notifyIcon.Text = $"Station - {status}";
     }
 }

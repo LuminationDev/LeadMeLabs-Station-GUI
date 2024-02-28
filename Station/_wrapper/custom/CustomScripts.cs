@@ -24,7 +24,7 @@ public static class CustomScripts
     /// <returns>A list of available experiences of type T, or null if no experiences are available.</returns>
     public static List<T>? LoadAvailableExperiences<T>()
     {
-        if (CommandLine.stationLocation == null)
+        if (CommandLine.StationLocation == null)
         {
             SessionController.PassStationMessage("Cannot find working directory for custom experiences");
             return null;

@@ -12,6 +12,7 @@ using Station._manager;
 using Station._models;
 using Station._monitoring;
 using Station._network;
+using Station._notification;
 using Station._openvr;
 using Station._profiles;
 using Station._utils;
@@ -72,7 +73,7 @@ internal class EmbeddedWrapper : IWrapper
             WrapperManager.ApplicationList.TryGetValue(experienceId, out var experience);
             string? experienceName = experience.Name;
 
-            if (CommandLine.stationLocation == null)
+            if (CommandLine.StationLocation == null)
             {
                 MockConsole.WriteLine($"Station working directory not found while searching for header file", MockConsole.LogLevel.Error);
                 SessionController.PassStationMessage($"StationError,Station working directory not found while searching for header file.");
@@ -143,7 +144,7 @@ internal class EmbeddedWrapper : IWrapper
         VrProfile? vrProfile = Profile.CastToType<VrProfile>(SessionController.StationProfile);
         
         _launchWillHaveFailedFromOpenVrTimeout = false;
-        if(CommandLine.stationLocation == null)
+        if(CommandLine.StationLocation == null)
         {
             SessionController.PassStationMessage("Cannot find working directory");
             return "Cannot find working directory";
@@ -234,7 +235,7 @@ internal class EmbeddedWrapper : IWrapper
     /// <param name="experience">The experience object representing the application to launch.</param>
     private void AlternateLaunchProcess(Experience experience)
     {
-        if (CommandLine.stationLocation == null)
+        if (CommandLine.StationLocation == null)
         {
             SessionController.PassStationMessage("Cannot find working directory");
             return;

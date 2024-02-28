@@ -9,14 +9,15 @@ using System.Threading.Tasks;
 using LeadMeLabsLibrary;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using NUC._qa.checks;
 using Sentry;
 using Station._commandLine;
 using Station._manager;
 using Station._models;
+using Station._notification;
 using Station._profiles;
 using Station._qa.checks;
 using Station._utils;
+using Station._utils._steamConfig;
 using Station._wrapper;
 
 namespace Station._qa;
@@ -319,11 +320,11 @@ public static class QualityManager
         }
         
         // Achieve that the upload has either succeed or failed
-        if (CommandLine.stationLocation == null) return;
+        if (CommandLine.StationLocation == null) return;
 
         string? version = Updater.GetVersionNumber();
         string details = $"{version}\n{result.IsSuccessStatusCode}";
-        WriteFile(CommandLine.stationLocation, details);
+        WriteFile(CommandLine.StationLocation, details);
     }
 
     /// <summary>
@@ -337,10 +338,10 @@ public static class QualityManager
     {
         string? version = Updater.GetVersionNumber();
 
-        if (CommandLine.stationLocation == null || version == null) return false;
+        if (CommandLine.StationLocation == null || version == null) return false;
 
         // Path to the saved file
-        string filePath = $"{CommandLine.stationLocation}\\_logs\\uploaded.txt";
+        string filePath = $"{CommandLine.StationLocation}\\_logs\\uploaded.txt";
 
         // Check if the file exists
         if (!File.Exists(filePath))

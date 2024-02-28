@@ -1,10 +1,4 @@
-using System;
-using System.Linq;
-using System.Management.Automation;
-using System.Net.NetworkInformation;
-using Station._qa;
-
-namespace NUC._qa.checks;
+namespace Station._qa.checks;
 
 public class InternetSpeedCheck
 {

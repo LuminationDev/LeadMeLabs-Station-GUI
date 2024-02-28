@@ -7,6 +7,7 @@ using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
 using LeadMeLabsLibrary;
+using Station._notification;
 using Station._utils;
 using Station._wrapper.steam;
 

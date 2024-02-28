@@ -6,6 +6,7 @@ using System.Text;
 using LeadMeLabsLibrary.Station;
 using Station._commandLine;
 using Station._interfaces;
+using Station._utils._steamConfig;
 using Station._wrapper;
 
 namespace Station._profiles._headsets;

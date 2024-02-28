@@ -10,6 +10,8 @@ using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using Sentry;
 using Station._manager;
+using Station._notification;
+using Station._overlay;
 using Station._utils;
 using Station._wrapper;
 using Station._wrapper.steam;
@@ -26,7 +28,7 @@ public static class CommandLine
     /// The location of the executing assembly. This is used to find the relative path for externally used applications.
     /// </summary>
     public static readonly string?
-        stationLocation = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+        StationLocation = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
 
     /// <summary>
     /// A string representing the regular command prompt executable.
@@ -52,7 +54,7 @@ public static class CommandLine
     /// <summary>
     /// The relative path to the SetVol executable
     /// </summary>
-    public static string SetVol = stationLocation + @"\external\SetVol\SetVol.exe";
+    public static string SetVol = StationLocation + @"\external\SetVol\SetVol.exe";
 
     /// <summary>
     /// Sets up a generic process ready for any type of command to be passed. There is no command
@@ -237,12 +239,12 @@ public static class CommandLine
         {
             configuringSteam = true;
 
-            if (string.IsNullOrEmpty(stationLocation))
+            if (string.IsNullOrEmpty(StationLocation))
             {
                 Logger.WriteLog($"Station location null or empty: cannot run '{command}', MonitorSteamConfiguration -> SetupCommand returned null value.", MockConsole.LogLevel.Error);
                 return;
             }
-            string fullPath = stationLocation + steamCmd;
+            string fullPath = StationLocation + steamCmd;
 
             Process ? cmd = SetupCommand(fullPath);
             if (cmd == null)
@@ -297,12 +299,12 @@ public static class CommandLine
     /// <returns>A string representing the results of the command</returns>
     public static string? ExecuteSteamCommand(string command)
     {
-        if (string.IsNullOrEmpty(stationLocation))
+        if (string.IsNullOrEmpty(StationLocation))
         {
             Logger.WriteLog($"Station location null or empty: cannot run '{command}', MonitorSteamConfiguration -> SetupCommand returned null value.", MockConsole.LogLevel.Error);
             return null;
         }
-        string fullPath = stationLocation + steamCmd;
+        string fullPath = StationLocation + steamCmd;
 
         if (!File.Exists(fullPath))
         {
@@ -354,12 +356,12 @@ public static class CommandLine
     /// <returns>A string representing the results of the command</returns>
     public static string? ExecuteSteamCommandSDrive(string command)
     {
-        if (string.IsNullOrEmpty(stationLocation))
+        if (string.IsNullOrEmpty(StationLocation))
         {
             Logger.WriteLog($"Station location null or empty: cannot run '{command}', MonitorSteamConfiguration -> SetupCommand returned null value.", MockConsole.LogLevel.Error);
             return null;
         }
-        string fullPath = stationLocation + steamCmd;
+        string fullPath = StationLocation + steamCmd;
 
         if (!File.Exists(fullPath))
         {

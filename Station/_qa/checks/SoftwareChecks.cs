@@ -178,7 +178,7 @@ public class SoftwareChecks
     private QaCheck IsSetVolPresent()
     {
         QaCheck qaCheck = new QaCheck("setvol_installed");
-        string filePath = CommandLine.stationLocation + @"\external\SetVol\SetVol.exe";
+        string filePath = CommandLine.StationLocation + @"\external\SetVol\SetVol.exe";
         if (File.Exists(filePath))
         {
             qaCheck.SetPassed(null);
@@ -197,7 +197,7 @@ public class SoftwareChecks
     private QaCheck IsSteamCmdPresent()
     {
         QaCheck qaCheck = new QaCheck("steamcmd_installed");
-        string filePath = CommandLine.stationLocation + @"\external\steamcmd\steamcmd.exe";
+        string filePath = CommandLine.StationLocation + @"\external\steamcmd\steamcmd.exe";
         if (File.Exists(filePath))
         {
             qaCheck.SetPassed(null);
@@ -216,7 +216,7 @@ public class SoftwareChecks
     private QaCheck IsSteamCmdInitialised()
     {
         QaCheck qaCheck = new QaCheck("steamcmd_initialised");
-        string filePath = CommandLine.stationLocation + @"\external\steamcmd\steamerrorreporter.exe";
+        string filePath = CommandLine.StationLocation + @"\external\steamcmd\steamerrorreporter.exe";
             
         if(!File.Exists(filePath))
         {
@@ -241,7 +241,7 @@ public class SoftwareChecks
         string loginUser = $"+login {loginDetails}";
         string quit = " +quit";
         
-        string fullPath = CommandLine.stationLocation + CommandLine.steamCmd;
+        string fullPath = CommandLine.StationLocation + CommandLine.steamCmd;
         string? output = "";
         string? error = "";
         
@@ -306,7 +306,7 @@ public class SoftwareChecks
         string loginUser = $"+login {loginDetails}";
         string quit = " +quit";
         
-        string fullPath = CommandLine.stationLocation + CommandLine.steamCmdFolder;
+        string fullPath = CommandLine.StationLocation + CommandLine.steamCmdFolder;
         string? output = "";
         string? error = "";
 

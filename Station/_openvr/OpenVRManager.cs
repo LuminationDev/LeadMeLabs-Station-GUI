@@ -9,6 +9,7 @@ using Station._commandLine;
 using Station._interfaces;
 using Station._manager;
 using Station._models;
+using Station._notification;
 using Station._profiles;
 using Station._utils;
 using Station._wrapper;

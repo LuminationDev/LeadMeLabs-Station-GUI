@@ -8,16 +8,17 @@ using Newtonsoft.Json.Linq;
 using Station._commandLine;
 using Station._manager;
 using Station._models;
+using Station._notification;
 using Station._utils;
 
 namespace Station._wrapper.embedded;
 
 public static class EmbeddedScripts
 {
-    private static readonly string EmbeddedManifest = Path.GetFullPath(Path.Combine(CommandLine.stationLocation, "_embedded", "manifest.json"));
-    private static readonly string EmbeddedDirectory = Path.GetFullPath(Path.Combine(CommandLine.stationLocation, "_embedded"));
+    private static readonly string EmbeddedManifest = Path.GetFullPath(Path.Combine(CommandLine.StationLocation, "_embedded", "manifest.json"));
+    private static readonly string EmbeddedDirectory = Path.GetFullPath(Path.Combine(CommandLine.StationLocation, "_embedded"));
     
-    public static readonly string EmbeddedVrManifest = Path.GetFullPath(Path.Combine(CommandLine.stationLocation, @"_embedded\embeddedapps.vrmanifest"));
+    public static readonly string EmbeddedVrManifest = Path.GetFullPath(Path.Combine(CommandLine.StationLocation, @"_embedded\embeddedapps.vrmanifest"));
     private static ManifestReader.ManifestApplicationList? embeddedManifestApplicationList;
     
     /// <summary>
@@ -149,7 +150,7 @@ public static class EmbeddedScripts
     {
         RegenerateEmbeddedManifests();
         
-        if (CommandLine.stationLocation == null)
+        if (CommandLine.StationLocation == null)
         {
             SessionController.PassStationMessage("Cannot find working directory for custom experiences");
             return null;
