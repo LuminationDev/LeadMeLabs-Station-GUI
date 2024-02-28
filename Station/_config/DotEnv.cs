@@ -3,12 +3,13 @@ using System.IO;
 using System.Threading.Tasks;
 using LeadMeLabsLibrary;
 using Station._commandLine;
+using Station._notification;
 
 namespace Station._config;
 
 public static class DotEnv
 {
-    private static readonly string FilePath = $"{CommandLine.stationLocation}\\_config\\config.env";
+    private static readonly string FilePath = $"{CommandLine.StationLocation}\\_config\\config.env";
 
     /// <summary>
     /// Load the variables within the config.env into the local environment for the running
