@@ -5,6 +5,7 @@ using System.Linq;
 using System.Threading;
 using Station._commandLine;
 using Station._manager;
+using Station._notification;
 using Station._utils;
 using Station._wrapper;
 using Station._wrapper.steam;

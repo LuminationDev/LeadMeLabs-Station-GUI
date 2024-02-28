@@ -10,6 +10,7 @@ using Station._commandLine;
 using Station._manager;
 using Station._models;
 using Station._monitoring;
+using Station._notification;
 using Station._utils;
 
 namespace Station._wrapper.steam;
@@ -208,7 +209,7 @@ public static class SteamScripts
     private static List<T>? LoadAvailableGamesUsingInternetConnection<T>()
     {
         //Check if SteamCMD has been initialised
-        string filePath = CommandLine.stationLocation + @"\external\steamcmd\steamerrorreporter.exe";
+        string filePath = CommandLine.StationLocation + @"\external\steamcmd\steamerrorreporter.exe";
         
         if(!File.Exists(filePath))
         {
@@ -389,7 +390,7 @@ public static class SteamScripts
     public static void CheckSteamVrHomeImage()
     {
         // Define the path to the local lumination_home.png image
-        string luminationHome = CommandLine.stationLocation + @"\assets\Images\lumination_home.png";
+        string luminationHome = CommandLine.StationLocation + @"\assets\Images\lumination_home.png";
 
         // If the local file does not exist, exit the function
         if (!File.Exists(luminationHome))

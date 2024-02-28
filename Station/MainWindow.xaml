@@ -6,6 +6,7 @@
         xmlns:bh="http://schemas.microsoft.com/xaml/behaviors"
         xmlns:local="clr-namespace:Station"
         xmlns:system="clr-namespace:System;assembly=System.Runtime"
+        xmlns:notification="clr-namespace:Station._notification"
         mc:Ignorable="d"
         ShowInTaskbar="{Binding ShowInTaskbar}"
         WindowState="{Binding WindowState}"
@@ -87,7 +88,7 @@
         <ColumnDefinition Width="125"/>
         </Grid.ColumnDefinitions>
         
-        <local:NotifyIconWrapper NotifyRequest="{Binding NotifyRequest}">
+        <notification:NotifyIconWrapper NotifyRequest="{Binding NotifyRequest}">
             <bh:Interaction.Triggers>
                 <bh:EventTrigger EventName="OpenSelected">
                     <bh:InvokeCommandAction Command="{Binding NotifyIconOpenCommand}"/>
@@ -96,7 +97,7 @@
                     <bh:InvokeCommandAction Command="{Binding NotifyIconExitCommand}"/>
                 </bh:EventTrigger>
             </bh:Interaction.Triggers>
-        </local:NotifyIconWrapper>
+        </notification:NotifyIconWrapper>
 
         <!-- Debug Panel -->
         <StackPanel

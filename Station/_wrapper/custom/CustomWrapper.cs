@@ -12,6 +12,7 @@ using Station._manager;
 using Station._models;
 using Station._monitoring;
 using Station._network;
+using Station._notification;
 using Station._openvr;
 using Station._profiles;
 using Station._utils;
@@ -73,7 +74,7 @@ internal class CustomWrapper : IWrapper
             string? experienceName = experience.Name;
             string? altPath = experience.AltPath;
 
-            if (CommandLine.stationLocation == null)
+            if (CommandLine.StationLocation == null)
             {
                 MockConsole.WriteLine($"Station working directory not found while searching for header file", MockConsole.LogLevel.Error);
                 SessionController.PassStationMessage($"StationError,Station working directory not found while searching for header file.");
@@ -90,7 +91,7 @@ internal class CustomWrapper : IWrapper
                 filePath = parentFolder + @"\header.jpg";
             } else
             {
-                filePath = Path.GetFullPath(Path.Combine(CommandLine.stationLocation, @"..\..", $"leadme_apps\\{experienceName}\\header.jpg"));
+                filePath = Path.GetFullPath(Path.Combine(CommandLine.StationLocation, @"..\..", $"leadme_apps\\{experienceName}\\header.jpg"));
             }
 
             if (!File.Exists(filePath))
@@ -139,7 +140,7 @@ internal class CustomWrapper : IWrapper
         VrProfile? vrProfile = Profile.CastToType<VrProfile>(SessionController.StationProfile);
         
         _launchWillHaveFailedFromOpenVrTimeout = false;
-        if(CommandLine.stationLocation == null)
+        if(CommandLine.StationLocation == null)
         {
             SessionController.PassStationMessage("Cannot find working directory");
             return "Cannot find working directory";
@@ -230,7 +231,7 @@ internal class CustomWrapper : IWrapper
     /// <param name="experience">The experience object representing the application to launch.</param>
     private void AlternateLaunchProcess(Experience experience)
     {
-        if (CommandLine.stationLocation == null)
+        if (CommandLine.StationLocation == null)
         {
             SessionController.PassStationMessage("Cannot find working directory");
             return;
@@ -245,7 +246,7 @@ internal class CustomWrapper : IWrapper
         }
         else
         {
-            filePath = Path.GetFullPath(Path.Combine(CommandLine.stationLocation, @"..\..", $"leadme_apps\\{experience.Name}\\{experience.Name}.exe"));
+            filePath = Path.GetFullPath(Path.Combine(CommandLine.StationLocation, @"..\..", $"leadme_apps\\{experience.Name}\\{experience.Name}.exe"));
         }
 
         if (!File.Exists(filePath))

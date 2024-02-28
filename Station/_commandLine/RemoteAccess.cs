@@ -5,132 +5,131 @@ using System.Text;
 using System.Threading.Tasks;
 using LeadMeLabsLibrary;
 using Newtonsoft.Json.Linq;
-using Station._commandLine;
+using Station._notification;
 using Station._utils;
 
-namespace Station
+namespace Station._commandLine;
+
+public static class RemoteAccess
 {
-    public static class RemoteAccess
+    private static readonly string remoteConfigFilePath =
+        $"{CommandLine.StationLocation}\\_config\\remote-config.env";
+
+    private static string remoteRefreshToken = "";
+    private static string remoteAccessToken = "";
+    private static string remoteUid = "";
+    private static bool? remoteConfigIsEnabled = null;
+    private static DateTime expiresAt = DateTime.Now;
+
+    public async static Task<bool> IsRemoteConfigEnabled()
     {
-        private static readonly string remoteConfigFilePath =
-            $"{CommandLine.stationLocation}\\_config\\remote-config.env";
-
-        private static string remoteRefreshToken = "";
-        private static string remoteAccessToken = "";
-        private static string remoteUid = "";
-        private static bool? remoteConfigIsEnabled = null;
-        private static DateTime expiresAt = DateTime.Now;
-
-        public async static Task<bool> IsRemoteConfigEnabled()
+        if (remoteConfigIsEnabled == null)
         {
-            if (remoteConfigIsEnabled == null)
-            {
-                remoteConfigIsEnabled = File.Exists(remoteConfigFilePath);
-            }
-
-            return remoteConfigIsEnabled ?? false;
+            remoteConfigIsEnabled = File.Exists(remoteConfigFilePath);
         }
 
-        private async static Task LoadRemoteConfig()
+        return remoteConfigIsEnabled ?? false;
+    }
+
+    private async static Task LoadRemoteConfig()
+    {
+        string? decryptedText = EncryptionHelper.DetectFileEncryption(remoteConfigFilePath);
+        if (string.IsNullOrEmpty(decryptedText))
         {
-            string? decryptedText = EncryptionHelper.DetectFileEncryption(remoteConfigFilePath);
-            if (string.IsNullOrEmpty(decryptedText))
-            {
-                Logger.WriteLog($"Warning, Remote config file empty:{remoteConfigFilePath}", MockConsole.LogLevel.Debug);
-                return;
-            }
+            Logger.WriteLog($"Warning, Remote config file empty:{remoteConfigFilePath}", MockConsole.LogLevel.Debug);
+            return;
+        }
 
-            foreach (var line in decryptedText.Split('\n'))
-            {
-                var parts = line.Split(
-                    '=',
-                    StringSplitOptions.RemoveEmptyEntries);
+        foreach (var line in decryptedText.Split('\n'))
+        {
+            var parts = line.Split(
+                '=',
+                StringSplitOptions.RemoveEmptyEntries);
 
-                if (parts.Length > 0)
+            if (parts.Length > 0)
+            {
+                if (parts.Length == 1)
                 {
-                    if (parts.Length == 1)
-                    {
-                        MockConsole.WriteLine($"Remote config error, config incomplete:{parts[0]} has no value", MockConsole.LogLevel.Error);
-                        return;
-                    }
+                    MockConsole.WriteLine($"Remote config error, config incomplete:{parts[0]} has no value", MockConsole.LogLevel.Error);
+                    return;
+                }
 
-                    if (parts[0].Equals("uid"))
-                    {
-                        remoteUid = parts[1];
-                    }
-                    if (parts[0].Equals("refreshToken"))
-                    {
-                        remoteRefreshToken = parts[1];
-                    }
+                if (parts[0].Equals("uid"))
+                {
+                    remoteUid = parts[1];
+                }
+                if (parts[0].Equals("refreshToken"))
+                {
+                    remoteRefreshToken = parts[1];
                 }
             }
         }
+    }
 
-        public async static Task<string> GetAccessToken()
+    public async static Task<string> GetAccessToken()
+    {
+        if (!await IsRemoteConfigEnabled())
         {
-            if (!await IsRemoteConfigEnabled())
-            {
-                return remoteAccessToken;
-            }
-            if (String.IsNullOrEmpty(remoteAccessToken))
-            {
-                string refreshToken = await GetRemoteRefreshToken();
-                if (!String.IsNullOrEmpty(refreshToken))
-                {
-                    await LoadAccessToken(refreshToken);
-                    return remoteAccessToken;
-                }
-            }
-
-            if (DateTime.Now > expiresAt)
-            {
-                string refreshToken = await GetRemoteRefreshToken();
-                if (!String.IsNullOrEmpty(refreshToken))
-                {
-                    await LoadAccessToken(refreshToken);
-                }
-            }
-
             return remoteAccessToken;
         }
-        
-        public async static Task<string> GetRemoteUid()
+        if (String.IsNullOrEmpty(remoteAccessToken))
         {
-            return remoteUid;
-        }
-
-        private async static Task LoadAccessToken(string refreshToken)
-        {
-            using var httpClient = new HttpClient();
-            string strJSON = String.Format("{{\n\t\"grant_type\": \"refresh_token\",\n\t\"refresh_token\":\"{0}\"\n}}", refreshToken);
-        
-            StringContent objData = new StringContent(strJSON, Encoding.UTF8, "application/json");
-            var response = await httpClient.PostAsync(
-                $"https://securetoken.googleapis.com/v1/token?key=AIzaSyA5O7Ri4P6nfUX7duZIl19diSuT-wxICRc",
-                objData
-            );
-            var responseString = await response.Content.ReadAsStringAsync();
-            var responseData = JObject.Parse(responseString);
-            if (!responseData.ContainsKey("access_token") || !responseData.ContainsKey("expires_in"))
+            string refreshToken = await GetRemoteRefreshToken();
+            if (!String.IsNullOrEmpty(refreshToken))
             {
-                // todo report error
-                return;
+                await LoadAccessToken(refreshToken);
+                return remoteAccessToken;
             }
-            remoteAccessToken = responseData.GetValue("id_token").ToString();
-            expiresAt = DateTime.Now.AddSeconds(Int32.Parse(responseData.GetValue("expires_in").ToString()));
         }
 
-        public async static Task<string> GetRemoteRefreshToken()
+        if (DateTime.Now > expiresAt)
         {
-            if (String.IsNullOrEmpty(remoteRefreshToken))
+            string refreshToken = await GetRemoteRefreshToken();
+            if (!String.IsNullOrEmpty(refreshToken))
             {
-                if (await IsRemoteConfigEnabled())
-                {
-                    await LoadRemoteConfig();
-                }
+                await LoadAccessToken(refreshToken);
             }
-
-            return remoteRefreshToken;
         }
+
+        return remoteAccessToken;
+    }
+    
+    public async static Task<string> GetRemoteUid()
+    {
+        return remoteUid;
+    }
+
+    private async static Task LoadAccessToken(string refreshToken)
+    {
+        using var httpClient = new HttpClient();
+        string strJSON = String.Format("{{\n\t\"grant_type\": \"refresh_token\",\n\t\"refresh_token\":\"{0}\"\n}}", refreshToken);
+    
+        StringContent objData = new StringContent(strJSON, Encoding.UTF8, "application/json");
+        var response = await httpClient.PostAsync(
+            $"https://securetoken.googleapis.com/v1/token?key=AIzaSyA5O7Ri4P6nfUX7duZIl19diSuT-wxICRc",
+            objData
+        );
+        var responseString = await response.Content.ReadAsStringAsync();
+        var responseData = JObject.Parse(responseString);
+        if (!responseData.ContainsKey("access_token") || !responseData.ContainsKey("expires_in"))
+        {
+            // todo report error
+            return;
+        }
+        remoteAccessToken = responseData.GetValue("id_token").ToString();
+        expiresAt = DateTime.Now.AddSeconds(Int32.Parse(responseData.GetValue("expires_in").ToString()));
+    }
+
+    public async static Task<string> GetRemoteRefreshToken()
+    {
+        if (String.IsNullOrEmpty(remoteRefreshToken))
+        {
+            if (await IsRemoteConfigEnabled())
+            {
+                await LoadRemoteConfig();
+            }
+        }
+
+        return remoteRefreshToken;
     }
 }

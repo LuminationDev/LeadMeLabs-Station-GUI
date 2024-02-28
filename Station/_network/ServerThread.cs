@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using LeadMeLabsLibrary;
 using Station._commandLine;
 using Station._manager;
+using Station._notification;
 using Station._utils;
 using Station._wrapper;
 
@@ -320,7 +321,7 @@ public class ServerThread
         switch (ext)
         {
             case ".jpg":
-                folderPath = $@"{CommandLine.stationLocation}\_cache";
+                folderPath = $@"{CommandLine.StationLocation}\_cache";
                 Directory.CreateDirectory(folderPath); // Create the directory if required
                 break;
             case ".zip":

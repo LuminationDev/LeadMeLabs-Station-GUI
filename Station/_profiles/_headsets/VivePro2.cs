@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Linq;
 using Station._commandLine;
 using Station._interfaces;
+using Station._utils._steamConfig;
 using Station._wrapper;
 
 namespace Station._profiles._headsets;

@@ -3,7 +3,9 @@ using System.Windows;
 using Sentry;
 using Station._commandLine;
 using Station._manager;
+using Station._notification;
 using Station._utils;
+using Station._utils._steamConfig;
 using Application = System.Windows.Application;
 
 namespace Station

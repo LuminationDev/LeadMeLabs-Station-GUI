@@ -7,6 +7,7 @@ using leadme_api;
 using Station._interfaces;
 using Station._manager;
 using Station._models;
+using Station._notification;
 
 namespace Station._wrapper.@internal;
 

@@ -29,7 +29,7 @@ namespace StationTests._utils
 
             // Assert
             Assert.True(result);
-            string actualVersion = File.ReadAllText($"{CommandLine.stationLocation}\\_logs\\version.txt");
+            string actualVersion = File.ReadAllText($"{CommandLine.StationLocation}\\_logs\\version.txt");
             Assert.Equal(expectedVersion, actualVersion);
         }
     }
