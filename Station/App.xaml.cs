@@ -2,10 +2,11 @@
 using System.Windows;
 using Sentry;
 using Station._commandLine;
-using Station._manager;
+using Station._controllers;
 using Station._notification;
 using Station._utils;
 using Station._utils._steamConfig;
+using Station._wrapper;
 using Application = System.Windows.Application;
 
 namespace Station
@@ -40,7 +41,7 @@ namespace Station
             currentDomain.ProcessExit += ProcessExitHandler;
             CheckStorage();
 
-            Manager.StartProgram();
+            MainController.StartProgram();
         }
 
         /// <summary>
@@ -74,9 +75,9 @@ namespace Station
             Logger.WriteLog("UnhandledExceptionHandler caught: " + e.Message, MockConsole.LogLevel.Error);
             Logger.WriteLog($"Runtime terminating: {args.IsTerminating}", MockConsole.LogLevel.Error);
             Logger.WorkQueue();
-            Manager.SendResponse("Android", "Station", "SetValue:status:Off");
-            Manager.SendResponse("Android", "Station", "SetValue:gameName:Unexpected error occured, please restart station");
-            Manager.SendResponse("Android", "Station", "SetValue:gameId:");
+            MessageController.SendResponse("Android", "Station", "SetValue:status:Off");
+            MessageController.SendResponse("Android", "Station", "SetValue:gameName:Unexpected error occured, please restart station");
+            MessageController.SendResponse("Android", "Station", "SetValue:gameId:");
             try
             {
                 SentrySdk.CaptureException(e);
@@ -91,15 +92,15 @@ namespace Station
         {
             Logger.WriteLog($"Process Exiting. Sender: {sender}, Event: {args}", MockConsole.LogLevel.Verbose);
             Logger.WorkQueue();
-            Manager.SendResponse("Android", "Station", "SetValue:status:Off");
-            Manager.SendResponse("Android", "Station", "SetValue:gameName:");
-            Manager.SendResponse("Android", "Station", "SetValue:gameId:");
+            MessageController.SendResponse("Android", "Station", "SetValue:status:Off");
+            MessageController.SendResponse("Android", "Station", "SetValue:gameName:");
+            MessageController.SendResponse("Android", "Station", "SetValue:gameId:");
 
             //Shut down the pipe server if running
             WrapperManager.ClosePipeServer();
 
             //Shut down any OpenVR systems
-            Manager.openVRManager?.OpenVrSystem?.Shutdown();
+            MainController.openVRManager?.OpenVrSystem?.Shutdown();
         }
 
         public static void InitSentry()

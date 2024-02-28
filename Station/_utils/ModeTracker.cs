@@ -2,7 +2,7 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Station._commandLine;
-using Station._manager;
+using Station._controllers;
 using Station._notification;
 using Station._overlay;
 using Station._wrapper;
@@ -61,7 +61,7 @@ public static class ModeTracker
         //Update the status
         SessionController.CurrentState = "Idle Mode...";
         //TODO This currently stops the Tablets Single Station Fragment from working - implement this after the next tablet update
-        // Manager.SendResponse("Android", "Station", "SetValue:status:Idle");
+        // MessageController.SendResponse("Android", "Station", "SetValue:status:Idle");
         
         //Exit VR applications
         WrapperManager.StopCommonProcesses();
@@ -78,7 +78,7 @@ public static class ModeTracker
         
         //Update the status
         SessionController.CurrentState = "Exiting Idle Mode";
-        Manager.SendResponse("Android", "Station", "SetValue:status:On");
+        MessageController.SendResponse("Android", "Station", "SetValue:status:On");
 
         if (Helper.GetStationMode().Equals(Helper.STATION_MODE_VR))
         {

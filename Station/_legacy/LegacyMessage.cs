@@ -1,7 +1,7 @@
 using System.Threading.Tasks;
-using Station._manager;
+using Station._controllers;
 
-namespace Station._utils;
+namespace Station._legacy;
 
 /// <summary>
 /// A dedicated class to hold functions that interpret the legacy string messages. This will condense all functions
@@ -17,34 +17,34 @@ public static class LegacyMessage
     {
         if (additionalData.StartsWith("Refresh"))
         {
-            Manager.wrapperManager?.ActionHandler("CollectApplications");
+            MainController.wrapperManager?.ActionHandler("CollectApplications");
         }
 
         if (additionalData.StartsWith("Restart"))
         {
-            Manager.wrapperManager?.ActionHandler("Restart");
+            MainController.wrapperManager?.ActionHandler("Restart");
         }
 
         if (additionalData.StartsWith("Thumbnails"))
         {
             string[] split = additionalData.Split(":", 2);
-            Manager.wrapperManager?.ActionHandler("CollectHeaderImages", split[1]);
+            MainController.wrapperManager?.ActionHandler("CollectHeaderImages", split[1]);
         }
 
         if (additionalData.StartsWith("Launch"))
         {
             string id = additionalData.Split(":")[1]; // todo - tidy this up
-            Manager.wrapperManager?.ActionHandler("Stop");
+            MainController.wrapperManager?.ActionHandler("Stop");
             
             await Task.Delay(2000);
             
-            Manager.wrapperManager?.ActionHandler("Start", id);
+            MainController.wrapperManager?.ActionHandler("Start", id);
         }
 
         if (additionalData.StartsWith("PassToExperience"))
         {
             string[] split = additionalData.Split(":", 2);
-            Manager.wrapperManager?.ActionHandler("Message", split[1]);
+            MainController.wrapperManager?.ActionHandler("Message", split[1]);
         }
     }
 }

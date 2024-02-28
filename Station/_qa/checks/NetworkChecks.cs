@@ -4,7 +4,7 @@ using System.Net;
 using System.Net.Http;
 using System.Net.NetworkInformation;
 using LeadMeLabsLibrary;
-using Station._manager;
+using Station._controllers;
 
 namespace Station._qa.checks;
 
@@ -37,7 +37,7 @@ public class NetworkChecks
     {
         QaCheck qaCheck = new QaCheck("static_ip_is_present");
 
-        IPAddress ipAddress = IPAddress.Parse(Manager.localEndPoint.Address.ToString());
+        IPAddress ipAddress = IPAddress.Parse(MainController.localEndPoint.Address.ToString());
         
         NetworkInterface[] networkInterfaces = NetworkInterface.GetAllNetworkInterfaces();
         foreach (NetworkInterface networkInterface in networkInterfaces)
@@ -157,7 +157,7 @@ public class NetworkChecks
     public List<QaCheck> GetNetworkInterfaceChecks()
     {
         List<QaCheck> qaChecks = new();
-        IPAddress ipAddress = IPAddress.Parse(Manager.localEndPoint.Address.ToString());
+        IPAddress ipAddress = IPAddress.Parse(MainController.localEndPoint.Address.ToString());
         
         NetworkInterface[] networkInterfaces = NetworkInterface.GetAllNetworkInterfaces();
         foreach (NetworkInterface networkInterface in networkInterfaces)
@@ -223,13 +223,13 @@ public class NetworkChecks
                     QaCheck staticIpAddress = new QaCheck("static_ip_is_default");
                     string expectedAddress =
                         $"12.245.42.1{Environment.GetEnvironmentVariable("StationId", EnvironmentVariableTarget.Process)}";
-                    if (Manager.localEndPoint.Address.ToString().Equals(expectedAddress))
+                    if (MainController.localEndPoint.Address.ToString().Equals(expectedAddress))
                     {
                         staticIpAddress.SetPassed(null);
                     }
                     else
                     {
-                        staticIpAddress.SetWarning($"Actual IP address {Manager.localEndPoint.Address} did not match expected IP address {expectedAddress}");
+                        staticIpAddress.SetWarning($"Actual IP address {MainController.localEndPoint.Address} did not match expected IP address {expectedAddress}");
                     }
                     
                     qaChecks.Add(defaultGateway);

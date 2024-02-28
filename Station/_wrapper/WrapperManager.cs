@@ -7,6 +7,7 @@ using leadme_api;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Station._commandLine;
+using Station._controllers;
 using Station._interfaces;
 using Station._models;
 using Station._monitoring;
@@ -14,7 +15,6 @@ using Station._notification;
 using Station._profiles;
 using Station._utils;
 using Station._utils._steamConfig;
-using Station._wrapper;
 using Station._wrapper.custom;
 using Station._wrapper.embedded;
 using Station._wrapper.@internal;
@@ -22,7 +22,7 @@ using Station._wrapper.revive;
 using Station._wrapper.steam;
 using Station._wrapper.vive;
 
-namespace Station._manager;
+namespace Station._wrapper;
 
 public class WrapperManager
 {
@@ -125,7 +125,7 @@ public class WrapperManager
         switch (tokens[0])
         {
             case "details":
-                Manager.SendResponse("Android", "Station", $"SetValue:details:{CheckExperienceName(tokens[1])}");
+                MessageController.SendResponse("Android", "Station", $"SetValue:details:{CheckExperienceName(tokens[1])}");
                 break;
             default:
                 LogHandler($"Unknown actionspace: {tokens[0]}");
@@ -264,7 +264,7 @@ public class WrapperManager
         // Send the JSON message here as the PassStationMessage method splits the supplied message by ','
         if (messageType.Equals("ApplicationJson"))
         {
-            Manager.SendResponse("Android", "Station", "SetValue:installedJsonApplications:" + convertedApplications);
+            MessageController.SendResponse("Android", "Station", "SetValue:installedJsonApplications:" + convertedApplications);
             return;
         }
         
@@ -498,7 +498,7 @@ public class WrapperManager
         bool manifestCorrupted = await Helper.MonitorLoop(() => steamManifestCorrupted, 10);
         if (!manifestCorrupted)
         {
-            Manager.SendResponse("Android", "Station", "SteamappsCorrupted");
+            MessageController.SendResponse("Android", "Station", "SteamappsCorrupted");
             return "Error: Steam manifest corrupted";
         }
 

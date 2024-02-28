@@ -11,8 +11,8 @@ namespace Station._qa.checks;
 
 public class SteamConfigChecks
 {
-    private string? _steamId = null;
-    private List<QaCheck> _qaChecks = new();
+    private string? _steamId;
+    private readonly List<QaCheck> _qaChecks = new();
 
     private const string NotInitializedMessage =
         "Steam has not been initialized, please login to Steam client to continue checks.";
@@ -78,6 +78,11 @@ public class SteamConfigChecks
     {
         string? password = Environment.GetEnvironmentVariable("SteamPassword", EnvironmentVariableTarget.Process);
         QaCheck qaCheck = new QaCheck("steam_password_complexity");
+        if (string.IsNullOrEmpty(password))
+        {
+            qaCheck.SetFailed("SteamPassword is not set");
+            return qaCheck;
+        }
 
         bool isPasswordValid = Helpers.DoesPasswordMeetRequirements(password);
         if (isPasswordValid)

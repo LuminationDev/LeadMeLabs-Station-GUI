@@ -5,7 +5,7 @@ using System.Windows;
 using System.Windows.Input;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using Station._manager;
+using Station._controllers;
 using Station._notification;
 using Station._utils;
 using Station._wrapper;
@@ -23,9 +23,9 @@ namespace Station
             LoadedCommand = new RelayCommand(Loaded);
             ClosingCommand = new RelayCommand<CancelEventArgs>(Closing);
 
-            StartStationCommand = new RelayCommand(Manager.StartProgram);
-            RestartStationCommand = new RelayCommand(Manager.RestartProgram);
-            StopStationCommand = new RelayCommand(Manager.StopProgram);
+            StartStationCommand = new RelayCommand(MainController.StartProgram);
+            RestartStationCommand = new RelayCommand(MainController.RestartProgram);
+            StopStationCommand = new RelayCommand(MainController.StopProgram);
             ChangeLogLevelCommand = new RelayCommand(MockConsole.ChangeLogLevel);
             StopCurrentProcess = new RelayCommand(WrapperManager.StopAProcess);
             ResetSteamVrProcess = new RelayCommand(RestartVr);

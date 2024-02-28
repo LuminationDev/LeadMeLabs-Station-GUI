@@ -2,7 +2,7 @@ using System;
 using System.Threading;
 using System.Timers;
 using Station._commandLine;
-using Station._manager;
+using Station._controllers;
 using Station._notification;
 using Station._overlay;
 using Station._utils;
@@ -45,8 +45,8 @@ public static class StationScripts
                 if (isValidUrl)
                 {
                     CommandLine.ExecuteBrowserCommand(url);
-                    Manager.SendResponse(source, "Station", "SetValue:gameName:" + url);
-                    Manager.SendResponse("Android", "Station", "SetValue:gameId:");
+                    MessageController.SendResponse(source, "Station", "SetValue:gameName:" + url);
+                    MessageController.SendResponse("Android", "Station", "SetValue:gameId:");
                 }
             }
         }
@@ -73,7 +73,7 @@ public static class StationScripts
         }
         else if (additionalData.Equals("StopGame"))
         {
-            Manager.wrapperManager?.ActionHandler("Stop");
+            MainController.wrapperManager?.ActionHandler("Stop");
         }
         else if (additionalData.StartsWith("IdentifyStation"))
         {
@@ -95,12 +95,12 @@ public static class StationScripts
     /// <returns></returns>
     public static void RestartVRSession()
     {
-        Manager.SendResponse("Android", "Station", "SetValue:status:On");
+        MessageController.SendResponse("Android", "Station", "SetValue:status:On");
         if (!processing)
         {
             processing = true;
-            Manager.SendResponse("Android", "Station", "SetValue:status:On");
-            Manager.wrapperManager?.ActionHandler("Session", "Restart");
+            MessageController.SendResponse("Android", "Station", "SetValue:status:On");
+            MainController.wrapperManager?.ActionHandler("Session", "Restart");
         }
         else
         {
@@ -141,11 +141,11 @@ public static class StationScripts
             EndVRSession();
 
             //Shut down the server first, so the NUC cannot send off any more Pings
-            Manager.StopServer();
-            Manager.SendResponse(source, "Station", "SetValue:status:Off");
-            Manager.SendResponse(source, "Station", "SetValue:state:");
-            Manager.SendResponse(source, "Station", "SetValue:gameName:");
-            Manager.SendResponse(source, "Station", "SetValue:gameId:");
+            MainController.StopServer();
+            MessageController.SendResponse(source, "Station", "SetValue:status:Off");
+            MessageController.SendResponse(source, "Station", "SetValue:state:");
+            MessageController.SendResponse(source, "Station", "SetValue:gameName:");
+            MessageController.SendResponse(source, "Station", "SetValue:gameId:");
         }
 
         timer.Elapsed += timerElapsed;
@@ -158,8 +158,8 @@ public static class StationScripts
     /// </summary>
     public static void EndVRSession()
     {
-        Manager.SendResponse("Android", "Station", "SetValue:status:On");
-        Manager.wrapperManager?.ActionHandler("Session", "Stop");
-        Manager.SendResponse("Android", "Station", "SetValue:session:Ended");
+        MessageController.SendResponse("Android", "Station", "SetValue:status:On");
+        MainController.wrapperManager?.ActionHandler("Session", "Stop");
+        MessageController.SendResponse("Android", "Station", "SetValue:session:Ended");
     }
 }

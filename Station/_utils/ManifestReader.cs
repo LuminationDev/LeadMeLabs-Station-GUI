@@ -3,9 +3,10 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Newtonsoft.Json.Linq;
-using Station._manager;
+using Station._controllers;
 using Station._models;
 using Station._notification;
+using Station._wrapper;
 using Station._wrapper.custom;
 using Station._wrapper.embedded;
 using Station._wrapper.revive;
@@ -91,7 +92,7 @@ public static class ManifestReader
             // - Steam application list has become corrupted
             // - Connect a headset to the computer (steamapps.vrmanifest will refresh)
             // - Restart the VR system
-            Manager.SendResponse("Android", "Station", "SteamappsCorrupted");
+            MessageController.SendResponse("Android", "Station", "SteamappsCorrupted");
             return null;
         }
 
@@ -122,7 +123,7 @@ public static class ManifestReader
                 // - Steam application list has become corrupted
                 // - Connect a headset to the computer (steamapps.vrmanifest will refresh)
                 // - Restart the VR system
-                Manager.SendResponse("Android", "Station", "SteamappsCorrupted");
+                MessageController.SendResponse("Android", "Station", "SteamappsCorrupted");
                 break;
 
             case SteamScripts.SteamManifest:

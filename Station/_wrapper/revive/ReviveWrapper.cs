@@ -5,8 +5,8 @@ using System.IO;
 using System.Threading.Tasks;
 using LeadMeLabsLibrary;
 using Station._commandLine;
+using Station._controllers;
 using Station._interfaces;
-using Station._manager;
 using Station._models;
 using Station._monitoring;
 using Station._network;
@@ -78,7 +78,7 @@ public class ReviveWrapper : IWrapper
             {
                 MockConsole.WriteLine($"File not found:{filePath}", MockConsole.LogLevel.Error);
                 SessionController.PassStationMessage($"StationError,File not found:{filePath}");
-                Manager.SendResponse("Android", "Station", $"ThumbnailError:{experienceKey}");
+                MessageController.SendResponse("Android", "Station", $"ThumbnailError:{experienceKey}");
                 return;
             }
 

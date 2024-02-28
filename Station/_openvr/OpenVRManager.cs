@@ -6,8 +6,8 @@ using System.Text;
 using System.Threading.Tasks;
 using Newtonsoft.Json.Linq;
 using Station._commandLine;
+using Station._controllers;
 using Station._interfaces;
-using Station._manager;
 using Station._models;
 using Station._notification;
 using Station._profiles;
@@ -154,10 +154,10 @@ public class OpenVRManager
         if (vrProfile?.VrHeadset == null) return false;
 
         MockConsole.WriteLine($"WaitForOpenVR - Checking SteamVR. Vive status: {Enum.GetName(typeof(DeviceStatus), vrProfile.VrHeadset.GetHeadsetManagementSoftwareStatus())} " +
-            $"- OpenVR status: {Manager.openVRManager?.InitialiseOpenVR() ?? false}", MockConsole.LogLevel.Normal);
+            $"- OpenVR status: {MainController.openVRManager?.InitialiseOpenVR() ?? false}", MockConsole.LogLevel.Normal);
 
         //If Vive is connect but OpenVR is not/cannot be initialised, restart SteamVR and check again.
-        if (vrProfile.VrHeadset.GetHeadsetManagementSoftwareStatus() == DeviceStatus.Connected && (!Manager.openVRManager?.InitialiseOpenVR() ?? true))
+        if (vrProfile.VrHeadset.GetHeadsetManagementSoftwareStatus() == DeviceStatus.Connected && (!MainController.openVRManager?.InitialiseOpenVR() ?? true))
         {
             Logger.WriteLog($"OpenVRManager.WaitForOpenVR - Vive status: {vrProfile.VrHeadset.GetHeadsetManagementSoftwareStatus()}, " +
                 $"OpenVR connection not established - restarting SteamVR", MockConsole.LogLevel.Normal);
@@ -187,7 +187,7 @@ public class OpenVRManager
             //Send message to the tablet (Updating what is happening)
             ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage($"SoftwareState,Connecting SteamVR"), TimeSpan.FromSeconds(1));
 
-            bool openvr = await Helper.MonitorLoop(() => !Manager.openVRManager?.InitialiseOpenVR() ?? true, 10);
+            bool openvr = await Helper.MonitorLoop(() => !MainController.openVRManager?.InitialiseOpenVR() ?? true, 10);
             if (!openvr)
             {
                 ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage($"SoftwareState,SteamVR Error"), TimeSpan.FromSeconds(1));
@@ -353,7 +353,7 @@ public class OpenVRManager
                     responseData.Add("experienceId", WrapperManager.currentWrapper?.GetLastExperience()?.ID);
                     response.Add("responseData", responseData);
             
-                    Manager.SendResponse("NUC", "QA", response.ToString());
+                    MessageController.SendResponse("NUC", "QA", response.ToString());
                 }
             }, TimeSpan.FromSeconds(30));
         }
@@ -455,7 +455,7 @@ public class OpenVRManager
         responseData.Add("experienceId", experienceId);
         response.Add("responseData", responseData);
             
-        Manager.SendResponse("NUC", "QA", response.ToString());
+        MessageController.SendResponse("NUC", "QA", response.ToString());
 
         // Update the Station UI
         UIUpdater.UpdateProcess(targetProcess.MainWindowTitle);

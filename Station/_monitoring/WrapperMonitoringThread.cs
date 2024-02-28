@@ -4,7 +4,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using Station._commandLine;
-using Station._manager;
+using Station._controllers;
 using Station._notification;
 using Station._utils;
 using Station._wrapper;
@@ -204,6 +204,6 @@ public static class WrapperMonitoringThread
         
         //Only trigger once per experience
         SteamScripts.popupDetect = true;
-        Manager.SendResponse("Android", "Station", $"PopupDetected:{SteamWrapper.experienceName}");
+        MessageController.SendResponse("Android", "Station", $"PopupDetected:{SteamWrapper.experienceName}");
     }
 }

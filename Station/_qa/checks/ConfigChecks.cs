@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using Newtonsoft.Json;
-using Station._manager;
+using Station._controllers;
 
 namespace Station._qa.checks;
 
@@ -16,8 +16,8 @@ public class ConfigChecks
         qaDetails.Add(new QaDetail("id", GetStationId()));
         qaDetails.Add(new QaDetail("room", GetStationRoom()));
         qaDetails.Add(new QaDetail("labLocation", GetLabLocation()));
-        qaDetails.Add(new QaDetail("ipAddress", Manager.localEndPoint.Address.ToString()));
-        qaDetails.Add(new QaDetail("macAddress", Manager.macAddress));
+        qaDetails.Add(new QaDetail("ipAddress", MainController.localEndPoint.Address.ToString()));
+        qaDetails.Add(new QaDetail("macAddress", MainController.macAddress));
         qaDetails.Add(new QaDetail("nucIpAddress", GetExpectedNucAddress()));
         qaDetails.Add(new QaDetail("selectedHeadset", GetSelectedHeadset()));
 

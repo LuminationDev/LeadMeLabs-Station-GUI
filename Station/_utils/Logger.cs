@@ -6,7 +6,7 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using LeadMeLabsLibrary;
 using Station._commandLine;
-using Station._manager;
+using Station._controllers;
 using Station._network;
 using Station._notification;
 
@@ -87,7 +87,7 @@ public static class Logger
 
         if(logs.Count == 0)
         {
-            Manager.SendResponse("NUC", "Station", "LogRequest:NoLogsFound");
+            MessageController.SendResponse("NUC", "Station", "LogRequest:NoLogsFound");
             return;
         }
 

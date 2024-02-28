@@ -11,7 +11,7 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Sentry;
 using Station._commandLine;
-using Station._manager;
+using Station._controllers;
 using Station._models;
 using Station._notification;
 using Station._profiles;
@@ -64,7 +64,7 @@ public static class QualityManager
                 responseData.Add("expectedStationId", actionData.GetValue("expectedStationId"));
                 response.Add("responseData", responseData);
             
-                Manager.SendResponse("QA:" + requestData.GetValue("qaToolAddress") , "QA", response.ToString());
+                MessageController.SendResponse("QA:" + requestData.GetValue("qaToolAddress") , "QA", response.ToString());
                 break;
             }
             
@@ -98,7 +98,7 @@ public static class QualityManager
                             responseData.Add("data", output);
                             response.Add("responseData", responseData);
             
-                            Manager.SendResponse("NUC", "QA", response.ToString());
+                            MessageController.SendResponse("NUC", "QA", response.ToString());
                         }).Start();
                         break;
                     
@@ -135,7 +135,7 @@ public static class QualityManager
                                 responseData.Add("data", JsonConvert.SerializeObject(qaCheckList));
                                 response.Add("responseData", responseData);
 
-                                Manager.SendResponse("NUC", "QA", response.ToString());
+                                MessageController.SendResponse("NUC", "QA", response.ToString());
                             }).Start();
                         }
                         break;
@@ -156,7 +156,7 @@ public static class QualityManager
                 responseData.Add("data", result);
                 response.Add("responseData", responseData);
             
-                Manager.SendResponse("NUC", "QA", response.ToString());
+                MessageController.SendResponse("NUC", "QA", response.ToString());
                 break;
             }
             
@@ -175,7 +175,7 @@ public static class QualityManager
                     responseData.Add("message", "Experience is a VR experience and Station is a non-vr Station");
                     responseData.Add("experienceId", experienceId);
                     response.Add("responseData", responseData);
-                    Manager.SendResponse("NUC", "QA", response.ToString());
+                    MessageController.SendResponse("NUC", "QA", response.ToString());
                     return;
                 }
             
@@ -210,7 +210,7 @@ public static class QualityManager
                 responseData.Add("experienceId", experienceId);
                 response.Add("responseData", responseData);
             
-                Manager.SendResponse("NUC", "QA", response.ToString());
+                MessageController.SendResponse("NUC", "QA", response.ToString());
                 return;
             }
             
@@ -226,7 +226,7 @@ public static class QualityManager
                 if (vrProfile?.VrHeadset == null) break;
 
                 responseData.Add("result", vrProfile.VrHeadset?.GetStatusManager().GetStatusesJson());
-                Manager.SendResponse("NUC", "QA", response.ToString());
+                MessageController.SendResponse("NUC", "QA", response.ToString());
                 break;
             }
             

@@ -2,14 +2,14 @@
 using System.Threading;
 using System.Threading.Tasks;
 using Station._interfaces;
-using Station._manager;
 using Station._notification;
 using Station._profiles;
 using Station._scripts;
 using Station._utils;
+using Station._wrapper;
 using Station._wrapper.vive;
 
-namespace Station._wrapper;
+namespace Station._controllers;
 
 public static class SessionController
 {
@@ -39,7 +39,7 @@ public static class SessionController
         set
         {
             currentState = value;
-            Manager.SendResponse("Android", "Station", $"SetValue:state:{value}");
+            MessageController.SendResponse("Android", "Station", $"SetValue:state:{value}");
         }
     }
 
@@ -183,7 +183,7 @@ public static class SessionController
             switch (tokens[0])
             {
                 case "MessageToAndroid":
-                    Manager.SendResponse("Android", "Station", tokens[1]);
+                    MessageController.SendResponse("Android", "Station", tokens[1]);
                     break;
 
                 case "Processing":
@@ -192,17 +192,17 @@ public static class SessionController
 
                 case "ApplicationUpdate":
                     string[] values = tokens[1].Split('/');
-                    Manager.SendResponse("Android", "Station", $"SetValue:gameName:{values[0]}");
+                    MessageController.SendResponse("Android", "Station", $"SetValue:gameName:{values[0]}");
 
                     if (values.Length > 1)
                     {
-                        Manager.SendResponse("Android", "Station", $"SetValue:gameId:{values[1]}");
-                        Manager.SendResponse("Android", "Station", $"SetValue:gameType:{values[2]}");
+                        MessageController.SendResponse("Android", "Station", $"SetValue:gameId:{values[1]}");
+                        MessageController.SendResponse("Android", "Station", $"SetValue:gameType:{values[2]}");
                     }
                     else
                     {
-                        Manager.SendResponse("Android", "Station", "SetValue:gameId:");
-                        Manager.SendResponse("Android", "Station", "SetValue:gameType:");
+                        MessageController.SendResponse("Android", "Station", "SetValue:gameId:");
+                        MessageController.SendResponse("Android", "Station", "SetValue:gameType:");
                     }
                     break;
 
@@ -212,13 +212,13 @@ public static class SessionController
 
                 //BACKWARDS COMPATABILITY
                 case "ApplicationList":
-                    Manager.SendResponse("Android", "Station", "SetValue:installedApplications:" + tokens[1]);
+                    MessageController.SendResponse("Android", "Station", "SetValue:installedApplications:" + tokens[1]);
                     break;
 
                 case "ApplicationClosed":
-                    Manager.SendResponse("Android", "Station", "SetValue:gameName:");
-                    Manager.SendResponse("Android", "Station", "SetValue:gameId:");
-                    Manager.SendResponse("Android", "Station", "SetValue:gameType:");
+                    MessageController.SendResponse("Android", "Station", "SetValue:gameName:");
+                    MessageController.SendResponse("Android", "Station", "SetValue:gameId:");
+                    MessageController.SendResponse("Android", "Station", "SetValue:gameType:");
                     break;
 
                 case "StationError":

@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 using LeadMeLabsLibrary.Station;
 using Newtonsoft.Json.Linq;
 using Station._commandLine;
-using Station._manager;
+using Station._controllers;
 using Station._models;
 using Station._monitoring;
 using Station._notification;
@@ -83,7 +83,7 @@ public static class SteamScripts
                     if(restartAttempts > 2)
                     {
                         Logger.WriteLog("CheckForSteamLogError - SteamVR Error: restarts failed, sending message to tablet.", MockConsole.LogLevel.Normal);
-                        Manager.SendResponse("Android", "Station", "SteamVRError");
+                        MessageController.SendResponse("Android", "Station", "SteamVRError");
                         break;
                     }
 
@@ -214,7 +214,7 @@ public static class SteamScripts
         if(!File.Exists(filePath))
         {
             Logger.WriteLog($"SteamCMD not initialised yet. Initialising now.", MockConsole.LogLevel.Error);
-            Manager.SendResponse("Android", "Station", "SetValue:steamCMD:required");
+            MessageController.SendResponse("Android", "Station", "SetValue:steamCMD:required");
             
             steamCMDConfigured = "Missing";
 

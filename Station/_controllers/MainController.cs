@@ -11,20 +11,19 @@ using Station._notification;
 using Station._openvr;
 using Station._profiles;
 using Station._qa;
-using Station._scripts;
 using Station._utils;
 using Station._utils._steamConfig;
 using Station._wrapper;
 using Station._wrapper.steam;
 
-namespace Station._manager;
+namespace Station._controllers;
 
 /// <summary>
 /// A class to control the main aspects of the program and hold static values for
 /// use in other files. Primary function is to setup the localEndPoint (IPEndPoint) 
 /// and start a server on the specific port.
 /// </summary>
-public static class Manager
+public static class MainController
 {
     /// <summary>
     /// IPEndPoint representing the server that is running on the android tablet.
@@ -183,7 +182,7 @@ public static class Manager
         
         Logger.WriteLog($"Expected NUC address: {Environment.GetEnvironmentVariable("NucAddress", EnvironmentVariableTarget.Process)}", MockConsole.LogLevel.Normal);
         if (Helper.GetStationMode().Equals(Helper.STATION_MODE_APPLIANCE)) return;
-        InitialStartUp();
+        MessageController.InitialStartUp();
         
         // Safe cast for potential content profile
         ContentProfile? contentProfile = Profile.CastToType<ContentProfile>(SessionController.StationProfile);
@@ -272,16 +271,6 @@ public static class Manager
     }
 
     /// <summary>
-    /// On start up or NUC address change send the status, steam list and the current volume to the NUC.
-    /// </summary>
-    private static void InitialStartUp()
-    {
-        SendResponse("NUC", "Station", "SetValue:status:On");
-        SendResponse("NUC", "Station", "SetValue:gameName:");
-        SendResponse("Android", "Station", "SetValue:gameId:");
-    }
-
-    /// <summary>
     /// Collect the necessary system details for starting the service. Including the IP address, mac address
     /// and the current version number.
     /// </summary>
@@ -289,7 +278,7 @@ public static class Manager
     {
         try
         {
-            IPAddress? ip = AttemptIPAddressRetrieval();
+            IPAddress? ip = AttemptIpAddressRetrieval();
             if (ip == null) throw new Exception("Manager class: Server IP Address could not be found");
 
             macAddress = SystemInformation.GetMACAddress() ?? "Unknown";
@@ -314,7 +303,7 @@ public static class Manager
     /// address. The attempts are done 15 seconds apart.
     /// </summary>
     /// <returns></returns>
-    private static IPAddress? AttemptIPAddressRetrieval()
+    private static IPAddress? AttemptIpAddressRetrieval()
     {
         int attemptLimit = 5;
         int attempts = 0;
@@ -356,68 +345,5 @@ public static class Manager
         
         Logger.WriteLog($"{output.Item2}", MockConsole.LogLevel.Error);
         SentrySdk.CaptureMessage($"{output.Item2}. Location: {Environment.GetEnvironmentVariable("LabLocation", EnvironmentVariableTarget.Process) ?? "Unknown"}");
-    }
-
-    /// <summary>
-    /// Create a new script thread and start it, passing in the data collected from 
-    /// the recently connected client.
-    /// </summary>
-    public static void RunScript(string data)
-    {
-        ScriptThread script = new(data);
-        Thread scriptThread = new(script.Run);
-        scriptThread.Start();
-    }
-
-    /// <summary>
-    /// Send a response back to the android server detailing what has happened.
-    /// </summary>
-    public static void SendResponse(string destination, string actionNamespace, string? additionalData, bool writeToLog = true)
-    {
-        IPAddress? address = null;
-        int? port = null;
-        
-        string source = $"Station,{Environment.GetEnvironmentVariable("StationId", EnvironmentVariableTarget.Process)}";
-        string? response = $"{source}:{destination}:{actionNamespace}";
-        if (additionalData != null)
-        {
-            response = $"{response}:{additionalData}";
-        }
-        
-        if (destination.StartsWith("QA:"))
-        {
-            address = IPAddress.Parse(destination.Substring(3).Split(":")[0]);
-            port = Int32.Parse(destination.Substring(3).Split(":")[1]);
-            response = additionalData;
-        }
-        if (response == null) return;
-
-        Logger.WriteLog($"Sending: {response}", MockConsole.LogLevel.Normal, writeToLog);
-
-        string? key = Environment.GetEnvironmentVariable("AppKey", EnvironmentVariableTarget.Process);
-        if (key is null) {
-            Logger.WriteLog("Encryption key not set", MockConsole.LogLevel.Normal);
-            return;
-        }
-
-        string encryptedText;
-        if (isNucUtf8)
-        {
-            encryptedText = EncryptionHelper.Encrypt(response, key);
-        }
-        else
-        {
-            encryptedText = EncryptionHelper.UnicodeEncrypt(response, key);
-        }
-        
-        SocketClient client = new(encryptedText);
-        if (address != null && port != null)
-        {
-            client.Send(writeToLog, address, port);
-        }
-        else
-        {
-            client.Send(writeToLog);
-        }
     }
 }
