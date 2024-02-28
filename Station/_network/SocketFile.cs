@@ -5,7 +5,7 @@ using System.Net;
 using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
-using Station._manager;
+using Station._controllers;
 using Station._notification;
 using Station._utils;
 
@@ -88,7 +88,7 @@ public class SocketFile
             _client = new TcpClient();
             CancellationTokenSource tokenSource = new CancellationTokenSource();
             CancellationToken token = tokenSource.Token;
-            ValueTask connect = _client.ConnectAsync(Manager.remoteEndPoint.Address, Manager.remoteEndPoint.Port, token);
+            ValueTask connect = _client.ConnectAsync(MainController.remoteEndPoint.Address, MainController.remoteEndPoint.Port, token);
             Task<bool> task = TimeoutAfter(connect, TimeOut);
 
             if (!task.Result)
@@ -111,7 +111,7 @@ public class SocketFile
                 // Construct and send the header
                 string headerMessageType = this._type;
                 byte[] headerMessageTypeBytes;
-                if (Manager.isNucUtf8)
+                if (MainController.isNucUtf8)
                 {
                     headerMessageTypeBytes = System.Text.Encoding.UTF8.GetBytes(headerMessageType);
                 }
@@ -130,7 +130,7 @@ public class SocketFile
                 string fileName = _name;
                 byte[] fileNameBytes;
                 
-                if (Manager.isNucUtf8)
+                if (MainController.isNucUtf8)
                 {
                     fileNameBytes = System.Text.Encoding.UTF8.GetBytes(fileName);
                     stream.Write(BitConverter.GetBytes(fileNameBytes.Length), 0, 4);
@@ -182,7 +182,7 @@ public class SocketFile
 
             if (this._type.Equals("file"))
             {
-                Manager.SendResponse("NUC", "Station", "LogRequest:TransferFailed");
+                MessageController.SendResponse("NUC", "Station", "LogRequest:TransferFailed");
             }
         }
     }

@@ -7,8 +7,8 @@ using leadme_api;
 using LeadMeLabsLibrary;
 using Newtonsoft.Json.Linq;
 using Station._commandLine;
+using Station._controllers;
 using Station._interfaces;
-using Station._manager;
 using Station._models;
 using Station._monitoring;
 using Station._network;
@@ -78,7 +78,7 @@ internal class EmbeddedWrapper : IWrapper
                 MockConsole.WriteLine($"Station working directory not found while searching for header file", MockConsole.LogLevel.Error);
                 SessionController.PassStationMessage($"StationError,Station working directory not found while searching for header file.");
 
-                Manager.SendResponse("Android", "Station", $"ThumbnailError:{experienceName}");
+                MessageController.SendResponse("Android", "Station", $"ThumbnailError:{experienceName}");
                 return;
             }
 
@@ -100,7 +100,7 @@ internal class EmbeddedWrapper : IWrapper
             {
                 MockConsole.WriteLine($"File not found:{filePath}", MockConsole.LogLevel.Error);
                 SessionController.PassStationMessage($"StationError,File not found:{filePath}");
-                Manager.SendResponse("Android", "Station", $"ThumbnailError:{experienceName}");
+                MessageController.SendResponse("Android", "Station", $"ThumbnailError:{experienceName}");
                 return;
             }
 
@@ -290,7 +290,7 @@ internal class EmbeddedWrapper : IWrapper
             JObject response = new JObject { { "response", "ExperienceLaunched" } };
             JObject responseData = new JObject { { "experienceId", lastExperience.ID } };
             response.Add("responseData", responseData);
-            Manager.SendResponse("NUC", "QA", response.ToString());
+            MessageController.SendResponse("NUC", "QA", response.ToString());
 
             MockConsole.WriteLine($"Application launching: {currentProcess.MainWindowTitle}/{lastExperience.ID}", MockConsole.LogLevel.Normal);
 
@@ -308,7 +308,7 @@ internal class EmbeddedWrapper : IWrapper
             responseData.Add("experienceId", lastExperience.ID);
             response.Add("responseData", responseData);
             
-            Manager.SendResponse("NUC", "QA", response.ToString());
+            MessageController.SendResponse("NUC", "QA", response.ToString());
         }
     }
 

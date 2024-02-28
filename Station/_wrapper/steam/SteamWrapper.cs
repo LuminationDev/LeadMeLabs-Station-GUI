@@ -7,8 +7,8 @@ using System.Threading.Tasks;
 using System.Timers;
 using Newtonsoft.Json.Linq;
 using Station._commandLine;
+using Station._controllers;
 using Station._interfaces;
-using Station._manager;
 using Station._models;
 using Station._monitoring;
 using Station._notification;
@@ -291,7 +291,7 @@ public class SteamWrapper : IWrapper
             responseData.Add("experienceId", lastExperience.ID);
             response.Add("responseData", responseData);
             
-            Manager.SendResponse("NUC", "QA", response.ToString());
+            MessageController.SendResponse("NUC", "QA", response.ToString());
         } else
         {
             Logger.WriteLog("Game launch failure: " + lastExperience.Name, MockConsole.LogLevel.Normal);
@@ -304,7 +304,7 @@ public class SteamWrapper : IWrapper
             responseData.Add("message", "Launch timed out, there may be a popup that needs confirmation");
             response.Add("responseData", responseData);
             
-            Manager.SendResponse("NUC", "QA", response.ToString());
+            MessageController.SendResponse("NUC", "QA", response.ToString());
         }
     }
 

@@ -7,7 +7,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using LeadMeLabsLibrary;
 using Station._commandLine;
-using Station._manager;
+using Station._controllers;
 using Station._notification;
 using Station._utils;
 using Station._wrapper;
@@ -38,7 +38,7 @@ public class ServerThread
 
     public ServerThread()
     {
-        server = new TcpListener(Manager.localEndPoint);
+        server = new TcpListener(MainController.localEndPoint);
     }
 
     /// <summary>
@@ -65,7 +65,7 @@ public class ServerThread
             //Enter listening loop
             while (true)
             {
-                Logger.WriteLog("Waiting for a connection on: " + Manager.localEndPoint.Address + ":" + Manager.localEndPoint.Port, MockConsole.LogLevel.Debug, false);
+                Logger.WriteLog("Waiting for a connection on: " + MainController.localEndPoint.Address + ":" + MainController.localEndPoint.Port, MockConsole.LogLevel.Debug, false);
                 TcpClient clientConnection = await server.AcceptTcpClientAsync();
 
                 //Start new Task so the server loop can continue straight away
@@ -137,7 +137,7 @@ public class ServerThread
             DetermineConnectionType(headerMessageTypeBytes);
             
             string headerMessageType;
-            if (Manager.isNucUtf8)
+            if (MainController.isNucUtf8)
             {
                 headerMessageType = Encoding.UTF8.GetString(headerMessageTypeBytes);
             }
@@ -174,8 +174,8 @@ public class ServerThread
         if (!connectionMessage)
         {
             connectionMessage = true;
-            Manager.SendResponse("NUC", "MessageType", "Station:Unicode");
-            Manager.SendResponse("NUC", "MessageType", "Station:Json");
+            MessageController.SendResponse("NUC", "MessageType", "Station:Unicode");
+            MessageController.SendResponse("NUC", "MessageType", "Station:Json");
         }
         
         try
@@ -183,13 +183,13 @@ public class ServerThread
             string test = Encoding.Unicode.GetString(headerMessageTypeBytes);
             if (test.Equals("text") || test.Equals("image") || test.Equals("file"))
             {
-                Manager.isNucUtf8 = false;
+                MainController.isNucUtf8 = false;
             }
             else
             {
                 //The NUC has been restarted and assumes the Station can't handle Unicode
                 connectionMessage = false;
-                Manager.isNucUtf8 = true;
+                MainController.isNucUtf8 = true;
             }
         }
         catch (Exception e)
@@ -230,7 +230,7 @@ public class ServerThread
             return;
         };
 
-        if (Manager.isNucUtf8)
+        if (MainController.isNucUtf8)
         {
             data = EncryptionHelper.Decrypt(data, key);
         }
@@ -254,7 +254,7 @@ public class ServerThread
         }
         
         //Run the appropriate script
-        Manager.RunScript(data);
+        MessageController.RunScript(data);
     }
     
     /// <summary>

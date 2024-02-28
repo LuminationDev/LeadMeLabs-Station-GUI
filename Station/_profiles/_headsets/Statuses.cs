@@ -2,8 +2,8 @@
 using System.Collections.Generic;
 using System.Linq;
 using Newtonsoft.Json.Linq;
+using Station._controllers;
 using Station._interfaces;
-using Station._manager;
 using Station._models;
 using Station._notification;
 using Station._qa;
@@ -116,10 +116,10 @@ public class Statuses
     public void HandleValueChanged(object? sender, GenericEventArgs<string> e)
     {
         // Code to execute when the value changes.
-        Manager.SendResponse("Android", "Station", $"SetValue:deviceStatus:{e.Data}");
+        MessageController.SendResponse("Android", "Station", $"SetValue:deviceStatus:{e.Data}");
         
         //Backwards compat
-        Manager.SendResponse("Android", "Station", $"DeviceStatus:{e.Data}");
+        MessageController.SendResponse("Android", "Station", $"DeviceStatus:{e.Data}");
     }
 
     private bool _headsetFirmwareStatus = false;
@@ -307,23 +307,23 @@ public class Statuses
     public void QueryStatuses()
     {
         //Headset
-        Manager.SendResponse("Android", "Station", $"SetValue:deviceStatus:Headset:OpenVR:tracking:{OpenVRStatus.ToString()}");
-        Manager.SendResponse("Android", "Station", $"SetValue:deviceStatus:Headset:Vive:tracking:{SoftwareStatus.ToString()}");
+        MessageController.SendResponse("Android", "Station", $"SetValue:deviceStatus:Headset:OpenVR:tracking:{OpenVRStatus.ToString()}");
+        MessageController.SendResponse("Android", "Station", $"SetValue:deviceStatus:Headset:Vive:tracking:{SoftwareStatus.ToString()}");
         
         //Backwards compat
-        Manager.SendResponse("Android", "Station", $"DeviceStatus:Headset:OpenVR:tracking:{OpenVRStatus.ToString()}");
-        Manager.SendResponse("Android", "Station", $"DeviceStatus:Headset:Vive:tracking:{SoftwareStatus.ToString()}");
+        MessageController.SendResponse("Android", "Station", $"DeviceStatus:Headset:OpenVR:tracking:{OpenVRStatus.ToString()}");
+        MessageController.SendResponse("Android", "Station", $"DeviceStatus:Headset:Vive:tracking:{SoftwareStatus.ToString()}");
 
         //Controllers
         foreach (var vrController in Controllers)
         {
             //Update the tablet
-            Manager.SendResponse("Android", "Station", $"SetValue:deviceStatus:Controller:{vrController.Value.Role.ToString()}:tracking:{vrController.Value.Tracking.ToString()}");
-            Manager.SendResponse("Android", "Station", $"SetValue:deviceStatus:Controller:{vrController.Value.Role.ToString()}:battery:{vrController.Value.Battery}");
+            MessageController.SendResponse("Android", "Station", $"SetValue:deviceStatus:Controller:{vrController.Value.Role.ToString()}:tracking:{vrController.Value.Tracking.ToString()}");
+            MessageController.SendResponse("Android", "Station", $"SetValue:deviceStatus:Controller:{vrController.Value.Role.ToString()}:battery:{vrController.Value.Battery}");
             
             //Backwards compat
-            Manager.SendResponse("Android", "Station", $"DeviceStatus:Controller:{vrController.Value.Role.ToString()}:tracking:{vrController.Value.Tracking.ToString()}");
-            Manager.SendResponse("Android", "Station", $"DeviceStatus:Controller:{vrController.Value.Role.ToString()}:battery:{vrController.Value.Battery}");
+            MessageController.SendResponse("Android", "Station", $"DeviceStatus:Controller:{vrController.Value.Role.ToString()}:tracking:{vrController.Value.Tracking.ToString()}");
+            MessageController.SendResponse("Android", "Station", $"DeviceStatus:Controller:{vrController.Value.Role.ToString()}:battery:{vrController.Value.Battery}");
         }
 
         //Base stations
@@ -335,10 +335,10 @@ public class Statuses
                 active++;
             }
         }
-        Manager.SendResponse("Android", "Station", $"SetValue:deviceStatus:BaseStation:{active}:{baseStations.Count}");
+        MessageController.SendResponse("Android", "Station", $"SetValue:deviceStatus:BaseStation:{active}:{baseStations.Count}");
         
         //Backwards compat
-        Manager.SendResponse("Android", "Station", $"DeviceStatus:BaseStation:{active}:{baseStations.Count}");
+        MessageController.SendResponse("Android", "Station", $"DeviceStatus:BaseStation:{active}:{baseStations.Count}");
     }
 
     public JObject GetStatusesJson()

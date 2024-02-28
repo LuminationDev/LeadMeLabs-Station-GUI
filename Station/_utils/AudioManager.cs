@@ -9,9 +9,10 @@ using System.Threading.Tasks;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Sentry;
+using Station._controllers;
 using Station._models;
 
-namespace Station._manager;
+namespace Station._utils;
 
 /// <summary>
 /// Provides methods to control audio devices using PowerShell commands.
@@ -66,7 +67,7 @@ public static class AudioManager
             string json = JsonConvert.SerializeObject(audioArray);
             JArray jsonObject = JArray.Parse(json);
             string additionalData = $"SetValue:audioDevices:{jsonObject}";
-            Manager.SendResponse("NUC", "Station", additionalData);
+            MessageController.SendResponse("NUC", "Station", additionalData);
 
             await GetCurrentAudioDevice();
         }
@@ -90,7 +91,7 @@ public static class AudioManager
             //Collect the currently active audio device and send to the NUC
             var result = obj.Properties["Name"]?.Value.ToString() ?? "";
             string additionalData = $"SetValue:activeAudioDevice:{result}";
-            Manager.SendResponse("NUC", "Station", additionalData);
+            MessageController.SendResponse("NUC", "Station", additionalData);
             UpdateActiveDevice();
         });
     }
@@ -102,11 +103,11 @@ public static class AudioManager
     {
         //Collect the current volume and send to the NUC
         string currentVolume = GetVolume().Result;
-        Manager.SendResponse("NUC", "Station", "SetValue:volume:" + currentVolume);
+        MessageController.SendResponse("NUC", "Station", "SetValue:volume:" + currentVolume);
 
         //Collect the current muted value and send to the NUC
         string isCurrentMuted = GetMuted().Result;
-        Manager.SendResponse("NUC", "Station", "SetValue:muted:" + isCurrentMuted);
+        MessageController.SendResponse("NUC", "Station", "SetValue:muted:" + isCurrentMuted);
     }
 
     /// <summary>

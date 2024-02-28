@@ -52,6 +52,8 @@ public static class DotEnv
                         break;
                 }
             }
+            
+            Environment.SetEnvironmentVariable("nucAddress", "192.168.3.136");
         } 
         catch (Exception ex)
         {

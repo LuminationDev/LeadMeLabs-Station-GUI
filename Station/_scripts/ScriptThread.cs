@@ -2,7 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Newtonsoft.Json.Linq;
-using Station._manager;
+using Station._controllers;
+using Station._legacy;
 using Station._models;
 using Station._notification;
 using Station._profiles;
@@ -54,7 +55,7 @@ public class ScriptThread
             case "MessageType":
                 if (_additionalData.Contains("Json"))
                 {
-                    Manager.isNucJsonEnabled = true;
+                    MainController.isNucJsonEnabled = true;
                 }
                 break;
             
@@ -93,10 +94,10 @@ public class ScriptThread
         if (additionalData == null) return;
         if (additionalData.Contains("Connect"))
         {
-            Manager.SendResponse(_source, "Station", "SetValue:status:On");
-            Manager.SendResponse(_source, "Station", $"SetValue:state:{SessionController.CurrentState}");
-            Manager.SendResponse(_source, "Station", "SetValue:gameName:");
-            Manager.SendResponse("Android", "Station", "SetValue:gameId:");
+            MessageController.SendResponse(_source, "Station", "SetValue:status:On");
+            MessageController.SendResponse(_source, "Station", $"SetValue:state:{SessionController.CurrentState}");
+            MessageController.SendResponse(_source, "Station", "SetValue:gameName:");
+            MessageController.SendResponse("Android", "Station", "SetValue:gameId:");
             AudioManager.Initialise();
         }
     }
@@ -110,17 +111,17 @@ public class ScriptThread
             {
                 case "installedApplications":
                     Logger.WriteLog("Collecting station experiences", MockConsole.LogLevel.Normal);
-                    Manager.wrapperManager?.ActionHandler("CollectApplications");
+                    MainController.wrapperManager?.ActionHandler("CollectApplications");
                     break;
 
                 case "volume":
                     string currentVolume = await AudioManager.GetVolume();
-                    Manager.SendResponse(_source, "Station", "SetValue:" + key + ":" + currentVolume);
+                    MessageController.SendResponse(_source, "Station", "SetValue:" + key + ":" + currentVolume);
                     break;
 
                 case "muted":
                     string isMuted = await AudioManager.GetMuted();
-                    Manager.SendResponse(_source, "Station", "SetValue:" + key + ":" + isMuted);
+                    MessageController.SendResponse(_source, "Station", "SetValue:" + key + ":" + isMuted);
                     break;
 
                 case "devices":
@@ -178,7 +179,7 @@ public class ScriptThread
         
         string isVr = split.Length > 4 ? split[4] : "true";
         
-        Manager.wrapperManager?.HandleInternalExecutable(action, launchType, path, parameters, isVr);
+        MainController.wrapperManager?.HandleInternalExecutable(action, launchType, path, parameters, isVr);
     }
     
     /// <summary>
@@ -232,7 +233,7 @@ public class ScriptThread
     /// <param name="jObjectData">A JObject in string form</param>
     private async void HandleExperience(string jObjectData)
     {
-        if (!Manager.isNucJsonEnabled)
+        if (!MainController.isNucJsonEnabled)
         {
             LegacyMessage.HandleExperienceString(jObjectData);
             return;
@@ -254,25 +255,25 @@ public class ScriptThread
         switch (action)
         {
             case "Refresh":
-                Manager.wrapperManager?.ActionHandler("CollectApplications");
+                MainController.wrapperManager?.ActionHandler("CollectApplications");
                 break;
             
             case "Restart":
-                Manager.wrapperManager?.ActionHandler("Restart");
+                MainController.wrapperManager?.ActionHandler("Restart");
                 break;
             
             case "Thumbnails":
                 string? required = experienceData.GetValue("ImagesRequired")?.ToString();
                 if (required == null) return;
                 
-                Manager.wrapperManager?.ActionHandler("CollectHeaderImages", required);
+                MainController.wrapperManager?.ActionHandler("CollectHeaderImages", required);
                 break;
             
             case "Launch":
                 string? id = experienceData.GetValue("ExperienceId")?.ToString();
                 if (id == null) return;
                 
-                Manager.wrapperManager?.ActionHandler("Stop");
+                MainController.wrapperManager?.ActionHandler("Stop");
                 
                 await Task.Delay(2000);
                 
@@ -290,13 +291,13 @@ public class ScriptThread
                     await Task.Delay(2000);
                 }
 
-                Manager.wrapperManager?.ActionHandler("Start", id);
+                MainController.wrapperManager?.ActionHandler("Start", id);
                 break;
             
             case "PassToExperience":
                 string? trigger = experienceData.GetValue("Trigger")?.ToString();
                 if (trigger == null) return;
-                Manager.wrapperManager?.ActionHandler("Message", trigger);
+                MainController.wrapperManager?.ActionHandler("Message", trigger);
                 break;
         }
     }

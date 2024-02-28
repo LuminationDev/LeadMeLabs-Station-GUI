@@ -9,7 +9,7 @@ using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using Sentry;
-using Station._manager;
+using Station._controllers;
 using Station._notification;
 using Station._overlay;
 using Station._utils;
@@ -262,7 +262,7 @@ public static class CommandLine
             if (output == null)
             {
                 Logger.WriteLog("Unable to read output", MockConsole.LogLevel.Normal);
-                Manager.SendResponse("Android", "Station", "SetValue:steamCMD:error");
+                MessageController.SendResponse("Android", "Station", "SetValue:steamCMD:error");
                 configuringSteam = false;
                 return;
             }
@@ -272,16 +272,16 @@ public static class CommandLine
             if (output.Contains("FAILED (Invalid Login Auth Code)"))
             {
                 Logger.WriteLog("AUTH FAILED", MockConsole.LogLevel.Normal);
-                Manager.SendResponse("Android", "Station", "SetValue:steamCMD:failure");
+                MessageController.SendResponse("Android", "Station", "SetValue:steamCMD:failure");
                 configuringSteam = false;
             }
             else if (output.Contains("OK"))
             {
                 Logger.WriteLog("AUTH SUCCESS, restarting VR system", MockConsole.LogLevel.Normal);
-                Manager.SendResponse("Android", "Station", "SetValue:steamCMD:configured");
+                MessageController.SendResponse("Android", "Station", "SetValue:steamCMD:configured");
 
                 //Recollect the installed experiences
-                Manager.wrapperManager?.ActionHandler("CollectApplications");
+                MainController.wrapperManager?.ActionHandler("CollectApplications");
                 configuringSteam = false;
             }
 
@@ -332,7 +332,7 @@ public static class CommandLine
 
         if (output.Contains("Steam Guard code:"))
         {
-            Manager.SendResponse("Android", "Station", "SetValue:steamCMD:required");
+            MessageController.SendResponse("Android", "Station", "SetValue:steamCMD:required");
             MockConsole.WriteLine("Steam Guard is not enabled for this account.");
             SteamScripts.steamCMDConfigured = "Missing";
 
@@ -341,7 +341,7 @@ public static class CommandLine
             return null;
         }
 
-        Manager.SendResponse("Android", "Station", "SetValue:steamCMD:configured");
+        MessageController.SendResponse("Android", "Station", "SetValue:steamCMD:configured");
         SteamScripts.steamCMDConfigured = "Configured";
         
         return output;

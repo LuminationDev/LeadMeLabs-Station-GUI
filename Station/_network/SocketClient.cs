@@ -4,7 +4,7 @@ using System.Net;
 using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
-using Station._manager;
+using Station._controllers;
 using Station._notification;
 using Station._utils;
 
@@ -61,8 +61,8 @@ public class SocketClient
     /// </summary>
     public void Send(bool writeToLog = true, IPAddress? address = null, int? destPort = null)
     {
-        address ??= Manager.remoteEndPoint.Address;
-        int port = destPort ?? Manager.remoteEndPoint.Port; //ConnectAsync does not like int?
+        address ??= MainController.remoteEndPoint.Address;
+        int port = destPort ?? MainController.remoteEndPoint.Port; //ConnectAsync does not like int?
         
         try
         {
@@ -77,7 +77,7 @@ public class SocketClient
             {
                 tokenSource.Cancel();
                 if (NotifyIconWrapper.Instance != null) NotifyIconWrapper.Instance.ChangeIcon("offline");
-                throw new Exception($"Socket timeout trying to contact: {Manager.remoteEndPoint.Address}");
+                throw new Exception($"Socket timeout trying to contact: {MainController.remoteEndPoint.Address}");
             }
 
             if (NotifyIconWrapper.Instance != null) NotifyIconWrapper.Instance.ChangeIcon("online");
@@ -102,7 +102,7 @@ public class SocketClient
                 string headerMessageType = "text";
                 byte[] headerMessageTypeBytes;
                 
-                if (Manager.isNucUtf8)
+                if (MainController.isNucUtf8)
                 {
                     headerMessageTypeBytes = System.Text.Encoding.UTF8.GetBytes(headerMessageType);
                 }

@@ -4,8 +4,8 @@ using System.Threading;
 using System.Threading.Tasks;
 using Sentry;
 using Station._commandLine;
+using Station._controllers;
 using Station._interfaces;
-using Station._manager;
 using Station._notification;
 using Station._profiles;
 using Station._utils;
@@ -95,10 +95,10 @@ public static class StationMonitoringThread
         if (ProcessManager.GetProcessesByName("vrmonitor").Length == 0) return;
 
         //Attempt to contact OpenVR, if this fails check the logs for errors
-        if (Manager.openVRManager?.InitialiseOpenVR() ?? false)
+        if (MainController.openVRManager?.InitialiseOpenVR() ?? false)
         {
-            Manager.openVRManager.QueryCurrentApplication();
-            Manager.openVRManager?.StartDeviceChecks(); //Start a loop instead of continuously checking
+            MainController.openVRManager.QueryCurrentApplication();
+            MainController.openVRManager?.StartDeviceChecks(); //Start a loop instead of continuously checking
         } 
         else
         {
@@ -190,7 +190,7 @@ public static class StationMonitoringThread
 
         if (temperature > 90)
         {
-            Manager.SendResponse("Android", "Station", "HighTemperature");
+            MessageController.SendResponse("Android", "Station", "HighTemperature");
             SentrySdk.CaptureMessage("High temperature detected (" + temperature + ") at: " +
                 (Environment.GetEnvironmentVariable("LabLocation", EnvironmentVariableTarget.Process) ?? "Unknown"));
             Logger.WriteLog("High temperature detected (" + temperature + ") at: " +
