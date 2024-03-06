@@ -11,11 +11,11 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Sentry;
 using Station.Components._commandLine;
+using Station.Components._managers;
 using Station.Components._notification;
 using Station.Components._profiles;
 using Station.Components._utils;
 using Station.Components._utils._steamConfig;
-using Station.Components._wrapper;
 using Station.MVC.Controller;
 using Station.MVC.ViewModel;
 using Station.QA.checks;
@@ -246,6 +246,7 @@ public static class QualityManager
         ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage($"SoftwareState,Running QA"), TimeSpan.FromSeconds(0));
         
         MainViewModel.ViewModelManager.QaViewModel.IsLoading = true;
+        MainViewModel.ViewModelManager.QaViewModel.ClearQaChecks();
         
         Dictionary<string, Dictionary<string, QaCheck>> qaCheckDictionary = new();
 

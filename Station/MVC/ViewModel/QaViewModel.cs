@@ -114,6 +114,15 @@ public class QaViewModel : ObservableObject
 
         return false;
     }
+
+    /**
+     * Remove any old QA checks before starting a new test.
+     */
+    public void ClearQaChecks()
+    {
+        //Needs to be added using the main UI thread to reflect in real-time
+        Application.Current.Dispatcher.Invoke(() => { QaChecks.Clear(); });
+    }
     
     /**
      * Add a new Qa Check object to the Observable collection.

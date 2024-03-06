@@ -18,6 +18,7 @@ namespace Station.QA.checks
 
         public List<QaCheck> RunQa(string labType)
         {
+            _qaChecks = new();
             QaCheck isSteamUserNameSet = IsSteamUserNameSet();
             QaCheck isSteamPasswordSet = IsSteamPasswordSet();
             

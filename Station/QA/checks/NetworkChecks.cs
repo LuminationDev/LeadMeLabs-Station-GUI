@@ -14,6 +14,7 @@ public class NetworkChecks
     
     public List<QaCheck> RunQa(string networkType)
     {
+        _qaChecks = new();
         if (networkType.Equals("Milesight"))
         {
             _qaChecks.AddRange(GetNetworkInterfaceChecks());
@@ -71,7 +72,7 @@ public class NetworkChecks
     {
         QaCheck qaCheck = new QaCheck("allowed_through_firewall");
 
-        string result = FirewallManagement.IsProgramAllowedThroughFirewall() ?? "Unknown";
+        string result = FirewallManagement.IsProgramAllowedThroughFirewall();
         if (result.Equals("Allowed"))
         {
             qaCheck.SetPassed(null);
@@ -91,7 +92,8 @@ public class NetworkChecks
     {
         QaCheck qaCheck = new QaCheck("launcher_allowed_through_firewall");
 
-        string result = FirewallManagement.IsProgramAllowedThroughFirewall($"C:\\Users\\Lumination\\AppData\\Local\\Programs\\LeadMe") ?? "Unknown";
+        //Only need to parse the executable name, this way it can be located anywhere on the computer
+        string result = FirewallManagement.IsProgramAllowedThroughFirewall("LeadMe.exe");
         if (result.Equals("Allowed"))
         {
             qaCheck.SetPassed(null);
@@ -123,7 +125,7 @@ public class NetworkChecks
         }
         catch (Exception e)
         {
-            qaCheck.SetFailed("Accessing station heroku failed with exception: " + e.ToString());
+            qaCheck.SetFailed("Accessing station heroku failed with exception: " + e);
         }
 
         return qaCheck;
@@ -148,7 +150,7 @@ public class NetworkChecks
         }
         catch (Exception e)
         {
-            qaCheck.SetFailed("Accessing launcher heroku failed with exception: " + e.ToString());
+            qaCheck.SetFailed("Accessing launcher heroku failed with exception: " + e);
         }
 
         return qaCheck;
@@ -172,13 +174,13 @@ public class NetworkChecks
                     QaCheck defaultGateway = new QaCheck("default_gateway_is_correct");
                     if (ipProperties.GatewayAddresses.Count > 0)
                     {
-                        if (ipProperties.GatewayAddresses[0].ToString().Equals("12.245.42.1"))
+                        if (ipProperties.GatewayAddresses[0].ToString()?.Equals("12.245.42.1") ?? false)
                         {
                             defaultGateway.SetPassed(null);
                         }
                         else
                         {
-                            defaultGateway.SetFailed($"Default gateway {ipProperties.GatewayAddresses[0].ToString()} does not match expected default gateway");
+                            defaultGateway.SetFailed($"Default gateway {ipProperties.GatewayAddresses[0]} does not match expected default gateway");
                         }
                     }
                     else
@@ -195,7 +197,7 @@ public class NetworkChecks
                         }
                         else
                         {
-                            dnsServer.SetFailed($"DNS server {ipProperties.DnsAddresses[0].ToString()} does not match expected DNS server");
+                            dnsServer.SetFailed($"DNS server {ipProperties.DnsAddresses[0]} does not match expected DNS server");
                         }
                     }
                     else
@@ -212,7 +214,7 @@ public class NetworkChecks
                         }
                         else
                         {
-                            altDnsServer.SetFailed($"Alt DNS server {ipProperties.DnsAddresses[1].ToString()} does not match expected alt DNS server");
+                            altDnsServer.SetFailed($"Alt DNS server {ipProperties.DnsAddresses[1]} does not match expected alt DNS server");
                         }
                     }
                     else
