@@ -3,22 +3,20 @@ using System.Windows;
 using Sentry;
 using Station._commandLine;
 using Station._controllers;
+using Station._managers;
 using Station._notification;
 using Station._utils;
 using Station._utils._steamConfig;
-using Station._wrapper;
-using Application = System.Windows.Application;
 
 namespace Station
 {
     /// <summary>
     /// Interaction logic for App.xaml
     /// </summary>
-    public partial class App : Application
+    public partial class App
     {
-        
         public static int steamProcessId = 0;
-        public static WindowEventTracker? windowEventTracker = null;
+        public static WindowEventTracker? windowEventTracker;
         private void Application_Startup(object sender, StartupEventArgs e)
         {
             if (e.Args.Length > 0 && e.Args[0].Trim().ToLower() == "writeversion")
@@ -50,7 +48,7 @@ namespace Station
         private static void CheckStorage()
         {
             int? freeStorage = CommandLine.GetFreeStorage();
-            if (freeStorage != null && freeStorage < 10)
+            if (freeStorage is < 10)
             {
                 SentrySdk.CaptureMessage("Low memory detected (" + freeStorage + ") at: " +
                                          (Environment.GetEnvironmentVariable("LabLocation",
@@ -64,8 +62,12 @@ namespace Station
         /// <param name="title"></param>
         public static void SetWindowTitle(string title)
         {
-            Application.Current.Dispatcher.BeginInvoke(new Action(() => {
-                Application.Current.MainWindow.Title = title;
+            Current.Dispatcher.BeginInvoke(new Action(() =>
+            {
+                if (Current.MainWindow != null)
+                {
+                    Current.MainWindow.Title = title;
+                }
             }));
         }
 
@@ -100,62 +102,61 @@ namespace Station
             WrapperManager.ClosePipeServer();
 
             //Shut down any OpenVR systems
-            MainController.openVRManager?.OpenVrSystem?.Shutdown();
+            MainController.openVrManager?.OpenVrSystem?.Shutdown();
         }
 
-        public static void InitSentry()
+        private static void InitSentry()
         {
-            string? sentryDsn = "";
+            string? sentryDsn;
 
 #if DEBUG
             sentryDsn = "https://ca9abb6c77444340802da0c5a3805841@o1294571.ingest.sentry.io/6704982"; //Development
 #elif RELEASE
 	        sentryDsn = "https://812f2b29bf3c4d129071683c7cf62361@o1294571.ingest.sentry.io/6518754"; //Production
 #endif
-            if (sentryDsn != null && sentryDsn.Length > 0)
+            if (sentryDsn is not { Length: > 0 }) return;
+            
+            SentrySdk.Init(options =>
             {
-                SentrySdk.Init(options =>
-                {
-                    options.Dsn = sentryDsn;
-                    options.Debug = false;
-                    options.TracesSampleRate = 0.1;
+                options.Dsn = sentryDsn;
+                options.Debug = false;
+                options.TracesSampleRate = 0.1;
 
-                    options.SetBeforeSend((SentryEvent sentryEvent) =>
+                options.SetBeforeSend((SentryEvent sentryEvent) =>
+                {
+                    if (sentryEvent.Exception != null
+                        && sentryEvent.Exception.Message.Contains("Aggregate Exception")
+                        && sentryEvent.Exception.Message.Contains("WSACancelBlockingCall"))
                     {
-                        if (sentryEvent.Exception != null
-                            && sentryEvent.Exception.Message.Contains("Aggregate Exception")
-                            && sentryEvent.Exception.Message.Contains("WSACancelBlockingCall"))
-                        {
-                            return null; // Don't send this event to Sentry
-                        }
+                        return null; // Don't send this event to Sentry
+                    }
 
-                        Logger.WriteLog("Sentry Exception", MockConsole.LogLevel.Error);
+                    Logger.WriteLog("Sentry Exception", MockConsole.LogLevel.Error);
 
-                        if (sentryEvent.Exception != null)
-                        {
-                            Logger.WriteLog(sentryEvent.Exception, MockConsole.LogLevel.Error);
-                        }
-                        if (sentryEvent.Message != null)
-                        {
-                            Logger.WriteLog(sentryEvent.Message.ToString() ?? "No message", MockConsole.LogLevel.Error);
-                        }
+                    if (sentryEvent.Exception != null)
+                    {
+                        Logger.WriteLog(sentryEvent.Exception, MockConsole.LogLevel.Error);
+                    }
+                    if (sentryEvent.Message != null)
+                    {
+                        Logger.WriteLog(sentryEvent.Message.ToString() ?? "No message", MockConsole.LogLevel.Error);
+                    }
 
-                        sentryEvent.ServerName = null; // Never send Server Name to Sentry
-                        return sentryEvent;
-                    });
+                    sentryEvent.ServerName = null; // Never send Server Name to Sentry
+                    return sentryEvent;
                 });
-                SentrySdk.ConfigureScope(scope =>
-                {
-                    scope.SetTag("lab_location", Environment.GetEnvironmentVariable("LabLocation",
-                                             EnvironmentVariableTarget.Process) ?? "Unknown");
-                    scope.SetTag("station_id", Environment.GetEnvironmentVariable("StationId",
-                                             EnvironmentVariableTarget.Process) ?? "Unknown");
-                    scope.SetTag("headset_type", Environment.GetEnvironmentVariable("HeadsetType",
-                                             EnvironmentVariableTarget.Process) ?? "Unknown");
-                    scope.SetTag("room", Environment.GetEnvironmentVariable("room",
-                                             EnvironmentVariableTarget.Process) ?? "Unknown");
-                });
-            }
+            });
+            SentrySdk.ConfigureScope(scope =>
+            {
+                scope.SetTag("lab_location", Environment.GetEnvironmentVariable("LabLocation",
+                    EnvironmentVariableTarget.Process) ?? "Unknown");
+                scope.SetTag("station_id", Environment.GetEnvironmentVariable("StationId",
+                    EnvironmentVariableTarget.Process) ?? "Unknown");
+                scope.SetTag("headset_type", Environment.GetEnvironmentVariable("HeadsetType",
+                    EnvironmentVariableTarget.Process) ?? "Unknown");
+                scope.SetTag("room", Environment.GetEnvironmentVariable("room",
+                    EnvironmentVariableTarget.Process) ?? "Unknown");
+            });
         }
     }
 }

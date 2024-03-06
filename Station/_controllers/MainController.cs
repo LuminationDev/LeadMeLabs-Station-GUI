@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using LeadMeLabsLibrary;
 using Sentry;
 using Station._config;
+using Station._managers;
 using Station._monitoring;
 using Station._network;
 using Station._notification;
@@ -13,7 +14,6 @@ using Station._profiles;
 using Station._qa;
 using Station._utils;
 using Station._utils._steamConfig;
-using Station._wrapper;
 using Station._wrapper.steam;
 
 namespace Station._controllers;
@@ -33,7 +33,7 @@ public static class MainController
     /// <summary>
     /// An integer representing the port of the NUC machine.
     /// </summary>
-    private static readonly int NUCPort = 55556;
+    private const int NucPort = 55556;
 
     /// <summary>
     /// IPEndPoint representing the server that is running on the local machine.
@@ -43,7 +43,7 @@ public static class MainController
     /// <summary>
     /// An integer representing the port of the local machine.
     /// </summary>
-    private static readonly int localPort = 55557;
+    private const int LocalPort = 55557;
 
     /// <summary>
     /// Access to the thread running the server thread
@@ -63,10 +63,10 @@ public static class MainController
     /// <summary>
     /// Access the non-static classes of the openvr manager
     /// </summary>
-    public static OpenVRManager? openVRManager;
+    public static OpenVRManager? openVrManager;
 
-    public static string? macAddress = null;
-    private static string? versionNumber = null;
+    public static string? macAddress;
+    private static string? versionNumber;
     private static Timer? variableCheck;
 
     public static bool isNucUtf8 = true;
@@ -112,8 +112,9 @@ public static class MainController
 
         ValidateInstall("Station");
         
-        // Collect audio devices before starting the server
+        // Collect audio devices and videos before starting the server
         AudioManager.Initialise();
+        VideoManager.Initialise();
         
         // Additional tasks - Start a new task as to now hold up the UI
         new Task(() =>
@@ -162,7 +163,7 @@ public static class MainController
             {
                 // Check SteamVRs background image
                 SteamScripts.CheckSteamVrHomeImage();
-                openVRManager = new OpenVRManager();
+                openVrManager = new OpenVRManager();
             }
 
             wrapperManager = new WrapperManager();
@@ -208,8 +209,8 @@ public static class MainController
 
             Logger.WriteLog("Re-checking software details after 5 minutes of operation.", MockConsole.LogLevel.Normal);
             Logger.WriteLog("Server IP Address is: " + ip, MockConsole.LogLevel.Normal);
-            Logger.WriteLog("MAC Address is: " + SystemInformation.GetMACAddress() ?? "Unknown", MockConsole.LogLevel.Normal);
-            Logger.WriteLog("Version is: " + Updater.GetVersionNumber() ?? "Unknown", MockConsole.LogLevel.Normal);
+            Logger.WriteLog("MAC Address is: " + SystemInformation.GetMACAddress(), MockConsole.LogLevel.Normal);
+            Logger.WriteLog("Version is: " + Updater.GetVersionNumber(), MockConsole.LogLevel.Normal);
         }
         catch (Exception e)
         {
@@ -281,11 +282,11 @@ public static class MainController
             IPAddress? ip = AttemptIpAddressRetrieval();
             if (ip == null) throw new Exception("Manager class: Server IP Address could not be found");
 
-            macAddress = SystemInformation.GetMACAddress() ?? "Unknown";
-            versionNumber = Updater.GetVersionNumber() ?? "Unknown";
-            localEndPoint = new IPEndPoint(ip.Address, localPort);
+            macAddress = SystemInformation.GetMACAddress();
+            versionNumber = Updater.GetVersionNumber();
+            localEndPoint = new IPEndPoint(ip.Address, LocalPort);
 
-            Logger.WriteLog("Server IP Address is: " + localEndPoint.Address.ToString(), MockConsole.LogLevel.Normal);
+            Logger.WriteLog("Server IP Address is: " + localEndPoint.Address, MockConsole.LogLevel.Normal);
             Logger.WriteLog("MAC Address is: " + macAddress, MockConsole.LogLevel.Normal);
             Logger.WriteLog("Version is: " + versionNumber, MockConsole.LogLevel.Normal);
             return true;
@@ -330,7 +331,7 @@ public static class MainController
 
     private static void SetRemoteEndPoint()
     {
-        remoteEndPoint = new IPEndPoint(IPAddress.Parse((ReadOnlySpan<char>)Environment.GetEnvironmentVariable("NucAddress", EnvironmentVariableTarget.Process)), NUCPort);
+        remoteEndPoint = new IPEndPoint(IPAddress.Parse((ReadOnlySpan<char>)Environment.GetEnvironmentVariable("NucAddress", EnvironmentVariableTarget.Process)), NucPort);
     }
     
     /// <summary>

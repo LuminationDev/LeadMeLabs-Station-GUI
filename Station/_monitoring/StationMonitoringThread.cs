@@ -95,10 +95,10 @@ public static class StationMonitoringThread
         if (ProcessManager.GetProcessesByName("vrmonitor").Length == 0) return;
 
         //Attempt to contact OpenVR, if this fails check the logs for errors
-        if (MainController.openVRManager?.InitialiseOpenVR() ?? false)
+        if (MainController.openVrManager?.InitialiseOpenVR() ?? false)
         {
-            MainController.openVRManager.QueryCurrentApplication();
-            MainController.openVRManager?.StartDeviceChecks(); //Start a loop instead of continuously checking
+            MainController.openVrManager.QueryCurrentApplication();
+            MainController.openVrManager?.StartDeviceChecks(); //Start a loop instead of continuously checking
         } 
         else
         {

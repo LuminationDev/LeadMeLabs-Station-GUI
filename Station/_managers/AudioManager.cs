@@ -12,7 +12,7 @@ using Sentry;
 using Station._controllers;
 using Station._models;
 
-namespace Station._utils;
+namespace Station._managers;
 
 /// <summary>
 /// Provides methods to control audio devices using PowerShell commands.
