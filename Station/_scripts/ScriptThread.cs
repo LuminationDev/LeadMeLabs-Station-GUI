@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using Newtonsoft.Json.Linq;
 using Station._controllers;
 using Station._legacy;
+using Station._managers;
 using Station._models;
 using Station._notification;
 using Station._profiles;
@@ -99,6 +100,7 @@ public class ScriptThread
             MessageController.SendResponse(_source, "Station", "SetValue:gameName:");
             MessageController.SendResponse("Android", "Station", "SetValue:gameId:");
             AudioManager.Initialise();
+            VideoManager.Initialise();
         }
     }
 

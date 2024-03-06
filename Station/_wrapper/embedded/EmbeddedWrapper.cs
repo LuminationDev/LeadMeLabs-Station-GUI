@@ -9,6 +9,7 @@ using Newtonsoft.Json.Linq;
 using Station._commandLine;
 using Station._controllers;
 using Station._interfaces;
+using Station._managers;
 using Station._models;
 using Station._monitoring;
 using Station._network;
@@ -302,10 +303,8 @@ internal class EmbeddedWrapper : IWrapper
             UIUpdater.ResetUIDisplay();
             SessionController.PassStationMessage($"MessageToAndroid,GameLaunchFailed:{lastExperience.Name}");
             
-            JObject response = new JObject();
-            response.Add("response", "ExperienceLaunchFailed");
-            JObject responseData = new JObject();
-            responseData.Add("experienceId", lastExperience.ID);
+            JObject response = new JObject { { "response", "ExperienceLaunchFailed" } };
+            JObject responseData = new JObject { { "experienceId", lastExperience.ID } };
             response.Add("responseData", responseData);
             
             MessageController.SendResponse("NUC", "QA", response.ToString());
@@ -354,6 +353,23 @@ internal class EmbeddedWrapper : IWrapper
         {
             currentProcess?.WaitForExit();
             lastExperience.Name = null; //Reset for correct headset state
+
+            try
+            {
+                if (lastExperience.Subtype?.ContainsKey("category") ?? false)
+                {
+                    string category = lastExperience.Subtype?.GetValue("category")?.ToString() ?? "";
+                    if (category.Equals("videoPlayer"))
+                    {
+                        VideoManager.ClearVideoInformation();
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+            }
+
             SessionController.PassStationMessage($"ApplicationClosed");
             UIUpdater.ResetUIDisplay();
         });

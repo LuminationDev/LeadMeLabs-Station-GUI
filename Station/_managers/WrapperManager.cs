@@ -22,7 +22,7 @@ using Station._wrapper.revive;
 using Station._wrapper.steam;
 using Station._wrapper.vive;
 
-namespace Station._wrapper;
+namespace Station._managers;
 
 public class WrapperManager
 {
@@ -114,7 +114,6 @@ public class WrapperManager
     private static void ExternalActionHandler(string message)
     {
         Logger.WriteLog($"Pipe message: {message}", MockConsole.LogLevel.Normal);
-
         if (message.Contains("Command received")) return;
 
         //Token break down
@@ -126,6 +125,17 @@ public class WrapperManager
         {
             case "details":
                 MessageController.SendResponse("Android", "Station", $"SetValue:details:{CheckExperienceName(tokens[1])}");
+                break;
+            
+            // Let the video manager handle video associated messages
+            case "videoTime":
+                VideoManager.UpdatePlaybackTime(tokens[1]);
+                break;
+            case "videoActive":
+                VideoManager.UpdateActiveVideo(tokens[1]);
+                break;
+            case "videoPlayerDetails":
+                VideoManager.UpdateVideoPlayerDetails(tokens[1]);
                 break;
             default:
                 LogHandler($"Unknown actionspace: {tokens[0]}");
@@ -718,8 +728,8 @@ public class WrapperManager
     /// <param name="launchType">A string of if the experience is to show on the tablet (visible) or not (hidden)</param>
     /// <param name="path">A string of the absolute path of the executable to run</param>
     /// <param name="parameters">A string to be passed as the process arguments</param>
-    /// <param name="_isVr">A string of if the experience is VR or not</param>
-    public void HandleInternalExecutable(string action, string launchType, string path, string? parameters, string _isVr)
+    /// <param name="isExperienceVr">A string of if the experience is VR or not</param>
+    public void HandleInternalExecutable(string action, string launchType, string path, string? parameters, string isExperienceVr)
     {
         string name = Path.GetFileNameWithoutExtension(path);
         string id = "NA";
@@ -750,7 +760,7 @@ public class WrapperManager
         }
 
         // Attempt to convert the string into a boolean or default to false
-        if (!bool.TryParse(_isVr, out var isVr))
+        if (!bool.TryParse(isExperienceVr, out var isVr))
         {
             isVr = false;
         }

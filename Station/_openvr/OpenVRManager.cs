@@ -8,6 +8,7 @@ using Newtonsoft.Json.Linq;
 using Station._commandLine;
 using Station._controllers;
 using Station._interfaces;
+using Station._managers;
 using Station._models;
 using Station._notification;
 using Station._profiles;
@@ -154,10 +155,10 @@ public class OpenVRManager
         if (vrProfile?.VrHeadset == null) return false;
 
         MockConsole.WriteLine($"WaitForOpenVR - Checking SteamVR. Vive status: {Enum.GetName(typeof(DeviceStatus), vrProfile.VrHeadset.GetHeadsetManagementSoftwareStatus())} " +
-            $"- OpenVR status: {MainController.openVRManager?.InitialiseOpenVR() ?? false}", MockConsole.LogLevel.Normal);
+            $"- OpenVR status: {MainController.openVrManager?.InitialiseOpenVR() ?? false}", MockConsole.LogLevel.Normal);
 
         //If Vive is connect but OpenVR is not/cannot be initialised, restart SteamVR and check again.
-        if (vrProfile.VrHeadset.GetHeadsetManagementSoftwareStatus() == DeviceStatus.Connected && (!MainController.openVRManager?.InitialiseOpenVR() ?? true))
+        if (vrProfile.VrHeadset.GetHeadsetManagementSoftwareStatus() == DeviceStatus.Connected && (!MainController.openVrManager?.InitialiseOpenVR() ?? true))
         {
             Logger.WriteLog($"OpenVRManager.WaitForOpenVR - Vive status: {vrProfile.VrHeadset.GetHeadsetManagementSoftwareStatus()}, " +
                 $"OpenVR connection not established - restarting SteamVR", MockConsole.LogLevel.Normal);
@@ -187,7 +188,7 @@ public class OpenVRManager
             //Send message to the tablet (Updating what is happening)
             ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage($"SoftwareState,Connecting SteamVR"), TimeSpan.FromSeconds(1));
 
-            bool openvr = await Helper.MonitorLoop(() => !MainController.openVRManager?.InitialiseOpenVR() ?? true, 10);
+            bool openvr = await Helper.MonitorLoop(() => !MainController.openVrManager?.InitialiseOpenVR() ?? true, 10);
             if (!openvr)
             {
                 ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage($"SoftwareState,SteamVR Error"), TimeSpan.FromSeconds(1));
