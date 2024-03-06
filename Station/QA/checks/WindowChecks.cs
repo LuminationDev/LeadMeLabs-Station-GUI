@@ -13,10 +13,13 @@ public class WindowChecks
     private List<QaCheck> _qaChecks = new();
     public List<QaCheck> RunQa(string labType)
     {
-        _qaChecks.Add(GetWindowsVersion());
-        _qaChecks.Add(IsWakeOnMagicPacketEnabled());
-        _qaChecks.Add(CheckEnvAsync());
-        _qaChecks.Add(CheckWallpaper());
+        _qaChecks = new()
+        {
+            GetWindowsVersion(),
+            IsWakeOnMagicPacketEnabled(),
+            CheckEnvAsync(),
+            CheckWallpaper()
+        };
 
         if (labType.Equals("Online"))
         {

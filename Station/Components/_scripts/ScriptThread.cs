@@ -4,11 +4,11 @@ using System.Threading.Tasks;
 using Newtonsoft.Json.Linq;
 using Sentry;
 using Station.Components._legacy;
+using Station.Components._managers;
 using Station.Components._models;
 using Station.Components._notification;
 using Station.Components._profiles;
 using Station.Components._utils;
-using Station.Components._wrapper;
 using Station.Components._wrapper.steam;
 using Station.MVC.Controller;
 using Station.QA;
@@ -98,6 +98,7 @@ public class ScriptThread
         MessageController.SendResponse(_source, "Station", "SetValue:gameName:");
         MessageController.SendResponse("Android", "Station", "SetValue:gameId:");
         AudioManager.Initialise();
+        VideoManager.Initialise();
     }
 
     private async void HandleStation(string additionalData)

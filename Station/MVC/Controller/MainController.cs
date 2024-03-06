@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using LeadMeLabsLibrary;
 using Sentry;
 using Station._config;
+using Station.Components._managers;
 using Station.Components._monitoring;
 using Station.Components._network;
 using Station.Components._notification;
@@ -13,7 +14,6 @@ using Station.Components._organisers;
 using Station.Components._profiles;
 using Station.Components._utils;
 using Station.Components._utils._steamConfig;
-using Station.Components._wrapper;
 using Station.Components._wrapper.steam;
 using Station.QA;
 
@@ -112,13 +112,14 @@ public static class MainController
         // Continue with additional tasks if environment variables are loaded successfully
         MockConsole.WriteLine("ENV variables loaded", MockConsole.LogLevel.Error);
 
-        // Set the end point before attempting an outgiong messages
+        // Set the end point before attempting an outgoing messages
         SetRemoteEndPoint();
         
         ValidateInstall("Station");
         
-        // Collect audio devices before starting the server
+        // Collect audio devices and videos before starting the server
         AudioManager.Initialise();
+        VideoManager.Initialise();
         
         // Additional tasks - Start a new task as to now hold up the UI
         new Task(() =>
@@ -152,7 +153,7 @@ public static class MainController
         string? currentVersion = Updater.GetVersionNumber();
         string? currentName = "Ice Cream Sandwich";
         
-        UIController.UpdateSoftwareDetails("versionNumber", currentVersion ?? "Unavailable");
+        UIController.UpdateSoftwareDetails("versionNumber", currentVersion);
         UIController.UpdateSoftwareDetails("versionName", currentName);
         
         Logger.WriteLog($"Version number: {currentVersion}, name: {currentName}", MockConsole.LogLevel.Error);

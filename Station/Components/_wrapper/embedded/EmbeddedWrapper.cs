@@ -8,6 +8,7 @@ using LeadMeLabsLibrary;
 using Newtonsoft.Json.Linq;
 using Station.Components._commandLine;
 using Station.Components._interfaces;
+using Station.Components._managers;
 using Station.Components._models;
 using Station.Components._monitoring;
 using Station.Components._network;
@@ -347,6 +348,23 @@ internal class EmbeddedWrapper : IWrapper
         {
             currentProcess?.WaitForExit();
             lastExperience.Name = null; //Reset for correct headset state
+            
+            try
+            {
+                if (lastExperience.Subtype?.ContainsKey("category") ?? false)
+                {
+                    string category = lastExperience.Subtype?.GetValue("category")?.ToString() ?? "";
+                    if (category.Equals("videoPlayer"))
+                    {
+                        VideoManager.ClearVideoInformation();
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+            }
+            
             SessionController.PassStationMessage($"ApplicationClosed");
             UIController.UpdateProcessMessages("reset");
         });

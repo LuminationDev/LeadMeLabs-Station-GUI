@@ -10,8 +10,11 @@ public class ConfigurationChecks
     private List<QaCheck> _qaChecks = new();
     public List<QaCheck> RunQa(string labType)
     {
-        _qaChecks.Add(IsTaskSchedulerCreated());
-        _qaChecks.Add(IsOldTaskSchedulerNotPresent());
+        _qaChecks = new()
+        {
+            IsTaskSchedulerCreated(),
+            IsOldTaskSchedulerNotPresent()
+        };
         _qaChecks.AddRange(CheckEnvironmentVariables());
 
         return _qaChecks;

@@ -28,7 +28,7 @@ public static class Logger
     public static void WriteLog<T>(T logMessage, MockConsole.LogLevel logLevel, bool writeToLogFile = true)
     {
         if (logMessage == null) return;
-        string msg = $"[{DateTime.Now:yyyy-MM-ddTHH:mm:ss}]: {logMessage.ToString()}";
+        string msg = $"{DeterminePrefix(logLevel)}[{DateTime.Now:yyyy-MM-ddTHH:mm:ss}]: {logMessage.ToString()}";
         if (writeToLogFile)
         {
             LogQueue.Enqueue(msg);
@@ -38,6 +38,24 @@ public static class Logger
 
         if (log == null) return;
         MockConsole.WriteLine(log, logLevel);
+    }
+    
+    /// <summary>
+    /// Based on the LogLevel passed by a message, add a prefix to the log message. This can be used to filter through
+    /// the messages.
+    /// </summary>
+    /// <param name="logLevel">A MockConsole.LogLevel</param>
+    /// <returns>A string of a prefix to add to the log.</returns>
+    private static string DeterminePrefix(MockConsole.LogLevel logLevel)
+    {
+        return logLevel switch
+        {
+            MockConsole.LogLevel.Error => "[E]",
+            MockConsole.LogLevel.Normal => "[N]",
+            MockConsole.LogLevel.Debug => "[D]",
+            MockConsole.LogLevel.Verbose => "[V]",
+            _ => "[N]"
+        };
     }
 
     public static string GetCurrentLogFilePath()
