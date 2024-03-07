@@ -214,7 +214,7 @@ public static class SteamScripts
         
         if(!File.Exists(filePath))
         {
-            Logger.WriteLog($"SteamCMD not initialised yet. Initialising now.", MockConsole.LogLevel.Error);
+            Logger.WriteLog($"SteamCMD not initialised yet. Initialising now.", MockConsole.LogLevel.Info);
             MessageController.SendResponse("Android", "Station", "SetValue:steamCMD:required");
             
             steamCMDConfigured = "Missing";
@@ -348,24 +348,24 @@ public static class SteamScripts
 
             if (current.Contains("No custom list"))
             {
-                Logger.WriteLog("No custom list of steam applications", MockConsole.LogLevel.Error);
+                Logger.WriteLog("No custom list of steam applications", MockConsole.LogLevel.Info);
                 break;
             }
             if (current.Contains("Custom list"))
             {
-                Logger.WriteLog("Reached end of parental approved list", MockConsole.LogLevel.Error);
+                Logger.WriteLog("Reached end of parental approved list", MockConsole.LogLevel.Info);
                 break;
             }
             if (current.Contains("Custom list"))
             {
-                Logger.WriteLog("Reached end of parental approved list", MockConsole.LogLevel.Error);
+                Logger.WriteLog("Reached end of parental approved list", MockConsole.LogLevel.Info);
                 
                 // check for if family mode is not enabled
                 enumerator.MoveNext();
                 enumerator.MoveNext();
                 if (enumerator.Current.Contains("Enabled: false"))
                 {
-                    Logger.WriteLog("Reached end of parental approved list, but enabled is false, returning empty list", MockConsole.LogLevel.Error);
+                    Logger.WriteLog("Reached end of parental approved list, but enabled is false, returning empty list", MockConsole.LogLevel.Info);
                     return new List<string>(); // return an empty list, as this indicates all approved
                 }
                 break;

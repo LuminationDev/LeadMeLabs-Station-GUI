@@ -91,6 +91,7 @@ public class SteamConfig
         }
         catch (Exception e)
         {
+            Logger.WriteLog($"GetSteamId - Sentry Exception: {e}", MockConsole.LogLevel.Error);
             SentrySdk.CaptureException(e);
         }
 
@@ -143,6 +144,7 @@ public class SteamConfig
         }
         catch (Exception e)
         {
+            Logger.WriteLog($"VerifySteamHideNotificationConfig - Sentry Exception: {e}", MockConsole.LogLevel.Error);
             SentrySdk.CaptureException(e);
         }
     }
@@ -186,6 +188,7 @@ public class SteamConfig
         }
         catch (Exception e)
         {
+            Logger.WriteLog($"GetAcceptedEulasForAppId - Sentry Exception: {e}", MockConsole.LogLevel.Error);
             SentrySdk.CaptureException(e);
         }
 
@@ -220,6 +223,7 @@ public class SteamConfig
             }
             catch (Exception e)
             {
+                Logger.WriteLog($"VerifyConfigSharedConfigFile - Sentry Exception: {e}", MockConsole.LogLevel.Error);
                 SentrySdk.CaptureException(e);
             }
         }
@@ -248,6 +252,7 @@ public class SteamConfig
             }
             catch (Exception e)
             {
+                Logger.WriteLog($"VerifyConfigSharedConfigFile - Sentry Exception: {e}", MockConsole.LogLevel.Error);
                 SentrySdk.CaptureException(e);
             }
         }
@@ -312,6 +317,7 @@ public class SteamConfig
         }
         catch (Exception e)
         {
+            Logger.WriteLog($"VerifySteamDefaultPageConfig - Sentry Exception: {e}", MockConsole.LogLevel.Error);
             SentrySdk.CaptureException(e);
         }
     }
@@ -355,6 +361,7 @@ public class SteamConfig
         }
         catch (Exception e)
         {
+            Logger.WriteLog($"VerifySteamLoginUserConfig - Sentry Exception: {e}", MockConsole.LogLevel.Error);
             SentrySdk.CaptureException(e);
         }
     }
@@ -459,13 +466,16 @@ public class SteamConfig
                     }
                     else
                     {
-                        SentrySdk.CaptureMessage($"Steam capture failed with response code {result.StatusCode}");
+                        string msg = $"Steam capture failed with response code {result.StatusCode}";
+                        Logger.WriteLog($"VerifySteamLoginUserConfig - Sentry Message: {msg}", MockConsole.LogLevel.Error);
+                        SentrySdk.CaptureMessage(msg);
                     }
                 }
             });
         }
         catch (Exception e)
         {
+            Logger.WriteLog($"ReadAndReportSteamStats - Sentry Exception: {e}", MockConsole.LogLevel.Error);
             SentrySdk.CaptureException(e);
         }
     }
@@ -504,6 +514,7 @@ public class SteamConfig
         }
         catch (Exception e)
         {
+            Logger.WriteLog($"UpdateSteamVRSettings - Sentry Exception: {e}", MockConsole.LogLevel.Error);
             SentrySdk.CaptureException(e);
         }
     }

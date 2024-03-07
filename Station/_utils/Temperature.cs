@@ -1,6 +1,7 @@
 ﻿using System;
 using LibreHardwareMonitor.Hardware;
 using Sentry;
+using Station._notification;
 
 namespace Station._utils;
 
@@ -83,6 +84,7 @@ public class Temperature
         }
         catch (Exception e)
         {
+            Logger.WriteLog($"GetTemperature - Sentry Exception: {e}", MockConsole.LogLevel.Error);
             SentrySdk.CaptureException(e);
             return 0;
         }

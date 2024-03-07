@@ -471,6 +471,7 @@ public static class CommandLine
         }
         catch (Exception e)
         {
+            Logger.WriteLog($"GetFreeStorage - Sentry Exception: {e}", MockConsole.LogLevel.Error);
             SentrySdk.CaptureException(e);
         }
 

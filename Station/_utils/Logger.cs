@@ -56,6 +56,7 @@ public static class Logger
         return logLevel switch
         {
             MockConsole.LogLevel.Error => "[E]",
+            MockConsole.LogLevel.Info => "[I]",
             MockConsole.LogLevel.Normal => "[N]",
             MockConsole.LogLevel.Debug => "[D]",
             MockConsole.LogLevel.Verbose => "[V]",
@@ -94,7 +95,7 @@ public static class Logger
     {
         if (CommandLine.StationLocation == null)
         {
-            Logger.WriteLog("Station location not found: LogRequest", MockConsole.LogLevel.Error);
+            WriteLog("Station location not found: LogRequest", MockConsole.LogLevel.Error);
             return;
         }
 

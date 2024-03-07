@@ -11,6 +11,8 @@ using Newtonsoft.Json.Linq;
 using Sentry;
 using Station._controllers;
 using Station._models;
+using Station._notification;
+using Station._utils;
 
 namespace Station._managers;
 
@@ -133,6 +135,7 @@ public static class AudioManager
         }
         catch (Exception e)
         {
+            Logger.WriteLog($"SetVolume - Sentry Exception: {e}", MockConsole.LogLevel.Error);
             SentrySdk.CaptureException(e);
         }
     }
@@ -174,6 +177,7 @@ public static class AudioManager
         }
         catch (Exception e)
         {
+            Logger.WriteLog($"SetMuted - Sentry Exception: {e}", MockConsole.LogLevel.Error);
             SentrySdk.CaptureException(e);
         }
     }
@@ -282,6 +286,7 @@ public static class AudioManager
                 }
                 catch (Exception e)
                 {
+                    Logger.WriteLog($"CollectAudioDeviceInformation - Sentry Exception: {e}", MockConsole.LogLevel.Error);
                     SentrySdk.CaptureException(e);
                 }
             }

@@ -282,7 +282,7 @@ public class ServerThread
 
         if (File.Exists($@"{path}\{fileName}"))
         {
-            Logger.WriteLog($"File: {fileName} is already present on the system.", MockConsole.LogLevel.Error);
+            Logger.WriteLog($"File: {fileName} is already present on the system.", MockConsole.LogLevel.Info);
             return;
         }
         // Open the output file stream
@@ -303,7 +303,7 @@ public class ServerThread
             fileStream.Close();
         }
 
-        Logger.WriteLog($"New File saved: {fileName} at {path}", MockConsole.LogLevel.Error);
+        Logger.WriteLog($"New File saved: {fileName} at {path}", MockConsole.LogLevel.Info);
 
         // Close the client connection
         await stream.DisposeAsync();

@@ -22,6 +22,7 @@ public static class MockConsole
     {
         Off,
         Error,
+        Info,
         Normal,
         Debug,
         Verbose
