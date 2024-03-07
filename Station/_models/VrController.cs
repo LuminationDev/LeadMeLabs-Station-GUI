@@ -156,7 +156,7 @@ public class VrController
         else
         {
             MockConsole.WriteLine($"VrController.UpdateProperty - {errorMsg}: {newValue}",
-                MockConsole.LogLevel.Error);
+                MockConsole.LogLevel.Info);
         }
     }
 }

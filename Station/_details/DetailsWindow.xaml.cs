@@ -229,7 +229,7 @@ namespace Station._details
         /// <param name="e">The event arguments.</param>
         private void ToggleSteam_Click(object sender, RoutedEventArgs e)
         {
-            Logger.WriteLog($"Attempting to toggle Steam firewall rules, enabled: {SteamRules}", MockConsole.LogLevel.Error);
+            Logger.WriteLog($"Attempting to toggle Steam firewall rules, enabled: {SteamRules}", MockConsole.LogLevel.Normal);
             string responseSteam = FirewallManagement.ToggleRule("SteamBlocker", @"C:\Program Files (x86)\Steam\Steam.exe", SteamRules);
             string responseWeb = FirewallManagement.ToggleRule("SteamBlockerWeb", @"C:\Program Files (x86)\Steam\bin\cef\cef.win7x64\steamwebhelper.exe", SteamRules);
             string responseTour = FirewallManagement.ToggleRule("SteamBlockerTours", @"C:\program files (x86)\steam\steamapps\common\steamvr\tools\steamvr_environments\game\bin\win64\steamtours.exe", SteamRules);
@@ -243,7 +243,7 @@ namespace Station._details
             if (successSteam && successWeb && successTour && successVR)
             {
                 ToggleOffline.Content = "Steam: " + (SteamRules ? "Offline" : "Online");
-                Logger.WriteLog("Successfully toggled Steam firewall. Rules now: " + (SteamRules ? "Enabled" : "Disabled"), MockConsole.LogLevel.Error);
+                Logger.WriteLog("Successfully toggled Steam firewall. Rules now: " + (SteamRules ? "Enabled" : "Disabled"), MockConsole.LogLevel.Info);
                 SteamRules = !SteamRules;
             } else
             {
@@ -266,12 +266,12 @@ namespace Station._details
         {
             if(action.Equals("true"))
             {
-                Logger.WriteLog($"Existing outbound rule '{ruleName}' " + (enabled ? "enabled" : "disabled") + " successfully.", MockConsole.LogLevel.Error);
+                Logger.WriteLog($"Existing outbound rule '{ruleName}' " + (enabled ? "enabled" : "disabled") + " successfully.", MockConsole.LogLevel.Info);
                 return true;
             }
             else if (action.Equals("Created"))
             {
-                Logger.WriteLog($"New outbound rule '{ruleName}' created successfully.", MockConsole.LogLevel.Error);
+                Logger.WriteLog($"New outbound rule '{ruleName}' created successfully.", MockConsole.LogLevel.Info);
                 return true;
             } else
             {

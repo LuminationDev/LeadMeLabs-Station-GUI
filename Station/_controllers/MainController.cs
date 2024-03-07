@@ -128,6 +128,7 @@ public static class MainController
             }
             catch (Exception e)
             {
+                Logger.WriteLog($"StartProgram - Sentry Exception: {e}", MockConsole.LogLevel.Error);
                 SentrySdk.CaptureException(e);
             }
 
@@ -214,8 +215,8 @@ public static class MainController
         }
         catch (Exception e)
         {
+            Logger.WriteLog($"OnTimerCallback - Sentry Exception: {e}", MockConsole.LogLevel.Error);
             SentrySdk.CaptureException(e);
-            Logger.WriteLog($"Unexpected exception : {e}", MockConsole.LogLevel.Error);
         }
     }
 
@@ -293,8 +294,8 @@ public static class MainController
         }
         catch (Exception e)
         {
+            Logger.WriteLog($"SetupServerDetails - Sentry Exception: {e}", MockConsole.LogLevel.Error);
             SentrySdk.CaptureException(e);
-            Logger.WriteLog($"Unexpected exception : {e}", MockConsole.LogLevel.Error);
             return false;
         }
     }

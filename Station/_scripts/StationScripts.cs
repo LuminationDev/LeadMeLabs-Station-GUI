@@ -84,7 +84,7 @@ public static class StationScripts
         }
         else
         {
-            Logger.WriteLog("Unidentified command", MockConsole.LogLevel.Error);
+            Logger.WriteLog("Unidentified command", MockConsole.LogLevel.Info);
         }
     }
 

@@ -110,7 +110,7 @@ internal class CustomWrapper : IWrapper
             //Queue the send function for invoking
             TaskQueue.Queue(false, sendImage);
 
-            MockConsole.WriteLine($"Thumbnail for experience: {experienceName} now queued for transfer.", MockConsole.LogLevel.Error);
+            MockConsole.WriteLine($"Thumbnail for experience: {experienceName} now queued for transfer.", MockConsole.LogLevel.Info);
         });
     }
 

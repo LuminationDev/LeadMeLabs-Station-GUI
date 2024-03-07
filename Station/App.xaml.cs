@@ -25,7 +25,6 @@ namespace Station
                 Environment.Exit(1);
                 return;
             }
-            Logger.WriteLog("Updated to OpenVR Version", MockConsole.LogLevel.Error);
             SteamConfig.VerifySteamConfig();
 
             MainWindow mainWindow = new();
@@ -50,9 +49,10 @@ namespace Station
             int? freeStorage = CommandLine.GetFreeStorage();
             if (freeStorage is < 10)
             {
-                SentrySdk.CaptureMessage("Low memory detected (" + freeStorage + ") at: " +
-                                         (Environment.GetEnvironmentVariable("LabLocation",
-                                             EnvironmentVariableTarget.Process) ?? "Unknown"));
+                string msg =
+                    $"Low memory detected ({freeStorage}) at: {(Environment.GetEnvironmentVariable("LabLocation", EnvironmentVariableTarget.Process) ?? "Unknown")}";
+                Logger.WriteLog($"CheckStorage - Sentry Message: {msg}", MockConsole.LogLevel.Error);
+                SentrySdk.CaptureMessage(msg);
             }
         }
 

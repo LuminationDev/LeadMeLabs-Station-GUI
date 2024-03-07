@@ -200,6 +200,7 @@ public static class VideoManager
                 }
                 catch (Exception e)
                 {
+                    InternalLogger.WriteLog($"LoadLocalVideoFiles - Sentry Exception: {e}", MockConsole.LogLevel.Error);
                     SentrySdk.CaptureException(e);
                 }
             }
@@ -225,6 +226,7 @@ public static class VideoManager
         catch (Exception ex)
         {
             // Log the exception using Sentry for monitoring purposes
+            InternalLogger.WriteLog($"GetVideoDuration - Unable to calculate duration from ({filePath}), Error: {ex}", MockConsole.LogLevel.Error);
             SentrySdk.CaptureMessage($"Unable to calculate duration from ({filePath}), Error: {ex}");
         }
 

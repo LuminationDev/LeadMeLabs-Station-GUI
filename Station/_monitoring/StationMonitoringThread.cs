@@ -139,7 +139,7 @@ public static class StationMonitoringThread
         {
             if (string.IsNullOrEmpty(process.MainWindowTitle)) continue;
             
-            Logger.WriteLog($"Killing SetVol process: {process.MainWindowTitle}", MockConsole.LogLevel.Error);
+            Logger.WriteLog($"Killing SetVol process: {process.MainWindowTitle}", MockConsole.LogLevel.Normal);
             process.Kill();
         }
     }
@@ -160,7 +160,7 @@ public static class StationMonitoringThread
                 }
                 catch (Exception e)
                 {
-                    Logger.WriteLog(e, MockConsole.LogLevel.Error);
+                    Logger.WriteLog($"NewSteamProcessesCheck - Sentry Exception: {e}", MockConsole.LogLevel.Error);
                     SentrySdk.CaptureException(e);
                 }
                 

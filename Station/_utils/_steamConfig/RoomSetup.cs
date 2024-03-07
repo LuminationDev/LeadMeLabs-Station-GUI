@@ -129,22 +129,22 @@ public static class RoomSetup
             bool filesAreEqual = AreFilesEqual(currentFilePath, DefaultFilePath);
             if (!filesAreEqual)
             {
-                Logger.WriteLog("CompareRoomSetup - SteamVR is not equal to the Default", MockConsole.LogLevel.Error);
+                Logger.WriteLog("CompareRoomSetup - SteamVR is not equal to the Default", MockConsole.LogLevel.Info);
                 LoadRoomSetup();
             }
             else
             {
-                Logger.WriteLog("CompareRoomSetup - chaperone_info.vrchap is in working order, no action necessary", MockConsole.LogLevel.Error);
+                Logger.WriteLog("CompareRoomSetup - chaperone_info.vrchap is in working order, no action necessary", MockConsole.LogLevel.Info);
             }
         }
         else if (defaultExists)
         {
             LoadRoomSetup();
-            Logger.WriteLog("CompareRoomSetup - SteamVR chaperone_info.vrchap does not exist, replacing with Default", MockConsole.LogLevel.Error);
+            Logger.WriteLog("CompareRoomSetup - SteamVR chaperone_info.vrchap does not exist, replacing with Default", MockConsole.LogLevel.Info);
         }
         else if (steamExists)
         {
-            Logger.WriteLog("CompareRoomSetup - SteamVR chaperone_info.vrchap does exist, Default does not", MockConsole.LogLevel.Error);
+            Logger.WriteLog("CompareRoomSetup - SteamVR chaperone_info.vrchap does exist, Default does not", MockConsole.LogLevel.Info);
         }
         else
         { 
