@@ -172,6 +172,7 @@ public static class VideoManager
         if (!Directory.Exists(folderPath))
         {
             InternalLogger.WriteLog($"VideoManager - Folder does not exist {folderPath}", MockConsole.LogLevel.Normal);
+            return;
         }
         
         string[] files = Directory.GetFiles(folderPath);
