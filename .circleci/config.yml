@@ -12,7 +12,7 @@ commands:
       - run: mkdir -p ~/circleci-working/<<pipeline.id>>
       - run:
           name: Setup git config
-          command: git config --global user.name "CircleCI"; git config --global user.email "CircleCI@lumination.com.au"
+          command: git config --global user.name "CircleCI"; git config --global user.email "CircleCI@lumination.com.au"; git lfs install
       - run:
           name: Add github to known hosts
           command: ssh-keyscan github.com >> ~/.ssh/known_hosts
