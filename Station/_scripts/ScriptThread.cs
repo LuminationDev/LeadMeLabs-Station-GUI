@@ -265,10 +265,17 @@ public class ScriptThread
                 break;
             
             case "Thumbnails":
-                string? required = experienceData.GetValue("ImagesRequired")?.ToString();
-                if (required == null) return;
+                string? requiredExperiences = experienceData.GetValue("ImagesRequired")?.ToString();
+                if (requiredExperiences == null) return;
                 
-                MainController.wrapperManager?.ActionHandler("CollectHeaderImages", required);
+                MainController.wrapperManager?.ActionHandler("CollectHeaderImages", requiredExperiences);
+                break;
+            
+            case "VideoThumbnails":
+                string? requiredVideos = experienceData.GetValue("ImagesRequired")?.ToString();
+                if (requiredVideos == null) return;
+
+                VideoManager.CollectVideoThumbnails(requiredVideos);
                 break;
             
             case "Launch":

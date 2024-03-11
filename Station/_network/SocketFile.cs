@@ -48,7 +48,17 @@ public class SocketFile
     /// </summary>
     private string GetName(string type, string name)
     {
-        return type == "image" ? $"{name}_header.jpg" : name;
+        switch (type)
+        {
+            case "experienceThumbnail":
+                return $"{name.Replace(":", "")}_header.jpg";
+            
+            case "videoThumbnail":
+                return $"{name}_thumbnail.jpg";
+            
+            default:
+                return name;
+        }
     }
 
     /// <summary>
