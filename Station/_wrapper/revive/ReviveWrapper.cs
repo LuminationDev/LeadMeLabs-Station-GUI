@@ -83,7 +83,7 @@ public class ReviveWrapper : IWrapper
             }
 
             //Add the header image to the sending image queue through action transformation
-            SocketFile socketImage = new("image", experienceKey, filePath);
+            SocketFile socketImage = new("experienceThumbnail", experienceKey, filePath);
             System.Action sendImage = new(() => socketImage.Send());
 
             //Queue the send function for invoking

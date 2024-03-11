@@ -106,7 +106,7 @@ internal class EmbeddedWrapper : IWrapper
             }
 
             //Add the header image to the sending image queue through action transformation
-            SocketFile socketImage = new("image", experienceName, filePath);
+            SocketFile socketImage = new("experienceThumbnail", experienceName, filePath);
 
             //Queue the send function for invoking
             TaskQueue.Queue(false, SendImage);

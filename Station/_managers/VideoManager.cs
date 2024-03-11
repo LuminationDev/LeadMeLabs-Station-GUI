@@ -14,6 +14,11 @@ using Station._controllers;
 using Station._models;
 using Station._notification;
 using InternalLogger = Station._utils.Logger;
+using Microsoft.WindowsAPICodePack.Shell;
+using System.Drawing;
+using LeadMeLabsLibrary;
+using Station._commandLine;
+using Station._network;
 
 namespace Station._managers;
 
@@ -28,9 +33,11 @@ public static class VideoManager
     private static readonly List<string> ValidFileTypes = new() { ".mp4" };
     private static readonly object VideoFilesLock = new();
     
+    //TODO put all videos in sub folders (one video per video)
     private static readonly string BaseFolderPath = GetVideoFolder();
     private static readonly string VrFolderPath = Path.Join(BaseFolderPath, "VR");
     private static readonly string RegularFolderPath = Path.Join(BaseFolderPath, "Regular");
+    private static readonly string BackdropFolderPath = Path.Join(BaseFolderPath, "Backdrops");
 
     // Hold the different video types
     private static readonly Dictionary<string, Video> VideoFiles = new();
@@ -142,6 +149,7 @@ public static class VideoManager
         ActiveVideo = video;
     }
     #endregion
+    
     /// <summary>
     /// Collect and store the list of videos.
     /// </summary>
@@ -150,7 +158,8 @@ public static class VideoManager
         void Collect()
         {
             LoadLocalVideoFiles(VrFolderPath, true);
-            LoadLocalVideoFiles(RegularFolderPath, false);
+            LoadLocalVideoFiles(RegularFolderPath);
+            LoadLocalVideoFiles(BackdropFolderPath, false, true);
             
             Video[] videoArray = VideoFiles.Values.ToArray();
             string json = JsonConvert.SerializeObject(videoArray);
@@ -166,26 +175,30 @@ public static class VideoManager
     /// Load any video files that are in the local Video folder, adding these to the details object
     /// before sending the details object to LeadMe Labs.
     /// </summary>
-    private static void LoadLocalVideoFiles(string folderPath, bool isVr)
+    /// <param name="folderPath">A string of the absolute folder path of where to look for videos</param>
+    /// <param name="isVr">A boolean representing if the videos found in this path are VR</param>
+    /// <param name="isBackdrop">A boolean representing if the videos found in this path are just for display</param>
+    private static void LoadLocalVideoFiles(string folderPath, bool isVr = false, bool isBackdrop = false)
     {
         // Bail out early if folder does not exist
         if (!Directory.Exists(folderPath))
         {
             InternalLogger.WriteLog($"VideoManager - Folder does not exist {folderPath}", MockConsole.LogLevel.Normal);
+            return;
         }
         
         string[] files = Directory.GetFiles(folderPath);
 
         foreach (string filePath in files)
         {
-            string fileName = Path.GetFileName(filePath);
+            string fileName = Path.GetFileNameWithoutExtension(filePath);
             string extension = Path.GetExtension(filePath);
             if (!ValidFileTypes.Contains(extension)) continue;
             
             // Calculate video duration
             int duration = GetVideoDuration(filePath);
-
-            //TODO look into if we can create a thumbnails of the first frame?
+            
+            // Generate a unique ID so two files can potentially have the same name (one VR, one non-VR)
             string id = GenerateUniqueId(fileName, filePath);
             
             // Lock the VideoFilesLock dictionary to avoid duplicate entry race conditions
@@ -195,7 +208,7 @@ public static class VideoManager
                 
                 try
                 {
-                    Video video = new Video(id, fileName, filePath, duration, isVr);
+                    Video video = new Video(id, fileName, filePath, duration, isVr, isBackdrop);
                     VideoFiles.Add(id ,video);
                 }
                 catch (Exception e)
@@ -303,4 +316,98 @@ public static class VideoManager
         ActiveVideo = null;
         VideoPlayerDetails = new JObject();
     }
+
+    #region Thumbnail Organisation
+    /// <summary>
+    /// Deserialize the supplied list of Ids.
+    /// </summary>
+    public static void CollectVideoThumbnails(string list)
+    {
+        // Deserialize received data back into a List<string>
+        List<string>? receivedIdList = JsonConvert.DeserializeObject<List<string>>(list);
+
+        if (receivedIdList == null)
+        {
+            return;
+        }
+        
+        foreach (string id in receivedIdList)
+        {
+            CollectVideoThumbnail(id);
+        }
+    }
+    
+    /// <summary>
+    /// Collects and queues the transfer of a video thumbnail to a designated destination.
+    /// </summary>
+    /// <param name="id">The unique ID of the video.</param>
+    private static void CollectVideoThumbnail(string id)
+    {
+        string folderPath = $@"{CommandLine.StationLocation}\_cache";
+        Directory.CreateDirectory(folderPath); // Create the directory if required
+    
+        // Collect the file path based on the id
+        if (!VideoFiles.TryGetValue(id, out Video? video))
+        {
+            InternalLogger.WriteLog($"Thumbnail for video: {id} could not be found.", MockConsole.LogLevel.Error);
+            return;
+        }
+        string filePath = video.source;
+        
+        // Check if the file already exists, attempt to save it if it doesn't
+        string savePath = $@"{folderPath}\{id}_thumbnail.jpg";
+        if (!File.Exists(savePath) && !SaveThumbnail(filePath, savePath))
+        {
+            return;
+        }
+
+        // Send the image to the NUC
+        SocketFile socketImage = new SocketFile("videoThumbnail", id, savePath);
+
+        // Queue the send function for invoking
+        TaskQueue.Queue(false, () => socketImage.Send());
+
+        MockConsole.WriteLine($"Thumbnail for video: {filePath} now queued for transfer.", MockConsole.LogLevel.Normal);
+    }
+    
+    /// <summary>
+    /// Attempts to generate and save a thumbnail image from the provided video file.
+    /// </summary>
+    /// <param name="filePath">The file path of the video file from which the thumbnail is to be generated.</param>
+    /// <param name="savePath">The file path where the generated thumbnail will be saved.</param>
+    /// <returns>True if the thumbnail was successfully generated and saved, otherwise false.</returns>
+    private static bool SaveThumbnail(string filePath, string savePath)
+    {
+        // Get thumbnail from the video file and prepare to send it
+        Image? thumbnail = GetThumbnail(filePath);
+        
+        // Display the thumbnail
+        if (thumbnail != null)
+        {
+            thumbnail.Save(savePath, System.Drawing.Imaging.ImageFormat.Jpeg);
+            thumbnail.Dispose();
+            
+            //TODO change to Logger
+            Console.WriteLine("Thumbnail generated successfully.");
+            return true;
+        }
+        
+        //TODO change to Logger
+        Console.WriteLine("Failed to generate thumbnail.");
+        return false;
+    }
+    
+    /// <summary>
+    /// Collect the thumbnail for the supplied video.
+    /// </summary>
+    /// <param name="videoFilePath">A string of the absolute path to the video</param>
+    /// <returns>An image object of the video thumbnail</returns>
+    private static Image? GetThumbnail(string videoFilePath)
+    {
+        ShellFile shellFile = ShellFile.FromFilePath(videoFilePath);
+        Bitmap shellThumbnail = shellFile.Thumbnail.Bitmap;
+        shellFile.Dispose();
+        return shellThumbnail;
+    }
+    #endregion
 }

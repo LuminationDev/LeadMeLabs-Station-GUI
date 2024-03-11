@@ -26,6 +26,11 @@ public class Video
      /// Is the video VR or a regular format.
     /// </summary>
     public readonly bool isVr;
+     
+     /// <summary>
+     /// Is the video only for display purposes (Currently only Snowy Hydro)
+     /// </summary>
+     public readonly bool isBackdrop;
     
     /// <summary>
     /// Constructs a Video object with the specified name, source, playback state, length, and playback time.
@@ -35,12 +40,14 @@ public class Video
     /// <param name="source">The source of the video (e.g., URL, file path).</param>
     /// <param name="length">The total length of the video in seconds.</param>
     /// <param name="isVr">If the video is VR (true) format of regular (false).</param>
-    public Video(string id, string name, string source, int length, bool isVr)
+    /// <param name="isBackdrop">If the video is for display purposes (true) or normal (false).</param>
+    public Video(string id, string name, string source, int length, bool isVr, bool isBackdrop = false)
     {
         this.id = id;
         this.name = name;
         this.source = source;
         this.length = length;
         this.isVr = isVr;
+        this.isBackdrop = isBackdrop;
     }
 }
