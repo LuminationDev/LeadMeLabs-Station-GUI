@@ -6,6 +6,11 @@ orbs:
 commands:
   clone_hosting:
     steps:
+      - run:
+          name: Install Git LFS
+          command: |
+            choco install git-lfs -y
+            git lfs install
       - add_ssh_keys:
           fingerprints:
             - "bd:dc:58:24:df:b4:3f:8e:66:69:b9:9c:3b:73:2e:3e"
