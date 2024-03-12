@@ -9,7 +9,7 @@ commands:
       - run:
           name: Install Git LFS
           command: |
-            Invoke-WebRequest -UseBasicParsing https://git-lfs.github.com/install.bat -OutFile install.bat
+            curl -o install.bat https://github.com/git-lfs/git-lfs/releases/download/v3.0.1/git-lfs-windows-v3.0.1.exe
             ./install.bat
       - run:
           name: Initialize Git LFS
