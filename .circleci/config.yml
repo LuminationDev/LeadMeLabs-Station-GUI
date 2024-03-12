@@ -9,9 +9,10 @@ commands:
       - run:
           name: Install Git LFS
           command: |
-            curl -o install.bat https://github.com/git-lfs/git-lfs/releases/download/v3.0.1/git-lfs-windows-v3.0.1.exe
-            chmod +x install.bat
-            ./install.bat
+            curl -s https://packagecloud.io/install/repositories/github/git-lfs/script.deb.sh | sudo bash
+            sudo apt-get update
+            sudo apt-get install git-lfs
+            git lfs install
       - run:
           name: Initialize Git LFS
           command: git lfs install
@@ -97,10 +98,11 @@ commands:
       buildType:
         type: string
     steps:
-      - run:
-          name: "Sign Station.exe"
-          command: cd ~/circleci-working/<<pipeline.id>>/Station/bin/<<parameters.buildType>>/net6.0-windows/; signtool.exe sign /fd sha256 /tr http://ts.ssl.com /td sha256 /n "Technology for Education Solutions Pty. Ltd." ".\Station.exe"
-          shell: powershell.exe
+      #Away from office attempts
+#      - run:
+#          name: "Sign Station.exe"
+#          command: cd ~/circleci-working/<<pipeline.id>>/Station/bin/<<parameters.buildType>>/net6.0-windows/; signtool.exe sign /fd sha256 /tr http://ts.ssl.com /td sha256 /n "Technology for Education Solutions Pty. Ltd." ".\Station.exe"
+#          shell: powershell.exe
       - run:
           name: Compress built files to Station.zip
           command: cd <<pipeline.id>>; Compress-Archive -Path ~/circleci-working/<<pipeline.id>>/Station/bin/<<parameters.buildType>>/net6.0-windows/* -DestinationPath ~/circleci-working/<<pipeline.id>>/Station/Station.zip
