@@ -12,7 +12,9 @@ commands:
       - run: mkdir -p ~/circleci-working/<<pipeline.id>>
       - run:
           name: Setup git config
-          command: git config --global user.name "CircleCI"; git config --global user.email "CircleCI@lumination.com.au"
+          command: | 
+            git config --global user.name "CircleCI" 
+            git config --global user.email "CircleCI@lumination.com.au"
       - run:
           name: Add github to known hosts
           command: ssh-keyscan github.com >> ~/.ssh/known_hosts
@@ -21,7 +23,9 @@ commands:
           command: echo "Host github.com" > ~/.ssh/config; echo "  IdentitiesOnly yes" >> ~/.ssh/config && echo "  IdentityFile ~/.ssh/id_rsa_bddc5824dfb43f8e6669b99c3b732e3e" >> ~/.ssh/config
       - run:
           name: Clone hosting server
-          command: cd ~/circleci-working/<<pipeline.id>>; git clone git@github.com:LuminationDev/LeadMeLabs---HostingServer.git
+          command: | 
+            cd ~/circleci-working/<<pipeline.id>> 
+            git clone git@github.com:LuminationDev/LeadMeLabs---HostingServer.git
 
   copy_and_push:
     parameters:
@@ -30,19 +34,28 @@ commands:
     steps:
       - run:
           name: Checkout <<parameters.branch>>
-          command: cd ~/circleci-working/<<pipeline.id>>/LeadMeLabs---HostingServer; git checkout <<parameters.branch>>
+          command: |
+            cd ~/circleci-working/<<pipeline.id>>/LeadMeLabs---HostingServer 
+            git lfs fetch --all
+            git checkout <<parameters.branch>>
       - run:
           name: Copy Station.zip to git repository
           command: cp ~/circleci-working/<<pipeline.id>>/Station/Station.zip ~/circleci-working/<<pipeline.id>>/LeadMeLabs---HostingServer/applications
       - run:
           name: Add Station.zip with git
-          command: cd ~/circleci-working/<<pipeline.id>>/LeadMeLabs---HostingServer; git add applications/Station.zip
+          command: | 
+            cd ~/circleci-working/<<pipeline.id>>/LeadMeLabs---HostingServer 
+            git add applications/Station.zip
       - run:
           name: Commit
-          command: cd ~/circleci-working/<<pipeline.id>>/LeadMeLabs---HostingServer; git commit -m "Updating <<parameters.branch>> Station"
+          command: | 
+            cd ~/circleci-working/<<pipeline.id>>/LeadMeLabs---HostingServer 
+            git commit -m "Updating <<parameters.branch>> Station"
       - run:
           name: Push
-          command: cd ~/circleci-working/<<pipeline.id>>/LeadMeLabs---HostingServer; git push
+          command: | 
+            cd ~/circleci-working/<<pipeline.id>>/LeadMeLabs---HostingServer 
+            git push
 
   build:
     parameters:
@@ -54,7 +67,10 @@ commands:
           path: ~/circleci-working/<<pipeline.id>>
       - run:
           name: "load nuget config"
-          command: cd ~/circleci-working/<<pipeline.id>>; dotnet new nugetconfig; dotnet nuget add source --username $env:PACKAGE_ACCESS_USERNAME --password $env:PACKAGE_ACCESS_TOKEN --store-password-in-clear-text --name github "https://nuget.pkg.github.com/LuminationDev/index.json"
+          command: | 
+            cd ~/circleci-working/<<pipeline.id>> 
+            dotnet new nugetconfig 
+            dotnet nuget add source --username $env:PACKAGE_ACCESS_USERNAME --password $env:PACKAGE_ACCESS_TOKEN --store-password-in-clear-text --name github "https://nuget.pkg.github.com/LuminationDev/index.json"
       - run:
           name: "dotnet restore"
           command: cd ~/circleci-working/<<pipeline.id>>; dotnet.exe restore
