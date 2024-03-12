@@ -10,6 +10,7 @@ commands:
           name: Install Git LFS
           command: |
             curl -o install.bat https://github.com/git-lfs/git-lfs/releases/download/v3.0.1/git-lfs-windows-v3.0.1.exe
+            chmod +x install.bat
             ./install.bat
       - run:
           name: Initialize Git LFS
