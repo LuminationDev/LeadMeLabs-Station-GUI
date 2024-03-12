@@ -35,8 +35,7 @@ commands:
       - run:
           name: Checkout <<parameters.branch>>
           command: |
-            cd ~/circleci-working/<<pipeline.id>>/LeadMeLabs---HostingServer 
-            git lfs fetch --all
+            cd ~/circleci-working/<<pipeline.id>>/LeadMeLabs---HostingServer
             git checkout <<parameters.branch>>
       - run:
           name: Copy Station.zip to git repository
