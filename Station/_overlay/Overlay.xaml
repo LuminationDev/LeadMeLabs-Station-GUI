@@ -21,12 +21,12 @@
     <Grid>
         <Image x:Name="Logo" HorizontalAlignment="Left" VerticalAlignment="Top" Height="130" Width="341">
             <Image.Source>
-                <BitmapImage UriSource="../assets/LuminationLogo.png" />
+                <BitmapImage UriSource="../Assets/Images/LuminationLogo.png" />
             </Image.Source>
         </Image>
         <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
             <Border x:Name="Spinner" BorderThickness="15"  Visibility="Collapsed">
-                <Image Height="256" Width="256" gif:ImageBehavior.AnimatedSource="../assets/loadingspinner.gif">
+                <Image Height="256" Width="256" gif:ImageBehavior.AnimatedSource="../Assets/Gifs/loadingspinner.gif">
                 </Image>
             </Border>
             <TextBlock x:Name="StationName" TextWrapping="Wrap" Text="Station" Foreground="White" FontSize="72" FontFamily="Poppins Black"/>

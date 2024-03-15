@@ -154,7 +154,7 @@ public static class UIUpdater
         // Load the image from the asset folder
         BitmapImage imageSource = new BitmapImage();
         imageSource.BeginInit();
-        imageSource.UriSource = new Uri($"pack://application:,,,/Station;component/Assets/{iconPath}");
+        imageSource.UriSource = new Uri($"pack://application:,,,/Station;component/Assets/Icons/{iconPath}");
         imageSource.EndInit();
 
         return imageSource;

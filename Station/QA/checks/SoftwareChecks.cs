@@ -11,7 +11,7 @@ using Newtonsoft.Json;
 using Station._commandLine;
 using Station._utils;
 
-namespace Station._qa.checks;
+namespace Station.QA.checks;
 
 public class SoftwareChecks
 {

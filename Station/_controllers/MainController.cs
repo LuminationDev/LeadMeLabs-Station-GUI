@@ -11,10 +11,10 @@ using Station._network;
 using Station._notification;
 using Station._openvr;
 using Station._profiles;
-using Station._qa;
 using Station._utils;
 using Station._utils._steamConfig;
 using Station._wrapper.steam;
+using Station.QA;
 
 namespace Station._controllers;
 

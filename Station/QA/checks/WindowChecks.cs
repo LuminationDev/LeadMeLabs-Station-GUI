@@ -6,11 +6,11 @@ using Newtonsoft.Json;
 using Station._commandLine;
 using Station._utils;
 
-namespace Station._qa.checks;
+namespace Station.QA.checks;
 
 public class WindowChecks
 {
-    private List<QaCheck> _qaChecks = new();
+    private readonly List<QaCheck> _qaChecks = new();
     public List<QaCheck> RunQa(string labType)
     {
         _qaChecks.Add(GetWindowsVersion());
@@ -112,8 +112,9 @@ public class WindowChecks
             using (ManagementObjectSearcher searcher = new ManagementObjectSearcher(scope, query))
             {
                 ManagementObjectCollection results = searcher.Get();
-                foreach (ManagementObject obj in results)
+                foreach (var o in results)
                 {
+                    ManagementObject obj = (ManagementObject)o;
                     if (obj["Wallpaper"] != null)
                     {
                         string wallpaperPath = System.IO.Path.GetFileName(obj["Wallpaper"].ToString());

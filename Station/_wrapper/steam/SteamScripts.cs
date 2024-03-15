@@ -391,7 +391,7 @@ public static class SteamScripts
     public static void CheckSteamVrHomeImage()
     {
         // Define the path to the local lumination_home.png image
-        string luminationHome = CommandLine.StationLocation + @"\assets\Images\lumination_home.png";
+        string luminationHome = CommandLine.StationLocation + @"\Assets\Images\lumination_home.png";
 
         // If the local file does not exist, exit the function
         if (!File.Exists(luminationHome))

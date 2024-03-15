@@ -1,12 +1,9 @@
 using System;
 using System.Collections.Generic;
-using System.Management;
-using System.Net.Http;
-using Newtonsoft.Json;
 using Station._commandLine;
 using Station._utils;
 
-namespace Station._qa.checks;
+namespace Station.QA.checks;
 
 public class ConfigurationChecks
 {

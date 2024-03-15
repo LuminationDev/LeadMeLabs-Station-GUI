@@ -1,9 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using Newtonsoft.Json;
 using Station._controllers;
 
-namespace Station._qa.checks;
+namespace Station.QA.checks;
 
 public class ConfigChecks
 {

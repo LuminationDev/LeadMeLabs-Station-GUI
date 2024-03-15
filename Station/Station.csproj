@@ -12,17 +12,15 @@
 		<UseWPF>true</UseWPF>
 		<UseWindowsForms>true</UseWindowsForms>
 		<Nullable>enable</Nullable>
-		<ApplicationIcon>./assets/icon.ico</ApplicationIcon>
+		<ApplicationIcon>./Assets/Icons/icon.ico</ApplicationIcon>
 		<Configurations>Debug;Release;DevDebug;DevRelease</Configurations>
 		<Version>1.1.20</Version>
 	</PropertyGroup>
 
 	<ItemGroup>
-    <None Remove="assets\icon.ico" />
-    <None Remove="assets\LuminationLogo.png" />
-    <None Remove="assets\offline.ico" />
-    <None Remove="assets\online.ico" />
-    <None Remove="assets\refresh.ico" />
+    <None Remove="Assets\Icons\offline.ico" />
+    <None Remove="Assets\Icons\online.ico" />
+    <None Remove="Assets\Icons\refresh.ico" />
     <None Remove="_batch\LeadMeLabs-SoftwareChecker.deps.json" />
     <None Remove="_batch\LeadMeLabs-SoftwareChecker.dll" />
     <None Remove="_batch\LeadMeLabs-SoftwareChecker.exe" />
@@ -47,19 +45,13 @@
 	</ItemGroup>
 
   <ItemGroup>
-    <Content Include="assets\LuminationLogo.png">
+    <Content Include="Assets\Icons\offline.ico">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Content Include="assets\loadingspinner.gif">
+    <Content Include="Assets\Icons\online.ico">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Content Include="assets\offline.ico">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="assets\online.ico">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="assets\refresh.ico">
+    <Content Include="Assets\Icons\refresh.ico">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
     <Content Include="openvr_api.dll">
@@ -89,14 +81,8 @@
     <Content Include="_logs\.gitkeep">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <None Remove="assets\openvr_offline.ico" />
-    <Content Include="assets\openvr_offline.ico">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <None Remove="assets\openvr_online.ico" />
-    <Content Include="assets\openvr_online.ico">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
+    <None Remove="Assets\openvr_offline.ico" />
+    <None Remove="Assets\openvr_online.ico" />
     <None Remove="AudioDeviceCmdlets.dll" />
     <Content Include="AudioDeviceCmdlets.dll">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
@@ -113,6 +99,41 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
     <Content Update="embedded\leadme_config_example.txt">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Update="Assets\Images\LuminationLogo.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Update="Assets\Gifs\loadingspinner.gif">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Update="Assets\Icons\icon.ico">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Update="Assets\Icons\openvr_offline.ico">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Update="Assets\Icons\openvr_online.ico">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <None Remove="Assets\Icons\icon.ico" />
+    <Content Include="Assets\Icons\icon.ico">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <None Remove="Assets\Gifs\loadingspinner.gif" />
+    <Content Include="Assets\Gifs\loadingspinner.gif">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <None Remove="Assets\Images\LuminationLogo.png" />
+    <Content Include="Assets\Images\LuminationLogo.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <None Remove="Assets\Icons\openvr_online.ico" />
+    <Content Include="Assets\Icons\openvr_online.ico">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <None Remove="Assets\Icons\openvr_offline.ico" />
+    <Content Include="Assets\Icons\openvr_offline.ico">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
@@ -139,12 +160,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Content Include="assets\icon.ico">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-  </ItemGroup>
-
-  <ItemGroup>
     <Page Update="_overlay\Overlay.xaml">
       <XamlRuntime>$(DefaultXamlRuntime)</XamlRuntime>
       <SubType>Designer</SubType>
@@ -153,5 +168,9 @@
 
   <ItemGroup>
     <Service Include="{508349b6-6b84-4df5-91f0-309beebad82d}" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Components\" />
   </ItemGroup>
 </Project>

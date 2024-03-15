@@ -8,11 +8,12 @@ using System.Windows;
 using System.Windows.Forms;
 using Station._commandLine;
 using Station._details;
+using Station._notification;
 using Station._utils;
 using Station._utils._steamConfig;
 using Application = System.Windows.Application;
 
-namespace Station._notification;
+namespace Station.Core;
 
 public class NotifyIconWrapper : FrameworkElement, IDisposable
 {
@@ -44,7 +45,7 @@ public class NotifyIconWrapper : FrameworkElement, IDisposable
         RoutingStrategy.Direct, typeof(RoutedEventHandler), typeof(NotifyIconWrapper));
 
     private readonly NotifyIcon? _notifyIcon;
-    private string? iconPath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+    private string? _iconPath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
 
     public NotifyIconWrapper()
     {
@@ -52,13 +53,13 @@ public class NotifyIconWrapper : FrameworkElement, IDisposable
             return;
         _notifyIcon = new NotifyIcon
         {
-            Icon = Icon.ExtractAssociatedIcon(iconPath + @"\assets\icon.ico"),
+            Icon = Icon.ExtractAssociatedIcon(_iconPath + @"\Assets\Icons\icon.ico"),
             Visible = true,
             Text = "Station",
             ContextMenuStrip = CreateContextMenu()
         };
         _notifyIcon.DoubleClick += OpenItemOnClick;
-        Application.Current.Exit += (obj, args) => { _notifyIcon.Dispose(); };
+        Application.Current.Exit += (_, _) => { _notifyIcon.Dispose(); };
 
         Instance = this;
     }
@@ -138,7 +139,15 @@ public class NotifyIconWrapper : FrameworkElement, IDisposable
 
     private void GoToLogsOnClick(object? sender, EventArgs eventArgs)
     {
-        string path = Path.GetFullPath(Path.Combine(CommandLine.StationLocation, "_logs"));
+        string? location = CommandLine.StationLocation;
+
+        if (location == null)
+        {
+            Logger.WriteLog("NotifyIconWrapper - GoToLogsOnClick: Station location not found.", MockConsole.LogLevel.Error);
+            return;
+        }
+        
+        string path = Path.GetFullPath(Path.Combine(location, "_logs"));
 
         try
         {
@@ -146,7 +155,7 @@ public class NotifyIconWrapper : FrameworkElement, IDisposable
         }
         catch (Exception ex)
         {
-            Logger.WriteLog("An error occurred: " + ex.Message, MockConsole.LogLevel.Error);
+            Logger.WriteLog("NotifyIconWrapper - GoToLogsOnClick: An error occurred: " + ex.Message, MockConsole.LogLevel.Error);
         }
     }
 
@@ -170,13 +179,13 @@ public class NotifyIconWrapper : FrameworkElement, IDisposable
     /// <param name="status">A string of the current software operating status</param>
     public void ChangeIcon(string status)
     {
-        if (_notifyIcon == null || iconPath == null)
+        if (_notifyIcon == null || _iconPath == null)
         {
             return;
         }
 
         //Don't continously set the icon if it is the same
-        if (iconPath.Contains(status))
+        if (_iconPath.Contains(status))
         {
             return;
         }
@@ -184,17 +193,17 @@ public class NotifyIconWrapper : FrameworkElement, IDisposable
         switch (status)
         {
             case "offline":
-                iconPath = @"\assets\offline.ico";
+                _iconPath = @"\Assets\Icons\offline.ico";
                 break;
             case "online":
-                iconPath = @"\assets\online.ico";
+                _iconPath = @"\Assets\Icons\online.ico";
                 break;
             default:
-                iconPath = @"\assets\icon.ico";
+                _iconPath = @"\Assets\Icons\icon.ico";
                 break;
         }
 
-        _notifyIcon.Icon = Icon.ExtractAssociatedIcon(CommandLine.StationLocation + iconPath);
+        _notifyIcon.Icon = Icon.ExtractAssociatedIcon(CommandLine.StationLocation + _iconPath);
         _notifyIcon.Text = $"Station - {status}";
     }
 }
