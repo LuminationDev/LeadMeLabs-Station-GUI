@@ -1,6 +1,6 @@
 ﻿using Station;
 using System;
-using Station._utils;
+using Station.Components._utils;
 using Xunit;
 
 namespace StationTests._utils

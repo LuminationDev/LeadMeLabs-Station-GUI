@@ -1,8 +1,8 @@
 using System;
 using System.Collections.Generic;
-using Station._controllers;
-using Station._profiles;
-using Station._utils;
+using Station.Components._profiles;
+using Station.Components._utils;
+using Station.MVC.Controller;
 
 namespace Station.QA.checks;
 

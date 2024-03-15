@@ -2,8 +2,8 @@
 using System;
 using System.IO;
 using System.Linq;
-using Station._notification;
-using Station._utils;
+using Station.Components._notification;
+using Station.Components._utils;
 using Xunit;
 
 namespace StationTests._utils

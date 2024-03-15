@@ -2,8 +2,8 @@
 using System.IO;
 using System.Threading.Tasks;
 using LeadMeLabsLibrary;
-using Station._commandLine;
-using Station._notification;
+using Station.Components._commandLine;
+using Station.Components._notification;
 
 namespace Station._config;
 

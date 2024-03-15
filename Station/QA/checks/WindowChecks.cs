@@ -3,8 +3,8 @@ using System.Collections.Generic;
 using System.Management;
 using System.Net.Http;
 using Newtonsoft.Json;
-using Station._commandLine;
-using Station._utils;
+using Station.Components._commandLine;
+using Station.Components._utils;
 
 namespace Station.QA.checks;
 

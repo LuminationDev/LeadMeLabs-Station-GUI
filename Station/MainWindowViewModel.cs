@@ -5,12 +5,11 @@ using System.Windows;
 using System.Windows.Input;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using Station._controllers;
-using Station._managers;
-using Station._notification;
-using Station._utils;
-using Station._wrapper;
+using Station.Components._managers;
+using Station.Components._notification;
+using Station.Components._utils;
 using Station.Core;
+using Station.MVC.Controller;
 
 namespace Station
 {

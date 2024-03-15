@@ -1,12 +1,10 @@
-﻿using Station;
-using Xunit;
+﻿using Xunit;
 using System;
 using System.Threading.Tasks;
 using System.Diagnostics;
-using Station._controllers;
-using Station._profiles;
-using Station._profiles._headsets;
-using Station._wrapper;
+using Station.Components._profiles;
+using Station.Components._profiles._headsets;
+using Station.MVC.Controller;
 
 namespace StationTests._wrapper
 {

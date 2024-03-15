@@ -7,9 +7,9 @@ using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
 using LeadMeLabsLibrary;
-using Station._notification;
-using Station._utils;
-using Station._wrapper.steam;
+using Station.Components._notification;
+using Station.Components._utils;
+using Station.Components._wrapper.steam;
 
 namespace Station._details
 {

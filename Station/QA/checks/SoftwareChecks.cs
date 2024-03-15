@@ -8,8 +8,8 @@ using System.Net.Http;
 using System.Threading.Tasks;
 using LeadMeLabsLibrary;
 using Newtonsoft.Json;
-using Station._commandLine;
-using Station._utils;
+using Station.Components._commandLine;
+using Station.Components._utils;
 
 namespace Station.QA.checks;
 

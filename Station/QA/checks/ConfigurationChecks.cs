@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
-using Station._commandLine;
-using Station._utils;
+using Station.Components._commandLine;
+using Station.Components._utils;
 
 namespace Station.QA.checks;
 

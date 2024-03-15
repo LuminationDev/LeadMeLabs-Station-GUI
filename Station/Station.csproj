@@ -57,21 +57,6 @@
     <Content Include="openvr_api.dll">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Content Include="_batch\LeadMeLabs-SoftwareChecker.deps.json">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="_batch\LeadMeLabs-SoftwareChecker.dll">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="_batch\LeadMeLabs-SoftwareChecker.exe">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="_batch\LeadMeLabs-SoftwareChecker.pdb">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="_batch\LeadMeLabs-SoftwareChecker.runtimeconfig.json">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
     <Content Include="_config\base_config.env">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
@@ -160,17 +145,16 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Page Update="_overlay\Overlay.xaml">
-      <XamlRuntime>$(DefaultXamlRuntime)</XamlRuntime>
-      <SubType>Designer</SubType>
-    </Page>
-  </ItemGroup>
-
-  <ItemGroup>
     <Service Include="{508349b6-6b84-4df5-91f0-309beebad82d}" />
   </ItemGroup>
 
   <ItemGroup>
     <Folder Include="Components\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Page Update="Components\_overlay\Overlay.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
   </ItemGroup>
 </Project>
