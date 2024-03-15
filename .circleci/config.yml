@@ -100,7 +100,9 @@ commands:
     steps:
       - run:
           name: "Sign Station.exe"
-          command: cd ~/circleci-working/<<pipeline.id>>/Station/bin/<<parameters.buildType>>/net6.0-windows/; signtool.exe sign /fd sha256 /tr http://ts.ssl.com /td sha256 /n "Technology for Education Solutions Pty. Ltd." ".\Station.exe"
+          command: |
+            cd ~/circleci-working/<<pipeline.id>>/Station/bin/<<parameters.buildType>>/net6.0-windows/
+            signtool.exe sign /fd sha256 /tr http://ts.ssl.com /td sha256 /n "Technology for Education Solutions Pty. Ltd." ".\Station.exe"
           shell: powershell.exe
       - run:
           name: Compress built files to Station.zip

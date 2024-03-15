@@ -1,14 +1,13 @@
-﻿using System.Runtime.Serialization;
-using Newtonsoft.Json;
+﻿using Newtonsoft.Json;
 
-namespace Station._qa;
+namespace Station.QA;
 
 public class QaCheck
 {
     [JsonProperty]
-    private string? _passedStatus = null;
+    private string? _passedStatus;
     [JsonProperty]
-    private string? _message = null;
+    private string? _message;
     [JsonProperty]
     private string _id;
 

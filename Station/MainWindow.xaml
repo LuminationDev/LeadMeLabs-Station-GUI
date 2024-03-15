@@ -7,6 +7,7 @@
         xmlns:local="clr-namespace:Station"
         xmlns:system="clr-namespace:System;assembly=System.Runtime"
         xmlns:notification="clr-namespace:Station._notification"
+        xmlns:core="clr-namespace:Station.Core"
         mc:Ignorable="d"
         ShowInTaskbar="{Binding ShowInTaskbar}"
         WindowState="{Binding WindowState}"
@@ -88,7 +89,7 @@
         <ColumnDefinition Width="125"/>
         </Grid.ColumnDefinitions>
         
-        <notification:NotifyIconWrapper NotifyRequest="{Binding NotifyRequest}">
+        <core:NotifyIconWrapper NotifyRequest="{Binding NotifyRequest}">
             <bh:Interaction.Triggers>
                 <bh:EventTrigger EventName="OpenSelected">
                     <bh:InvokeCommandAction Command="{Binding NotifyIconOpenCommand}"/>
@@ -97,7 +98,7 @@
                     <bh:InvokeCommandAction Command="{Binding NotifyIconExitCommand}"/>
                 </bh:EventTrigger>
             </bh:Interaction.Triggers>
-        </notification:NotifyIconWrapper>
+        </core:NotifyIconWrapper>
 
         <!-- Debug Panel -->
         <StackPanel
@@ -332,7 +333,7 @@
                         x:Name="HeadsetConnection" 
                         ToolTip="OpenVR Offline" 
                         Margin="0,0,0,3" 
-                        Source="../assets/openvr_offline.ico" 
+                        Source="../Assets/Icons/openvr_offline.ico" 
                         Width="20"/>
                 </WrapPanel>
 
@@ -358,7 +359,7 @@
                         x:Name="LeftControllerConnection" 
                         ToolTip="Left Controller Lost" 
                         Margin="0,0,0,3" 
-                        Source="../assets/openvr_offline.ico" 
+                        Source="../Assets/Icons/openvr_offline.ico" 
                         Width="20"/>
                 </WrapPanel>
 
@@ -393,7 +394,7 @@
                         x:Name="RightControllerConnection" 
                         ToolTip="Right Controller Lost" 
                         Margin="0,0,0,3" 
-                        Source="../assets/openvr_offline.ico" 
+                        Source="../Assets/Icons/openvr_offline.ico" 
                         Width="20"/>
                 </WrapPanel>
 
@@ -461,7 +462,7 @@
                             x:Name="HeadsetVrConnection" 
                             ToolTip="HeadsetVR Offline" 
                             Margin="0,0,0,3" 
-                            Source="../assets/openvr_offline.ico"
+                            Source="../Assets/Icons/openvr_offline.ico"
                             Width="20"/>
                     </WrapPanel>
                 </Border>
@@ -480,7 +481,7 @@
                         x:Name="OpenVrConnection" 
                         ToolTip="OpenVR Offline" 
                         Margin="0,0,0,3" 
-                        Source="../assets/openvr_offline.ico"
+                        Source="../Assets/Icons/openvr_offline.ico"
                         Width="20"/>
                 </WrapPanel>
                 

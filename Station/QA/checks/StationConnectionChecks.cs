@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace Station._qa.checks;
+namespace Station.QA.checks;
 
 public class StationConnectionChecks
 {

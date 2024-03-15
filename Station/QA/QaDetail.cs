@@ -1,13 +1,13 @@
 using Newtonsoft.Json;
 
-namespace Station._qa;
+namespace Station.QA;
 
 public class QaDetail
 {
     [JsonProperty]
-    private string? _value = null;
+    private string? _value;
     [JsonProperty]
-    private string? _message = null;
+    private string? _message;
     [JsonProperty]
     private string _id;
 

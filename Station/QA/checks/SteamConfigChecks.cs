@@ -1,14 +1,14 @@
-﻿using Sentry;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using LeadMeLabsLibrary;
+using Sentry;
 using Station._commandLine;
 using Station._notification;
 using Station._utils;
 using Station._utils._steamConfig;
 
-namespace Station._qa.checks;
+namespace Station.QA.checks;
 
 public class SteamConfigChecks
 {

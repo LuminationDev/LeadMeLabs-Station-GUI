@@ -97,7 +97,7 @@
                     Margin="10"
                     ToolTip="Recollect the IP address."
                     Click="Button_Click">
-                    <Image Source="../assets/refresh.ico" Width="25">
+                    <Image Source="../Assets/refresh.ico" Width="25">
                         <Image.RenderTransform>
                             <RotateTransform x:Name="RotationIP" CenterX="12.5" CenterY="12.5" />
                         </Image.RenderTransform>
@@ -125,7 +125,7 @@
                     Margin="10"
                     ToolTip="Refresh the MAC address."
                     Click="Button_Click">
-                    <Image Source="../assets/refresh.ico" Width="25">
+                    <Image Source="../Assets/refresh.ico" Width="25">
                         <Image.RenderTransform>
                             <RotateTransform x:Name="RotationMac" CenterX="12.5" CenterY="12.5" />
                         </Image.RenderTransform>
@@ -153,7 +153,7 @@
                     Margin="10"
                     ToolTip="Refresh the version number of the project."
                     Click="Button_Click">
-                    <Image Source="../assets/refresh.ico" Width="25">
+                    <Image Source="../Assets/refresh.ico" Width="25">
                         <Image.RenderTransform>
                             <RotateTransform x:Name="RotationVersion" CenterX="12.5" CenterY="12.5" />
                         </Image.RenderTransform>
@@ -181,7 +181,7 @@
                     Margin="10"
                     ToolTip="Refresh the version number of the project."
                     Click="Button_Click">
-                    <Image Source="../assets/refresh.ico" Width="25">
+                    <Image Source="../Assets/refresh.ico" Width="25">
                         <Image.RenderTransform>
                             <RotateTransform x:Name="RotationSteam" CenterX="12.5" CenterY="12.5" />
                         </Image.RenderTransform>

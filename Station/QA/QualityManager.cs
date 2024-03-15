@@ -16,12 +16,11 @@ using Station._managers;
 using Station._models;
 using Station._notification;
 using Station._profiles;
-using Station._qa.checks;
 using Station._utils;
 using Station._utils._steamConfig;
-using Station._wrapper;
+using Station.QA.checks;
 
-namespace Station._qa;
+namespace Station.QA;
 
 public static class QualityManager
 {
