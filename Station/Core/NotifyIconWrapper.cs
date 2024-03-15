@@ -6,11 +6,11 @@ using System.IO;
 using System.Reflection;
 using System.Windows;
 using System.Windows.Forms;
-using Station._commandLine;
 using Station._details;
-using Station._notification;
-using Station._utils;
-using Station._utils._steamConfig;
+using Station.Components._commandLine;
+using Station.Components._notification;
+using Station.Components._utils;
+using Station.Components._utils._steamConfig;
 using Application = System.Windows.Application;
 
 namespace Station.Core;

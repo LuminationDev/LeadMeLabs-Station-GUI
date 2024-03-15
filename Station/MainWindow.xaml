@@ -6,7 +6,6 @@
         xmlns:bh="http://schemas.microsoft.com/xaml/behaviors"
         xmlns:local="clr-namespace:Station"
         xmlns:system="clr-namespace:System;assembly=System.Runtime"
-        xmlns:notification="clr-namespace:Station._notification"
         xmlns:core="clr-namespace:Station.Core"
         mc:Ignorable="d"
         ShowInTaskbar="{Binding ShowInTaskbar}"

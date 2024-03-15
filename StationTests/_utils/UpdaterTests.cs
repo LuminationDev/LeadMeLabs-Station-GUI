@@ -2,8 +2,8 @@
 using System.Diagnostics;
 using System.IO;
 using System.Reflection;
-using Station._commandLine;
-using Station._utils;
+using Station.Components._commandLine;
+using Station.Components._utils;
 using Xunit;
 
 namespace StationTests._utils

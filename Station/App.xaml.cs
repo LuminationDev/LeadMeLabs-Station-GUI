@@ -1,12 +1,12 @@
 ﻿using System;
 using System.Windows;
 using Sentry;
-using Station._commandLine;
-using Station._controllers;
-using Station._managers;
-using Station._notification;
-using Station._utils;
-using Station._utils._steamConfig;
+using Station.Components._commandLine;
+using Station.Components._managers;
+using Station.Components._notification;
+using Station.Components._utils;
+using Station.Components._utils._steamConfig;
+using Station.MVC.Controller;
 
 namespace Station
 {
@@ -102,7 +102,7 @@ namespace Station
             WrapperManager.ClosePipeServer();
 
             //Shut down any OpenVR systems
-            MainController.openVrManager?.OpenVrSystem?.Shutdown();
+            MainController.openVrManager?.openVrSystem?.Shutdown();
         }
 
         private static void InitSentry()

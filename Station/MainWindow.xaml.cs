@@ -1,6 +1,6 @@
 ﻿using System.Windows;
 using System.Windows.Controls;
-using Station._notification;
+using Station.Components._notification;
 
 namespace Station
 {
