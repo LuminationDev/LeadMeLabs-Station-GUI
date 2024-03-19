@@ -93,7 +93,7 @@ public static class MainController
         }
 
         //Even if DotEnv fails, still load up the server details to show the details to the user.
-        Logger.WriteLog("Setting up server.", MockConsole.LogLevel.Error);
+        Logger.WriteLog("Setting up server.", MockConsole.LogLevel.Normal);
         bool connected = SetupServerDetails();
         if (!connected)
         {
@@ -139,7 +139,7 @@ public static class MainController
 
             App.SetWindowTitle(
                 $"Station({Environment.GetEnvironmentVariable("StationId", EnvironmentVariableTarget.Process)}) -- {localEndPoint.Address} -- {macAddress} -- {versionNumber}");
-            Logger.WriteLog("ENV variables loaded", MockConsole.LogLevel.Error);
+            Logger.WriteLog("ENV variables loaded", MockConsole.LogLevel.Info);
 
             //Call as a new task to stop UI and server start up from hanging whilst reading the files
             new Thread(Initialisation).Start();
