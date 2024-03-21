@@ -341,6 +341,16 @@ public static class VideoManager
     }
 
     /// <summary>
+    /// Finds a video in the VideoFiles dictionary by its name.
+    /// </summary>
+    /// <param name="name">The name of the video to find.</param>
+    /// <returns>The video with the specified source if found; otherwise, returns null.</returns>
+    public static Video? FindVideoByName(string? name)
+    {
+        return name == null ? null : (from kvp in VideoFiles where kvp.Value.name == name select kvp.Value).FirstOrDefault();
+    }
+
+    /// <summary>
     /// A video player has closed, reset all the information for the next time it is used.
     /// </summary>
     public static void ClearVideoInformation()
