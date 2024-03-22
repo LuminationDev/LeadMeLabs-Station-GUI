@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Newtonsoft.Json.Linq;
 using Station.Components._legacy;
@@ -305,6 +306,19 @@ public class ScriptThread
             case "PassToExperience":
                 string? trigger = experienceData.GetValue("Trigger")?.ToString();
                 if (trigger == null) return;
+                
+                //If loading a source, use the name provided and find the correct source in the video manager
+                if (trigger.Contains("source"))
+                {
+                    string[] tokens = trigger.Split(",", 2);
+                    Video? video = VideoManager.FindVideoByName(tokens[1]);
+                    
+                    if (video == null) return;
+
+                    tokens[1] = video.source;
+                    trigger = string.Join(",", tokens);
+                }
+                
                 MainController.wrapperManager?.ActionHandler("Message", trigger);
                 break;
         }
