@@ -34,7 +34,7 @@ public static class SteamScripts
     private const string Quit = " +quit";
     
     public static bool popupDetect = false;
-    public static string steamCMDConfigured = "Missing";
+    public static string steamCmdConfigured = "Missing";
 
     private static int restartAttempts = 0; //Track how many times SteamVR has failed in a Station session
     
@@ -64,7 +64,7 @@ public static class SteamScripts
             do
             {
                 string current = enumerator.Current;
-                if (current == null)
+                if (string.IsNullOrEmpty(current))
                 {
                     continue;
                 }
@@ -164,7 +164,7 @@ public static class SteamScripts
         {
             AcfReader acfReader = new AcfReader(file.FullName, true);
             acfReader.ACFFileToStruct();
-            if (acfReader.gameName == null || acfReader.appId == null) continue;
+            if (string.IsNullOrEmpty(acfReader.gameName) || acfReader.appId == null) continue;
                 
             if (BlacklistedGames.Contains(acfReader.appId))
             {
@@ -195,7 +195,7 @@ public static class SteamScripts
         return list;
     }
 
-    private static List<T>? LoadAvailableGamesWithoutUsingInternetConnection<T>()
+    private static List<T> LoadAvailableGamesWithoutUsingInternetConnection<T>()
     {
         List<T> installedGames = new List<T>();
 
@@ -217,7 +217,7 @@ public static class SteamScripts
             Logger.WriteLog($"SteamCMD not initialised yet. Initialising now.", MockConsole.LogLevel.Info);
             MessageController.SendResponse("Android", "Station", "SetValue:steamCMD:required");
             
-            steamCMDConfigured = "Missing";
+            steamCmdConfigured = "Missing";
 
             //Login to initialise/update SteamCMD and get the Steam Guard email sent off
             string command = $"{LoginDetails} {Quit}";
@@ -285,27 +285,44 @@ public static class SteamScripts
             List<string> filter = line.Split(":").ToList();
             string id = filter[0].Replace("AppID", "").Trim();
 
-            if (!AvailableLicenses.Contains(id)) continue;
-            if (BlacklistedGames.Contains(id) ||
-                (approvedGames.Count != 0 && !approvedGames.Contains(id))) continue; // if count is zero then all games are approved
+            if (!AvailableLicenses.Contains(id))
+            {
+                Logger.WriteLog($"SteamScripts - FilterAvailableExperiences: Experience does not have available license: {id}", MockConsole.LogLevel.Info);
+                continue;
+            }
+            if (BlacklistedGames.Contains(id))
+            {
+                Logger.WriteLog($"SteamScripts - FilterAvailableExperiences: Experience is black listed: {id}", MockConsole.LogLevel.Info);
+                continue;
+            } 
+            if (approvedGames.Count != 0 && !approvedGames.Contains(id)) 
+            {
+                Logger.WriteLog($"SteamScripts - FilterAvailableExperiences: Experience is not on approved games list: {id}", MockConsole.LogLevel.Info);
+                continue; // if count is zero then all games are approved
+            }
 
-            filter.RemoveAt(0);
+            filter.RemoveAt(0); // remove AppID prefix
             filter.RemoveAt(filter.Count - 1); // remove file location
             filter.RemoveAt(filter.Count - 1); // remove drive name
             string name = string.Join(":", filter.ToArray()).Replace("\\", "").Trim();
             name = name.Replace("\"", "").Trim();
             if (name.Contains("appid_")) // as a backup if steamcmd doesn't load the game name, we get it from the acf file
             {
+                Logger.WriteLog($"SteamScripts - FilterAvailableExperiences: Experience name not provided got: {name}", MockConsole.LogLevel.Info);
+                
                 AcfReader acfReader = new AcfReader(id);
                 acfReader.ACFFileToStruct();
-                if (acfReader.gameName != null)
+                if (!string.IsNullOrEmpty(acfReader.gameName))
                 {
                     name = acfReader.gameName;
+                    Logger.WriteLog($"SteamScripts - FilterAvailableExperiences: Experience name from acf file: {name}", MockConsole.LogLevel.Info);
                 }
             }
             //Determine if it is a VR experience
             bool isVr = steamManifestApplicationList.IsApplicationInstalledAndVrCompatible("steam.app." + id);
             if (!Helper.GetStationMode().Equals(Helper.STATION_MODE_VR) && isVr) continue;
+            
+            Logger.WriteLog($"SteamScripts - FilterAvailableExperiences: Storing new experience: {SteamWrapper.WrapperType}|{id}|{name}|{isVr}", MockConsole.LogLevel.Info);
             //item.parameters may be null here
             WrapperManager.StoreApplication(SteamWrapper.WrapperType, id, name, isVr);
             // Basic application requirements
@@ -326,13 +343,14 @@ public static class SteamScripts
 
     private static List<string> GetParentalApprovedGames()
     {
-        List<string> approvedGames = new List<string>();
+        List<string> approvedList = new List<string>();
         var directory = new DirectoryInfo(@"C:\Program Files (x86)\Steam\logs");
         var files = directory.GetFiles("parental_log.txt")
             .OrderByDescending(f => f.LastWriteTime);
+        
         if (files != null && !files.Any())
         {
-            return approvedGames;
+            return approvedList;
         }
 
         var file = files.First();
@@ -341,7 +359,7 @@ public static class SteamScripts
         do
         {
             string current = enumerator.Current;
-            if (current == null)
+            if (string.IsNullOrEmpty(current))
             {
                 continue;
             }
@@ -376,12 +394,12 @@ public static class SteamScripts
                 string[] lineParts = current.Split(" ");
                 if (lineParts.Length > 2)
                 {
-                    approvedGames.Add(lineParts[2].Trim());
+                    approvedList.Add(lineParts[2].Trim());
                 }
             }
         } while (enumerator.MoveNext());
         enumerator.Dispose();
-        return approvedGames;
+        return approvedList;
     }
     
     //TODO create (wait for designer) an image for the home screen

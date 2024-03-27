@@ -308,7 +308,7 @@ public static class CommandLine
         if (!File.Exists(fullPath))
         {
             SessionController.PassStationMessage($"StationError,File not found:{fullPath}");
-            SteamScripts.steamCMDConfigured = "steamcmd.exe not found";
+            SteamScripts.steamCmdConfigured = "steamcmd.exe not found";
             return null;
         }
 
@@ -333,7 +333,7 @@ public static class CommandLine
         {
             MessageController.SendResponse("Android", "Station", "SetValue:steamCMD:required");
             MockConsole.WriteLine("Steam Guard is not enabled for this account.");
-            SteamScripts.steamCMDConfigured = "Missing";
+            SteamScripts.steamCmdConfigured = "Missing";
 
             //Manually kill the process or it will stay on the guard code input 
             cmd.Kill(true);
@@ -341,7 +341,7 @@ public static class CommandLine
         }
 
         MessageController.SendResponse("Android", "Station", "SetValue:steamCMD:configured");
-        SteamScripts.steamCMDConfigured = "Configured";
+        SteamScripts.steamCmdConfigured = "Configured";
         
         return output;
     }
