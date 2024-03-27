@@ -28,7 +28,7 @@ namespace Station._details
             InitaliseSteamRules();
 
             //Steam is handled differently
-            steamGuard.Text = SteamScripts.steamCMDConfigured;
+            steamGuard.Text = SteamScripts.steamCmdConfigured;
 
             buttonRotationMap = new Dictionary<string, RotateTransform>
             {
@@ -202,7 +202,7 @@ namespace Station._details
             await Task.Delay(5000);
             Application.Current.Dispatcher.Invoke(() =>
             {
-                steamGuard.Text = SteamScripts.steamCMDConfigured;
+                steamGuard.Text = SteamScripts.steamCmdConfigured;
             });
         }
 
