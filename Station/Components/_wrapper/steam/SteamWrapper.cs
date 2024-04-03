@@ -183,7 +183,7 @@ public class SteamWrapper : IWrapper
                 vrProfile?.VrHeadset?.StopProcessesBeforeLaunch();
             }
 
-            Logger.WriteLog($"SteamWrapper.WrapProcess - Using AlternateLaunchProcess", MockConsole.LogLevel.Normal);
+            Logger.WriteLog($"SteamWrapper.WrapProcess: Using AlternateLaunchProcess", MockConsole.LogLevel.Normal);
             AlternateLaunchProcess(experience);
         });
         return "launching";

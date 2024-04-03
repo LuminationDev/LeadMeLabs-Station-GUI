@@ -233,9 +233,16 @@ public static class MainController
     private static void StopVariableTimer()
     {
         if (variableCheck == null) return;
-        
-        variableCheck.Change(Timeout.Infinite, Timeout.Infinite);
-        variableCheck.Dispose();
+
+        try
+        {
+            variableCheck.Change(Timeout.Infinite, Timeout.Infinite);
+            variableCheck.Dispose();
+        }
+        catch (ObjectDisposedException e)
+        {
+            Logger.WriteLog($"StopVariableTimer: variableCheck has already been disposed - {e}", MockConsole.LogLevel.Info);
+        }
     }
 
     /// <summary>
