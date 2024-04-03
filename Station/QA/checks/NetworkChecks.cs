@@ -14,6 +14,7 @@ public class NetworkChecks
     
     public List<QaCheck> RunQa(string networkType)
     {
+        _qaChecks = new List<QaCheck>();
         if (networkType.Equals("Milesight"))
         {
             _qaChecks.AddRange(GetNetworkInterfaceChecks());

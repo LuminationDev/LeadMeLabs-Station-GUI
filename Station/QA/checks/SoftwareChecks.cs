@@ -18,6 +18,7 @@ public class SoftwareChecks
     private List<QaCheck> _qaChecks = new();
     public async Task<List<QaCheck>> RunQa(string labType)
     {
+        _qaChecks = new List<QaCheck>();
         if (labType.ToLower().Equals("online"))
         {
             _qaChecks.Add(await IsLatestSoftwareVersion());
