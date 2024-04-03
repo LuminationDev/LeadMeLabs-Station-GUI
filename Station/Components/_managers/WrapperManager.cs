@@ -179,13 +179,7 @@ public class WrapperManager
         }
 
         alreadyCollecting = true;
-
-        //NEW METHOD
         CollectApplications<ExperienceDetails>(experiences => new JArray(experiences.Select(experience => experience.ToJObject())), "ApplicationJson");
-        
-        //BACKWARDS COMPATABILITY
-        CollectApplications<string>( apps => string.Join("/", apps), "ApplicationList");
-
         alreadyCollecting = false;
 
         _ = RestartVrProcesses();
