@@ -245,11 +245,11 @@ public class ServerThread
         if (data.Contains(":Ping:")) return;
         
         //If the task relates to an experience restart the VR processes
-        if (data.Contains(":Experience:"))
+        if (data.Contains(":Experience:") && InternalDebugger.GetIdleModeActive())
         {
             //Reset the idle timer
-            // bool success = await ModeTracker.ResetTimer();
-            // if (!success) return;
+            bool success = await ModeTracker.ResetTimer();
+            if (!success) return;
         }
         
         //Run the appropriate script
