@@ -151,8 +151,11 @@ public static class MainController
             //Call as a new task to stop UI and server start up from hanging whilst reading the files
             new Thread(Initialisation).Start();
         }).Start();
-        
-        // ModeTracker.Initialise(); //Start tracking any idle time
+
+        if (InternalDebugger.GetIdleModeActive())
+        {
+            ModeTracker.Initialise(); //Start tracking any idle time
+        }
     }
 
     /// <summary>

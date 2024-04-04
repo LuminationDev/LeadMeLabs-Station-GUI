@@ -11,207 +11,230 @@ using Station.Components._utils;
 using Station.Core;
 using Station.MVC.Controller;
 
-namespace Station
+namespace Station.MVC.ViewModel;
+
+public class MainWindowViewModel : ObservableRecipient
 {
-    public class MainWindowViewModel : ObservableRecipient
+    private NotifyIconWrapper.NotifyRequestRecord? _notifyRequest;
+    private bool _showInTaskbar;
+    private WindowState _windowState;
+
+    public MainWindowViewModel()
     {
-        private NotifyIconWrapper.NotifyRequestRecord? _notifyRequest;
-        private bool _showInTaskbar;
-        private WindowState _windowState;
+        LoadedCommand = new RelayCommand(Loaded);
+        ClosingCommand = new RelayCommand<CancelEventArgs>(Closing);
 
-        public MainWindowViewModel()
-        {
-            LoadedCommand = new RelayCommand(Loaded);
-            ClosingCommand = new RelayCommand<CancelEventArgs>(Closing);
+        StartStationCommand = new RelayCommand(MainController.StartProgram);
+        RestartStationCommand = new RelayCommand(MainController.RestartProgram);
+        StopStationCommand = new RelayCommand(MainController.StopProgram);
+        ChangeLogLevelCommand = new RelayCommand(MockConsole.ChangeLogLevel);
+        StopCurrentProcess = new RelayCommand(WrapperManager.StopAProcess);
+        ResetSteamVrProcess = new RelayCommand(RestartVr);
 
-            StartStationCommand = new RelayCommand(MainController.StartProgram);
-            RestartStationCommand = new RelayCommand(MainController.RestartProgram);
-            StopStationCommand = new RelayCommand(MainController.StopProgram);
-            ChangeLogLevelCommand = new RelayCommand(MockConsole.ChangeLogLevel);
-            StopCurrentProcess = new RelayCommand(WrapperManager.StopAProcess);
-            ResetSteamVrProcess = new RelayCommand(RestartVr);
-
-            NotifyIconOpenCommand = new RelayCommand(() => { WindowState = WindowState.Normal; });
-            NotifyIconExitCommand = new RelayCommand(() => { Application.Current.Shutdown(); });
-            
-            // Debug processes
-            ChangeViewConsoleValue = new RelayCommand(() => ViewConsoleWindow = !ViewConsoleWindow);
-            ChangeMinimisingValue = new RelayCommand(() => MinimiseVrPrograms = !MinimiseVrPrograms);
-            AutoStartVrValue = new RelayCommand(() => AutoStartVrPrograms = !AutoStartVrPrograms);
-            HeadsetRequiredValue = new RelayCommand(() => HeadsetRequired = !HeadsetRequired);
-        }
-
-        public ICommand LoadedCommand { get; }
-        public ICommand ClosingCommand { get; }
-        public ICommand NotifyIconOpenCommand { get; }
-        public ICommand NotifyIconExitCommand { get; }
-
-        //Button bindings
-        public ICommand StartStationCommand { get; }
-        public ICommand RestartStationCommand { get; }
-        public ICommand StopStationCommand { get; }
-        public ICommand ChangeLogLevelCommand { get; }
-        public ICommand StopCurrentProcess { get; }
-        public ICommand ResetSteamVrProcess { get; }
+        NotifyIconOpenCommand = new RelayCommand(() => { WindowState = WindowState.Normal; });
+        NotifyIconExitCommand = new RelayCommand(() => { Application.Current.Shutdown(); });
         
-        // Debug bindings
-        public ICommand ChangeViewConsoleValue { get; }
-        public ICommand ChangeMinimisingValue { get; }
-        public ICommand AutoStartVrValue { get; }
-        public ICommand HeadsetRequiredValue { get; }
+        // Debug processes
+        ChangeViewConsoleValue = new RelayCommand(() => ViewConsoleWindow = !ViewConsoleWindow);
+        ChangeMinimisingValue = new RelayCommand(() => MinimiseVrPrograms = !MinimiseVrPrograms);
+        AutoStartVrValue = new RelayCommand(() => AutoStartVrPrograms = !AutoStartVrPrograms);
+        HeadsetRequiredValue = new RelayCommand(() => HeadsetRequired = !HeadsetRequired);
+        IdleModeActiveValue = new RelayCommand(() => IdleModeActive = !IdleModeActive);
+    }
 
-        public WindowState WindowState
+    public ICommand LoadedCommand { get; }
+    public ICommand ClosingCommand { get; }
+    public ICommand NotifyIconOpenCommand { get; }
+    public ICommand NotifyIconExitCommand { get; }
+
+    //Button bindings
+    public ICommand StartStationCommand { get; }
+    public ICommand RestartStationCommand { get; }
+    public ICommand StopStationCommand { get; }
+    public ICommand ChangeLogLevelCommand { get; }
+    public ICommand StopCurrentProcess { get; }
+    public ICommand ResetSteamVrProcess { get; }
+    
+    // Debug bindings
+    public ICommand ChangeViewConsoleValue { get; }
+    public ICommand ChangeMinimisingValue { get; }
+    public ICommand AutoStartVrValue { get; }
+    public ICommand HeadsetRequiredValue { get; }
+    public ICommand IdleModeActiveValue { get; }
+
+    public WindowState WindowState
+    {
+        get => _windowState;
+        set
         {
-            get => _windowState;
-            set
+            ShowInTaskbar = true;
+            SetProperty(ref _windowState, value);
+            ShowInTaskbar = value != WindowState.Minimized;
+        }
+    }
+
+    public bool ShowInTaskbar
+    {
+        get => _showInTaskbar;
+        private set => SetProperty(ref _showInTaskbar, value);
+    }
+
+    public NotifyIconWrapper.NotifyRequestRecord? NotifyRequest
+    {
+        get => _notifyRequest;
+        set => SetProperty(ref _notifyRequest, value);
+    }
+
+    private void RestartVr()
+    {
+        new Task(() =>
+        {
+            ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage($"SoftwareState,Shutting down VR processes"), TimeSpan.FromSeconds(1));
+            _ = WrapperManager.RestartVrProcesses();
+        }).Start();
+    }
+
+    /// <summary>
+    /// Determine how the window is first presented when initially loaded.
+    /// </summary>
+    private void Loaded()
+    {
+        WindowState = WindowState.Minimized;
+    }
+
+    private void Closing(CancelEventArgs? e)
+    {
+        if (e == null)
+            return;
+        e.Cancel = true;
+        WindowState = WindowState.Minimized;
+    }
+
+    /// <summary>
+    /// Used for binding the MainWindow MockConsole
+    /// </summary>
+    private string _consoleText = "";
+
+    public string ConsoleText
+    {
+        get => _consoleText;
+        set => SetProperty(ref _consoleText, value);
+    }
+    
+    /// <summary>
+    /// Below are the debug control logic from the UI into the program. 
+    /// </summary>
+    private bool ViewConsoleWindow
+    {
+        get => InternalDebugger.viewConsoleWindow;
+        set
+        {
+            InternalDebugger.viewConsoleWindow = value;
+            ViewConsoleText = value ? "Yes" : "No";
+            if (!value)
             {
-                ShowInTaskbar = true;
-                SetProperty(ref _windowState, value);
-                ShowInTaskbar = value != WindowState.Minimized;
+                MockConsole.ClearConsole();
             }
         }
-
-        public bool ShowInTaskbar
+    }
+    
+    private string _viewConsoleText = "Yes";
+    public string ViewConsoleText
+    {
+        get => _viewConsoleText;
+        private set
         {
-            get => _showInTaskbar;
-            private set => SetProperty(ref _showInTaskbar, value);
+            if (_viewConsoleText == value) return;
+            _viewConsoleText = value;
+            OnPropertyChanged();
         }
-
-        public NotifyIconWrapper.NotifyRequestRecord? NotifyRequest
+    }
+    
+    private bool MinimiseVrPrograms
+    {
+        get => InternalDebugger.minimiseVrPrograms;
+        set
         {
-            get => _notifyRequest;
-            set => SetProperty(ref _notifyRequest, value);
+            InternalDebugger.minimiseVrPrograms = value;
+            MinimisingText = value ? "Yes" : "No";
         }
-
-        private void RestartVr()
+    }
+    
+    private string _minimisingText = "Yes";
+    public string MinimisingText
+    {
+        get => _minimisingText;
+        private set
         {
-            new Task(() =>
-            {
-                ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage($"SoftwareState,Shutting down VR processes"), TimeSpan.FromSeconds(1));
-                _ = WrapperManager.RestartVrProcesses();
-            }).Start();
+            if (_minimisingText == value) return;
+            _minimisingText = value;
+            OnPropertyChanged();
         }
-
-        /// <summary>
-        /// Determine how the window is first presented when initially loaded.
-        /// </summary>
-        private void Loaded()
+    }
+    
+    private bool AutoStartVrPrograms
+    {
+        get => InternalDebugger.autoStartVrPrograms;
+        set
         {
-            WindowState = WindowState.Minimized;
+            InternalDebugger.autoStartVrPrograms = value;
+            AutoStartSteamText = value ? "Yes" : "No";
         }
-
-        private void Closing(CancelEventArgs? e)
+    }
+    
+    private string _autoStartSteamText = "Yes";
+    public string AutoStartSteamText
+    {
+        get => _autoStartSteamText;
+        private set
         {
-            if (e == null)
-                return;
-            e.Cancel = true;
-            WindowState = WindowState.Minimized;
+            if (_autoStartSteamText == value) return;
+            _autoStartSteamText = value;
+            OnPropertyChanged();
         }
-
-        /// <summary>
-        /// Used for binding the MainWindow MockConsole
-        /// </summary>
-        private string _consoleText = "";
-
-        public string ConsoleText
+    }
+    
+    private bool HeadsetRequired
+    {
+        get => InternalDebugger.headsetRequired;
+        set
         {
-            get => _consoleText;
-            set => SetProperty(ref _consoleText, value);
+            InternalDebugger.headsetRequired = value;
+            AHeadsetRequiredText = value ? "Yes" : "No";
         }
-        
-        /// <summary>
-        /// Below are the debug control logic from the UI into the program. 
-        /// </summary>
-        private bool ViewConsoleWindow
+    }
+    
+    private string _headsetRequiredText = "Yes";
+    public string AHeadsetRequiredText
+    {
+        get => _headsetRequiredText;
+        private set
         {
-            get => InternalDebugger.viewConsoleWindow;
-            set
-            {
-                InternalDebugger.viewConsoleWindow = value;
-                ViewConsoleText = value ? "Yes" : "No";
-                if (!value)
-                {
-                    MockConsole.ClearConsole();
-                }
-            }
+            if (_headsetRequiredText == value) return;
+            _headsetRequiredText = value;
+            OnPropertyChanged();
         }
-        
-        private string _viewConsoleText = "Yes";
-        public string ViewConsoleText
+    }
+    
+    private bool IdleModeActive
+    {
+        get => InternalDebugger.idleModeActive;
+        set
         {
-            get => _viewConsoleText;
-            private set
-            {
-                if (_viewConsoleText == value) return;
-                _viewConsoleText = value;
-                OnPropertyChanged();
-            }
+            InternalDebugger.SetIdleModeActive(value);
+            IdleModeActiveText = value ? "Yes" : "No";
         }
-        
-        private bool MinimiseVrPrograms
+    }
+    
+    private string _idleModeActiveText = "No";
+    public string IdleModeActiveText
+    {
+        get => _idleModeActiveText;
+        private set
         {
-            get => InternalDebugger.minimiseVrPrograms;
-            set
-            {
-                InternalDebugger.minimiseVrPrograms = value;
-                MinimisingText = value ? "Yes" : "No";
-            }
-        }
-        
-        private string _minimisingText = "Yes";
-        public string MinimisingText
-        {
-            get => _minimisingText;
-            private set
-            {
-                if (_minimisingText == value) return;
-                _minimisingText = value;
-                OnPropertyChanged();
-            }
-        }
-        
-        private bool AutoStartVrPrograms
-        {
-            get => InternalDebugger.autoStartVrPrograms;
-            set
-            {
-                InternalDebugger.autoStartVrPrograms = value;
-                AutoStartSteamText = value ? "Yes" : "No";
-            }
-        }
-        
-        private string _autoStartSteamText = "Yes";
-        public string AutoStartSteamText
-        {
-            get => _autoStartSteamText;
-            private set
-            {
-                if (_autoStartSteamText == value) return;
-                _autoStartSteamText = value;
-                OnPropertyChanged();
-            }
-        }
-        
-        private bool HeadsetRequired
-        {
-            get => InternalDebugger.headsetRequired;
-            set
-            {
-                InternalDebugger.headsetRequired = value;
-                AHeadsetRequiredText = value ? "Yes" : "No";
-            }
-        }
-        
-        private string _headsetRequiredText = "Yes";
-        public string AHeadsetRequiredText
-        {
-            get => _headsetRequiredText;
-            private set
-            {
-                if (_headsetRequiredText == value) return;
-                _headsetRequiredText = value;
-                OnPropertyChanged();
-            }
+            if (_idleModeActiveText == value) return;
+            _idleModeActiveText = value;
+            OnPropertyChanged();
         }
     }
 }
