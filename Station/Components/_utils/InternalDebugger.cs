@@ -51,4 +51,32 @@ public static class InternalDebugger
         
         return headsetRequired;
     }
+    
+    /// <summary>
+    /// Used to control the Station should go into Idle mode after 60 minutes of no usage
+    /// </summary>
+    public static bool idleModeActive = false;
+    public static void SetIdleModeActive(bool active)
+    {
+        idleModeActive = active;
+
+        if (active)
+        {
+            ModeTracker.Initialise();
+        }
+        else
+        {
+            ModeTracker.DisableIdleMode();
+        }
+    }
+    
+    public static bool GetIdleModeActive()
+    {
+        if (!idleModeActive)
+        {
+            MockConsole.WriteLine("WARNING: Idle Mode is off, the Station will not go into Idle mode.");
+        }
+        
+        return idleModeActive;
+    }
 }

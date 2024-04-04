@@ -2,6 +2,7 @@
 using System.Runtime.CompilerServices;
 using System.Windows;
 using System.Windows.Media.Imaging;
+using Station.MVC.View;
 
 namespace Station.Components._notification;
 

@@ -126,7 +126,10 @@ public static class SessionController
         StationProfile?.MinimizeSoftware(2);
         
         //Reset the idle timer and current mode type
-        // ModeTracker.ResetMode();
+        if (InternalDebugger.GetIdleModeActive())
+        {
+            ModeTracker.ResetMode();
+        }
     }
 
     /// <summary>

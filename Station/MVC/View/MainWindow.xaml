@@ -1,4 +1,4 @@
-﻿<Window x:Class="Station.MainWindow"
+﻿<Window x:Class="Station.MVC.View.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
@@ -7,13 +7,14 @@
         xmlns:local="clr-namespace:Station"
         xmlns:system="clr-namespace:System;assembly=System.Runtime"
         xmlns:core="clr-namespace:Station.Core"
+        xmlns:viewModel="clr-namespace:Station.MVC.ViewModel"
         mc:Ignorable="d"
         ShowInTaskbar="{Binding ShowInTaskbar}"
         WindowState="{Binding WindowState}"
         Title="Station" Height="380" Width="900"
         ResizeMode="NoResize">
     <Window.DataContext>
-        <local:MainWindowViewModel/>
+        <viewModel:MainWindowViewModel/>
     </Window.DataContext>
 
     <Window.Resources>
@@ -176,6 +177,18 @@
                         Style="{StaticResource MainButton}"
                         Content="{Binding AHeadsetRequiredText}"
                         Command="{Binding HeadsetRequiredValue}"
+                        ToolTip="Toggle if the program should launch experiences regardless of if a headset is connected."/>
+                </WrapPanel>
+                <Separator HorizontalAlignment="Stretch" Margin="0,0,0,0" BorderBrush="Black" BorderThickness="0.5"/>
+                
+                <WrapPanel Margin="10">
+                    <Label Height="Auto" Width="140">Idle Mode Active</Label>
+                    <Button
+                        Width="40"
+                        HorizontalAlignment="Right"
+                        Style="{StaticResource MainButton}"
+                        Content="{Binding IdleModeActiveText}"
+                        Command="{Binding IdleModeActiveValue}"
                         ToolTip="Toggle if the program should launch experiences regardless of if a headset is connected."/>
                 </WrapPanel>
                 <Separator HorizontalAlignment="Stretch" Margin="0,0,0,0" BorderBrush="Black" BorderThickness="0.5"/>
