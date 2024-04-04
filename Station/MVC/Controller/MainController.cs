@@ -108,7 +108,14 @@ public static class MainController
             Logger.WriteLog("Failed loading ENV variables", MockConsole.LogLevel.Error);
             return;
         }
-        SetRemoteEndPoint();
+        
+        //Do not continue if the NUC address is not supplied
+        bool collectedIpAddress = SetRemoteEndPoint();
+        if (!collectedIpAddress)
+        {
+            Logger.WriteLog("Could not collect saved NUC address.", MockConsole.LogLevel.Error);
+            return;
+        }
 
         ValidateInstall("Station");
         
@@ -225,10 +232,16 @@ public static class MainController
     /// </summary>
     private static void StopVariableTimer()
     {
-        if(variableCheck != null)
+        if (variableCheck == null) return;
+
+        try
         {
             variableCheck.Change(Timeout.Infinite, Timeout.Infinite);
             variableCheck.Dispose();
+        }
+        catch (ObjectDisposedException e)
+        {
+            Logger.WriteLog($"StopVariableTimer: variableCheck has already been disposed - {e}", MockConsole.LogLevel.Info);
         }
     }
 
@@ -330,9 +343,31 @@ public static class MainController
         return ip;
     }
 
-    private static void SetRemoteEndPoint()
+    /// <summary>
+    /// Sets the remote end point for communication based on the IP address retrieved from the environment variable "NucAddress".
+    /// </summary>
+    /// <returns>
+    /// True if the remote end point was successfully set; otherwise, false.
+    /// </returns>
+    private static bool SetRemoteEndPoint()
     {
-        remoteEndPoint = new IPEndPoint(IPAddress.Parse((ReadOnlySpan<char>)Environment.GetEnvironmentVariable("NucAddress", EnvironmentVariableTarget.Process)), NucPort);
+        try
+        {
+            IPAddress ipAddress =
+                IPAddress.Parse(
+                    (ReadOnlySpan<char>)Environment.GetEnvironmentVariable("NucAddress",
+                        EnvironmentVariableTarget.Process));
+
+            remoteEndPoint = new IPEndPoint(ipAddress, NucPort);
+            return true;
+        }
+        catch (Exception e)
+        {
+            Logger.WriteLog($"SetRemoteEndPoint - Sentry Exception: {e}", MockConsole.LogLevel.Error);
+            SentrySdk.CaptureException(e);
+        }
+
+        return false;
     }
     
     /// <summary>
