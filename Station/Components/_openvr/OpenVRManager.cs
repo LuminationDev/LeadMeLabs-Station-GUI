@@ -426,11 +426,7 @@ public class OpenVrManager
                 MockConsole.LogLevel.Normal);
             _processId = 0;
             
-            // this is because Journey to the Centre of the Cell has a pre-game popup that we need to bypass
-            if (WrapperManager.currentWrapper.GetLastExperience()?.ID == "1308470")
-            {
-                CommandLine.BypassExperienceConfirmationWindow("Cell_Project_17[10Aug17]");
-            }
+            WrapperManager.PerformExperienceWindowConfirmations();
             
             return;
         }

@@ -781,4 +781,13 @@ public class WrapperManager
                 break;
         }
     }
+
+    public static void PerformExperienceWindowConfirmations()
+    {
+        // this is because Journey to the Centre of the Cell has a pre-game popup that we need to bypass
+        if (currentWrapper.GetLastExperience()?.ID == "1308470")
+        {
+            CommandLine.BypassExperienceConfirmationWindow("Cell_Project_17[10Aug17]");
+        }
+    }
 }

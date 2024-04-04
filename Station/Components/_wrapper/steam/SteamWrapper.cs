@@ -8,6 +8,7 @@ using System.Timers;
 using Newtonsoft.Json.Linq;
 using Station.Components._commandLine;
 using Station.Components._interfaces;
+using Station.Components._managers;
 using Station.Components._models;
 using Station.Components._monitoring;
 using Station.Components._notification;
@@ -273,11 +274,7 @@ public class SteamWrapper : IWrapper
             Task.Delay(3000).Wait();
             child = GetExperienceProcess();
             
-            // this is because Journey to the Centre of the Cell has a pre-game popup that we need to bypass
-            if (lastExperience.ID == "1308470")
-            {
-                CommandLine.BypassExperienceConfirmationWindow("Cell_Project_17[10Aug17]");
-            }
+            WrapperManager.PerformExperienceWindowConfirmations();
         }
         currentProcess = child;
         launchingExperience = false;
