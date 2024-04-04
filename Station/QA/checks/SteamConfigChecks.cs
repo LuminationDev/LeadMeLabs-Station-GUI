@@ -13,13 +13,14 @@ namespace Station.QA.checks;
 public class SteamConfigChecks
 {
     private string? _steamId;
-    private readonly List<QaCheck> _qaChecks = new();
+    private List<QaCheck> _qaChecks = new();
 
     private const string NotInitializedMessage =
         "Steam has not been initialized, please login to Steam client to continue checks.";
 
     public List<QaCheck> RunQa(string labType)
     {
+        _qaChecks = new List<QaCheck>();
         QaCheck isSteamUserNameSet = IsSteamUserNameSet();
         QaCheck isSteamPasswordSet = IsSteamPasswordSet();
         

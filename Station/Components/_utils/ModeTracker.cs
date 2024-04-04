@@ -28,6 +28,8 @@ public static class ModeTracker
 
     public static void Initialise()
     {
+        idleCheck?.Dispose();
+
         CurrentMode = Mode.Normal;
         idleCheck = new Timer(OnTimerCallback, null, Timeout, System.Threading.Timeout.Infinite);
         Logger.WriteLog("Idle mode timer started.", MockConsole.LogLevel.Normal);
@@ -144,5 +146,16 @@ public static class ModeTracker
     {
         CurrentMode = Mode.Normal;
         idleCheck?.Change(Timeout, System.Threading.Timeout.Infinite);
+    }
+
+    /// <summary>
+    /// Disable Idle mode, stop and dispose of the timer.
+    /// </summary>
+    public static void DisableIdleMode()
+    {
+        CurrentMode = Mode.Normal;
+        idleCheck?.Dispose();
+        
+        Logger.WriteLog("Idle mode disabled", MockConsole.LogLevel.Normal);
     }
 }

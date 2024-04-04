@@ -64,7 +64,7 @@ public class WrapperManager
     /// </summary>
     private void ValidateManifestFiles()
     {
-        //TODO remove Oculus/CoreData/Manifests that have steam apps
+        //TODO remove Oculus/CoreData/Manifests that have steam apps (bad solution is making Oculus run as admin in the properties so it doesn't open)
         
         //Location is hardcoded for now
         ManifestReader.ModifyBinaryPath(ReviveScripts.ReviveManifest, @"C:/Program Files/Revive");
@@ -75,7 +75,7 @@ public class WrapperManager
     /// </summary>
     public void ShutDownWrapper()
     {
-        ParentPipeServer.Close();
+        ClosePipeServer();
         currentWrapper?.StopCurrentProcess();
         SessionController.EndVrSession();
     }
@@ -90,12 +90,20 @@ public class WrapperManager
     }
 
     /// <summary>
-    /// Close a currently open pipe server.
+    /// Close a currently open pipe server. If the software has not started correct the pipe server will be null
+    /// internally.
     /// </summary>
     public static void ClosePipeServer()
     {
-        MockConsole.WriteLine("Closing Pipe Server");
-        ParentPipeServer.Close();
+        try
+        {
+            MockConsole.WriteLine("Closing Pipe Server");
+            ParentPipeServer.Close();
+        }
+        catch (Exception e)
+        {
+            Logger.WriteLog($"Pipe Server was not started yet - {e}", MockConsole.LogLevel.Info);
+        }
     }
 
     /// <summary>
@@ -180,13 +188,7 @@ public class WrapperManager
         }
 
         alreadyCollecting = true;
-
-        //NEW METHOD
         CollectApplications<ExperienceDetails>(experiences => new JArray(experiences.Select(experience => experience.ToJObject())), "ApplicationJson");
-        
-        //BACKWARDS COMPATABILITY
-        CollectApplications<string>( apps => string.Join("/", apps), "ApplicationList");
-
         alreadyCollecting = false;
 
         _ = RestartVrProcesses();

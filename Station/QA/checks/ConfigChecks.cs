@@ -11,14 +11,16 @@ public class ConfigChecks
      */
     public List<QaDetail> GetLocalStationDetails()
     {
-        List<QaDetail> qaDetails = new();
-        qaDetails.Add(new QaDetail("id", GetStationId()));
-        qaDetails.Add(new QaDetail("room", GetStationRoom()));
-        qaDetails.Add(new QaDetail("labLocation", GetLabLocation()));
-        qaDetails.Add(new QaDetail("ipAddress", MainController.localEndPoint.Address.ToString()));
-        qaDetails.Add(new QaDetail("macAddress", MainController.macAddress));
-        qaDetails.Add(new QaDetail("nucIpAddress", GetExpectedNucAddress()));
-        qaDetails.Add(new QaDetail("selectedHeadset", GetSelectedHeadset()));
+        List<QaDetail> qaDetails = new()
+        {
+            new QaDetail("id", GetStationId()),
+            new QaDetail("room", GetStationRoom()),
+            new QaDetail("labLocation", GetLabLocation()),
+            new QaDetail("ipAddress", MainController.localEndPoint.Address.ToString()),
+            new QaDetail("macAddress", MainController.macAddress),
+            new QaDetail("nucIpAddress", GetExpectedNucAddress()),
+            new QaDetail("selectedHeadset", GetSelectedHeadset())
+        };
 
         return qaDetails;
     }

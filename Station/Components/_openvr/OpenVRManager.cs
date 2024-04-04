@@ -17,6 +17,7 @@ using Station.Components._wrapper.embedded;
 using Station.Components._wrapper.revive;
 using Station.Components._wrapper.steam;
 using Station.MVC.Controller;
+using Station.MVC.View;
 using Valve.VR;
 
 namespace Station.Components._openvr;
