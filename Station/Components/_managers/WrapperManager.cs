@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using leadme_api;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using Sentry;
 using Station.Components._commandLine;
 using Station.Components._interfaces;
 using Station.Components._models;
@@ -779,6 +780,22 @@ public class WrapperManager
             default:
                 LogHandler($"Unknown actionspace (HandleInternalExecutable): {action}");
                 break;
+        }
+    }
+
+    public static void PerformExperienceWindowConfirmations()
+    {
+        try
+        {
+            // this is because Journey to the Centre of the Cell has a pre-game popup that we need to bypass
+            if (currentWrapper.GetLastExperience()?.ID == "1308470")
+            {
+                CommandLine.BypassExperienceConfirmationWindow("Cell_Project_17[10Aug17]");
+            }
+        }
+        catch (Exception e)
+        {
+            SentrySdk.CaptureException(e);
         }
     }
 }

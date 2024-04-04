@@ -8,6 +8,7 @@ using System.Timers;
 using Newtonsoft.Json.Linq;
 using Station.Components._commandLine;
 using Station.Components._interfaces;
+using Station.Components._managers;
 using Station.Components._models;
 using Station.Components._monitoring;
 using Station.Components._notification;
@@ -272,6 +273,8 @@ public class SteamWrapper : IWrapper
             MockConsole.WriteLine($"Checking for child process...", MockConsole.LogLevel.Debug);
             Task.Delay(3000).Wait();
             child = GetExperienceProcess();
+            
+            WrapperManager.PerformExperienceWindowConfirmations();
         }
         currentProcess = child;
         launchingExperience = false;

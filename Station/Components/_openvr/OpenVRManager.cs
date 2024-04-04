@@ -425,6 +425,9 @@ public class OpenVrManager
             Logger.WriteLog($"OpenVRManager.QueryCurrentApplication - Target Process NOT found.",
                 MockConsole.LogLevel.Normal);
             _processId = 0;
+            
+            WrapperManager.PerformExperienceWindowConfirmations();
+            
             return;
         }
 
