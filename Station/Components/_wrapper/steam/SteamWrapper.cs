@@ -272,6 +272,12 @@ public class SteamWrapper : IWrapper
             MockConsole.WriteLine($"Checking for child process...", MockConsole.LogLevel.Debug);
             Task.Delay(3000).Wait();
             child = GetExperienceProcess();
+            
+            // this is because Journey to the Centre of the Cell has a pre-game popup that we need to bypass
+            if (lastExperience.ID == "1308470")
+            {
+                CommandLine.BypassExperienceConfirmationWindow("Cell_Project_17[10Aug17]");
+            }
         }
         currentProcess = child;
         launchingExperience = false;

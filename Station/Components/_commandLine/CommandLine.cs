@@ -514,6 +514,30 @@ public static class CommandLine
         "Almost there..."
     };
 
+    public static void BypassExperienceConfirmationWindow(string processName)
+    {
+        Process[] processes = Process.GetProcessesByName(processName);
+        if (processes.Length > 0)
+        {
+            SetForegroundWindow(processes[0].MainWindowHandle.ToInt32());
+            PressEnterOnActiveWindow();
+        }
+    }
+
+    public static void PressEnterOnActiveWindow()
+    {
+        Process? cmd = SetupCommand(stationPowershell);
+        if (cmd == null)
+        {
+            Logger.WriteLog($"Cannot start: {stationPowershell}, PowershellCommand (cmd) -> SetupCommand returned null value.", MockConsole.LogLevel.Error);
+            return;
+        }
+        cmd.Start();
+        cmd.StandardInput.WriteLine("$StartDHCP = New-Object -ComObject wscript.shell;");
+        cmd.StandardInput.WriteLine("$StartDHCP.SendKeys('{ENTER}')");
+        outcome(cmd);
+    }
+
     public async static void PowershellCommand(Process steamSignInWindow)
     {
         OverlayManager.SetText(loadingMessages[0]);
