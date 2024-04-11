@@ -785,15 +785,32 @@ public class WrapperManager
         }
     }
 
+    
+    /// <summary>
+    /// Hold all the experiences that require a confirmation. The appID is the key with the WindowTitle for the
+    /// confirmation as the value.
+    /// </summary>
+    private static readonly Dictionary<string, string> ExperienceConfirmations = new()
+    {
+        { "1308470", "JTCC VR Configuration" }
+    };
+
+    /// <summary>
+    /// Attempt to automatically bypass any confirmation windows that may be present at the start of an experience being
+    /// loaded.
+    /// </summary>
     public static void PerformExperienceWindowConfirmations()
     {
         try
         {
+            string? id = currentWrapper?.GetLastExperience()?.ID;
+            if (id == null) return;
+            
+            ExperienceConfirmations.TryGetValue(id, out string? windowTitle);
+            if (windowTitle == null) return;
+            
             // this is because Journey to the Centre of the Cell has a pre-game popup that we need to bypass
-            if (currentWrapper.GetLastExperience()?.ID == "1308470")
-            {
-                CommandLine.BypassExperienceConfirmationWindow("Cell_Project_17[10Aug17]");
-            }
+            _ = CommandLine.BypassExperienceConfirmationWindow(windowTitle);
         }
         catch (Exception e)
         {

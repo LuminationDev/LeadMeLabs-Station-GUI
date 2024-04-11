@@ -266,6 +266,8 @@ public class SteamWrapper : IWrapper
     {
         int attempts = 0; //Track the loop for finding child processes
 
+        WrapperManager.PerformExperienceWindowConfirmations();
+        
         Process? child = GetExperienceProcess();
         while(child == null && attempts < 10)
         {
@@ -273,8 +275,6 @@ public class SteamWrapper : IWrapper
             MockConsole.WriteLine($"Checking for child process...", MockConsole.LogLevel.Debug);
             Task.Delay(3000).Wait();
             child = GetExperienceProcess();
-            
-            WrapperManager.PerformExperienceWindowConfirmations();
         }
         currentProcess = child;
         launchingExperience = false;

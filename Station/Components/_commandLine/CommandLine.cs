@@ -32,12 +32,12 @@ public static class CommandLine
     /// <summary>
     /// A string representing the regular command prompt executable.
     /// </summary>
-    private static readonly string stationCmd = "cmd.exe";
+    private const string StationCmd = "cmd.exe";
 
     /// <summary>
     /// A string representing the powershell executable.
     /// </summary>
-    private static readonly string stationPowershell = "powershell.exe";
+    private const string StationPowershell = "powershell.exe";
 
     /// <summary>
     /// The relative path of the steamCMD executable on the local machine.
@@ -48,12 +48,7 @@ public static class CommandLine
     /// <summary>
     /// Track if SteamCMD is currently being configured with a Guard Key.
     /// </summary>
-    private static bool configuringSteam = false;
-
-    /// <summary>
-    /// The relative path to the SetVol executable
-    /// </summary>
-    public static string SetVol = StationLocation + @"\external\SetVol\SetVol.exe";
+    private static bool configuringSteam;
 
     /// <summary>
     /// Sets up a generic process ready for any type of command to be passed. There is no command
@@ -86,13 +81,13 @@ public static class CommandLine
     /// </summary>
     /// <param name="temp">A Process that represents a current command process that has been executed.</param>
     /// <returns>A string representing the output or error from the command prompt.</returns>
-    private static string? outcome(Process temp)
+    private static string? Outcome(Process temp)
     {
-        string? output = "";
+        string output = "";
         string? error = "";
 
-        temp.OutputDataReceived += (s, e) => { output += e.Data + "\n"; };
-        temp.ErrorDataReceived += (s, e) => { error += e.Data + "\n"; };
+        temp.OutputDataReceived += (_, e) => { output += e.Data + "\n"; };
+        temp.ErrorDataReceived += (_, e) => { error += e.Data + "\n"; };
 
         temp.BeginOutputReadLine();
         temp.BeginErrorReadLine();
@@ -100,12 +95,7 @@ public static class CommandLine
         temp.StandardInput.Close();
         temp.WaitForExit();
 
-        if (error != null)
-        {
-            return output;
-        }
-
-        return error;
+        return error != null ? output : error;
     }
 
     /// <summary>
@@ -138,7 +128,7 @@ public static class CommandLine
 
         cmd.StartInfo.Arguments = arguments;
         cmd.Start();
-        string? result = outcome(cmd);
+        string? result = Outcome(cmd);
         cmd.Close();
         return result;
     }
@@ -152,16 +142,16 @@ public static class CommandLine
     /// <returns>A string representing the result of the command</returns>
     private static string? ExecuteStationCommand(string command)
     {
-        Process? cmd = SetupCommand(stationCmd);
+        Process? cmd = SetupCommand(StationCmd);
         if (cmd == null)
         {
-            Logger.WriteLog($"Cannot start: {stationCmd} and run '{command}', ExecuteStationCommand -> SetupCommand returned null value.", MockConsole.LogLevel.Error);
+            Logger.WriteLog($"Cannot start: {StationCmd} and run '{command}', ExecuteStationCommand -> SetupCommand returned null value.", MockConsole.LogLevel.Error);
             return null;
         }
         cmd.Start();
         cmd.StandardInput.WriteLine(command);
 
-        return outcome(cmd);
+        return Outcome(cmd);
     }
 
     /// <summary>
@@ -234,59 +224,58 @@ public static class CommandLine
     /// <param name="command">A command to set the steam guard key for the local SteamCMD</param>
     public static void MonitorSteamConfiguration(string command)
     {
-        if (!configuringSteam)
+        if (configuringSteam) return;
+        
+        configuringSteam = true;
+
+        if (string.IsNullOrEmpty(StationLocation))
         {
-            configuringSteam = true;
-
-            if (string.IsNullOrEmpty(StationLocation))
-            {
-                Logger.WriteLog($"Station location null or empty: cannot run '{command}', MonitorSteamConfiguration -> SetupCommand returned null value.", MockConsole.LogLevel.Error);
-                return;
-            }
-            string fullPath = StationLocation + steamCmd;
-
-            Process ? cmd = SetupCommand(fullPath);
-            if (cmd == null)
-            {
-                Logger.WriteLog($"Cannot start: {fullPath} and run '{command}', MonitorSteamConfiguration -> SetupCommand returned null value.", MockConsole.LogLevel.Error);
-                return;
-            }
-
-            cmd.StartInfo.Arguments = command;
-            cmd.Start();
-
-            //Check the output for a result
-            string? output = outcome(cmd);
-
-            if (output == null)
-            {
-                Logger.WriteLog("Unable to read output", MockConsole.LogLevel.Normal);
-                MessageController.SendResponse("Android", "Station", "SetValue:steamCMD:error");
-                configuringSteam = false;
-                return;
-            }
-
-            Logger.WriteLog(output, MockConsole.LogLevel.Normal);
-
-            if (output.Contains("FAILED (Invalid Login Auth Code)"))
-            {
-                Logger.WriteLog("AUTH FAILED", MockConsole.LogLevel.Normal);
-                MessageController.SendResponse("Android", "Station", "SetValue:steamCMD:failure");
-                configuringSteam = false;
-            }
-            else if (output.Contains("OK"))
-            {
-                Logger.WriteLog("AUTH SUCCESS, restarting VR system", MockConsole.LogLevel.Normal);
-                MessageController.SendResponse("Android", "Station", "SetValue:steamCMD:configured");
-
-                //Recollect the installed experiences
-                MainController.wrapperManager?.ActionHandler("CollectApplications");
-                configuringSteam = false;
-            }
-
-            //Manually kill the process or it will stay on the guard code input 
-            cmd.Kill(true);
+            Logger.WriteLog($"Station location null or empty: cannot run '{command}', MonitorSteamConfiguration -> SetupCommand returned null value.", MockConsole.LogLevel.Error);
+            return;
         }
+        string fullPath = StationLocation + steamCmd;
+
+        Process ? cmd = SetupCommand(fullPath);
+        if (cmd == null)
+        {
+            Logger.WriteLog($"Cannot start: {fullPath} and run '{command}', MonitorSteamConfiguration -> SetupCommand returned null value.", MockConsole.LogLevel.Error);
+            return;
+        }
+
+        cmd.StartInfo.Arguments = command;
+        cmd.Start();
+
+        //Check the output for a result
+        string? output = Outcome(cmd);
+
+        if (output == null)
+        {
+            Logger.WriteLog("Unable to read output", MockConsole.LogLevel.Normal);
+            MessageController.SendResponse("Android", "Station", "SetValue:steamCMD:error");
+            configuringSteam = false;
+            return;
+        }
+
+        Logger.WriteLog(output, MockConsole.LogLevel.Normal);
+
+        if (output.Contains("FAILED (Invalid Login Auth Code)"))
+        {
+            Logger.WriteLog("AUTH FAILED", MockConsole.LogLevel.Normal);
+            MessageController.SendResponse("Android", "Station", "SetValue:steamCMD:failure");
+            configuringSteam = false;
+        }
+        else if (output.Contains("OK"))
+        {
+            Logger.WriteLog("AUTH SUCCESS, restarting VR system", MockConsole.LogLevel.Normal);
+            MessageController.SendResponse("Android", "Station", "SetValue:steamCMD:configured");
+
+            //Recollect the installed experiences
+            MainController.wrapperManager?.ActionHandler("CollectApplications");
+            configuringSteam = false;
+        }
+
+        //Manually kill the process or it will stay on the guard code input 
+        cmd.Kill(true);
     }
 
     /// <summary>
@@ -321,7 +310,7 @@ public static class CommandLine
         cmd.StartInfo.Arguments = "\"+force_install_dir \\\"C:/Program Files (x86)/Steam\\\"\" " + command;
         cmd.Start();
 
-        string? output = outcome(cmd);
+        string? output = Outcome(cmd);
 
         if (output == null)
         {
@@ -377,7 +366,7 @@ public static class CommandLine
         cmd.StartInfo.Arguments = "\"+force_install_dir \\\"S:/SteamLibrary\\\"\" " + command;
         cmd.Start();
 
-        return outcome(cmd);
+        return Outcome(cmd);
     }
 
     /// <summary>
@@ -439,16 +428,16 @@ public static class CommandLine
     {
         try
         {
-            Process? cmd = SetupCommand(stationPowershell);
+            Process? cmd = SetupCommand(StationPowershell);
             if (cmd == null)
             {
-                Logger.WriteLog($"Cannot start: {stationPowershell}, GetFreeStorage -> SetupCommand returned null value.", MockConsole.LogLevel.Error);
+                Logger.WriteLog($"Cannot start: {StationPowershell}, GetFreeStorage -> SetupCommand returned null value.", MockConsole.LogLevel.Error);
                 return 9999;
             }
             cmd.Start();
             cmd.StandardInput.WriteLine(
                 "Get-WmiObject -Class win32_logicaldisk | Format-Table @{n=\"FreeSpace\";e={[math]::Round($_.FreeSpace/1GB,2)}}");
-            string? output = outcome(cmd);
+            string? output = Outcome(cmd);
 
             if (output == null)
             {
@@ -491,20 +480,19 @@ public static class CommandLine
         httpClient.DefaultRequestHeaders.Add("Authorization", $"Bearer {accessToken}");
         var content = new StreamContent(fileStream);
         content.Headers.ContentType = new MediaTypeHeaderValue("text/plain");
-        var response = await httpClient.PostAsync(
+        await httpClient.PostAsync(
             "https://us-central1-leadme-labs.cloudfunctions.net/uploadFile",
             content
         );
     }
 
     [DllImport("user32.dll")]
-    public static extern int SetForegroundWindow(int hwnd);
+    private static extern int SetForegroundWindow(int hwnd);
 
     [DllImport("user32.dll")]
-    public static extern bool ShowWindow(int handle, int state);
-
-
-    private static string[] loadingMessages = {
+    private static extern bool ShowWindow(int handle, int state);
+    
+    private static readonly string[] LoadingMessages = {
         "Preparing immersive learning environment...",
         "Loading immersive experiences...",
         "Configuring VR settings...",
@@ -514,44 +502,74 @@ public static class CommandLine
         "Almost there..."
     };
 
-    public static void BypassExperienceConfirmationWindow(string processName)
+    /// <summary>
+    /// Attempts to bypass the experience confirmation window of a specified process by bringing its main window to the foreground and simulating a key press.
+    /// </summary>
+    /// <param name="windowTitleToFind">The window title to search for in order to identify the process.</param>
+    /// <returns>A task representing the asynchronous operation.</returns>
+    public static async Task BypassExperienceConfirmationWindow(string windowTitleToFind)
     {
-        Process[] processes = Process.GetProcessesByName(processName);
-        if (processes.Length > 0)
+        for (int attempt = 0; attempt < 5; attempt++)
         {
-            SetForegroundWindow(processes[0].MainWindowHandle.ToInt32());
-            PressEnterOnActiveWindow();
+            MockConsole.WriteLine($"Searching for confirmation window: {windowTitleToFind}", MockConsole.LogLevel.Normal);
+            
+            // Retrieve all processes
+            Process[] processes = Process.GetProcesses();
+
+            foreach (Process process in processes)
+            {
+                // Skip processes with no main window title or title mismatch
+                if (string.IsNullOrEmpty(process.MainWindowTitle) ||
+                    !process.MainWindowTitle.Contains(windowTitleToFind)) continue;
+
+                // Print process information
+                Console.WriteLine($"Process Name: {process.ProcessName}, Window Title: {process.MainWindowTitle}, Process ID: {process.Id}");
+                
+                MockConsole.WriteLine($"Confirmation window found attempting to bypass: {windowTitleToFind}", MockConsole.LogLevel.Normal);
+
+                // Set the found window as foreground and perform action
+                SetForegroundWindow(process.MainWindowHandle.ToInt32());
+                PressEnterOnActiveWindow();
+
+                // Exit the function after action is performed
+                return;
+            }
+
+            // Delay for 5 seconds before the next attempt
+            await Task.Delay(5000);
         }
+        
+        MockConsole.WriteLine($"Confirmation window not found, unable to bypass: {windowTitleToFind}", MockConsole.LogLevel.Normal);
     }
 
-    public static void PressEnterOnActiveWindow()
+    private static void PressEnterOnActiveWindow()
     {
-        Process? cmd = SetupCommand(stationPowershell);
+        Process? cmd = SetupCommand(StationPowershell);
         if (cmd == null)
         {
-            Logger.WriteLog($"Cannot start: {stationPowershell}, PowershellCommand (cmd) -> SetupCommand returned null value.", MockConsole.LogLevel.Error);
+            Logger.WriteLog($"Cannot start: {StationPowershell}, PowershellCommand (cmd) -> SetupCommand returned null value.", MockConsole.LogLevel.Error);
             return;
         }
         cmd.Start();
         cmd.StandardInput.WriteLine("$StartDHCP = New-Object -ComObject wscript.shell;");
         cmd.StandardInput.WriteLine("$StartDHCP.SendKeys('{ENTER}')");
-        outcome(cmd);
+        Outcome(cmd);
     }
 
-    public async static void PowershellCommand(Process steamSignInWindow)
+    public static async void PowershellCommand(Process steamSignInWindow)
     {
-        OverlayManager.SetText(loadingMessages[0]);
+        OverlayManager.SetText(LoadingMessages[0]);
         await Task.Delay(5000);
-        OverlayManager.SetText(loadingMessages[1]);
+        OverlayManager.SetText(LoadingMessages[1]);
         await Task.Delay(5000);
-        OverlayManager.SetText(loadingMessages[2]);
+        OverlayManager.SetText(LoadingMessages[2]);
         await Task.Delay(5000);
-        OverlayManager.SetText(loadingMessages[3]);
+        OverlayManager.SetText(LoadingMessages[3]);
         Logger.WriteLog($"Tabbing back out of offline warning", MockConsole.LogLevel.Debug);
-        Process? cmd = SetupCommand(stationPowershell);
+        Process? cmd = SetupCommand(StationPowershell);
         if (cmd == null)
         {
-            Logger.WriteLog($"Cannot start: {stationPowershell}, PowershellCommand (cmd) -> SetupCommand returned null value.", MockConsole.LogLevel.Error);
+            Logger.WriteLog($"Cannot start: {StationPowershell}, PowershellCommand (cmd) -> SetupCommand returned null value.", MockConsole.LogLevel.Error);
             return;
         }
         cmd.Start();
@@ -560,15 +578,15 @@ public static class CommandLine
         cmd.StandardInput.WriteLine("$StartDHCP.SendKeys('{ENTER}')");
         ShowWindow(steamSignInWindow.MainWindowHandle.ToInt32(), 3);    
         SetForegroundWindow(steamSignInWindow.MainWindowHandle.ToInt32());
-        outcome(cmd);
+        Outcome(cmd);
         
         await Task.Delay(2000);
-        OverlayManager.SetText(loadingMessages[4]);
+        OverlayManager.SetText(LoadingMessages[4]);
         Logger.WriteLog($"Entering steam details", MockConsole.LogLevel.Debug);
-        Process? cmd2 = SetupCommand(stationPowershell);
+        Process? cmd2 = SetupCommand(StationPowershell);
         if (cmd2 == null)
         {
-            Logger.WriteLog($"Cannot start: {stationPowershell}, PowershellCommand (cmd2) -> SetupCommand returned null value.", MockConsole.LogLevel.Error);
+            Logger.WriteLog($"Cannot start: {StationPowershell}, PowershellCommand (cmd2) -> SetupCommand returned null value.", MockConsole.LogLevel.Error);
             return;
         }
         cmd2.Start();
@@ -579,17 +597,17 @@ public static class CommandLine
         cmd2.StandardInput.WriteLine("$StartDHCP.SendKeys('{ENTER}')");
         ShowWindow(steamSignInWindow.MainWindowHandle.ToInt32(), 3);
         SetForegroundWindow(steamSignInWindow.MainWindowHandle.ToInt32());
-        outcome(cmd2);
+        Outcome(cmd2);
         
         await Task.Delay(5000);
-        OverlayManager.SetText(loadingMessages[5]);
+        OverlayManager.SetText(LoadingMessages[5]);
         await Task.Delay(5000);
-        OverlayManager.SetText(loadingMessages[6]);
+        OverlayManager.SetText(LoadingMessages[6]);
         Logger.WriteLog($"Submitting offline form", MockConsole.LogLevel.Debug);
-        Process cmd3 = SetupCommand(stationPowershell);
+        Process cmd3 = SetupCommand(StationPowershell);
         if (cmd3 == null)
         {
-            Logger.WriteLog($"Cannot start: {stationPowershell}, PowershellCommand (cmd3) -> SetupCommand returned null value.", MockConsole.LogLevel.Error);
+            Logger.WriteLog($"Cannot start: {StationPowershell}, PowershellCommand (cmd3) -> SetupCommand returned null value.", MockConsole.LogLevel.Error);
             return;
         }
         cmd3.Start();
@@ -599,7 +617,7 @@ public static class CommandLine
         cmd3.StandardInput.WriteLine("$StartDHCP.SendKeys('{ENTER}')");
         ShowWindow(steamSignInWindow.MainWindowHandle.ToInt32(), 3);
         SetForegroundWindow(steamSignInWindow.MainWindowHandle.ToInt32());
-        outcome(cmd3);
+        Outcome(cmd3);
 
         await Task.Delay(2000);
         OverlayManager.ManualStop();
@@ -614,10 +632,10 @@ public static class CommandLine
     {
         Logger.WriteLog("gps | where {$_.Path -Like \"" + dir + "*\"} | where {$_.MainWindowHandle -ne 0} | select ID", MockConsole.LogLevel.Debug);
 
-        Process? cmd = SetupCommand(stationPowershell);
+        Process? cmd = SetupCommand(StationPowershell);
         if (cmd == null)
         {
-            Logger.WriteLog($"Cannot start: {stationPowershell}, GetProcessIdFromDir -> SetupCommand returned null value.", MockConsole.LogLevel.Error);
+            Logger.WriteLog($"Cannot start: {StationPowershell}, GetProcessIdFromDir -> SetupCommand returned null value.", MockConsole.LogLevel.Error);
             return null;
         }
         cmd.Start();
@@ -628,7 +646,7 @@ public static class CommandLine
         //cmd.Start();
         //cmd.StandardInput.WriteLine($"wmic process where \"ExecutablePath like '%{dir}%'\" get ProcessID,ExecutablePath");
 
-        string? output = outcome(cmd);
+        string? output = Outcome(cmd);
 
         if (output == null)
         {

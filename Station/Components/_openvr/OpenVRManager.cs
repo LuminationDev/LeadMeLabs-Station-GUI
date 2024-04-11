@@ -354,6 +354,9 @@ public class OpenVrManager
             
                 MessageController.SendResponse("NUC", "QA", response.ToString());
             }, TimeSpan.FromSeconds(30));
+            
+            // Check if there are any confirmation windows associated with the experience
+            WrapperManager.PerformExperienceWindowConfirmations();
         }
         return error == EVRApplicationError.None;
     }
@@ -366,7 +369,7 @@ public class OpenVrManager
     {
         CVRApplications applications = OpenVR.Applications;
         uint queriedProcessId = applications.GetCurrentSceneProcessId();
-
+        
         //If _processId is 0 there is no active process, if _queriedProcessId is different then the application has changed
         if (queriedProcessId == 0 || queriedProcessId == _processId) return;
         _processId = queriedProcessId;
@@ -426,9 +429,6 @@ public class OpenVrManager
             Logger.WriteLog($"OpenVRManager.QueryCurrentApplication - Target Process NOT found.",
                 MockConsole.LogLevel.Normal);
             _processId = 0;
-            
-            WrapperManager.PerformExperienceWindowConfirmations();
-            
             return;
         }
 
