@@ -411,6 +411,14 @@ public class WrapperManager
         {
             error = "Error: Vive could not open";
         }
+        else
+        {
+            // close legacy mirror if open
+            if (CommandLine.GetProcessIdFromMainWindowTitle("Legacy Mirror") != null)
+            {
+                CommandLine.ToggleSteamVrLegacyMirror();
+            }
+        }
 
         string message = count <= 60 ? "Awaiting headset connection..." : error;
 

@@ -369,6 +369,12 @@ internal class EmbeddedWrapper : IWrapper
             {
                 Console.WriteLine(e);
             }
+            
+            // close legacy mirror if open
+            if (CommandLine.GetProcessIdFromMainWindowTitle("Legacy Mirror") != null)
+            {
+                CommandLine.ToggleSteamVrLegacyMirror();
+            }
 
             SessionController.PassStationMessage($"ApplicationClosed");
             UiUpdater.ResetUiDisplay();
