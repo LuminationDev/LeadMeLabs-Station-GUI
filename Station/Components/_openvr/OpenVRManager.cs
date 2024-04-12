@@ -444,6 +444,12 @@ public class OpenVrManager
         if (string.IsNullOrEmpty(experienceId))
         {
             experienceId = "0";
+
+            // close legacy mirror if open
+            if (CommandLine.GetProcessIdFromMainWindowTitle("Legacy Mirror") != null)
+            {
+                CommandLine.ToggleSteamVrLegacyMirror();
+            }
         }
             
         // Send a message to the NUC

@@ -605,6 +605,68 @@ public static class CommandLine
         OverlayManager.ManualStop();
     }
 
+    public static void ToggleSteamVrLegacyMirror()
+    {
+        Process? cmd = SetupCommand(stationPowershell);
+        if (cmd == null)
+        {
+            Logger.WriteLog($"Cannot start: {stationPowershell}, PowershellCommand (cmd) -> SetupCommand returned null value.", MockConsole.LogLevel.Error);
+            return;
+        }
+        cmd.Start();
+        cmd.StandardInput.WriteLine("Start-Process \"vrmonitor://debugcommands/legacy_mirror_view_toggle\"");
+        outcome(cmd);
+    }
+
+    public static string? GetProcessIdFromMainWindowTitle(string mainWindowTitle)
+    {
+        Logger.WriteLog("gps | where {$_.MainWindowTitle -Like \"*" + mainWindowTitle + "*\"} | select ID", MockConsole.LogLevel.Debug);
+
+        Process? cmd = SetupCommand(stationPowershell);
+        if (cmd == null)
+        {
+            Logger.WriteLog($"Cannot start: {stationPowershell}, GetProcessIdFromDir -> SetupCommand returned null value.", MockConsole.LogLevel.Error);
+            return null;
+        }
+        cmd.Start();
+        cmd.StandardInput.WriteLine("gps | where {$_.MainWindowTitle -Like \"*" + mainWindowTitle + "*\"} | select ID");
+
+        string? output = outcome(cmd);
+
+        if (output == null)
+        {
+            Logger.WriteLog($"No output recorded for {mainWindowTitle}", MockConsole.LogLevel.Debug);
+            return null;
+        }
+
+        Logger.WriteLog(output, MockConsole.LogLevel.Debug);
+
+        string[] outputP = output.Split("\n");
+
+        // if there is less than 14 items, the app probably hasn't launched yet
+        int iterator = 0;
+        while (iterator < outputP.Length)
+        {
+            Logger.WriteLog($"Output line {iterator}: {outputP[iterator].Trim()}", MockConsole.LogLevel.Debug);
+
+            if (outputP[iterator].Trim().Equals("Id"))
+            {
+                break;
+            }
+
+            iterator++;
+        }
+
+        if (outputP.Length < iterator + 2)
+        {
+            return null;
+        }
+
+        Logger.WriteLog($"ID: {outputP[iterator + 2].Trim()}", MockConsole.LogLevel.Debug);
+
+        return outputP[iterator + 2].Trim();
+    }
+
     /// <summary>
     /// Pass in a steam application directory to get the process id if running
     /// </summary>
