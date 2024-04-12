@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Threading.Tasks;
 using leadme_api;
+using Newtonsoft.Json.Linq;
 using Station.Components._interfaces;
 using Station.Components._managers;
 using Station.Components._models;
@@ -89,7 +90,12 @@ public class InternalWrapper : IWrapper
 
             if (!File.Exists(processPath))
             {
-                SessionController.PassStationMessage($"StationError,File not found:{processPath}");
+                JObject message = new JObject
+                {
+                    { "action", "StationError" },
+                    { "value", $"File not found:{processPath}" }
+                };
+                SessionController.PassStationMessage(message);
                 return;
             }
 
@@ -124,7 +130,20 @@ public class InternalWrapper : IWrapper
             //Update the UI, NUC and Tablet
             UiUpdater.UpdateProcess(lastExperience.Name ?? "Unknown");
             UiUpdater.UpdateStatus("Running...");
-            SessionController.PassStationMessage($"ApplicationUpdate,{lastExperience.Name}/{lastExperience.ID}/Internal");
+
+            JObject experienceInformation = new JObject
+            {
+                { "name", lastExperience.Name },
+                { "appId", lastExperience.ID },
+                { "wrapper", "Internal" }
+            };
+            
+            JObject updateMessage = new JObject
+            {
+                { "action", "ApplicationUpdate" },
+                { "info", experienceInformation }
+            };
+            SessionController.PassStationMessage(updateMessage);
             ListenForClose();
         });
         return "launching";
@@ -139,7 +158,12 @@ public class InternalWrapper : IWrapper
         {
             currentProcess?.WaitForExit();
             lastExperience.Name = null; //Reset for correct headset state
-            SessionController.PassStationMessage($"ApplicationClosed");
+            
+            JObject message = new JObject
+            {
+                { "action", "ApplicationClosed" },
+            };
+            SessionController.PassStationMessage(message);
             UiUpdater.ResetUiDisplay();
         });
     }
@@ -164,7 +188,11 @@ public class InternalWrapper : IWrapper
         if (experience.Name != lastExperience.Name) return;
 
         lastExperience.Name = null; //Reset for correct headset state
-        SessionController.PassStationMessage($"ApplicationClosed");
+        JObject message = new JObject
+        {
+            { "action", "ApplicationClosed" },
+        };
+        SessionController.PassStationMessage(message);
         UiUpdater.ResetUiDisplay();
     }
 
@@ -181,7 +209,11 @@ public class InternalWrapper : IWrapper
         _internalProcesses.Remove(lastExperience.Name);
 
         lastExperience.Name = null; //Reset for correct headset state
-        SessionController.PassStationMessage($"ApplicationClosed");
+        JObject message = new JObject
+        {
+            { "action", "ApplicationClosed" },
+        };
+        SessionController.PassStationMessage(message);
         UiUpdater.ResetUiDisplay();
     }
 

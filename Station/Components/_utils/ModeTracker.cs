@@ -1,6 +1,7 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using Newtonsoft.Json.Linq;
 using Station.Components._commandLine;
 using Station.Components._managers;
 using Station.Components._notification;
@@ -93,7 +94,12 @@ public static class ModeTracker
             bool steamvr = await Helper.MonitorLoop(() => ProcessManager.GetProcessesByName("vrmonitor").Length == 0, 20);
             if (!steamvr)
             {
-                ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage($"SoftwareState,SteamVR Error"), TimeSpan.FromSeconds(1));
+                JObject message = new JObject
+                {
+                    { "action", "SoftwareState" },
+                    { "value", "SteamVR Error" }
+                };
+                ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage(message), TimeSpan.FromSeconds(1));
             }
         
             await Task.Delay(2500);

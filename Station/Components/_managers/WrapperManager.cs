@@ -55,7 +55,13 @@ public class WrapperManager
         ValidateManifestFiles();
         StartPipeServer();
         SessionController.SetupStationProfile(Helper.GetStationMode());
-        ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage($"SoftwareState,Loading experiences"), TimeSpan.FromSeconds(2));
+        
+        JObject message = new JObject
+        {
+            { "action", "SoftwareState" },
+            { "value", $"Loading experiences" }
+        };
+        ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage(message), TimeSpan.FromSeconds(2));
         Task.Factory.StartNew(CollectAllApplications);
     }
 
@@ -183,7 +189,11 @@ public class WrapperManager
     { 
         if (alreadyCollecting)
         {
-            SessionController.PassStationMessage("Already collecting applications");
+            JObject message = new JObject
+            {
+                { "action", "Already collecting applications" }
+            };
+            SessionController.PassStationMessage(message);
             return;
         }
 
@@ -203,7 +213,11 @@ public class WrapperManager
     {
         if (alreadyCollecting)
         {
-            SessionController.PassStationMessage("Already collecting applications");
+            JObject message = new JObject
+            {
+                { "action", "Already collecting applications" }
+            };
+            SessionController.PassStationMessage(message);
             return;
         }
 
@@ -217,9 +231,6 @@ public class WrapperManager
 
         //NEW METHOD
         CollectApplications<ExperienceDetails>(experiences => new JArray(experiences.Select(experience => experience.ToJObject())), "ApplicationJson", true);
-
-        //BACKWARDS COMPATABILITY
-        CollectApplications<string>( apps => string.Join("/", apps), "ApplicationList", true);
 
         alreadyCollecting = false;
     }
@@ -281,7 +292,12 @@ public class WrapperManager
             return;
         }
         
-        SessionController.PassStationMessage($"{messageType},{convertedApplications}");
+        JObject message = new JObject
+        {
+            { "action", messageType },
+            { "value", $"{convertedApplications}" }
+        };
+        SessionController.PassStationMessage(message);
     }
     
     /// <summary>
@@ -313,8 +329,13 @@ public class WrapperManager
         StopCommonProcesses();
         if (SessionController.StationProfile == null)
         {
-            SessionController.PassStationMessage("No profile type specified.");
-            SessionController.PassStationMessage("Processing,false");
+            MockConsole.WriteLine("No profile type specified.", MockConsole.LogLevel.Normal);
+            JObject message = new JObject
+            {
+                { "action", "Processing" },
+                { "value", "false" }
+            };
+            SessionController.PassStationMessage(message);
             return;
         }
 
@@ -329,8 +350,19 @@ public class WrapperManager
             await SessionController.PutTaskDelay(1000);
             if (attempts > 20)
             {
-                SessionController.PassStationMessage("MessageToAndroid,FailedRestart");
-                SessionController.PassStationMessage("Processing,false");
+                JObject failed = new JObject
+                {
+                    { "action", "MessageToAndroid" },
+                    { "value", "FailedRestart" }
+                };
+                SessionController.PassStationMessage(failed);
+                
+                JObject processing = new JObject
+                {
+                    { "action", "Processing" },
+                    { "value", "false" }
+                };
+                SessionController.PassStationMessage(processing);
                 return;
             }
 
@@ -349,11 +381,23 @@ public class WrapperManager
 
         await SessionController.PutTaskDelay(5000);
 
-        SessionController.PassStationMessage("Processing,false");
+        {
+            JObject message = new JObject
+            {
+                { "action", "Processing" },
+                { "value", "false" }
+            };
+            SessionController.PassStationMessage(message);
+        }
 
         if (!InternalDebugger.GetAutoStart())
         {
-            ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage($"SoftwareState,Debug Mode"), TimeSpan.FromSeconds(0));
+            JObject message = new JObject
+            {
+                { "action", "SoftwareState" },
+                { "value", "Debug Mode" }
+            };
+            ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage(message), TimeSpan.FromSeconds(0));
             return;
         }
 
@@ -371,7 +415,12 @@ public class WrapperManager
         }
         else
         {
-            ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage($"SoftwareState,Ready to go"),
+            JObject message = new JObject
+            {
+                { "action", "SoftwareState" },
+                { "value", "Ready to go" }
+            };
+            ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage(message),
                 TimeSpan.FromSeconds(1));
         }
     }
@@ -382,11 +431,22 @@ public class WrapperManager
     private static void WaitForSteamProcess()
     {
         string error = "Error: Steam could not open";
-        string message = Profile.WaitForSteamLogin() ? "Ready to go" : error;
+        string state = Profile.WaitForSteamLogin() ? "Ready to go" : error;
 
-        ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage($"SoftwareState,{message}"),
+        JObject message = new JObject
+        {
+            { "action", "SoftwareState" },
+            { "value", state }
+        };
+        ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage(message),
             TimeSpan.FromSeconds(1)); //Wait for steam/other accounts to login
-        ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage("MessageToAndroid,SetValue:session:Restarted"), TimeSpan.FromSeconds(1));
+        
+        JObject androidMessage = new JObject
+        {
+            { "action", "MessageToAndroid" },
+            { "value", "SetValue:session:Restarted" }
+        };
+        ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage(androidMessage), TimeSpan.FromSeconds(1));
     }
 
     /// <summary>
@@ -420,16 +480,26 @@ public class WrapperManager
             }
         }
 
-        string message = count <= 60 ? "Awaiting headset connection..." : error;
+        string state = count <= 60 ? "Awaiting headset connection..." : error;
 
         //Only send the message if the headset is not yet connected
-        if (vrProfile.VrHeadset?.GetStatusManager().SoftwareStatus != DeviceStatus.Connected ||
-            vrProfile.VrHeadset?.GetStatusManager().OpenVRStatus != DeviceStatus.Connected)
+        if (vrProfile.VrHeadset?.GetStatusManager().SoftwareStatus == DeviceStatus.Connected &&
+            vrProfile.VrHeadset?.GetStatusManager().OpenVRStatus == DeviceStatus.Connected) return;
+        
+        JObject message = new JObject
         {
-            ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage($"SoftwareState,{message}"),
-                TimeSpan.FromSeconds(1));
-            ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage("MessageToAndroid,SetValue:session:Restarted"), TimeSpan.FromSeconds(1));
-        }
+            { "action", "SoftwareState" },
+            { "value", state }
+        };
+        ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage(message),
+            TimeSpan.FromSeconds(1));
+            
+        JObject androidMessage = new JObject
+        {
+            { "action", "MessageToAndroid" },
+            { "value", "SetValue:session:Restarted" }
+        };
+        ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage(androidMessage), TimeSpan.FromSeconds(1));
     }
 
     /// <summary>
@@ -534,13 +604,13 @@ public class WrapperManager
         Experience experience = ApplicationList.GetValueOrDefault(appId);
         if (experience.IsNull())
         {
-            SessionController.PassStationMessage($"No application found: {appId}");
+            MockConsole.WriteLine($"No application found: {appId}", MockConsole.LogLevel.Normal);
             return $"No application found: {appId}";
         }
 
         if(experience.Type == null)
         {
-            SessionController.PassStationMessage($"No wrapper associated with experience {appId}.");
+            MockConsole.WriteLine($"No wrapper associated with experience {appId}.", MockConsole.LogLevel.Normal);
             return $"No wrapper associated with experience {appId}.";
         }
 
@@ -548,7 +618,7 @@ public class WrapperManager
         LoadWrapper(experience.Type);
         if (currentWrapper == null)
         {
-            SessionController.PassStationMessage("No process wrapper created.");
+            MockConsole.WriteLine("No process wrapper created.", MockConsole.LogLevel.Normal);
             return "No process wrapper created.";
         }
 
@@ -613,7 +683,7 @@ public class WrapperManager
     {
         if (currentWrapper == null)
         {
-            SessionController.PassStationMessage("No process wrapper present.");
+            MockConsole.WriteLine("No process wrapper present.", MockConsole.LogLevel.Normal);
             return;
         }
 
@@ -627,7 +697,7 @@ public class WrapperManager
     {
         if (currentWrapper == null)
         {
-            SessionController.PassStationMessage("No process wrapper present, checking internal.");
+            MockConsole.WriteLine("No process wrapper present, checking internal.", MockConsole.LogLevel.Normal);
 
             if (InternalWrapper.GetCurrentExperienceName() != null)
             {
@@ -635,7 +705,7 @@ public class WrapperManager
                 return;
             }
 
-            SessionController.PassStationMessage("No internal wrapper present.");
+            MockConsole.WriteLine("No internal wrapper present.", MockConsole.LogLevel.Normal);
             return;
         }
 
@@ -655,7 +725,7 @@ public class WrapperManager
                 return;
             }
 
-            SessionController.PassStationMessage("No internal wrapper present.");
+            MockConsole.WriteLine("No internal wrapper present.", MockConsole.LogLevel.Normal);
             return;
         }
         Task.Factory.StartNew(() => currentWrapper.RestartCurrentExperience());
@@ -671,7 +741,7 @@ public class WrapperManager
 
         if (currentWrapper == null)
         {
-            SessionController.PassStationMessage("No process wrapper present.");
+            MockConsole.WriteLine("No process wrapper present.", MockConsole.LogLevel.Normal);
             
             if (InternalWrapper.GetCurrentExperienceName() != null)
             {
@@ -679,7 +749,7 @@ public class WrapperManager
                 return;
             }
 
-            SessionController.PassStationMessage("No internal wrapper present.");
+            MockConsole.WriteLine("No internal wrapper present.", MockConsole.LogLevel.Normal);
             return;
         }
 
@@ -793,15 +863,32 @@ public class WrapperManager
         }
     }
 
+    
+    /// <summary>
+    /// Hold all the experiences that require a confirmation. The appID is the key with the WindowTitle for the
+    /// confirmation as the value.
+    /// </summary>
+    private static readonly Dictionary<string, string> ExperienceConfirmations = new()
+    {
+        { "1308470", "JTCC VR Configuration" }
+    };
+
+    /// <summary>
+    /// Attempt to automatically bypass any confirmation windows that may be present at the start of an experience being
+    /// loaded.
+    /// </summary>
     public static void PerformExperienceWindowConfirmations()
     {
         try
         {
+            string? id = currentWrapper?.GetLastExperience()?.ID;
+            if (id == null) return;
+            
+            ExperienceConfirmations.TryGetValue(id, out string? windowTitle);
+            if (windowTitle == null) return;
+            
             // this is because Journey to the Centre of the Cell has a pre-game popup that we need to bypass
-            if (currentWrapper.GetLastExperience()?.ID == "1308470")
-            {
-                CommandLine.BypassExperienceConfirmationWindow("Cell_Project_17[10Aug17]");
-            }
+            _ = CommandLine.BypassExperienceConfirmationWindow(windowTitle);
         }
         catch (Exception e)
         {

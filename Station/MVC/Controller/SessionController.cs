@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Threading;
 using System.Threading.Tasks;
+using Newtonsoft.Json.Linq;
 using Station.Components._interfaces;
 using Station.Components._managers;
 using Station.Components._notification;
@@ -58,7 +59,7 @@ public static class SessionController
                 StationProfile = new ContentProfile();
                 break;
             default:
-                PassStationMessage($"Unknown profile selected: {profile}");
+                Logger.WriteLog($"SessionController - SetupStationProfile: Unknown profile selected: {profile}", MockConsole.LogLevel.Error);
                 break;
         }
     }
@@ -95,12 +96,17 @@ public static class SessionController
     /// </summary>
     public static void RestartVrSession()
     {
-        ScheduledTaskQueue.EnqueueTask(() => PassStationMessage($"SoftwareState,Shutting down VR processes"), TimeSpan.FromSeconds(1));
+        JObject message = new JObject
+        {
+            { "action", "SoftwareState" },
+            { "value", "Shutting down VR processes" }
+        };
+        ScheduledTaskQueue.EnqueueTask(() => PassStationMessage(message), TimeSpan.FromSeconds(1));
         _ = WrapperManager.RestartVrProcesses();
 
         if (ExperienceType == null)
         {
-            PassStationMessage("No experience is currently running.");
+            MockConsole.WriteLine("No experience is currently running.", MockConsole.LogLevel.Normal);
             return;
         }
 
@@ -175,32 +181,41 @@ public static class SessionController
     /// Take an action message from the wrapper and pass the response onto the NUC or handle it internally.
     /// </summary>
     /// <param name="message">A string representing the message, different actions are separated by a ','</param>
-    public static void PassStationMessage(string message)
+    public static void PassStationMessage(JObject message)
     {
         new Thread(() => {
-            MockConsole.WriteLine("Action: " + message, MockConsole.LogLevel.Normal);
+            MockConsole.WriteLine("Action: " + message, MockConsole.LogLevel.Debug);
+            
+            string? action = (string?)message.GetValue("action");
+            if (action == null) return;
+            
+            string? value = (string?)message.GetValue("value");
 
-            //[TYPE, ACTION, INFORMATION]
-            string[] tokens = message.Split(',');
-
-            switch (tokens[0])
+            switch (action)
             {
                 case "MessageToAndroid":
-                    MessageController.SendResponse("Android", "Station", tokens[1]);
+                    MessageController.SendResponse("Android", "Station", value);
                     break;
 
                 case "Processing":
-                    StationScripts.processing = bool.Parse(tokens[1]);
+                    if (value == null) return;
+                    StationScripts.processing = bool.Parse(value);
                     break;
-
+                
                 case "ApplicationUpdate":
-                    string[] values = tokens[1].Split('/');
-                    MessageController.SendResponse("Android", "Station", $"SetValue:gameName:{values[0]}");
+                    JObject? info = (JObject?)message.GetValue("info");
+                    if (info == null) return;
 
-                    if (values.Length > 1)
+                    string? name = (string?)info.GetValue("name");
+                    string? appId = (string?)info.GetValue("appId");
+                    string? wrapper = (string?)info.GetValue("wrapper");
+                    
+                    MessageController.SendResponse("Android", "Station", $"SetValue:gameName:{name}");
+
+                    if (appId != null && wrapper != null)
                     {
-                        MessageController.SendResponse("Android", "Station", $"SetValue:gameId:{values[1]}");
-                        MessageController.SendResponse("Android", "Station", $"SetValue:gameType:{values[2]}");
+                        MessageController.SendResponse("Android", "Station", $"SetValue:gameId:{appId}");
+                        MessageController.SendResponse("Android", "Station", $"SetValue:gameType:{wrapper}");
                     }
                     else
                     {
@@ -210,12 +225,8 @@ public static class SessionController
                     break;
 
                 case "SoftwareState":
-                    CurrentState = tokens[1];
-                    break;
-
-                //BACKWARDS COMPATABILITY
-                case "ApplicationList":
-                    MessageController.SendResponse("Android", "Station", "SetValue:installedApplications:" + tokens[1]);
+                    if (value == null) return;
+                    CurrentState = value;
                     break;
 
                 case "ApplicationClosed":

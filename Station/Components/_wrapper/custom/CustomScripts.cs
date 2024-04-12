@@ -7,6 +7,7 @@ using Newtonsoft.Json.Linq;
 using Station.Components._commandLine;
 using Station.Components._managers;
 using Station.Components._models;
+using Station.Components._notification;
 using Station.Components._utils;
 using Station.MVC.Controller;
 
@@ -27,7 +28,7 @@ public static class CustomScripts
     {
         if (CommandLine.StationLocation == null)
         {
-            SessionController.PassStationMessage("Cannot find working directory for custom experiences");
+            MockConsole.WriteLine("Cannot find working directory for custom experiences", MockConsole.LogLevel.Error);
             return null;
         }
 

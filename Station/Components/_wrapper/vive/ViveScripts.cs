@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Threading.Tasks;
+using Newtonsoft.Json.Linq;
 using Station.Components._interfaces;
 using Station.Components._managers;
 using Station.Components._notification;
@@ -45,7 +46,12 @@ public static class ViveScripts
         
         if (!InternalDebugger.GetAutoStart())
         {
-            ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage($"SoftwareState,Debug Mode"), TimeSpan.FromSeconds(0));
+            JObject message = new JObject
+            {
+                { "action", "SoftwareState" },
+                { "value", "Debug Mode" }
+            };
+            ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage(message), TimeSpan.FromSeconds(0));
             return false;
         }
 
@@ -54,7 +60,12 @@ public static class ViveScripts
             Enum.GetName(typeof(DeviceStatus), vrProfile.VrHeadset.GetHeadsetManagementSoftwareStatus()), MockConsole.LogLevel.Normal);
         if (WrapperManager.currentWrapper?.GetLaunchingExperience() ?? false)
         {
-            SessionController.PassStationMessage("MessageToAndroid,AlreadyLaunchingGame");
+            JObject message = new JObject
+            {
+                { "action", "MessageToAndroid" },
+                { "value", "AlreadyLaunchingGame" }
+            };
+            SessionController.PassStationMessage(message);
             return false;
         }
         WrapperManager.currentWrapper?.SetLaunchingExperience(true);
@@ -93,12 +104,30 @@ public static class ViveScripts
             if (vrProfile.VrHeadset.GetHeadsetManagementSoftwareStatus() == DeviceStatus.Off)
             {
                 SessionController.StartSession(type);
-                ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage($"SoftwareState,Starting VR Session"), TimeSpan.FromSeconds(1));
+                
+                JObject message = new JObject
+                {
+                    { "action", "SoftwareState" },
+                    { "value", "Starting VR Session" }
+                };
+                ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage(message), TimeSpan.FromSeconds(1));
                 if (count == 10) // (10 * 5000ms) this loop + 2000ms initial loop 
                 {
                     terminateMonitoring = true;
-                    SessionController.PassStationMessage("MessageToAndroid,HeadsetTimeout");
-                    ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage($"SoftwareState,Awaiting headset connection..."), TimeSpan.FromSeconds(1));
+                    
+                    JObject androidMessage = new JObject
+                    {
+                        { "action", "MessageToAndroid" },
+                        { "value", "HeadsetTimeout" }
+                    };
+                    SessionController.PassStationMessage(androidMessage);
+                    
+                    JObject stateMessage = new JObject
+                    {
+                        { "action", "SoftwareState" },
+                        { "value", "Awaiting headset connection..." }
+                    };
+                    ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage(stateMessage), TimeSpan.FromSeconds(1));
                 }
                 else
                 {
@@ -109,8 +138,19 @@ public static class ViveScripts
             else if (!sent)
             {
                 sent = true;
-                ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage($"SoftwareState,Awaiting headset connection..."), TimeSpan.FromSeconds(1));
-                ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage("MessageToAndroid,SetValue:session:Restarted"), TimeSpan.FromSeconds(1));
+                JObject message = new JObject
+                {
+                    { "action", "SoftwareState" },
+                    { "value", "Awaiting headset connection..." }
+                };
+                ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage(message), TimeSpan.FromSeconds(1));
+                
+                JObject androidMessage = new JObject
+                {
+                    { "action", "MessageToAndroid" },
+                    { "value", "SetValue:session:Restarted" }
+                };
+                ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage(androidMessage), TimeSpan.FromSeconds(1));
                 await Task.Delay(2000);
             }
             else //Message has already been sent to the NUC, block so it does not take up too much processing power
@@ -119,7 +159,13 @@ public static class ViveScripts
                 if (count == 30) // (30 * 2000ms) this loop + 2000ms initial loop 
                 {
                     terminateMonitoring = true;
-                    SessionController.PassStationMessage("MessageToAndroid,HeadsetTimeout");
+                    
+                    JObject message = new JObject
+                    {
+                        { "action", "MessageToAndroid" },
+                        { "value", "HeadsetTimeout" }
+                    };
+                    SessionController.PassStationMessage(message);
                 }
                 else
                 {
@@ -131,9 +177,19 @@ public static class ViveScripts
             //Externally stop the loop in case of ending VR session
             if (!terminateMonitoring) continue;
             
-            SessionController.PassStationMessage("ApplicationClosed");
+            JObject closedMessage = new JObject
+            {
+                { "action", "ApplicationClosed" }
+            };
+            SessionController.PassStationMessage(closedMessage);
             await Task.Delay(1000);
-            SessionController.PassStationMessage("MessageToAndroid,SetValue:status:On");
+            
+            JObject statusMessage = new JObject
+            {
+                { "action", "MessageToAndroid" },
+                { "value", "SetValue:status:On" }
+            };
+            SessionController.PassStationMessage(statusMessage);
 
             activelyMonitoring = false;
             terminateMonitoring = false;

@@ -165,7 +165,12 @@ public class Statuses
         //If the headset is connected and no experience is currently running tell the tablet the Station is ready to go
         if (SoftwareStatus == DeviceStatus.Connected && OpenVRStatus == DeviceStatus.Connected && !SessionController.CurrentState.Equals("Ready to go"))
         {
-            ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage($"SoftwareState,Ready to go"), TimeSpan.FromSeconds(0));
+            JObject message = new JObject
+            {
+                { "action", "SoftwareState" },
+                { "value", "Ready to go" }
+            };
+            ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage(message), TimeSpan.FromSeconds(0));
         }
     }
     
@@ -177,11 +182,16 @@ public class Statuses
     {
         if (!oldConnectionStatus || newConnectionStatus is not (DeviceStatus.Lost or DeviceStatus.Off)) return;
         
-        string? message = WrapperManager.currentWrapper?.GetCurrentExperienceName() == null ? 
+        string state = WrapperManager.currentWrapper?.GetCurrentExperienceName() == null ? 
             "Awaiting headset connection..." : "Lost headset connection";
             
+        JObject message = new JObject
+        {
+            { "action", "SoftwareState" },
+            { "value", state }
+        };
         ScheduledTaskQueue.EnqueueTask(
-            () => SessionController.PassStationMessage($"SoftwareState,{message}"),
+            () => SessionController.PassStationMessage(message),
             TimeSpan.FromSeconds(0));
     }
 
