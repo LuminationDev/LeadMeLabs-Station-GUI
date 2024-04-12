@@ -636,31 +636,31 @@ public static class CommandLine
 
     public static void ToggleSteamVrLegacyMirror()
     {
-        Process? cmd = SetupCommand(stationPowershell);
+        Process? cmd = SetupCommand(StationPowershell);
         if (cmd == null)
         {
-            Logger.WriteLog($"Cannot start: {stationPowershell}, PowershellCommand (cmd) -> SetupCommand returned null value.", MockConsole.LogLevel.Error);
+            Logger.WriteLog($"Cannot start: {StationPowershell}, PowershellCommand (cmd) -> SetupCommand returned null value.", MockConsole.LogLevel.Error);
             return;
         }
         cmd.Start();
         cmd.StandardInput.WriteLine("Start-Process \"vrmonitor://debugcommands/legacy_mirror_view_toggle\"");
-        outcome(cmd);
+        Outcome(cmd);
     }
 
     public static string? GetProcessIdFromMainWindowTitle(string mainWindowTitle)
     {
         Logger.WriteLog("gps | where {$_.MainWindowTitle -Like \"*" + mainWindowTitle + "*\"} | select ID", MockConsole.LogLevel.Debug);
 
-        Process? cmd = SetupCommand(stationPowershell);
+        Process? cmd = SetupCommand(StationPowershell);
         if (cmd == null)
         {
-            Logger.WriteLog($"Cannot start: {stationPowershell}, GetProcessIdFromDir -> SetupCommand returned null value.", MockConsole.LogLevel.Error);
+            Logger.WriteLog($"Cannot start: {StationPowershell}, GetProcessIdFromDir -> SetupCommand returned null value.", MockConsole.LogLevel.Error);
             return null;
         }
         cmd.Start();
         cmd.StandardInput.WriteLine("gps | where {$_.MainWindowTitle -Like \"*" + mainWindowTitle + "*\"} | select ID");
 
-        string? output = outcome(cmd);
+        string? output = Outcome(cmd);
 
         if (output == null)
         {
