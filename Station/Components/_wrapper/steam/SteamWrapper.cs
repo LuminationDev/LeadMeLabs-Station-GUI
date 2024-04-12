@@ -102,13 +102,18 @@ public class SteamWrapper : IWrapper
         _launchWillHaveFailedFromOpenVrTimeout = false;
         if (experience.ID == null)
         {
-            SessionController.PassStationMessage($"MessageToAndroid,GameLaunchFailed:Unknown experience");
+            JObject message = new JObject
+            {
+                { "action", "MessageToAndroid" },
+                { "value", "GameLaunchFailed:Unknown experience" }
+            };
+            SessionController.PassStationMessage(message);
             return $"MessageToAndroid,GameLaunchFailed:Unknown experience";
         }
 
         if (vrProfile?.VrHeadset == null && experience.IsVr)
         {
-            SessionController.PassStationMessage("No VR headset set.");
+            Logger.WriteLog("SteamWrapper - WrapProcess: No VR headset set.", MockConsole.LogLevel.Error);
             return "No VR headset set.";
         }
 
@@ -117,7 +122,12 @@ public class SteamWrapper : IWrapper
 
         if(experienceName == null || installDir == null)
         {
-            SessionController.PassStationMessage($"MessageToAndroid,GameLaunchFailed:Fail to find experience");
+            JObject message = new JObject
+            {
+                { "action", "MessageToAndroid" },
+                { "value", "GameLaunchFailed:Fail to find experience" }
+            };
+            SessionController.PassStationMessage(message);
             Logger.WriteLog($"Unable to find Steam experience details (name & install directory) for: {experience.Name}", MockConsole.LogLevel.Normal);
             return $"Unable to find Steam experience details (name & install directory) for: {experience.Name}";
         }
@@ -137,7 +147,13 @@ public class SteamWrapper : IWrapper
         if (!Profile.WaitForSteamLogin())
         {
             string error = "Error: Steam could not open";
-            ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage($"SoftwareState,{error}"),
+            
+            JObject message = new JObject
+            {
+                { "action", "SoftwareState" },
+                { "value", error }
+            };
+            ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage(message),
                 TimeSpan.FromSeconds(1)); //Wait for steam/other accounts to login
             return "Error: Steam could not open";
         }
@@ -286,7 +302,20 @@ public class SteamWrapper : IWrapper
             SteamScripts.popupDetect = false;
             ListenForClose();
             WindowManager.MaximizeProcess(child); //Maximise the process experience
-            SessionController.PassStationMessage($"ApplicationUpdate,{experienceName}/{lastExperience.ID}/Steam");
+            
+            JObject experienceInformation = new JObject
+            {
+                { "name", lastExperience.Name },
+                { "appId", lastExperience.ID },
+                { "wrapper", "Steam" }
+            };
+            
+            JObject message = new JObject
+            {
+                { "action", "ApplicationUpdate" },
+                { "info", experienceInformation }
+            };
+            SessionController.PassStationMessage(message);
             
             JObject response = new JObject();
             response.Add("response", "ExperienceLaunched");
@@ -299,7 +328,13 @@ public class SteamWrapper : IWrapper
         {
             Logger.WriteLog("Game launch failure: " + lastExperience.Name, MockConsole.LogLevel.Normal);
             UiUpdater.ResetUiDisplay();
-            SessionController.PassStationMessage($"MessageToAndroid,GameLaunchFailed:{lastExperience.Name}");
+            
+            JObject message = new JObject
+            {
+                { "action", "MessageToAndroid" },
+                { "value", $"GameLaunchFailed:{lastExperience.Name}" }
+            };
+            SessionController.PassStationMessage(message);
             JObject response = new JObject();
             response.Add("response", "ExperienceLaunchFailed");
             JObject responseData = new JObject();
@@ -353,7 +388,12 @@ public class SteamWrapper : IWrapper
             currentProcess?.WaitForExit();
             experienceName = null; //Reset for correct headset state
             SteamScripts.popupDetect = false;
-            SessionController.PassStationMessage($"ApplicationClosed");
+            
+            JObject message = new JObject
+            {
+                { "action", "ApplicationClosed" },
+            };
+            SessionController.PassStationMessage(message);
             UiUpdater.ResetUiDisplay();
         });
     }

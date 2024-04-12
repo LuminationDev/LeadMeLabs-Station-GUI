@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading;
+using Newtonsoft.Json.Linq;
 using Station.Components._commandLine;
 using Station.Components._notification;
 using Station.Components._utils;
@@ -154,9 +155,12 @@ public static class WrapperMonitoringThread
         
         processesAreResponding = processesAreAllResponding;
         
-        SessionController.PassStationMessage(!processesAreAllResponding
-            ? "MessageToAndroid,SetValue:state:Not Responding"
-            : "MessageToAndroid,SetValue:status:On");
+        JObject message = new JObject
+        {
+            { "action", "MessageToAndroid" },
+            { "value", !processesAreAllResponding ? "SetValue:state:Not Responding" : "SetValue:status:On" }
+        };
+        SessionController.PassStationMessage(message);
     }
 
     /// <summary>
@@ -170,7 +174,12 @@ public static class WrapperMonitoringThread
 
         if (hasSteamError && !steamError)
         {
-            SessionController.PassStationMessage("MessageToAndroid,SteamError");
+            JObject message = new JObject
+            {
+                { "action", "MessageToAndroid" },
+                { "value", "SteamError" }
+            };
+            SessionController.PassStationMessage(message);
             steamError = true;
         }
         else if (!hasSteamError && steamError)

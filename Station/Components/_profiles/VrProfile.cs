@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
+using Newtonsoft.Json.Linq;
 using Station.Components._interfaces;
+using Station.Components._notification;
 using Station.Components._profiles._headsets;
 using Station.Components._utils;
 using Station.Components._wrapper.vive;
@@ -61,7 +63,7 @@ public class VrProfile: Profile, IProfile
                 VrHeadset = new ViveFocus3();
                 break;
             default:
-                SessionController.PassStationMessage("No headset type specified.");
+                Logger.WriteLog("No headset type specified.", MockConsole.LogLevel.Error);
                 break;
         }
     }
@@ -96,7 +98,12 @@ public class VrProfile: Profile, IProfile
             return;
         }
 
-        ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage($"SoftwareState,Starting VR processes"), TimeSpan.FromSeconds(0));
+        JObject message = new JObject
+        {
+            { "action", "SoftwareState" },
+            { "value", "Starting VR processes" }
+        };
+        ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage(message), TimeSpan.FromSeconds(0));
 
         VrHeadset?.StartVrSession();
         MinimizeSoftware();
@@ -117,7 +124,7 @@ public class VrProfile: Profile, IProfile
             case "ViveFocus3":
                 return ViveScripts.WaitForVive(wrapperType).Result;
             default:
-                SessionController.PassStationMessage("WaitForConnection - No headset type specified.");
+                Logger.WriteLog("WaitForConnection - No headset type specified.", MockConsole.LogLevel.Error);
                 return false;
         }
     }

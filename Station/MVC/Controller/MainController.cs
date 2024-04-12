@@ -3,6 +3,7 @@ using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
 using LeadMeLabsLibrary;
+using Newtonsoft.Json.Linq;
 using Sentry;
 using Station._config;
 using Station.Components._managers;
@@ -140,8 +141,13 @@ public static class MainController
             }
 
             //Cannot be any higher - encryption key does not exist before the DotEnv.Load()
+            JObject message = new JObject
+            {
+                { "action", "SoftwareState" },
+                { "value", "Launching Software" }
+            };
             ScheduledTaskQueue.EnqueueTask(
-                () => SessionController.PassStationMessage($"SoftwareState,Launching Software"),
+                () => SessionController.PassStationMessage(message),
                 TimeSpan.FromSeconds(0));
 
             App.SetWindowTitle(
@@ -163,7 +169,12 @@ public static class MainController
     /// </summary>
     private static void Initialisation()
     {
-        ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage($"SoftwareState,Initialising configuration"), TimeSpan.FromSeconds(2));
+        JObject message = new JObject
+        {
+            { "action", "SoftwareState" },
+            { "value", "Initialising configuration" }
+        };
+        ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage(message), TimeSpan.FromSeconds(2));
 
         // Schedule the function to run after a 5-minute delay (300,000 milliseconds)
         variableCheck = new Timer(OnTimerCallback, null, 300000, Timeout.Infinite);

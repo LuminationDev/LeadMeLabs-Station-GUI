@@ -78,7 +78,13 @@ internal class CustomWrapper : IWrapper
             if (CommandLine.StationLocation == null)
             {
                 MockConsole.WriteLine($"Station working directory not found while searching for header file", MockConsole.LogLevel.Error);
-                SessionController.PassStationMessage($"StationError,Station working directory not found while searching for header file.");
+                
+                JObject message = new JObject
+                {
+                    { "action", "StationError" },
+                    { "value", "Station working directory not found while searching for header file." }
+                };
+                SessionController.PassStationMessage(message);
 
                 MessageController.SendResponse("Android", "Station", $"ThumbnailError:{experienceName}");
                 return;
@@ -98,7 +104,13 @@ internal class CustomWrapper : IWrapper
             if (!File.Exists(filePath))
             {
                 MockConsole.WriteLine($"File not found:{filePath}", MockConsole.LogLevel.Error);
-                SessionController.PassStationMessage($"StationError,File not found:{filePath}");
+                
+                JObject message = new JObject
+                {
+                    { "action", "StationError" },
+                    { "value", $"File not found:{filePath}" }
+                };
+                SessionController.PassStationMessage(message);
                 MessageController.SendResponse("Android", "Station", $"ThumbnailError:{experienceName}");
                 return;
             }
@@ -143,19 +155,19 @@ internal class CustomWrapper : IWrapper
         _launchWillHaveFailedFromOpenVrTimeout = false;
         if(CommandLine.StationLocation == null)
         {
-            SessionController.PassStationMessage("Cannot find working directory");
+            Logger.WriteLog("CustomWrapper - WrapProcess: Cannot find working directory", MockConsole.LogLevel.Error);
             return "Cannot find working directory";
         }
 
         if (vrProfile == null && experience.IsVr)
         {
-            SessionController.PassStationMessage("No VR headset set.");
+            Logger.WriteLog("CustomWrapper - WrapProcess: No VR headset set.", MockConsole.LogLevel.Error);
             return "No VR headset set.";
         }
 
         if (experience.Name == null || experience.ID == null)
         {
-            SessionController.PassStationMessage("CustomWrapper.WrapProcess - Experience name cannot be null.");
+            Logger.WriteLog("CustomWrapper.WrapProcess - Experience name cannot be null.", MockConsole.LogLevel.Error);
             return "CustomWrapper.WrapProcess - Experience name cannot be null.";
         }
 
@@ -234,7 +246,7 @@ internal class CustomWrapper : IWrapper
     {
         if (CommandLine.StationLocation == null)
         {
-            SessionController.PassStationMessage("Cannot find working directory");
+            Logger.WriteLog("CustomWrapper - WrapProcess: Cannot find working directory", MockConsole.LogLevel.Error);
             return;
         }
 
@@ -252,7 +264,12 @@ internal class CustomWrapper : IWrapper
 
         if (!File.Exists(filePath))
         {
-            SessionController.PassStationMessage($"StationError,File not found:{filePath}");
+            JObject message = new JObject
+            {
+                { "action", "StationError" },
+                { "value", $"File not found:{filePath}" }
+            };
+            SessionController.PassStationMessage(message);
             return;
         }
 
@@ -293,7 +310,20 @@ internal class CustomWrapper : IWrapper
             UiUpdater.UpdateProcess(lastExperience.Name ?? "Unknown");
             UiUpdater.UpdateStatus("Running...");
             WindowManager.MaximizeProcess(child); //Maximise the process experience
-            SessionController.PassStationMessage($"ApplicationUpdate,{lastExperience.Name}/{lastExperience.ID}/Custom");
+            
+            JObject experienceInformation = new JObject
+            {
+                { "name", lastExperience.Name },
+                { "appId", lastExperience.ID },
+                { "wrapper", "Custom" }
+            };
+            
+            JObject message = new JObject
+            {
+                { "action", "ApplicationUpdate" },
+                { "info", experienceInformation }
+            };
+            SessionController.PassStationMessage(message);
             
             JObject response = new JObject();
             response.Add("response", "ExperienceLaunched");
@@ -310,7 +340,13 @@ internal class CustomWrapper : IWrapper
         {
             StopCurrentProcess();
             UiUpdater.ResetUiDisplay();
-            SessionController.PassStationMessage($"MessageToAndroid,GameLaunchFailed:{lastExperience.Name}");
+            
+            JObject message = new JObject
+            {
+                { "action", "MessageToAndroid" },
+                { "value", $"GameLaunchFailed:{lastExperience.Name}" }
+            };
+            SessionController.PassStationMessage(message);
             
             JObject response = new JObject();
             response.Add("response", "ExperienceLaunchFailed");
@@ -364,7 +400,12 @@ internal class CustomWrapper : IWrapper
         {
             currentProcess?.WaitForExit();
             lastExperience.Name = null; //Reset for correct headset state
-            SessionController.PassStationMessage($"ApplicationClosed");
+            
+            JObject message = new JObject
+            {
+                { "action", "ApplicationClosed" }
+            };
+            SessionController.PassStationMessage(message);
             UiUpdater.ResetUiDisplay();
         });
     }
