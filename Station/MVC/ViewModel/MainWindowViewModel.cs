@@ -5,6 +5,7 @@ using System.Windows;
 using System.Windows.Input;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Newtonsoft.Json.Linq;
 using Station.Components._managers;
 using Station.Components._notification;
 using Station.Components._utils;
@@ -89,7 +90,12 @@ public class MainWindowViewModel : ObservableRecipient
     {
         new Task(() =>
         {
-            ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage($"SoftwareState,Shutting down VR processes"), TimeSpan.FromSeconds(1));
+            JObject message = new JObject
+            {
+                { "action", "SoftwareState" },
+                { "value", "Shutting down VR processes" }
+            };
+            ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage(message), TimeSpan.FromSeconds(1));
             _ = WrapperManager.RestartVrProcesses();
         }).Start();
     }

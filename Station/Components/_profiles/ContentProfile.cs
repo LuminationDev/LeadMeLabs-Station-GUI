@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using Newtonsoft.Json.Linq;
 using Station.Components._commandLine;
 using Station.Components._interfaces;
 using Station.Components._utils;
@@ -89,7 +90,12 @@ public class ContentProfile: Profile, IProfile
             return;
         }
 
-        ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage($"SoftwareState,Starting processes"), TimeSpan.FromSeconds(0));
+        JObject message = new JObject
+        {
+            { "action", "SoftwareState" },
+            { "value", "Starting processes" }
+        };
+        ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage(message), TimeSpan.FromSeconds(0));
         _startupFunctions.ExecuteStartupFunctions();
         MinimizeSoftware();
     }
