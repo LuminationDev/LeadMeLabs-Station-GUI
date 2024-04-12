@@ -164,7 +164,12 @@ public class OpenVrManager
                 $"OpenVR connection not established - restarting SteamVR", MockConsole.LogLevel.Normal);
 
             //Send message to the tablet (Updating what is happening)
-            ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage($"SoftwareState,Restarting SteamVR"), TimeSpan.FromSeconds(1));
+            JObject message = new JObject
+            {
+                { "action", "SoftwareState" },
+                { "value", "Restarting SteamVR" }
+            };
+            ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage(message), TimeSpan.FromSeconds(1));
 
             //Kill SteamVR
             CommandLine.QueryProcesses(new List<string> { "vrmonitor" }, true);
@@ -178,7 +183,12 @@ public class OpenVrManager
             if (!steamvr)
             {
                 // Connection bailed out, send a failure message
-                SessionController.PassStationMessage("MessageToAndroid,HeadsetTimeout");
+                JObject androidMessage = new JObject
+                {
+                    { "action", "MessageToAndroid" },
+                    { "value", "HeadsetTimeout" }
+                };
+                SessionController.PassStationMessage(androidMessage);
                 return false;
             }
 
@@ -186,12 +196,22 @@ public class OpenVrManager
                 $"SteamVR restarted successfully", MockConsole.LogLevel.Normal);
 
             //Send message to the tablet (Updating what is happening)
-            ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage($"SoftwareState,Connecting SteamVR"), TimeSpan.FromSeconds(1));
+            JObject stateMessage = new JObject
+            {
+                { "action", "SoftwareState" },
+                { "value", "Connecting SteamVR" }
+            };
+            ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage(stateMessage), TimeSpan.FromSeconds(1));
 
             bool openvr = await Helper.MonitorLoop(() => !MainController.openVrManager?.InitialiseOpenVr() ?? true, 10);
             if (!openvr)
             {
-                ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage($"SoftwareState,SteamVR Error"), TimeSpan.FromSeconds(1));
+                JObject errorMessage = new JObject
+                {
+                    { "action", "SoftwareState" },
+                    { "value", "SteamVR Error" }
+                };
+                ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage(errorMessage), TimeSpan.FromSeconds(1));
                 return false;
             }
 
@@ -350,7 +370,13 @@ public class OpenVrManager
                 
                 WrapperManager.currentWrapper.StopCurrentProcess();
                 UiUpdater.ResetUiDisplay();
-                SessionController.PassStationMessage($"MessageToAndroid,GameLaunchFailed:{WrapperManager.currentWrapper.GetLastExperience()?.Name}");
+                
+                JObject message = new JObject
+                {
+                    { "action", "MessageToAndroid" },
+                    { "value", $"GameLaunchFailed:{WrapperManager.currentWrapper.GetLastExperience()?.Name}" }
+                };
+                SessionController.PassStationMessage(message);
             
                 JObject response = new JObject { { "response", "ExperienceLaunchFailed" } };
                 JObject responseData = new JObject { { "experienceId", WrapperManager.currentWrapper.GetLastExperience()?.ID } };
@@ -451,8 +477,19 @@ public class OpenVrManager
         }
             
         // Send a message to the NUC
-        SessionController.PassStationMessage(
-            $"ApplicationUpdate,{currentAppName}/{experienceId}/{currentAppType}");
+        JObject experienceInformation = new JObject
+        {
+            { "name", currentAppName },
+            { "appId", experienceId },
+            { "wrapper", currentAppType }
+        };
+        
+        JObject message = new JObject
+        {
+            { "action", "ApplicationUpdate" },
+            { "info", experienceInformation }
+        };
+        SessionController.PassStationMessage(message);
             
         JObject response = new JObject();
         response.Add("response", "ExperienceLaunched");

@@ -8,6 +8,7 @@ using System.Net.Http.Headers;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
+using Newtonsoft.Json.Linq;
 using Sentry;
 using Station.Components._notification;
 using Station.Components._overlay;
@@ -296,7 +297,12 @@ public static class CommandLine
 
         if (!File.Exists(fullPath))
         {
-            SessionController.PassStationMessage($"StationError,File not found:{fullPath}");
+            JObject message = new JObject
+            {
+                { "action", "StationError" },
+                { "value", $"File not found:{fullPath}" }
+            };
+            SessionController.PassStationMessage(message);
             SteamScripts.steamCmdConfigured = "steamcmd.exe not found";
             return null;
         }
@@ -353,7 +359,12 @@ public static class CommandLine
 
         if (!File.Exists(fullPath))
         {
-            SessionController.PassStationMessage($"StationError,File not found:{fullPath}");
+            JObject message = new JObject
+            {
+                { "action", "StationError" },
+                { "value", $"File not found:{fullPath}" }
+            };
+            SessionController.PassStationMessage(message);
             return null;
         }
 

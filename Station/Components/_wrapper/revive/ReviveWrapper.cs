@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Threading.Tasks;
 using LeadMeLabsLibrary;
+using Newtonsoft.Json.Linq;
 using Station.Components._commandLine;
 using Station.Components._interfaces;
 using Station.Components._models;
@@ -77,7 +78,13 @@ public class ReviveWrapper : IWrapper
             if (!File.Exists(filePath))
             {
                 MockConsole.WriteLine($"File not found:{filePath}", MockConsole.LogLevel.Error);
-                SessionController.PassStationMessage($"StationError,File not found:{filePath}");
+                
+                JObject message = new JObject
+                {
+                    { "action", "StationError" },
+                    { "value", $"File not found:{filePath}" }
+                };
+                SessionController.PassStationMessage(message);
                 MessageController.SendResponse("Android", "Station", $"ThumbnailError:{experienceKey}");
                 return;
             }
@@ -118,13 +125,18 @@ public class ReviveWrapper : IWrapper
         _launchWillHaveFailedFromOpenVrTimeout = false;
         if (experience.ID == null)
         {
-            SessionController.PassStationMessage($"MessageToAndroid,GameLaunchFailed:Unknown experience");
+            JObject message = new JObject
+            {
+                { "action", "MessageToAndroid" },
+                { "value", "GameLaunchFailed:Unknown experience" }
+            };
+            SessionController.PassStationMessage(message);
             return $"MessageToAndroid,GameLaunchFailed:Unknown experience";
         }
 
         if (vrProfile?.VrHeadset == null)
         {
-            SessionController.PassStationMessage("No VR headset set.");
+            Logger.WriteLog("ReviveWrapper - WrapProcess: No VR headset set.", MockConsole.LogLevel.Error);
             return "No VR headset set.";
         }
 
@@ -133,7 +145,12 @@ public class ReviveWrapper : IWrapper
 
         if(experienceName == null)
         {
-            SessionController.PassStationMessage($"MessageToAndroid,GameLaunchFailed:Fail to find experience");
+            JObject message = new JObject
+            {
+                { "action", "MessageToAndroid" },
+                { "value", "GameLaunchFailed:Fail to find experience" }
+            };
+            SessionController.PassStationMessage(message);
             Logger.WriteLog($"Unable to find Revive experience details (name) for: {experience.Name}", MockConsole.LogLevel.Normal);
             return $"Unable to find Revive experience details (name & install directory) for: {experience.Name}";
         }
@@ -202,7 +219,12 @@ public class ReviveWrapper : IWrapper
             currentProcess?.WaitForExit();
             experienceName = null; //Reset for correct headset state
             SteamScripts.popupDetect = false;
-            SessionController.PassStationMessage($"ApplicationClosed");
+            
+            JObject message = new JObject
+            {
+                { "action", "ApplicationClosed" }
+            };
+            SessionController.PassStationMessage(message);
             UiUpdater.ResetUiDisplay();
         });
     }

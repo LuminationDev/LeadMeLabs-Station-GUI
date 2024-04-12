@@ -153,7 +153,7 @@ public static class EmbeddedScripts
         
         if (CommandLine.StationLocation == null)
         {
-            SessionController.PassStationMessage("Cannot find working directory for custom experiences");
+            Logger.WriteLog("EmbeddedScripts - LoadAvailableExperiences: Cannot find working directory for embedded experiences", MockConsole.LogLevel.Error);
             return null;
         }
         
