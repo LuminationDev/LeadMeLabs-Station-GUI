@@ -267,47 +267,51 @@ public class OpenVrManager
             if (error == EVRApplicationError.None)
             {
                 string pchKey = pchKeyBuffer.ToString();
-                if (pchKey.Contains("steam.app") || pchKey.Contains("custom.app") || pchKey.Contains("revive.app"))
+                if (!pchKey.Contains("steam.app") && !pchKey.Contains("custom.app") && !pchKey.Contains("revive.app") &&
+                    !pchKey.Contains("embedded.app")) continue;
+                
+                // Get the application properties using the pch key
+                // string applicationName =
+                //     GetApplicationPropertyString(pchKey, EVRApplicationProperty.Name_String);
+                // string applicationLaunchType =
+                //     GetApplicationPropertyString(pchKey, EVRApplicationProperty.LaunchType_String);
+                    
+                // string output = $"Application Key: {pchKey} " +
+                //                 $"Application Name: {applicationName} " +
+                //                 $"Application Index: {index} " +
+                //                 $"Application Type: {applicationLaunchType}";
+                    
+                //Logger.WriteLog(output, MockConsole.LogLevel.Normal);
+
+                vrApplicationCount++;
+
+                //Get the application ID
+                string appId;
+                if(pchKey.Contains("steam.app"))
                 {
-                    // Get the application properties using the pch key
-                    // string applicationName =
-                    //     GetApplicationPropertyString(pchKey, EVRApplicationProperty.Name_String);
-                    // string applicationLaunchType =
-                    //     GetApplicationPropertyString(pchKey, EVRApplicationProperty.LaunchType_String);
-                    
-                    // string output = $"Application Key: {pchKey} " +
-                    //                 $"Application Name: {applicationName} " +
-                    //                 $"Application Index: {index} " +
-                    //                 $"Application Type: {applicationLaunchType}";
-                    
-                    //Logger.WriteLog(output, MockConsole.LogLevel.Normal);
+                    appId = pchKey.Replace("steam.app.", "");
+                } 
+                else if (pchKey.Contains("custom.app"))
+                {
+                    appId = pchKey.Replace("custom.app.", "");
+                } 
+                else if (pchKey.Contains("revive.app"))
+                {
+                    appId = pchKey.Replace("revive.app.", "");
+                }
+                else if (pchKey.Contains("embedded.app"))
+                {
+                    appId = pchKey.Replace("embedded.app.", "");
+                }
+                else
+                {
+                    continue;
+                }
 
-                    vrApplicationCount++;
-
-                    //Get the application ID
-                    string appId;
-                    if(pchKey.Contains("steam.app"))
-                    {
-                        appId = pchKey.Replace("steam.app.", "");
-                    } 
-                    else if (pchKey.Contains("custom.app"))
-                    {
-                        appId = pchKey.Replace("custom.app.", "");
-                    } 
-                    else if (pchKey.Contains("revive.app"))
-                    {
-                        appId = pchKey.Replace("revive.app.", "");
-                    }
-                    else
-                    {
-                        continue;
-                    }
-
-                    //If an application is in the dictionary it is therefore a VR experience
-                    if (!vrApplicationDictionary?.ContainsKey(appId) ?? false)
-                    {
-                        vrApplicationDictionary.Add(appId, pchKey);
-                    }
+                //If an application is in the dictionary it is therefore a VR experience
+                if (!vrApplicationDictionary?.ContainsKey(appId) ?? false)
+                {
+                    vrApplicationDictionary.Add(appId, pchKey);
                 }
             }
             else
