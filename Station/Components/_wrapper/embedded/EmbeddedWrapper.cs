@@ -455,16 +455,12 @@ internal class EmbeddedWrapper : IWrapper
         if (currentProcess != null)
         {
             currentProcess.Kill(true);
-            WrapperMonitoringThread.StopMonitoring();
-        }
-        else
-        {
             currentProcess = GetExperienceProcess();
             if (currentProcess != null)
             {
-                currentProcess.Kill(true);
-                WrapperMonitoringThread.StopMonitoring();
+                currentProcess.Kill();
             }
+            WrapperMonitoringThread.StopMonitoring();
         }
         
         lastExperience.Name = null; //Reset for correct headset state
