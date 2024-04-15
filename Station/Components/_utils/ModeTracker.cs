@@ -13,7 +13,7 @@ namespace Station.Components._utils;
 public static class ModeTracker
 {
     //1 hour timeout (60 minutes) * (60 seconds) * (1000 milliseconds)
-    private const int Timeout = 60 * 60 * 1000;
+    private const int Timeout = 5 * 60 * 1000; //TODO change back to 60 instead of 5
     
     /// <summary>
     /// A private enum to track the different Station modes.
