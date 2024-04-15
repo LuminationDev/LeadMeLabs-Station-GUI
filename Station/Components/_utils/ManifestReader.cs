@@ -39,6 +39,30 @@ public static class ManifestReader
     }
     
     /// <summary>
+    /// Creates a .vrmanifest file with the specified source and an empty list of applications.
+    /// </summary>
+    /// <param name="filePath">The path to the .vrmanifest file to be created.</param>
+    /// <param name="source">The source value to be included in the .vrmanifest file.</param>
+    public static void CreateVrManifestFile(string filePath, string source)
+    {
+        string jsonContent = $@"{{
+            ""source"": ""{source}"",
+            ""applications"": []
+        }}";
+
+        try
+        {
+            // Write the JSON content to the file
+            File.WriteAllText(filePath, jsonContent);
+            Logger.WriteLog($"{source} - VR Manifest file created successfully.", MockConsole.LogLevel.Normal);
+        }
+        catch (Exception ex)
+        {
+            Logger.WriteLog($"{source} - ERROR: VR Manifest file not created. {ex.Message}", MockConsole.LogLevel.Error);
+        }
+    }
+    
+    /// <summary>
     /// Reads the content of a VR manifest file from the specified file path and converts it to a JObject.
     /// </summary>
     /// <param name="filePath">The path to the VR manifest file.</param>
