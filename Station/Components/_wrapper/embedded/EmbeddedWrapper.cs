@@ -341,7 +341,7 @@ internal class EmbeddedWrapper : IWrapper
             response.Add("responseData", responseData);
             MessageController.SendResponse("NUC", "QA", response.ToString());
 
-            MockConsole.WriteLine($"Application launching: {currentProcess.MainWindowTitle}/{lastExperience.ID}", MockConsole.LogLevel.Normal);
+            Logger.WriteLog($"Application launching: {currentProcess.MainWindowTitle}/{lastExperience.ID}/{currentProcess.Id}", MockConsole.LogLevel.Normal);
 
             ListenForClose();
         }
@@ -455,14 +455,20 @@ internal class EmbeddedWrapper : IWrapper
         if (currentProcess != null)
         {
             currentProcess.Kill(true);
+            currentProcess = GetExperienceProcess();
+            if (currentProcess != null)
+            {
+                currentProcess.Kill();
+            }
             WrapperMonitoringThread.StopMonitoring();
         }
+        
         lastExperience.Name = null; //Reset for correct headset state
     }
 
     public void RestartCurrentExperience()
     {
-        //Create a temp as the StopCurrenProcess alters the current experience
+        //Create a temp as the StopCurrentProcess alters the current experience
         Experience temp = lastExperience;
         if (currentProcess != null && !lastExperience.IsNull())
         {

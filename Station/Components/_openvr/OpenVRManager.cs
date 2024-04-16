@@ -502,6 +502,8 @@ public class OpenVrManager
         JObject responseData = new JObject();
         responseData.Add("experienceId", experienceId);
         response.Add("responseData", responseData);
+        
+        Logger.WriteLog($"Application launching: {targetProcess.MainWindowTitle}/{experienceId}/{targetProcess.Id}", MockConsole.LogLevel.Normal);
             
         MessageController.SendResponse("NUC", "QA", response.ToString());
 
