@@ -1,4 +1,9 @@
 using System.Threading.Tasks;
+using Station.Components._managers;
+using Station.Components._notification;
+using Station.Components._profiles;
+using Station.Components._utils;
+using Station.Components._wrapper.steam;
 using Station.MVC.Controller;
 
 namespace Station.Components._legacy;
@@ -9,6 +14,70 @@ namespace Station.Components._legacy;
 /// </summary>
 public static class LegacyMessage
 {
+    public static async void HandleStationString(string source, string additionalData)
+    {
+        if (additionalData.StartsWith("GetValue"))
+        {
+            string key = additionalData.Split(":", 2)[1];
+            switch (key)
+            {
+                case "installedApplications":
+                    Logger.WriteLog("Collecting station experiences", MockConsole.LogLevel.Normal);
+                    MainController.wrapperManager?.ActionHandler("CollectApplications");
+                    break;
+
+                case "volume":
+                    string currentVolume = await AudioManager.GetVolume();
+                    MessageController.SendResponse(source, "Station", "SetValue:" + key + ":" + currentVolume);
+                    break;
+
+                case "muted":
+                    string isMuted = await AudioManager.GetMuted();
+                    MessageController.SendResponse(source, "Station", "SetValue:" + key + ":" + isMuted);
+                    break;
+
+                case "devices":
+                    //When a tablet connects/reconnects to the NUC, send through the current VR device statuses.
+                    // Safe cast for potential vr profile
+                    VrProfile? vrProfile = Profile.CastToType<VrProfile>(SessionController.StationProfile);
+                    if (vrProfile?.VrHeadset == null) return;
+
+                    vrProfile.VrHeadset?.GetStatusManager().QueryStatuses();
+                    break;
+            }
+        }
+        
+        if (additionalData.StartsWith("SetValue"))
+        {
+            string[] keyValue = additionalData.Split(":", 3);
+            string key = keyValue[1];
+            string value = keyValue[2];
+            
+            switch (key)
+            {
+                case "idleMode":
+                    ModeTracker.ToggleIdleMode(value);
+                    break;
+                
+                case "volume":
+                    AudioManager.SetVolume(value);
+                    break;
+
+                case "activeAudioDevice":
+                    AudioManager.SetCurrentAudioDevice(value);
+                    break;
+
+                case "muted":
+                    AudioManager.SetMuted(value);
+                    break;
+
+                case "steamCMD":
+                    SteamScripts.ConfigureSteamCommand(value);
+                    break;
+            }
+        }
+    }
+    
     /// <summary>
     /// Handle the action of an experience that has been sent from the Tablet -> NUC -> Station
     /// </summary>

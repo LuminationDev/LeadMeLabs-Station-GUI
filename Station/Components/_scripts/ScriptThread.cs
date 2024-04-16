@@ -1,15 +1,12 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 using Newtonsoft.Json.Linq;
 using Station.Components._legacy;
 using Station.Components._managers;
 using Station.Components._models;
 using Station.Components._notification;
-using Station.Components._profiles;
 using Station.Components._utils;
-using Station.Components._wrapper.steam;
 using Station.MVC.Controller;
 using Station.QA;
 
@@ -104,64 +101,9 @@ public class ScriptThread
         }
     }
 
-    private async void HandleStation(string additionalData)
+    private void HandleStation(string jObjectData)
     {
-        if (additionalData.StartsWith("GetValue"))
-        {
-            string key = additionalData.Split(":", 2)[1];
-            switch (key)
-            {
-                case "installedApplications":
-                    Logger.WriteLog("Collecting station experiences", MockConsole.LogLevel.Normal);
-                    MainController.wrapperManager?.ActionHandler("CollectApplications");
-                    break;
-
-                case "volume":
-                    string currentVolume = await AudioManager.GetVolume();
-                    MessageController.SendResponse(_source, "Station", "SetValue:" + key + ":" + currentVolume);
-                    break;
-
-                case "muted":
-                    string isMuted = await AudioManager.GetMuted();
-                    MessageController.SendResponse(_source, "Station", "SetValue:" + key + ":" + isMuted);
-                    break;
-
-                case "devices":
-                    //When a tablet connects/reconnects to the NUC, send through the current VR device statuses.
-                    // Safe cast for potential vr profile
-                    VrProfile? vrProfile = Profile.CastToType<VrProfile>(SessionController.StationProfile);
-                    if (vrProfile?.VrHeadset == null) return;
-
-                    vrProfile.VrHeadset?.GetStatusManager().QueryStatuses();
-                    break;
-            }
-        }
-        
-        if (additionalData.StartsWith("SetValue"))
-        {
-            string[] keyValue = additionalData.Split(":", 3);
-            string key = keyValue[1];
-            string value = keyValue[2];
-            
-            switch (key)
-            {
-                case "volume":
-                    AudioManager.SetVolume(value);
-                    break;
-
-                case "activeAudioDevice":
-                    AudioManager.SetCurrentAudioDevice(value);
-                    break;
-
-                case "muted":
-                    AudioManager.SetMuted(value);
-                    break;
-
-                case "steamCMD":
-                    SteamScripts.ConfigureSteamCommand(value);
-                    break;
-            }
-        }
+        LegacyMessage.HandleStationString(_source, jObjectData);
     }
 
     /// <summary>
@@ -198,9 +140,7 @@ public class ScriptThread
         }
         string heightString = split[1];
         string widthString = split[3];
-        int height = 0;
-        int width = 0;
-        if (!Int32.TryParse(heightString, out height) || !Int32.TryParse(widthString, out width))
+        if (!Int32.TryParse(heightString, out var height) || !Int32.TryParse(widthString, out var width))
         {
             Logger.WriteLog($"Could not parse display change for values Height: {heightString}, Width: {widthString}", MockConsole.LogLevel.Error);
             return;
