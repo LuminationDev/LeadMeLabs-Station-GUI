@@ -67,7 +67,6 @@ public static class StationMonitoringThread
         {
             new Task(OpenVrCheck).Start(); //Perform as separate task in case SteamVR is restarting.
         }
-        SetVolCheck();
         TemperatureCheck();
         
         // Only check if a VR profile or the Content profile's account list has 'Steam' in it
@@ -88,6 +87,9 @@ public static class StationMonitoringThread
     /// </summary>
     private static void OpenVrCheck()
     {
+        // If in Idle mode to not attempt the check
+        if (ModeTracker.IsIdle()) return;
+        
         ExternalSoftwareCheck();
         
         //An early exit if the vrmonitor (SteamVR) process is not currently running
@@ -97,7 +99,7 @@ public static class StationMonitoringThread
         if (MainController.openVrManager?.InitialiseOpenVr() ?? false)
         {
             MainController.openVrManager.QueryCurrentApplication();
-            MainController.openVrManager?.StartDeviceChecks(); //Start a loop instead of continuously checking
+            MainController.openVrManager.StartDeviceChecks(); //Start a loop instead of continuously checking
         } 
         else
         {
@@ -126,23 +128,6 @@ public static class StationMonitoringThread
             MockConsole.LogLevel.Debug);
     }
 
-    /// <summary>
-    /// Retrieves a list of running processes with the name "SetVol" using `ProcessManager.GetProcessesByName`.
-    /// Iterates through the list and, if a process has a non-empty main window title (which represents an error, 
-    /// logs its termination and forcefully terminates the process using `process.Kill()`.
-    /// </summary>
-    private static void SetVolCheck()
-    {
-        Process[] setVolErrors = ProcessManager.GetProcessesByName("SetVol");
-        foreach (var process in setVolErrors)
-        {
-            if (string.IsNullOrEmpty(process.MainWindowTitle)) continue;
-            
-            Logger.WriteLog($"Killing SetVol process: {process.MainWindowTitle}", MockConsole.LogLevel.Normal);
-            process.Kill();
-        }
-    }
-
     private static void NewSteamProcessesCheck()
     {
         Process[] steamProcesses = ProcessManager.GetProcessesByName("steamwebhelper");
@@ -151,20 +136,19 @@ public static class StationMonitoringThread
             if (string.IsNullOrEmpty(process.MainWindowTitle)) continue;
             if (!process.MainWindowTitle.Equals("Steam")) continue;
 
-            if (App.steamProcessId != process.Id)
+            if (App.steamProcessId == process.Id) continue;
+            
+            try
             {
-                try
-                {
-                    App.windowEventTracker.Subscribe("Steam", null);
-                }
-                catch (Exception e)
-                {
-                    Logger.WriteLog($"NewSteamProcessesCheck - Sentry Exception: {e}", MockConsole.LogLevel.Error);
-                    SentrySdk.CaptureException(e);
-                }
-                
-                App.steamProcessId = process.Id;
+                App.windowEventTracker?.Subscribe("Steam", null);
             }
+            catch (Exception e)
+            {
+                Logger.WriteLog($"NewSteamProcessesCheck - Sentry Exception: {e}", MockConsole.LogLevel.Error);
+                SentrySdk.CaptureException(e);
+            }
+                
+            App.steamProcessId = process.Id;
         }
     }
 

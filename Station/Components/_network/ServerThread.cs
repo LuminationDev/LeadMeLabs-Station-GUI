@@ -6,6 +6,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using LeadMeLabsLibrary;
+using Newtonsoft.Json.Linq;
 using Station.Components._commandLine;
 using Station.Components._notification;
 using Station.Components._utils;
@@ -245,8 +246,20 @@ public class ServerThread
         if (data.Contains(":Ping:")) return;
         
         //If the task relates to an experience restart the VR processes
-        if (data.Contains(":Experience:") && InternalDebugger.GetIdleModeActive())
+        if (data.Contains(":Experience:") && !InternalDebugger.GetIdleModeActive() && Helper.GetStationMode().Equals(Helper.STATION_MODE_VR))
         {
+            //Check that the Station is not already exiting idle mode
+            if (ModeTracker.GetExitingIdleMode())
+            {
+                JObject message = new JObject
+                {
+                    { "action", "MessageToAndroid" },
+                    { "value", "AlreadyExitingIdleMode" }
+                };
+                SessionController.PassStationMessage(message);
+                return;
+            }
+            
             //Reset the idle timer
             bool success = await ModeTracker.ResetTimer();
             if (!success) return;

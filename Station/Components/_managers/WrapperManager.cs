@@ -286,18 +286,9 @@ public class WrapperManager
         object convertedApplications = convertFunc(applications);
 
         // Send the JSON message here as the PassStationMessage method splits the supplied message by ','
-        if (messageType.Equals("ApplicationJson"))
-        {
-            MessageController.SendResponse("Android", "Station", "SetValue:installedJsonApplications:" + convertedApplications);
-            return;
-        }
-        
-        JObject message = new JObject
-        {
-            { "action", messageType },
-            { "value", $"{convertedApplications}" }
-        };
-        SessionController.PassStationMessage(message);
+        if (!messageType.Equals("ApplicationJson")) return;
+        MessageController.SendResponse("Android", "Station",
+            $"SetValue:installedJsonApplications:{convertedApplications}");
     }
     
     /// <summary>

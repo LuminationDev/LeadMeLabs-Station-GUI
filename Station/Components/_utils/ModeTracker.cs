@@ -26,14 +26,61 @@ public static class ModeTracker
     
     private static Mode CurrentMode { get; set; }
     private static Timer? idleCheck;
+    private static bool exitingIdleMode;
+
+    /// <summary>
+    /// Check if any experience messages should wait as the system is still turning on.
+    /// </summary>
+    /// <returns>A bool representing if the Station is currently attempting to exit Idle mode.</returns>
+    public static bool GetExitingIdleMode()
+    {
+        return exitingIdleMode;
+    }
+
+    /// <summary>
+    /// Track when the Station is in idle mode.
+    /// </summary>
+    /// <returns>A bool representing if the Station is currently in Idle mode.</returns>
+    public static bool IsIdle()
+    {
+        return CurrentMode == Mode.Idle;
+    }
 
     public static void Initialise()
     {
+        // Do not engage Idle mode if the Station mode is anything other than VR
+        if (!Helper.GetStationMode().Equals(Helper.STATION_MODE_VR))
+        {
+            MockConsole.WriteLine("Station is not in VR mode, Idle mode is not applicable.", MockConsole.LogLevel.Normal);
+            return;
+        }
+        
         idleCheck?.Dispose();
 
         CurrentMode = Mode.Normal;
         idleCheck = new Timer(OnTimerCallback, null, Timeout, System.Threading.Timeout.Infinite);
         Logger.WriteLog("Idle mode timer started.", MockConsole.LogLevel.Normal);
+    }
+
+    /// <summary>
+    /// Switch between Idle mode or Normal mode, this has been manually sent by the tablet.
+    /// </summary>
+    public static void ToggleIdleMode(string value)
+    {
+        switch (value)
+        {
+            case "idle" when CurrentMode == Mode.Normal:
+                EnableIdleMode();
+                break;
+            
+            case "normal" when CurrentMode == Mode.Idle:
+                _ = ResetTimer();
+                break;
+            
+            default:
+                Logger.WriteLog($"ModeTracker - ToggleIdleMode: Mode is already - {value}", MockConsole.LogLevel.Normal);
+                break;
+        }
     }
     
     private static void OnTimerCallback(object? state)
@@ -41,7 +88,7 @@ public static class ModeTracker
         //An experience is active
         if (WrapperManager.currentWrapper?.GetCurrentExperienceName()?.Length > 0)
         {
-            Logger.WriteLog($"ModeTracker - OnTimerCallback() Active process detected: {WrapperManager.currentWrapper?.GetCurrentExperienceName()}", MockConsole.LogLevel.Normal);
+            Logger.WriteLog($"ModeTracker - OnTimerCallback() Active process detected: {WrapperManager.currentWrapper.GetCurrentExperienceName()}", MockConsole.LogLevel.Normal);
             idleCheck?.Change(Timeout, System.Threading.Timeout.Infinite);
             return;
         }
@@ -49,7 +96,6 @@ public static class ModeTracker
         //Already in idle mode
         if (CurrentMode == Mode.Idle) return;
         
-        CurrentMode = Mode.Idle;
         EnableIdleMode();
     }
     
@@ -60,11 +106,11 @@ public static class ModeTracker
     private static void EnableIdleMode()
     {
         Logger.WriteLog("Station is entering Idle mode.", MockConsole.LogLevel.Normal);
+        CurrentMode = Mode.Idle;
         
         //Update the status
-        SessionController.CurrentState = "Idle Mode...";
-        //TODO This currently stops the Tablets Single Station Fragment from working - implement this after the next tablet update
-        // MessageController.SendResponse("Android", "Station", "SetValue:status:Idle");
+        SessionController.CurrentState = "Idle Mode";
+        MessageController.SendResponse("Android", "Station", "SetValue:status:Idle");
         
         //Exit VR applications
         WrapperManager.StopCommonProcesses();
@@ -108,20 +154,18 @@ public static class ModeTracker
             await Task.Delay(2500);
         
             OverlayManager.ManualStop();
-
+            exitingIdleMode = false;
             return steamvr;
         }
-        else
-        {
-            await Task.Delay(2500);
-            
-            OverlayManager.SetText("Ready for use");
-            await Task.Delay(2500);
-        
-            OverlayManager.ManualStop();
 
-            return true;
-        }
+        await Task.Delay(2500);
+            
+        OverlayManager.SetText("Ready for use");
+        await Task.Delay(2500);
+        
+        OverlayManager.ManualStop();
+        exitingIdleMode = false;
+        return true;
     }
     
     /// <summary>
@@ -134,6 +178,7 @@ public static class ModeTracker
         
         if (CurrentMode != Mode.Normal)
         {
+            exitingIdleMode = true;
             success = await ExitIdleMode();
             CurrentMode = Mode.Normal;
         }

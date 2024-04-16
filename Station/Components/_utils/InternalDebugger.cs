@@ -55,7 +55,7 @@ public static class InternalDebugger
     /// <summary>
     /// Used to control the Station should go into Idle mode after 60 minutes of no usage
     /// </summary>
-    public static bool idleModeActive = false;
+    public static bool idleModeActive = true;
     public static void SetIdleModeActive(bool active)
     {
         idleModeActive = active;
