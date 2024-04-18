@@ -96,6 +96,12 @@ public static class SessionController
     /// </summary>
     public static void RestartVrSession()
     {
+        //Reset the idle timer and current mode type
+        if (InternalDebugger.GetIdleModeActive())
+        {
+            ModeTracker.ResetMode();
+        }
+        
         JObject message = new JObject
         {
             { "action", "SoftwareState" },
@@ -130,12 +136,6 @@ public static class SessionController
         
         //Attempt to minimise other applications (mostly Steam)
         StationProfile?.MinimizeSoftware(2);
-        
-        //Reset the idle timer and current mode type
-        if (InternalDebugger.GetIdleModeActive())
-        {
-            ModeTracker.ResetMode();
-        }
     }
 
     /// <summary>

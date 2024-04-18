@@ -244,6 +244,12 @@ public class WrapperManager
     /// <param name="silently">A bool for if the function should use the saved experiences (hence not interfering with the current operation).</param>
     private static void CollectApplications<T>(Func<List<T>, object> convertFunc, string messageType, bool silently = false)
     {
+        //Reset the idle timer and current mode type
+        if (InternalDebugger.GetIdleModeActive())
+        {
+            ModeTracker.ResetMode();
+        }
+        
         List<T> applications = new List<T>();
 
         List<T>? customApplications = CustomWrapper.CollectApplications<T>();
