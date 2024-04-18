@@ -69,7 +69,7 @@ public static class ModeTracker
     {
         switch (value)
         {
-            case "idle" when CurrentMode == Mode.Normal:
+            case "idle":
                 EnableIdleMode();
                 break;
             
