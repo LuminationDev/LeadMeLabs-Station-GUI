@@ -152,6 +152,9 @@ public class WrapperManager
             case "videoPlayerDetails":
                 VideoManager.UpdateVideoPlayerDetails(tokens[1]);
                 break;
+            case "appClosed":
+                StopAProcess();
+                break;
             default:
                 LogHandler($"Unknown actionspace: {tokens[0]}");
                 break;
