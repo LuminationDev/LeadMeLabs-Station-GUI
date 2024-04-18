@@ -441,6 +441,10 @@ public class OpenVrManager
         }
 
         string currentAppName = appNameBuffer.ToString();
+        if (currentAppName.Equals("nwjs 119"))
+        {
+            currentAppName = WrapperManager.currentWrapper?.GetLastExperience()?.Name ?? appNameBuffer.ToString();
+        }
         // string? currentAppStatus = Enum.GetName(typeof(EVRSceneApplicationState),
         //     applications.GetSceneApplicationState());
         //
