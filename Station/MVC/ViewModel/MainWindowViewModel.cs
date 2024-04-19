@@ -232,7 +232,7 @@ public class MainWindowViewModel : ObservableRecipient
         }
     }
     
-    private string _idleModeActiveText = "Yes";
+    private string _idleModeActiveText = "No";
     public string IdleModeActiveText
     {
         get => _idleModeActiveText;

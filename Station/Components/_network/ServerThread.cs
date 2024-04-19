@@ -246,7 +246,7 @@ public class ServerThread
         if (data.Contains(":Ping:")) return;
         
         //If the task relates to an experience restart the VR processes
-        if (data.Contains(":Experience:") && !InternalDebugger.GetIdleModeActive() && Helper.GetStationMode().Equals(Helper.STATION_MODE_VR))
+        if (data.Contains(":Experience:") && InternalDebugger.GetIdleModeActive() && Helper.GetStationMode().Equals(Helper.STATION_MODE_VR))
         {
             //Check that the Station is not already exiting idle mode
             if (ModeTracker.GetExitingIdleMode())
