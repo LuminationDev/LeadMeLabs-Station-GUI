@@ -1,11 +1,4 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-	<Target Name="GenerateVersionFile" AfterTargets="AfterBuild" Condition="'true'">
-		<PropertyGroup>
-			<VersionFilePath>$(OutputPath)\..\$(MSBuildProjectName)_Version.txt</VersionFilePath>
-		</PropertyGroup>
-		<WriteLinesToFile File="$(VersionFilePath)" Lines="$(Version)" Overwrite="true" />
-	</Target>
-	
 	<PropertyGroup>
 		<OutputType>WinExe</OutputType>
 		<TargetFramework>net6.0-windows</TargetFramework>
@@ -15,6 +8,9 @@
 		<ApplicationIcon>./Assets/Icons/icon.ico</ApplicationIcon>
 		<Configurations>Debug;Release;DevDebug;DevRelease</Configurations>
 		<Version>1.1.27</Version>
+        <SelfContained>false</SelfContained>
+        <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+        <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
 	</PropertyGroup>
 
 	<ItemGroup>
@@ -117,6 +113,7 @@
 	<PackageReference Include="Microsoft.Build.Framework" Version="17.6.3" />
 	<PackageReference Include="Microsoft.Extensions.Logging" Version="9.0.0-preview.1.24080.9" />
 	<PackageReference Include="Microsoft.Extensions.Logging.Console" Version="9.0.0-preview.1.24080.9" />
+	<PackageReference Include="Microsoft.Management.Infrastructure.Runtime.Win" Version="3.0.0" />
 	<PackageReference Include="Microsoft.PowerShell.SDK" Version="7.2.18" />
 	<PackageReference Include="Microsoft.WindowsAPICodePack.Shell" Version="1.1.0" />
 	<PackageReference Include="Microsoft.Xaml.Behaviors.Wpf" Version="1.1.39" />
