@@ -91,7 +91,7 @@ commands:
       - persist_to_workspace:
           root: ~/circleci-working/<<pipeline.id>>
           paths:
-            - Station/bin/<<parameters.buildType>>/net6.0-windows/
+            - Station/bin/<<parameters.buildType>>/net6.0-windows/win-x64/
   
   sign:
     parameters:
@@ -101,12 +101,12 @@ commands:
       - run:
           name: "Sign Station.exe"
           command: |
-            cd ~/circleci-working/<<pipeline.id>>/Station/bin/<<parameters.buildType>>/net6.0-windows/
+            cd ~/circleci-working/<<pipeline.id>>/Station/bin/<<parameters.buildType>>/net6.0-windows/win-x64/
             signtool.exe sign /fd sha256 /tr http://ts.ssl.com /td sha256 /n "Technology for Education Solutions Pty. Ltd." ".\Station.exe"
           shell: powershell.exe
       - run:
           name: Compress built files to Station.zip
-          command: cd <<pipeline.id>>; Compress-Archive -Path ~/circleci-working/<<pipeline.id>>/Station/bin/<<parameters.buildType>>/net6.0-windows/* -DestinationPath ~/circleci-working/<<pipeline.id>>/Station/Station.zip
+          command: cd <<pipeline.id>>; Compress-Archive -Path ~/circleci-working/<<pipeline.id>>/Station/bin/<<parameters.buildType>>/net6.0-windows/win-x64/* -DestinationPath ~/circleci-working/<<pipeline.id>>/Station/Station.zip
           shell: powershell.exe
       - store_artifacts:
           path: ~/circleci-working/<<pipeline.id>>/Station/Station.zip
