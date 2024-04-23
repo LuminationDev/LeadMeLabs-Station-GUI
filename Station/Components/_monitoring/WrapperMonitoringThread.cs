@@ -181,6 +181,7 @@ public static class WrapperMonitoringThread
             };
             SessionController.PassStationMessage(message);
             steamError = true;
+            MessageController.SendResponse("NUC", "Analytics", "SteamVRError");
         }
         else if (!hasSteamError && steamError)
         {

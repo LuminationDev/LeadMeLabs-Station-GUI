@@ -112,6 +112,9 @@ public static class ModeTracker
         SessionController.CurrentState = "Idle Mode";
         MessageController.SendResponse("Android", "Station", "SetValue:status:Idle");
         
+        // TODO - Enable this when we start using idle mode
+        // MessageController.SendResponse("NUC", "Analytics", "EnterIdleMode");
+        
         //Exit VR applications
         WrapperManager.StopCommonProcesses();
     }
@@ -146,6 +149,7 @@ public static class ModeTracker
                     { "value", "SteamVR Error" }
                 };
                 ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage(message), TimeSpan.FromSeconds(1));
+                ScheduledTaskQueue.EnqueueTask(() => MessageController.SendResponse("NUC", "Analytics", "SteamVRError"), TimeSpan.FromSeconds(1));
             }
         
             await Task.Delay(2500);
