@@ -2,7 +2,9 @@
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
+using Station.Components._notification;
 using Station.Components._utils;
+using Station.MVC.Controller;
 
 public class WindowEventTracker
 {
@@ -11,8 +13,12 @@ public class WindowEventTracker
     private IntPtr m_target;
 
     // Needed to prevent the GC from sweeping up our callback
-    private static WinEventDelegate m_winEventDelegate;
-    private static IntPtr m_hook;
+    private static WinEventDelegate m_winEventDelegateSteam;
+    private static WinEventDelegate m_winEventDelegateMouse;
+    private static IntPtr m_hookSteam;
+    private static IntPtr m_hookMouse;
+
+    private static DateTime nextReportTime = DateTime.Now;
     
     private static DateTime lastInteraction = DateTime.Now;
 
@@ -54,8 +60,10 @@ public class WindowEventTracker
          *
          * We initializing here, and then altering the target, process id and thread id when needed
          */
-        m_winEventDelegate = WhenWindowMoveStartsOrEnds;
-        m_hook = SetWinEventHook(0, 100, m_target, m_winEventDelegate, m_processId, m_threadId, 0);
+        m_winEventDelegateSteam = WhenWindowMoveStartsOrEnds;
+        m_winEventDelegateMouse = MouseClick;
+        m_hookSteam = SetWinEventHook(0, 100, m_target, m_winEventDelegateSteam, m_processId, m_threadId, 0);
+        m_hookMouse = SetWinEventHook(8, 8, m_target, m_winEventDelegateMouse, 0, 0, 0);
     }
 
     [DllImport("user32.dll", SetLastError = true)]
@@ -105,7 +113,8 @@ public class WindowEventTracker
 
     public void Unsubscribe()
     {
-        UnhookWinEvent(m_hook);
+        UnhookWinEvent(m_hookSteam);
+        UnhookWinEvent(m_hookMouse);
     }
 
     private void WhenWindowMoveStartsOrEnds(IntPtr hWinEventHook, uint eventType, IntPtr hwnd, int idObject, int idChild, uint dwEventThread, uint dwmsEventTime)
@@ -134,6 +143,19 @@ public class WindowEventTracker
                 lastInteraction = DateTime.Now;
             }
             
+        }
+        else
+        {
+            Logger.WriteLog(eventType.ToString(), MockConsole.LogLevel.Debug);
+        }
+    }
+    
+    private void MouseClick(IntPtr hWinEventHook, uint eventType, IntPtr hwnd, int idObject, int idChild, uint dwEventThread, uint dwmsEventTime)
+    {
+        if (nextReportTime > DateTime.Now)
+        {
+            nextReportTime = DateTime.Now.AddMinutes(10);
+            MessageController.SendResponse("NUC", "Analytics", "KeyboardInteraction");
         }
     }
 

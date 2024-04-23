@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using Newtonsoft.Json.Linq;
+using Station.Components._commandLine;
 using Station.Components._interfaces;
 using Station.Components._managers;
 using Station.Components._models;
@@ -29,6 +30,8 @@ public class Statuses
     private static readonly Dictionary<string, VrController> Controllers = new();
     //Base Station models stored by serial number
     public static Dictionary<string, VrBaseStation> baseStations = new();
+
+    private static Boolean openVrHasAlreadyConnected = false;
 
     #region Observers
     /// <summary>
@@ -89,6 +92,17 @@ public class Statuses
         MockConsole.WriteLine($"DeviceStatus:Headset:tracking:OpenVR:{newValue}", MockConsole.LogLevel.Debug);
         string message = $"Headset:OpenVR:tracking:{newValue}";
         OpenVRTrackingChanged?.Invoke(this, new GenericEventArgs<string>(message));
+        
+        // close the legacy mirror on the first time we launch SteamVR (in case it stayed open from a previous crash)
+        if (!openVrHasAlreadyConnected)
+        {
+            openVrHasAlreadyConnected = true;
+            // close legacy mirror if open
+            if (CommandLine.GetProcessIdFromMainWindowTitle("Legacy Mirror") != null)
+            {
+                CommandLine.ToggleSteamVrLegacyMirror();
+            }
+        }
     }
     #endregion
 

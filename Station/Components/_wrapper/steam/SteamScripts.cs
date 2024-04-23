@@ -84,7 +84,9 @@ public static class SteamScripts
                     if(restartAttempts > 2)
                     {
                         Logger.WriteLog("CheckForSteamLogError - SteamVR Error: restarts failed, sending message to tablet.", MockConsole.LogLevel.Normal);
+                        
                         MessageController.SendResponse("Android", "Station", "SteamVRError");
+                        MessageController.SendResponse("NUC", "Analytics", "SteamVRError");
                         break;
                     }
 

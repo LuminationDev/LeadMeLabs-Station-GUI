@@ -212,6 +212,7 @@ public class OpenVrManager
                     { "value", "SteamVR Error" }
                 };
                 ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage(errorMessage), TimeSpan.FromSeconds(1));
+                ScheduledTaskQueue.EnqueueTask(() => MessageController.SendResponse("NUC", "Analytics", "SteamVRError"), TimeSpan.FromSeconds(1));
                 return false;
             }
 
