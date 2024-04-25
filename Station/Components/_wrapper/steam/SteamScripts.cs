@@ -43,6 +43,10 @@ public static class SteamScripts
     private static readonly List<string> BlacklistedGames = new() {"1635730"}; // vive console
     private static readonly List<string> AvailableLicenses = new();
     private static List<string> approvedGames = new();
+    
+    //Track experiences with no licenses or blocked by family mode
+    public static List<string> noLicenses = new();
+    public static List<string> blockedByFamilyMode = new();
 
     private static ManifestReader.ManifestApplicationList steamManifestApplicationList = new (SteamManifest);
     public static void RefreshVrManifest()
@@ -272,6 +276,10 @@ public static class SteamScripts
     /// </summary>
     public static List<T> FilterAvailableExperiences<T>()
     {
+        //Reset the lists as to not double up each refresh //TODO SEND THESE LISTS TO THE NUC?? OR JUST QA??
+        noLicenses = new List<string>();
+        blockedByFamilyMode = new List<string>();
+        
          List<T> apps = new List<T>();
         approvedGames = GetParentalApprovedGames();
         Logger.WriteLog("Approved games length: " + approvedGames.Count, MockConsole.LogLevel.Debug);
@@ -288,6 +296,7 @@ public static class SteamScripts
             if (!AvailableLicenses.Contains(id))
             {
                 Logger.WriteLog($"SteamScripts - FilterAvailableExperiences: Experience does not have available license: {id}", MockConsole.LogLevel.Info);
+                noLicenses.Add(id);
                 continue;
             }
             if (BlacklistedGames.Contains(id))
@@ -298,6 +307,7 @@ public static class SteamScripts
             if (approvedGames.Count != 0 && !approvedGames.Contains(id)) 
             {
                 Logger.WriteLog($"SteamScripts - FilterAvailableExperiences: Experience is not on approved games list: {id}", MockConsole.LogLevel.Info);
+                blockedByFamilyMode.Add(id);
                 continue; // if count is zero then all games are approved
             }
 

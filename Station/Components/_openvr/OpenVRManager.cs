@@ -497,10 +497,8 @@ public class OpenVrManager
         };
         SessionController.PassStationMessage(message);
             
-        JObject response = new JObject();
-        response.Add("response", "ExperienceLaunched");
-        JObject responseData = new JObject();
-        responseData.Add("experienceId", experienceId);
+        JObject response = new JObject { { "response", "ExperienceLaunched" } };
+        JObject responseData = new JObject { { "experienceId", experienceId } };
         response.Add("responseData", responseData);
         
         Logger.WriteLog($"Application launching: {targetProcess.MainWindowTitle}/{experienceId}/{targetProcess.Id}", MockConsole.LogLevel.Normal);
