@@ -11,7 +11,7 @@ using Station.MVC.Controller;
 
 namespace Station.Components._profiles._headsets;
 
-public class ViveFocus3 : Profile, IVrHeadset
+public class ViveBusinessStreaming : Profile, IVrHeadset
 {
     private Statuses Statuses { get; } = new();
 
@@ -109,6 +109,6 @@ public class ViveFocus3 : Profile, IVrHeadset
     /// </summary>
     public void StopProcessesBeforeLaunch()
     {
-        //Not currently required for ViveFocus3
+        //Not currently required for ViveBusinessStreaming
     }
 }

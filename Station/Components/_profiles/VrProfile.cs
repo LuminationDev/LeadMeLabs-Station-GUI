@@ -59,8 +59,9 @@ public class VrProfile: Profile, IProfile
             case "VivePro2":
                 VrHeadset = new VivePro2();
                 break;
-            case "ViveFocus3":
-                VrHeadset = new ViveFocus3();
+            case "ViveFocus3": //Backwards compatability
+            case "ViveBusinessStreaming":
+                VrHeadset = new ViveBusinessStreaming();
                 break;
             default:
                 Logger.WriteLog("No headset type specified.", MockConsole.LogLevel.Error);
@@ -121,7 +122,8 @@ public class VrProfile: Profile, IProfile
         {
             case "VivePro1":
             case "VivePro2":
-            case "ViveFocus3":
+            case "ViveFocus3": //Backwards compatability
+            case "ViveBusinessStreaming":
                 return ViveScripts.WaitForVive(wrapperType).Result;
             default:
                 Logger.WriteLog("WaitForConnection - No headset type specified.", MockConsole.LogLevel.Error);
