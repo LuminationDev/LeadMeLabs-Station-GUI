@@ -6,6 +6,7 @@ using Station.Components._legacy;
 using Station.Components._managers;
 using Station.Components._models;
 using Station.Components._notification;
+using Station.Components._profiles;
 using Station.Components._utils;
 using Station.MVC.Controller;
 using Station.QA;
@@ -22,7 +23,7 @@ public class ScriptThread
 
     public ScriptThread(string data)
     {
-        this._data = data;
+        _data = data;
         string[] dataParts = data.Split(":", 4);
         _source = dataParts[0];
         _destination = dataParts[1];
@@ -90,15 +91,22 @@ public class ScriptThread
     private void HandleConnection(string? additionalData)
     {
         if (additionalData == null) return;
-        if (additionalData.Contains("Connect"))
+        if (!additionalData.Contains("Connect")) return;
+        
+        // Only send the headset if is a vr profile Station
+        // Safe cast for potential vr profile
+        VrProfile? vrProfile = Profile.CastToType<VrProfile>(SessionController.StationProfile);
+        if (vrProfile?.VrHeadset != null)
         {
-            MessageController.SendResponse(_source, "Station", "SetValue:status:On");
-            MessageController.SendResponse(_source, "Station", $"SetValue:state:{SessionController.CurrentState}");
-            MessageController.SendResponse(_source, "Station", "SetValue:gameName:");
-            MessageController.SendResponse("Android", "Station", "SetValue:gameId:");
-            AudioManager.Initialise();
-            VideoManager.Initialise();
+            MessageController.SendResponse(_source, "Station", $"SetValue:headsetType:{Environment.GetEnvironmentVariable("HeadsetType", EnvironmentVariableTarget.Process)}");
         }
+            
+        MessageController.SendResponse(_source, "Station", "SetValue:status:On");
+        MessageController.SendResponse(_source, "Station", $"SetValue:state:{SessionController.CurrentState}");
+        MessageController.SendResponse(_source, "Station", "SetValue:gameName:");
+        MessageController.SendResponse("Android", "Station", "SetValue:gameId:");
+        AudioManager.Initialise();
+        VideoManager.Initialise();
     }
 
     private void HandleStation(string jObjectData)

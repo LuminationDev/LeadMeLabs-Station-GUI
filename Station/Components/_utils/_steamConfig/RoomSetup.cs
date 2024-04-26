@@ -27,7 +27,8 @@ public static class RoomSetup
             case "VivePro2":
                 currentFilePath = SteamVrFilePath;
                 break;
-            case "ViveFocus3":
+            case "ViveFocus3": //Backwards compatability
+            case "ViveBusinessStreaming":
                 currentFilePath = HtcFilePath;
                 break;
         }
