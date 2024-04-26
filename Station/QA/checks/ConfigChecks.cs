@@ -1,6 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
-using Station.MVC.Controller;
+using LeadMeLabsLibrary;
+using Newtonsoft.Json.Linq;
 
 namespace Station.QA.checks;
 
@@ -9,29 +9,18 @@ public class ConfigChecks
     /**
      * Used to compare against the saved values in the station_list.json
      */
-    public List<QaDetail> GetLocalStationDetails()
+    public JObject GetLocalStationDetails()
     {
-        List<QaDetail> qaDetails = new()
-        {
-            new QaDetail("id", GetStationId()),
-            new QaDetail("room", GetStationRoom()),
-            new QaDetail("labLocation", GetLabLocation()),
-            new QaDetail("ipAddress", MainController.localEndPoint.Address.ToString()),
-            new QaDetail("macAddress", MainController.macAddress),
-            new QaDetail("nucIpAddress", GetExpectedNucAddress()),
-            new QaDetail("selectedHeadset", GetSelectedHeadset())
-        };
-
-        return qaDetails;
-    }
-
-    /// <summary>
-    /// Return the current Headset type, only load using the EnvironmentVariableTarget.Process, to disregard any saved
-    /// local ENVs.
-    /// </summary>
-    private string GetSelectedHeadset()
-    {
-        return Environment.GetEnvironmentVariable("HeadsetType", EnvironmentVariableTarget.Process) ?? "Not set";
+        JObject responseData = new JObject();
+        responseData.Add("ipAddress", SystemInformation.GetIPAddress()?.ToString());
+        responseData.Add("nucIpAddress", GetExpectedNucAddress());
+        responseData.Add("id", GetStationId());
+        responseData.Add("labLocation", GetLabLocation());
+        responseData.Add("stationMode", GetStationMode());
+        responseData.Add("room", GetStationRoom());
+        responseData.Add("macAddress", SystemInformation.GetMACAddress());
+        
+        return responseData;
     }
     
     /// <summary>
@@ -40,7 +29,7 @@ public class ConfigChecks
     /// </summary>
     private string GetStationRoom()
     {
-        return Environment.GetEnvironmentVariable("room", EnvironmentVariableTarget.Process) ?? "Not set";
+        return Environment.GetEnvironmentVariable("room", EnvironmentVariableTarget.Process) ?? "Not found";
     }
     
     /// <summary>
@@ -49,7 +38,7 @@ public class ConfigChecks
     /// </summary>
     private string GetLabLocation()
     {
-        return Environment.GetEnvironmentVariable("LabLocation", EnvironmentVariableTarget.Process) ?? "Not set";
+        return Environment.GetEnvironmentVariable("LabLocation", EnvironmentVariableTarget.Process) ?? "Not found";
     }
     
     /// <summary>
@@ -58,7 +47,7 @@ public class ConfigChecks
     /// </summary>
     private string GetStationId()
     {
-        return Environment.GetEnvironmentVariable("StationId", EnvironmentVariableTarget.Process) ?? "Not set";
+        return Environment.GetEnvironmentVariable("StationId", EnvironmentVariableTarget.Process) ?? "Not found";
     }
     
     /// <summary>
@@ -67,6 +56,14 @@ public class ConfigChecks
     /// </summary>
     private string GetExpectedNucAddress()
     {
-        return Environment.GetEnvironmentVariable("NucAddress", EnvironmentVariableTarget.Process) ?? "Not set";
+        return Environment.GetEnvironmentVariable("NucAddress", EnvironmentVariableTarget.Process) ?? "Not found";
+    }
+
+    /// <summary>
+    /// Return the currently set Station mode, this may be appliance, content or vr.
+    /// </summary>
+    private string GetStationMode()
+    {
+        return Environment.GetEnvironmentVariable("StationMode", EnvironmentVariableTarget.Process) ?? "Not found";
     }
 }

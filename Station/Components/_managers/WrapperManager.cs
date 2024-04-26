@@ -298,6 +298,17 @@ public class WrapperManager
         if (!messageType.Equals("ApplicationJson")) return;
         MessageController.SendResponse("Android", "Station",
             $"SetValue:installedJsonApplications:{convertedApplications}");
+
+        if (SteamScripts.blockedByFamilyMode.Count == 0 && SteamScripts.noLicenses.Count == 0) return;
+
+        JObject blockedApplications = new JObject
+        {
+            { "noLicense", JsonConvert.SerializeObject(SteamScripts.noLicenses) },
+            { "blockedFamilyMode", JsonConvert.SerializeObject(SteamScripts.blockedByFamilyMode) }
+        };
+
+        MessageController.SendResponse("Android", "Station",
+            $"SetValue:blockedApplications:{blockedApplications}");
     }
     
     /// <summary>
