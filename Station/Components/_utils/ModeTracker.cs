@@ -6,6 +6,7 @@ using Station.Components._commandLine;
 using Station.Components._managers;
 using Station.Components._notification;
 using Station.Components._overlay;
+using Station.Components._profiles;
 using Station.MVC.Controller;
 
 namespace Station.Components._utils;
@@ -134,14 +135,18 @@ public static class ModeTracker
 
         if (Helper.GetStationMode().Equals(Helper.STATION_MODE_VR))
         {
+            // Safe cast for potential vr profile
+            VrProfile? vrProfile = Profile.CastToType<VrProfile>(SessionController.StationProfile);
+            if (vrProfile?.VrHeadset == null) return false;
+            
             //Start VR applications
             await WrapperManager.RestartVrProcesses();
         
-            OverlayManager.SetText("Waiting for SteamVR");
+            OverlayManager.SetText("Launching software");
         
             //Wait for OpenVR to be available
-            bool steamvr = await Helper.MonitorLoop(() => ProcessManager.GetProcessesByName("vrmonitor").Length == 0, 20);
-            if (!steamvr)
+            bool headsetSoftware = await Helper.MonitorLoop(() => ProcessManager.GetProcessesByName(vrProfile.VrHeadset.GetHeadsetManagementProcessName()).Length == 0, 20);
+            if (!headsetSoftware)
             {
                 JObject message = new JObject
                 {
@@ -152,14 +157,14 @@ public static class ModeTracker
                 ScheduledTaskQueue.EnqueueTask(() => MessageController.SendResponse("NUC", "Analytics", "SteamVRError"), TimeSpan.FromSeconds(1));
             }
         
-            await Task.Delay(2500);
+            await Task.Delay(4000);
             
             OverlayManager.SetText("Ready for use");
             await Task.Delay(2500);
         
             OverlayManager.ManualStop();
             exitingIdleMode = false;
-            return steamvr;
+            return headsetSoftware;
         }
 
         await Task.Delay(2500);
