@@ -442,7 +442,7 @@ public class OpenVrManager
         }
 
         string currentAppName = appNameBuffer.ToString();
-        if (currentAppName.Equals("nwjs 119"))
+        if (currentAppName.StartsWith("nwjs"))
         {
             currentAppName = WrapperManager.currentWrapper?.GetLastExperience()?.Name ?? appNameBuffer.ToString();
         }

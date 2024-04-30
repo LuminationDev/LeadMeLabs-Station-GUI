@@ -233,6 +233,7 @@ internal class EmbeddedWrapper : IWrapper
                 if (OpenVrManager.LaunchApplication(experience.ID))
                 {
                     Logger.WriteLog($"EmbeddedWrapper.WrapProcess: Launching {experience.Name} via OpenVR", MockConsole.LogLevel.Verbose);
+                    FindCurrentProcess();
                     return;
                 }
                 _launchWillHaveFailedFromOpenVrTimeout = false;
@@ -392,7 +393,7 @@ internal class EmbeddedWrapper : IWrapper
         Logger.WriteLog($"Application found: {proc.MainWindowTitle}/{lastExperience.ID}", MockConsole.LogLevel.Debug);
         UiUpdater.UpdateProcess(proc.MainWindowTitle);
         UiUpdater.UpdateStatus("Running...");
-            
+
         return proc;
 
     }
