@@ -426,6 +426,45 @@ public class WrapperManager
             ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage(message),
                 TimeSpan.FromSeconds(1));
         }
+
+        // todo - Move this to run from a user response to the accept question
+        Profile.WaitForSteamLogin();
+
+
+        string handle = CommandLine.PowershellGetDevToolsChildProcessWindowHandle();
+        if (handle.Equals(""))
+        {
+            return;
+        }
+
+
+        if (SteamWrapper.installedExperiencesWithUnacceptedEulas.Count == 0)
+        {
+            CommandLine.EnterAltF4(Int32.Parse(handle));
+            return;
+        }
+
+        int index = 1;
+        App.windowEventTracker.Unsubscribe();
+        foreach (string installedExperienceWithUnacceptedEula in SteamWrapper.installedExperiencesWithUnacceptedEulas)
+        {
+            string[] eulaDetails = installedExperienceWithUnacceptedEula.Split(":");
+            if (eulaDetails.Length < 3)
+            {
+                continue;
+                
+                
+            }
+            ScheduledTaskQueue.EnqueueTask(() => CommandLine.EnterAcceptEula(Int32.Parse(handle), eulaDetails[0], eulaDetails[1], eulaDetails[2]),
+                TimeSpan.FromSeconds(index * 1.5));
+            index++;
+        }
+        ScheduledTaskQueue.EnqueueTask(() =>
+            {
+                CommandLine.EnterAltF4(Int32.Parse(handle));
+                App.windowEventTracker.Subscribe("Steam", null);
+            },
+            TimeSpan.FromSeconds(++index * 1.5));
     }
     
     /// <summary>

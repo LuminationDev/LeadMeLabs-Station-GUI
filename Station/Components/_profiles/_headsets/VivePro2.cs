@@ -54,7 +54,8 @@ public class VivePro2 : Profile, IVrHeadset
     {
         CommandLine.KillSteamSigninWindow();
         SteamConfig.VerifySteamConfig();
-        CommandLine.StartProgram(SessionController.Steam, "-noreactlogin -login " +
+        // todo - only opendevtools if there are unaccepted EULAs
+        CommandLine.StartProgram(SessionController.Steam, " -opendevtools -noreactlogin -login " +
             Environment.GetEnvironmentVariable("SteamUserName", EnvironmentVariableTarget.Process) + " " +
             Environment.GetEnvironmentVariable("SteamPassword", EnvironmentVariableTarget.Process) + " steam://rungameid/1635730"); //Open up steam and run vive console
     }

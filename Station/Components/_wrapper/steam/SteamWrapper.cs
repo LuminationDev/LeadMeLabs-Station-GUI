@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Timers;
@@ -16,6 +17,7 @@ using Station.Components._openvr;
 using Station.Components._overlay;
 using Station.Components._profiles;
 using Station.Components._utils;
+using Station.Components._utils._steamConfig;
 using Station.Components._wrapper.vive;
 using Station.MVC.Controller;
 using Timer = System.Timers.Timer;
@@ -33,6 +35,7 @@ public class SteamWrapper : IWrapper
     private static string? installDir;
     private static Experience lastExperience;
     private bool _launchWillHaveFailedFromOpenVrTimeout = true;
+    public static List<string> installedExperiencesWithUnacceptedEulas = new List<string>();
 
     /// <summary>
     /// Track if an experience is being launched.
@@ -71,7 +74,40 @@ public class SteamWrapper : IWrapper
     
     public List<T>? CollectApplications<T>()
     {
-        return SteamScripts.LoadAvailableExperiences<T>();
+        List<T>? experiences = SteamScripts.LoadAvailableExperiences<T>();
+
+        if (experiences == null)
+        {
+            return null;
+        }
+        List<string> unacceptedEulas = SteamConfig.GetUnacceptedEulas();
+        List<string> unacceptedEulaIds = unacceptedEulas.ConvertAll<string>(eula => eula.Split(":")[0]);
+        List<string> experienceIds = experiences.ConvertAll<string>(experience =>
+        {
+            if (experience == null)
+            {
+                return "";
+            }
+
+            if (experience.GetType() == typeof(ExperienceDetails))
+            {
+                return ((ExperienceDetails) (object) experience).Id;
+            }
+
+            if (experience is string)
+            {
+                return ((string) (object) experience).Split("|")[1];
+            }
+
+            return "";
+        });
+        installedExperiencesWithUnacceptedEulas = experienceIds.Intersect(unacceptedEulaIds).ToList();
+        installedExperiencesWithUnacceptedEulas = installedExperiencesWithUnacceptedEulas.ConvertAll(experienceId =>
+        {
+            return unacceptedEulas.Find(eula => eula.StartsWith(experienceId)) ?? "";
+        });
+
+        return experiences;
     }
 
     public void CollectHeaderImage(string experienceNameToCollect)
