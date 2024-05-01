@@ -140,10 +140,6 @@ internal class EmbeddedWrapper : IWrapper
 
     public void SetCurrentProcess(Process process)
     {
-        if (currentProcess != null)
-        {
-            currentProcess.Kill(true);
-        }
         _launchWillHaveFailedFromOpenVrTimeout = false;
         currentProcess = process;
         ListenForClose();
@@ -453,17 +449,31 @@ internal class EmbeddedWrapper : IWrapper
     /// </summary>
     public void StopCurrentProcess()
     {
+        // close legacy mirror if open
+        if (CommandLine.GetProcessIdFromMainWindowTitle("Legacy Mirror") != null)
+        {
+            CommandLine.ToggleSteamVrLegacyMirror();
+        }
+        
         if (currentProcess != null)
         {
-            currentProcess.Kill(true);
+            PassMessageToProcess("shutdown");
+        }
+        ScheduledTaskQueue.EnqueueTask(() => // if it hasn't cleaned itself up
+        {
             currentProcess = GetExperienceProcess();
             if (currentProcess != null)
             {
-                currentProcess.Kill();
+                currentProcess.Kill(true);
+                currentProcess = GetExperienceProcess();
+                if (currentProcess != null)
+                {
+                    currentProcess.Kill();
+                }
             }
-            WrapperMonitoringThread.StopMonitoring();
-        }
+        }, TimeSpan.FromSeconds(3));
         
+        WrapperMonitoringThread.StopMonitoring();
         lastExperience.Name = null; //Reset for correct headset state
     }
 

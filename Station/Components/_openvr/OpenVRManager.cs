@@ -367,8 +367,12 @@ public class OpenVrManager
         {
             ScheduledTaskQueue.EnqueueTask(() =>
             {
-                if (!(WrapperManager.currentWrapper?.LaunchFailedFromOpenVrTimeout() ?? false)) return;
-                
+                if (!(WrapperManager.currentWrapper?.LaunchFailedFromOpenVrTimeout() ?? false))
+                {
+                    WrapperManager.currentWrapper?.SetLaunchingExperience(false);
+                    return;
+                }
+
                 WrapperManager.currentWrapper.StopCurrentProcess();
                 UiUpdater.ResetUiDisplay();
                 
