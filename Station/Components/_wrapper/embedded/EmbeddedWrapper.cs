@@ -150,6 +150,8 @@ internal class EmbeddedWrapper : IWrapper
         // Safe cast for potential vr profile
         VrProfile? vrProfile = Profile.CastToType<VrProfile>(SessionController.StationProfile);
         
+        StopNwJsOrphans();
+        
         _launchWillHaveFailedFromOpenVrTimeout = false;
         if(CommandLine.StationLocation == null)
         {
@@ -476,6 +478,18 @@ internal class EmbeddedWrapper : IWrapper
             WrapperMonitoringThread.StopMonitoring();
         }
         lastExperience.Name = null; //Reset for correct headset state
+    }
+    
+    /// <summary>
+    /// hyper-specific function to clean up orphans that prevent LeadMe WebXR from launching or connecting to pipe server
+    /// </summary>
+    private void StopNwJsOrphans()
+    {
+        Process[] processes = Process.GetProcessesByName("leadme-webxr-viewer");
+        foreach (var process in processes)
+        {
+            process.Kill(true);
+        }
     }
 
     public void RestartCurrentExperience()
