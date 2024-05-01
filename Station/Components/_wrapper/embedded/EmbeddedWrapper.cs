@@ -458,22 +458,23 @@ internal class EmbeddedWrapper : IWrapper
         if (currentProcess != null)
         {
             PassMessageToProcess("shutdown");
-        }
-        ScheduledTaskQueue.EnqueueTask(() => // if it hasn't cleaned itself up
-        {
-            currentProcess = GetExperienceProcess();
-            if (currentProcess != null)
+
+            ScheduledTaskQueue.EnqueueTask(() => // if it hasn't cleaned itself up
             {
-                currentProcess.Kill(true);
                 currentProcess = GetExperienceProcess();
                 if (currentProcess != null)
                 {
-                    currentProcess.Kill();
+                    currentProcess.Kill(true);
+                    currentProcess = GetExperienceProcess();
+                    if (currentProcess != null)
+                    {
+                        currentProcess.Kill();
+                    }
                 }
-            }
-        }, TimeSpan.FromSeconds(3));
-        
-        WrapperMonitoringThread.StopMonitoring();
+            }, TimeSpan.FromSeconds(3));
+            
+            WrapperMonitoringThread.StopMonitoring();
+        }
         lastExperience.Name = null; //Reset for correct headset state
     }
 
