@@ -1,11 +1,11 @@
 ﻿using System;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
-using Station.Components._notification;
+using LeadMeLabsLibrary;
 
 namespace Station.Components._utils;
 
-public class WindowManager
+public static class WindowManager
 {
     private const int SW_SHOWMINIMIZED = 2;
     private const int SW_SHOWMAXIMIZED = 3;
@@ -17,7 +17,7 @@ public class WindowManager
             ShowWindow(process.MainWindowHandle, SW_SHOWMINIMIZED);
         } else
         {
-            Logger.WriteLog("A process was null when trying to minimise", MockConsole.LogLevel.Normal);
+            Logger.WriteLog("A process was null when trying to minimise", Enums.LogLevel.Normal);
         }
     }
 
@@ -29,7 +29,7 @@ public class WindowManager
         }
         else
         {
-            Logger.WriteLog("A process was null when trying to maximise", MockConsole.LogLevel.Normal);
+            Logger.WriteLog("A process was null when trying to maximise", Enums.LogLevel.Normal);
         }
     }
 

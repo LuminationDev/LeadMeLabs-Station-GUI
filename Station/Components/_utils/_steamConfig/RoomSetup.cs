@@ -1,9 +1,9 @@
 ﻿using System;
 using System.IO;
 using System.Security.Cryptography;
+using LeadMeLabsLibrary;
 using Newtonsoft.Json;
 using Station.Components._commandLine;
-using Station.Components._notification;
 
 namespace Station.Components._utils._steamConfig;
 
@@ -44,14 +44,14 @@ public static class RoomSetup
     {
         if (!DetermineFiletype())
         {
-            Logger.WriteLog($"SaveRoomSetup - chaperone_info.vrchap does not exist in SteamVR at {currentFilePath}", MockConsole.LogLevel.Error);
+            Logger.WriteLog($"SaveRoomSetup - chaperone_info.vrchap does not exist in SteamVR at {currentFilePath}", Enums.LogLevel.Error);
             return @"chaperone_info.vrchap not found. Attempt SteamVR quick calibrate again.";
         }
         
         // Read the JSON file
         if(!File.Exists(currentFilePath))
         {
-            Logger.WriteLog($"SaveRoomSetup - chaperone_info.vrchap does not exist in SteamVR at {currentFilePath}", MockConsole.LogLevel.Error);
+            Logger.WriteLog($"SaveRoomSetup - chaperone_info.vrchap does not exist in SteamVR at {currentFilePath}", Enums.LogLevel.Error);
             return @"chaperone_info.vrchap not found. Attempt SteamVR quick calibrate again.";
         }
 
@@ -65,12 +65,12 @@ public static class RoomSetup
         }
         catch (Exception ex)
         {
-            Logger.WriteLog($"SaveRoomSetup - Unable to DeserializeObject chaperone_info.vrchap. {ex}", MockConsole.LogLevel.Error);
+            Logger.WriteLog($"SaveRoomSetup - Unable to DeserializeObject chaperone_info.vrchap. {ex}", Enums.LogLevel.Error);
         }
 
         if(chaperoneInfo == null)
         {
-            Logger.WriteLog($"SaveRoomSetup - Unable to DeserializeObject chaperone_info.vrchap at {currentFilePath}", MockConsole.LogLevel.Error);
+            Logger.WriteLog($"SaveRoomSetup - Unable to DeserializeObject chaperone_info.vrchap at {currentFilePath}", Enums.LogLevel.Error);
             return "Unable to DeserializeObject chaperone_info.vrchap";
         }
 
@@ -82,7 +82,7 @@ public static class RoomSetup
         int mostRecent = chaperoneInfo.universes.Length - 1;
         if (chaperoneInfo.universes[mostRecent] == null)
         {
-            Logger.WriteLog($"SaveRoomSetup - Most recent universe [{mostRecent}], cannot be found.", MockConsole.LogLevel.Error);
+            Logger.WriteLog($"SaveRoomSetup - Most recent universe [{mostRecent}], cannot be found.", Enums.LogLevel.Error);
             return $"Saving file error.";
         }
 
@@ -97,7 +97,7 @@ public static class RoomSetup
         }
         catch (Exception ex)
         {
-            Logger.WriteLog($"SaveRoomSetup - Saving file error: {ex}", MockConsole.LogLevel.Error);
+            Logger.WriteLog($"SaveRoomSetup - Saving file error: {ex}", Enums.LogLevel.Error);
             return $"Saving file error: {ex}";
         }
 
@@ -114,7 +114,7 @@ public static class RoomSetup
     {
         if (!DetermineFiletype() || currentFilePath == null)
         {
-            Logger.WriteLog($"SaveRoomSetup - chaperone_info.vrchap does not exist in SteamVR at {currentFilePath}", MockConsole.LogLevel.Error);
+            Logger.WriteLog($"SaveRoomSetup - chaperone_info.vrchap does not exist in SteamVR at {currentFilePath}", Enums.LogLevel.Error);
             return;
         }
         
@@ -122,7 +122,7 @@ public static class RoomSetup
         bool defaultExists = File.Exists(DefaultFilePath);
         bool steamExists = File.Exists(currentFilePath);
 
-        Logger.WriteLog($"CompareRoomSetup - (chaperone_info.vrchap) steamExists: {steamExists}. defaultExists: {defaultExists}", MockConsole.LogLevel.Debug);
+        Logger.WriteLog($"CompareRoomSetup - (chaperone_info.vrchap) steamExists: {steamExists}. defaultExists: {defaultExists}", Enums.LogLevel.Debug);
 
         if (defaultExists && steamExists)
         {
@@ -130,26 +130,26 @@ public static class RoomSetup
             bool filesAreEqual = AreFilesEqual(currentFilePath, DefaultFilePath);
             if (!filesAreEqual)
             {
-                Logger.WriteLog("CompareRoomSetup - SteamVR is not equal to the Default", MockConsole.LogLevel.Info);
+                Logger.WriteLog("CompareRoomSetup - SteamVR is not equal to the Default", Enums.LogLevel.Info);
                 LoadRoomSetup();
             }
             else
             {
-                Logger.WriteLog("CompareRoomSetup - chaperone_info.vrchap is in working order, no action necessary", MockConsole.LogLevel.Info);
+                Logger.WriteLog("CompareRoomSetup - chaperone_info.vrchap is in working order, no action necessary", Enums.LogLevel.Info);
             }
         }
         else if (defaultExists)
         {
             LoadRoomSetup();
-            Logger.WriteLog("CompareRoomSetup - SteamVR chaperone_info.vrchap does not exist, replacing with Default", MockConsole.LogLevel.Info);
+            Logger.WriteLog("CompareRoomSetup - SteamVR chaperone_info.vrchap does not exist, replacing with Default", Enums.LogLevel.Info);
         }
         else if (steamExists)
         {
-            Logger.WriteLog("CompareRoomSetup - SteamVR chaperone_info.vrchap does exist, Default does not", MockConsole.LogLevel.Info);
+            Logger.WriteLog("CompareRoomSetup - SteamVR chaperone_info.vrchap does exist, Default does not", Enums.LogLevel.Info);
         }
         else
         { 
-            Logger.WriteLog($"CompareRoomSetup - chaperone_info.vrchap does not exist in SteamVR: {currentFilePath}. Or in _config: {DefaultFilePath}, ROOM SETUP REQUIRED", MockConsole.LogLevel.Error);
+            Logger.WriteLog($"CompareRoomSetup - chaperone_info.vrchap does not exist in SteamVR: {currentFilePath}. Or in _config: {DefaultFilePath}, ROOM SETUP REQUIRED", Enums.LogLevel.Error);
         }
     }
 
@@ -160,7 +160,7 @@ public static class RoomSetup
     {
         if (currentFilePath == null)
         {
-            Logger.WriteLog($"LoadRoomSetup - currentFilePath is null. Check HeadsetType", MockConsole.LogLevel.Normal);
+            Logger.WriteLog($"LoadRoomSetup - currentFilePath is null. Check HeadsetType", Enums.LogLevel.Normal);
             return;
         }
         
@@ -172,11 +172,11 @@ public static class RoomSetup
             }
 
             File.Copy(DefaultFilePath, currentFilePath, true);
-            Logger.WriteLog("LoadRoomSetup - chaperone_info.vrchap file moved successfully.", MockConsole.LogLevel.Normal);
+            Logger.WriteLog("LoadRoomSetup - chaperone_info.vrchap file moved successfully.", Enums.LogLevel.Normal);
         }
         catch (Exception ex)
         {
-            Logger.WriteLog($"LoadRoomSetup - chaperone_info.vrchap move failed. {ex}", MockConsole.LogLevel.Normal);
+            Logger.WriteLog($"LoadRoomSetup - chaperone_info.vrchap move failed. {ex}", Enums.LogLevel.Normal);
         }
     }
 

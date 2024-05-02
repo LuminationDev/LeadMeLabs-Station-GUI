@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
+using LeadMeLabsLibrary;
 using Newtonsoft.Json.Linq;
-using Station.Components._notification;
 using Station.Components._utils;
 
 namespace Station.Components._models;
@@ -81,7 +81,7 @@ public struct Experience
                 break;
             
             default:
-                Logger.WriteLog($"Subtype not configured for update: {category}", MockConsole.LogLevel.Normal);
+                Logger.WriteLog($"Subtype not configured for update: {category}", Enums.LogLevel.Normal);
                 break;
         }
     }

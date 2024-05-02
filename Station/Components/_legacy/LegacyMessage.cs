@@ -1,6 +1,6 @@
 using System.Threading.Tasks;
+using LeadMeLabsLibrary;
 using Station.Components._managers;
-using Station.Components._notification;
 using Station.Components._profiles;
 using Station.Components._utils;
 using Station.Components._wrapper.steam;
@@ -22,7 +22,7 @@ public static class LegacyMessage
             switch (key)
             {
                 case "installedApplications":
-                    Logger.WriteLog("Collecting station experiences", MockConsole.LogLevel.Normal);
+                    Logger.WriteLog("Collecting station experiences", Enums.LogLevel.Normal);
                     MainController.wrapperManager?.ActionHandler("CollectApplications");
                     break;
 

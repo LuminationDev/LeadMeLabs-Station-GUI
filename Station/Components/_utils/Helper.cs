@@ -1,11 +1,11 @@
 using System;
 using System.Linq;
 using System.Threading.Tasks;
-using Station.Components._notification;
+using LeadMeLabsLibrary;
 
 namespace Station.Components._utils;
 
-public class Helper
+public static class Helper
 {
     public const string STATION_MODE_VR = "VR";
     public const string STATION_MODE_APPLIANCE = "Appliance";
@@ -28,7 +28,7 @@ public class Helper
 
         if (!STATION_MODES.Contains(mode))
         {
-            Logger.WriteLog($"Station Mode is not set or supported: {mode}.", MockConsole.LogLevel.Error);
+            Logger.WriteLog($"Station Mode is not set or supported: {mode}.", Enums.LogLevel.Error);
             throw new Exception("Station in unsupported mode");
         }
 

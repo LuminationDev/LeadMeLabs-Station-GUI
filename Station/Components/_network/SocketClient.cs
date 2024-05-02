@@ -4,7 +4,7 @@ using System.Net;
 using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
-using Station.Components._notification;
+using LeadMeLabsLibrary;
 using Station.Components._utils;
 using Station.Core;
 using Station.MVC.Controller;
@@ -94,7 +94,7 @@ public class SocketClient
                 // Get a client stream for reading and writing.
                 NetworkStream stream = _client.GetStream();
 
-                Logger.WriteLog($"Socket connected to {_client.Client.RemoteEndPoint}", MockConsole.LogLevel.Debug, writeToLog);
+                Logger.WriteLog($"Socket connected to {_client.Client.RemoteEndPoint}", Enums.LogLevel.Debug, writeToLog);
 
                 // Translate the passed message into ASCII and store it as a Byte array.
                 byte[] data = System.Text.Encoding.ASCII.GetBytes(this._message);
@@ -132,15 +132,15 @@ public class SocketClient
             }
             catch (ArgumentNullException ane)
             {
-                Logger.WriteLog($"ArgumentNullException : {ane}", MockConsole.LogLevel.Error);
+                Logger.WriteLog($"ArgumentNullException : {ane}", Enums.LogLevel.Error);
             }
             catch (SocketException se)
             {
-                Logger.WriteLog($"SocketException : {se}", MockConsole.LogLevel.Error);
+                Logger.WriteLog($"SocketException : {se}", Enums.LogLevel.Error);
             }
             catch (Exception e)
             {
-                Logger.WriteLog($"Unexpected exception : {e}", MockConsole.LogLevel.Error);
+                Logger.WriteLog($"Unexpected exception : {e}", Enums.LogLevel.Error);
             }
         }
         catch (Exception e)
@@ -148,7 +148,7 @@ public class SocketClient
             _client?.Dispose();
             _client?.Close();
 
-            Logger.WriteLog($"Unexpected exception : {e.Message}", MockConsole.LogLevel.Error);
+            Logger.WriteLog($"Unexpected exception : {e.Message}", Enums.LogLevel.Error);
         }
     }
 }

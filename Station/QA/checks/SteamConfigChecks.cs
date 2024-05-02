@@ -183,7 +183,7 @@ public class SteamConfigChecks
             }
             catch (Exception e)
             {
-                Logger.WriteLog($"IsFriendsSettingsDisabled - Sentry Exception: {e}", MockConsole.LogLevel.Error);
+                Logger.WriteLog($"IsFriendsSettingsDisabled - Sentry Exception: {e}", Enums.LogLevel.Error);
                 SentrySdk.CaptureException(e);
             }
         }
@@ -214,7 +214,7 @@ public class SteamConfigChecks
             }
             catch (Exception e)
             {
-                Logger.WriteLog($"IsFriendsSettingsDisabled - Sentry Exception: {e}", MockConsole.LogLevel.Error);
+                Logger.WriteLog($"IsFriendsSettingsDisabled - Sentry Exception: {e}", Enums.LogLevel.Error);
                 SentrySdk.CaptureException(e);
             }
         }
@@ -292,7 +292,7 @@ public class SteamConfigChecks
             }
             catch (Exception e)
             {
-                Logger.WriteLog($"IsDownloadRegionSetCorrectly - Sentry Exception: {e}", MockConsole.LogLevel.Error);
+                Logger.WriteLog($"IsDownloadRegionSetCorrectly - Sentry Exception: {e}", Enums.LogLevel.Error);
                 SentrySdk.CaptureException(e);
             }
         }
@@ -341,7 +341,7 @@ public class SteamConfigChecks
             }
             catch (Exception e)
             {
-                Logger.WriteLog($"IsCloudEnabledOff - Sentry Exception: {e}", MockConsole.LogLevel.Error);
+                Logger.WriteLog($"IsCloudEnabledOff - Sentry Exception: {e}", Enums.LogLevel.Error);
                 SentrySdk.CaptureException(e);
             }
         }
@@ -371,7 +371,7 @@ public class SteamConfigChecks
             }
             catch (Exception e)
             {
-                Logger.WriteLog($"IsCloudEnabledOff - Sentry Exception: {e}", MockConsole.LogLevel.Error);
+                Logger.WriteLog($"IsCloudEnabledOff - Sentry Exception: {e}", Enums.LogLevel.Error);
                 SentrySdk.CaptureException(e);
             }
         }
@@ -416,7 +416,7 @@ public class SteamConfigChecks
             }
             catch (Exception e)
             {
-                Logger.WriteLog($"IsDefaultPageSetToLibrary - Sentry Exception: {e}", MockConsole.LogLevel.Error);
+                Logger.WriteLog($"IsDefaultPageSetToLibrary - Sentry Exception: {e}", Enums.LogLevel.Error);
                 SentrySdk.CaptureException(e);
             }
         }
@@ -518,7 +518,7 @@ public class SteamConfigChecks
             }
             catch (Exception e)
             {
-                Logger.WriteLog($"IsLoginUsersCorrectlySet - Sentry Exception: {e}", MockConsole.LogLevel.Error);
+                Logger.WriteLog($"IsLoginUsersCorrectlySet - Sentry Exception: {e}", Enums.LogLevel.Error);
                 SentrySdk.CaptureException(e);
             }
         }
@@ -690,7 +690,7 @@ public class SteamConfigChecks
             }
             catch (Exception e)
             {
-                Logger.WriteLog($"IsSteamVrSettingsCorrectlySet - Sentry Exception: {e}", MockConsole.LogLevel.Error);
+                Logger.WriteLog($"IsSteamVrSettingsCorrectlySet - Sentry Exception: {e}", Enums.LogLevel.Error);
                 SentrySdk.CaptureException(e);
             }
         }

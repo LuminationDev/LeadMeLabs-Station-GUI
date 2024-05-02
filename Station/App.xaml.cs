@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Windows;
+using LeadMeLabsLibrary;
 using Sentry;
 using Station.Components._commandLine;
 using Station.Components._managers;
@@ -52,7 +53,7 @@ namespace Station
             {
                 string msg =
                     $"Low memory detected ({freeStorage}) at: {(Environment.GetEnvironmentVariable("LabLocation", EnvironmentVariableTarget.Process) ?? "Unknown")}";
-                Logger.WriteLog($"CheckStorage - Sentry Message: {msg}", MockConsole.LogLevel.Error);
+                Logger.WriteLog($"CheckStorage - Sentry Message: {msg}", Enums.LogLevel.Error);
                 SentrySdk.CaptureMessage(msg);
             }
         }
@@ -75,8 +76,8 @@ namespace Station
         static void UnhandledExceptionHandler(object sender, UnhandledExceptionEventArgs args)
         {
             Exception e = (Exception)args.ExceptionObject;
-            Logger.WriteLog("UnhandledExceptionHandler caught: " + e.Message, MockConsole.LogLevel.Error);
-            Logger.WriteLog($"Runtime terminating: {args.IsTerminating}", MockConsole.LogLevel.Error);
+            Logger.WriteLog("UnhandledExceptionHandler caught: " + e.Message, Enums.LogLevel.Error);
+            Logger.WriteLog($"Runtime terminating: {args.IsTerminating}", Enums.LogLevel.Error);
             Logger.WorkQueue();
             MessageController.SendResponse("Android", "Station", "SetValue:status:Off");
             MessageController.SendResponse("Android", "Station", "SetValue:gameName:Unexpected error occured, please restart station");
@@ -87,13 +88,13 @@ namespace Station
             }
             catch (Exception e2)
             {
-                Logger.WriteLog("UnhandledExceptionHandler caught while reporting: " + e2.Message, MockConsole.LogLevel.Error);
+                Logger.WriteLog("UnhandledExceptionHandler caught while reporting: " + e2.Message, Enums.LogLevel.Error);
             }
         }
 
         static void ProcessExitHandler(object? sender, EventArgs args)
         {
-            Logger.WriteLog($"Process Exiting. Sender: {sender}, Event: {args}", MockConsole.LogLevel.Verbose);
+            Logger.WriteLog($"Process Exiting. Sender: {sender}, Event: {args}", Enums.LogLevel.Verbose);
             Logger.WorkQueue();
             MessageController.SendResponse("Android", "Station", "SetValue:status:Off");
             MessageController.SendResponse("Android", "Station", "SetValue:gameName:");
@@ -132,15 +133,15 @@ namespace Station
                         return null; // Don't send this event to Sentry
                     }
 
-                    Logger.WriteLog("Sentry Exception", MockConsole.LogLevel.Error);
+                    Logger.WriteLog("Sentry Exception", Enums.LogLevel.Error);
 
                     if (sentryEvent.Exception != null)
                     {
-                        Logger.WriteLog(sentryEvent.Exception, MockConsole.LogLevel.Error);
+                        Logger.WriteLog(sentryEvent.Exception, Enums.LogLevel.Error);
                     }
                     if (sentryEvent.Message != null)
                     {
-                        Logger.WriteLog(sentryEvent.Message.ToString() ?? "No message", MockConsole.LogLevel.Error);
+                        Logger.WriteLog(sentryEvent.Message.ToString() ?? "No message", Enums.LogLevel.Error);
                     }
 
                     sentryEvent.ServerName = null; // Never send Server Name to Sentry

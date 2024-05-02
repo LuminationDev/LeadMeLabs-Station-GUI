@@ -1,13 +1,13 @@
 ﻿using System;
+using LeadMeLabsLibrary;
 using LibreHardwareMonitor.Hardware;
 using Sentry;
-using Station.Components._notification;
 
 namespace Station.Components._utils;
 
-public class Temperature
+public static class Temperature
 {
-    public class UpdateVisitor : IVisitor
+    private class UpdateVisitor : IVisitor
     {
         public void VisitComputer(IComputer computer)
         {
@@ -22,7 +22,7 @@ public class Temperature
         public void VisitParameter(IParameter parameter) { }
     }
 
-    static public float? GetTemperature()
+    public static float? GetTemperature()
     {
         try
         {
@@ -84,7 +84,7 @@ public class Temperature
         }
         catch (Exception e)
         {
-            Logger.WriteLog($"GetTemperature - Sentry Exception: {e}", MockConsole.LogLevel.Error);
+            Logger.WriteLog($"GetTemperature - Sentry Exception: {e}", Enums.LogLevel.Error);
             SentrySdk.CaptureException(e);
             return 0;
         }

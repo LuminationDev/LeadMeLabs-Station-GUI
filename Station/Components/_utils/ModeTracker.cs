@@ -1,6 +1,7 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using LeadMeLabsLibrary;
 using Newtonsoft.Json.Linq;
 using Station.Components._commandLine;
 using Station.Components._managers;
@@ -52,7 +53,7 @@ public static class ModeTracker
         // Do not engage Idle mode if the Station mode is anything other than VR
         if (!Helper.GetStationMode().Equals(Helper.STATION_MODE_VR))
         {
-            MockConsole.WriteLine("Station is not in VR mode, Idle mode is not applicable.", MockConsole.LogLevel.Normal);
+            MockConsole.WriteLine("Station is not in VR mode, Idle mode is not applicable.", Enums.LogLevel.Normal);
             return;
         }
         
@@ -60,7 +61,7 @@ public static class ModeTracker
 
         CurrentMode = Mode.Normal;
         idleCheck = new Timer(OnTimerCallback, null, Timeout, System.Threading.Timeout.Infinite);
-        Logger.WriteLog("Idle mode timer started.", MockConsole.LogLevel.Normal);
+        Logger.WriteLog("Idle mode timer started.", Enums.LogLevel.Normal);
     }
 
     /// <summary>
@@ -79,7 +80,7 @@ public static class ModeTracker
                 break;
             
             default:
-                Logger.WriteLog($"ModeTracker - ToggleIdleMode: Mode is already - {value}", MockConsole.LogLevel.Normal);
+                Logger.WriteLog($"ModeTracker - ToggleIdleMode: Mode is already - {value}", Enums.LogLevel.Normal);
                 break;
         }
     }
@@ -89,7 +90,7 @@ public static class ModeTracker
         //An experience is active
         if (WrapperManager.currentWrapper?.GetCurrentExperienceName()?.Length > 0)
         {
-            Logger.WriteLog($"ModeTracker - OnTimerCallback() Active process detected: {WrapperManager.currentWrapper.GetCurrentExperienceName()}", MockConsole.LogLevel.Normal);
+            Logger.WriteLog($"ModeTracker - OnTimerCallback() Active process detected: {WrapperManager.currentWrapper.GetCurrentExperienceName()}", Enums.LogLevel.Normal);
             idleCheck?.Change(Timeout, System.Threading.Timeout.Infinite);
             return;
         }
@@ -106,7 +107,7 @@ public static class ModeTracker
     /// </summary>
     private static void EnableIdleMode()
     {
-        Logger.WriteLog("Station is entering Idle mode.", MockConsole.LogLevel.Normal);
+        Logger.WriteLog("Station is entering Idle mode.", Enums.LogLevel.Normal);
         CurrentMode = Mode.Idle;
         
         //Update the status
@@ -127,7 +128,7 @@ public static class ModeTracker
     {
         new Thread(() => { OverlayManager.OverlayThreadManual("Exiting Idle Mode"); }).Start();
 
-        Logger.WriteLog("Station is exiting Idle mode.", MockConsole.LogLevel.Normal);
+        Logger.WriteLog("Station is exiting Idle mode.", Enums.LogLevel.Normal);
         
         //Update the status
         SessionController.CurrentState = "Exiting Idle Mode";
@@ -216,6 +217,6 @@ public static class ModeTracker
         CurrentMode = Mode.Normal;
         idleCheck?.Dispose();
         
-        Logger.WriteLog("Idle mode disabled", MockConsole.LogLevel.Normal);
+        Logger.WriteLog("Idle mode disabled", Enums.LogLevel.Normal);
     }
 }

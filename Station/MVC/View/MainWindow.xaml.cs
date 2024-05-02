@@ -1,5 +1,5 @@
-﻿using System.Windows;
-using System.Windows.Controls;
+﻿using System.Windows.Controls;
+using LeadMeLabsLibrary;
 using Station.Components._notification;
 using Station.MVC.ViewModel;
 
@@ -67,6 +67,6 @@ public partial class MainWindow
         baseStationActive = this.BaseStationActive;
         baseStationAmount = this.BaseStationAmount;
         
-        MockConsole.WriteLine("Program Started", MockConsole.LogLevel.Error);
+        MockConsole.WriteLine("Program Started", Enums.LogLevel.Error);
     }
 }

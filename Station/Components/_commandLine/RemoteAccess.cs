@@ -36,7 +36,7 @@ public static class RemoteAccess
         string? decryptedText = EncryptionHelper.DetectFileEncryption(remoteConfigFilePath);
         if (string.IsNullOrEmpty(decryptedText))
         {
-            Logger.WriteLog($"Warning, Remote config file empty:{remoteConfigFilePath}", MockConsole.LogLevel.Debug);
+            Logger.WriteLog($"Warning, Remote config file empty:{remoteConfigFilePath}", Enums.LogLevel.Debug);
             return;
         }
 
@@ -50,7 +50,7 @@ public static class RemoteAccess
             {
                 if (parts.Length == 1)
                 {
-                    MockConsole.WriteLine($"Remote config error, config incomplete:{parts[0]} has no value", MockConsole.LogLevel.Error);
+                    MockConsole.WriteLine($"Remote config error, config incomplete:{parts[0]} has no value", Enums.LogLevel.Error);
                     return;
                 }
 
