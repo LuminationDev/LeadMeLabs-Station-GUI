@@ -6,11 +6,11 @@ using System.Linq;
 using System.Management.Automation;
 using System.Threading;
 using System.Threading.Tasks;
+using LeadMeLabsLibrary;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Sentry;
 using Station.Components._models;
-using Station.Components._notification;
 using Station.Components._utils;
 using Station.MVC.Controller;
 
@@ -135,7 +135,7 @@ public static class AudioManager
         }
         catch (Exception e)
         {
-            Logger.WriteLog($"SetVolume - Sentry Exception: {e}", MockConsole.LogLevel.Error);
+            Logger.WriteLog($"SetVolume - Sentry Exception: {e}", Enums.LogLevel.Error);
             SentrySdk.CaptureException(e);
         }
     }
@@ -177,7 +177,7 @@ public static class AudioManager
         }
         catch (Exception e)
         {
-            Logger.WriteLog($"SetMuted - Sentry Exception: {e}", MockConsole.LogLevel.Error);
+            Logger.WriteLog($"SetMuted - Sentry Exception: {e}", Enums.LogLevel.Error);
             SentrySdk.CaptureException(e);
         }
     }
@@ -286,7 +286,7 @@ public static class AudioManager
                 }
                 catch (Exception e)
                 {
-                    Logger.WriteLog($"CollectAudioDeviceInformation - Sentry Exception: {e}", MockConsole.LogLevel.Error);
+                    Logger.WriteLog($"CollectAudioDeviceInformation - Sentry Exception: {e}", Enums.LogLevel.Error);
                     SentrySdk.CaptureException(e);
                 }
             }

@@ -1,8 +1,8 @@
 using System;
 using System.Threading;
 using System.Timers;
+using LeadMeLabsLibrary;
 using Station.Components._commandLine;
-using Station.Components._notification;
 using Station.Components._overlay;
 using Station.Components._utils;
 using Station.MVC.Controller;
@@ -84,7 +84,7 @@ public static class StationScripts
         }
         else
         {
-            Logger.WriteLog("Unidentified command", MockConsole.LogLevel.Info);
+            Logger.WriteLog("Unidentified command", Enums.LogLevel.Info);
         }
     }
 
@@ -104,7 +104,7 @@ public static class StationScripts
         }
         else
         {
-            Logger.WriteLog("Processing...", MockConsole.LogLevel.Verbose);
+            Logger.WriteLog("Processing...", Enums.LogLevel.Verbose);
         }
     }
 

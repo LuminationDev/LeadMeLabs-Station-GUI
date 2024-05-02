@@ -6,6 +6,7 @@ using System.Net.Http;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using LeadMeLabsLibrary;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Sentry;
@@ -222,7 +223,7 @@ public static class QualityManager
             }
             
             default:
-                MockConsole.WriteLine($"Unknown QA request {additionalData}", MockConsole.LogLevel.Normal);
+                MockConsole.WriteLine($"Unknown QA request {additionalData}", Enums.LogLevel.Normal);
                 break;
         }
     }
@@ -312,11 +313,11 @@ public static class QualityManager
 
         if (result.IsSuccessStatusCode)
         {
-            Logger.WriteLog($"Uploaded QA test results to Firebase.", MockConsole.LogLevel.Normal);
+            Logger.WriteLog($"Uploaded QA test results to Firebase.", Enums.LogLevel.Normal);
         }
         else
         {
-            Logger.WriteLog($"Qa check capture failed with response code {result.StatusCode}", MockConsole.LogLevel.Normal);
+            Logger.WriteLog($"Qa check capture failed with response code {result.StatusCode}", Enums.LogLevel.Normal);
             SentrySdk.CaptureMessage($"Qa check capture failed with response code {result.StatusCode}");
         }
         
@@ -361,7 +362,7 @@ public static class QualityManager
             // Parse version number from the first line
             if (lines.Length == 0)
             {
-                Logger.WriteLog("HasUploadAlreadyBeenCompleted - File is empty - Uploading.", MockConsole.LogLevel.Normal);
+                Logger.WriteLog("HasUploadAlreadyBeenCompleted - File is empty - Uploading.", Enums.LogLevel.Normal);
                 return false;
             }
             
@@ -372,7 +373,7 @@ public static class QualityManager
             switch (versionComparison)
             {
                 case < 0:
-                    Logger.WriteLog("HasUploadAlreadyBeenCompleted - File version is greater than current software version - Uploading", MockConsole.LogLevel.Normal);
+                    Logger.WriteLog("HasUploadAlreadyBeenCompleted - File version is greater than current software version - Uploading", Enums.LogLevel.Normal);
                     return false;
                     
                 case 0 when lines.Length > 1:
@@ -380,18 +381,18 @@ public static class QualityManager
                     // Parse boolean value from the second line
                     if (bool.TryParse(lines[1], out bool isEnabled))
                     {
-                        Logger.WriteLog($"HasUploadAlreadyBeenCompleted - Version numbers match. Second line value: {isEnabled}", MockConsole.LogLevel.Normal);
+                        Logger.WriteLog($"HasUploadAlreadyBeenCompleted - Version numbers match. Second line value: {isEnabled}", Enums.LogLevel.Normal);
                         return isEnabled;
                     }
 
-                    Logger.WriteLog("HasUploadAlreadyBeenCompleted - Second line does not contain a valid boolean value - Uploading", MockConsole.LogLevel.Normal);
+                    Logger.WriteLog("HasUploadAlreadyBeenCompleted - Second line does not contain a valid boolean value - Uploading", Enums.LogLevel.Normal);
                     return false;
                 }
             }
         }
         catch (Exception ex)
         {
-            Logger.WriteLog($"HasUploadAlreadyBeenCompleted - An error occurred: {ex.Message}", MockConsole.LogLevel.Normal);
+            Logger.WriteLog($"HasUploadAlreadyBeenCompleted - An error occurred: {ex.Message}", Enums.LogLevel.Normal);
             return false;
         }
 

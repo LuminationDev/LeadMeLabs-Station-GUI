@@ -27,7 +27,7 @@ public static class CustomScripts
     {
         if (CommandLine.StationLocation == null)
         {
-            MockConsole.WriteLine("Cannot find working directory for custom experiences", MockConsole.LogLevel.Error);
+            MockConsole.WriteLine("Cannot find working directory for custom experiences", Enums.LogLevel.Error);
             return null;
         }
 

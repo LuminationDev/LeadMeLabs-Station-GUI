@@ -25,7 +25,7 @@ public static class Logger
     /// <param name="logLevel">The severity level of the log.</param>
     /// <param name="writeToLogFile">Determines whether to write the log message to the log file. Default is true.</param>
     [MethodImpl(MethodImplOptions.Synchronized)]
-    public static void WriteLog<T>(T logMessage, MockConsole.LogLevel logLevel, bool writeToLogFile = true)
+    public static void WriteLog<T>(T logMessage, Enums.LogLevel logLevel, bool writeToLogFile = true)
     {
         if (logMessage == null) return;
         string msg = $"{DeterminePrefix(logLevel)}[{DateTime.Now:yyyy-MM-ddTHH:mm:ss}]: {logMessage.ToString()}";
@@ -49,17 +49,18 @@ public static class Logger
     /// Based on the LogLevel passed by a message, add a prefix to the log message. This can be used to filter through
     /// the messages.
     /// </summary>
-    /// <param name="logLevel">A MockConsole.LogLevel</param>
+    /// <param name="logLevel">A Enums.LogLevel</param>
     /// <returns>A string of a prefix to add to the log.</returns>
-    private static string DeterminePrefix(MockConsole.LogLevel logLevel)
+    private static string DeterminePrefix(Enums.LogLevel logLevel)
     {
         return logLevel switch
         {
-            MockConsole.LogLevel.Error => "[E]",
-            MockConsole.LogLevel.Info => "[I]",
-            MockConsole.LogLevel.Normal => "[N]",
-            MockConsole.LogLevel.Debug => "[D]",
-            MockConsole.LogLevel.Verbose => "[V]",
+            Enums.LogLevel.Error => "[E]",
+            Enums.LogLevel.Info => "[I]",
+            Enums.LogLevel.Normal => "[N]",
+            Enums.LogLevel.Debug => "[D]",
+            Enums.LogLevel.Verbose => "[V]",
+            Enums.LogLevel.Update => "[U]",
             _ => "[N]"
         };
     }
@@ -82,7 +83,7 @@ public static class Logger
         else
         {
             //Clear the Queue as it will never Dequeue otherwise.
-            MockConsole.WriteLine($"_logs/ cannot be found, please run from Launcher. Looking in: {logFilePath}", MockConsole.LogLevel.Error);
+            MockConsole.WriteLine($"_logs/ cannot be found, please run from Launcher. Looking in: {logFilePath}", Enums.LogLevel.Error);
             LogQueue.Clear();
         }
     }
@@ -95,14 +96,14 @@ public static class Logger
     {
         if (CommandLine.StationLocation == null)
         {
-            WriteLog("Station location not found: LogRequest", MockConsole.LogLevel.Error);
+            WriteLog("Station location not found: LogRequest", Enums.LogLevel.Error);
             return;
         }
 
         //Collect the last x days of log files
         List<string> logs = CollectRecentLogs(days);
 
-        MockConsole.WriteLine($"Number of log files found: {logs.Count}", MockConsole.LogLevel.Debug);
+        MockConsole.WriteLine($"Number of log files found: {logs.Count}", Enums.LogLevel.Debug);
 
         if(logs.Count == 0)
         {
@@ -113,7 +114,7 @@ public static class Logger
         foreach (string filePath in logs)
         {
             string fileName = Path.GetFileNameWithoutExtension(filePath);
-            MockConsole.WriteLine($"Attempting to send: {fileName}", MockConsole.LogLevel.Debug);
+            MockConsole.WriteLine($"Attempting to send: {fileName}", Enums.LogLevel.Debug);
 
             //Add the header image to the sending image queue through action transformation
             SocketFile socketFile = new("file", $"{fileName}::::{Environment.GetEnvironmentVariable("StationId", EnvironmentVariableTarget.Process)}", $"{filePath}");
@@ -122,7 +123,7 @@ public static class Logger
             //Queue the send function for invoking
             TaskQueue.Queue(false, sendFile);
 
-            MockConsole.WriteLine($"Log file: {fileName} now queued for transfer.", MockConsole.LogLevel.Debug);
+            MockConsole.WriteLine($"Log file: {fileName} now queued for transfer.", Enums.LogLevel.Debug);
         }            
     }
 
@@ -139,7 +140,7 @@ public static class Logger
         // Get all log files in the directory
         string[] allLogFiles = Directory.GetFiles(logDirectory);
 
-        MockConsole.WriteLine($"Log directory count: {days}.", MockConsole.LogLevel.Debug);
+        MockConsole.WriteLine($"Log directory count: {days}.", Enums.LogLevel.Debug);
 
         // Filter and select the x most recent log files
         List<string> recentLogFiles = allLogFiles

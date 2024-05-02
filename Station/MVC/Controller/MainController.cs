@@ -79,7 +79,8 @@ public static class MainController
     public static async void StartProgram()
     {
         MockConsole.ClearConsole();
-        Logger.WriteLog("Loading ENV variables", MockConsole.LogLevel.Error);
+        
+        Logger.WriteLog("Loading ENV variables", Enums.LogLevel.Error);
         Environment.SetEnvironmentVariable("POWERSHELL_TELEMETRY_OPTOUT", "1");
         
         //Check if the Encryption key and env variables are set correctly before starting anything else
@@ -90,15 +91,15 @@ public static class MainController
         }
         catch (Exception ex)
         {
-            Logger.WriteLog($"DotEnv Error: {ex}", MockConsole.LogLevel.Error);
+            Logger.WriteLog($"DotEnv Error: {ex}", Enums.LogLevel.Error);
         }
 
         //Even if DotEnv fails, still load up the server details to show the details to the user.
-        Logger.WriteLog("Setting up server.", MockConsole.LogLevel.Normal);
+        Logger.WriteLog("Setting up server.", Enums.LogLevel.Normal);
         bool connected = SetupServerDetails();
         if (!connected)
         {
-            Logger.WriteLog("Server details were not collected.", MockConsole.LogLevel.Error);
+            Logger.WriteLog("Server details were not collected.", Enums.LogLevel.Error);
             return;
         }
         
@@ -106,7 +107,7 @@ public static class MainController
         if (!result)
         {
             App.SetWindowTitle("Station - Failed to load ENV variables.");
-            Logger.WriteLog("Failed loading ENV variables", MockConsole.LogLevel.Error);
+            Logger.WriteLog("Failed loading ENV variables", Enums.LogLevel.Error);
             return;
         }
         
@@ -114,7 +115,7 @@ public static class MainController
         bool collectedIpAddress = SetRemoteEndPoint();
         if (!collectedIpAddress)
         {
-            Logger.WriteLog("Could not collect saved NUC address.", MockConsole.LogLevel.Error);
+            Logger.WriteLog("Could not collect saved NUC address.", Enums.LogLevel.Error);
             return;
         }
 
@@ -136,7 +137,7 @@ public static class MainController
             }
             catch (Exception e)
             {
-                Logger.WriteLog($"StartProgram - Sentry Exception: {e}", MockConsole.LogLevel.Error);
+                Logger.WriteLog($"StartProgram - Sentry Exception: {e}", Enums.LogLevel.Error);
                 SentrySdk.CaptureException(e);
             }
 
@@ -152,7 +153,7 @@ public static class MainController
 
             App.SetWindowTitle(
                 $"Station({Environment.GetEnvironmentVariable("StationId", EnvironmentVariableTarget.Process)}) -- {localEndPoint.Address} -- {macAddress} -- {versionNumber}");
-            Logger.WriteLog("ENV variables loaded", MockConsole.LogLevel.Info);
+            Logger.WriteLog("ENV variables loaded", Enums.LogLevel.Info);
 
             //Call as a new task to stop UI and server start up from hanging whilst reading the files
             new Thread(Initialisation).Start();
@@ -199,11 +200,11 @@ public static class MainController
 
         if (Environment.GetEnvironmentVariable("NucAddress", EnvironmentVariableTarget.Process) == null)
         {
-            Logger.WriteLog($"Expected NUC address: is null, check environment variables are set.", MockConsole.LogLevel.Normal);
+            Logger.WriteLog($"Expected NUC address: is null, check environment variables are set.", Enums.LogLevel.Normal);
             return;
         }
         
-        Logger.WriteLog($"Expected NUC address: {Environment.GetEnvironmentVariable("NucAddress", EnvironmentVariableTarget.Process)}", MockConsole.LogLevel.Normal);
+        Logger.WriteLog($"Expected NUC address: {Environment.GetEnvironmentVariable("NucAddress", EnvironmentVariableTarget.Process)}", Enums.LogLevel.Normal);
         if (Helper.GetStationMode().Equals(Helper.STATION_MODE_APPLIANCE)) return;
         MessageController.InitialStartUp();
         
@@ -229,14 +230,14 @@ public static class MainController
                 throw new Exception($"ReChecked IP address is not the same. Original: {localEndPoint.Address.Address}, ReChecked: {ip.Address}");
             }
 
-            Logger.WriteLog("Re-checking software details after 5 minutes of operation.", MockConsole.LogLevel.Normal);
-            Logger.WriteLog("Server IP Address is: " + ip, MockConsole.LogLevel.Normal);
-            Logger.WriteLog("MAC Address is: " + SystemInformation.GetMACAddress(), MockConsole.LogLevel.Normal);
-            Logger.WriteLog("Version is: " + Updater.GetVersionNumber(), MockConsole.LogLevel.Normal);
+            Logger.WriteLog("Re-checking software details after 5 minutes of operation.", Enums.LogLevel.Normal);
+            Logger.WriteLog("Server IP Address is: " + ip, Enums.LogLevel.Normal);
+            Logger.WriteLog("MAC Address is: " + SystemInformation.GetMACAddress(), Enums.LogLevel.Normal);
+            Logger.WriteLog("Version is: " + Updater.GetVersionNumber(), Enums.LogLevel.Normal);
         }
         catch (Exception e)
         {
-            Logger.WriteLog($"OnTimerCallback - Sentry Exception: {e}", MockConsole.LogLevel.Error);
+            Logger.WriteLog($"OnTimerCallback - Sentry Exception: {e}", Enums.LogLevel.Error);
             SentrySdk.CaptureException(e);
         }
     }
@@ -255,7 +256,7 @@ public static class MainController
         }
         catch (ObjectDisposedException e)
         {
-            Logger.WriteLog($"StopVariableTimer: variableCheck has already been disposed - {e}", MockConsole.LogLevel.Info);
+            Logger.WriteLog($"StopVariableTimer: variableCheck has already been disposed - {e}", Enums.LogLevel.Info);
         }
     }
 
@@ -270,7 +271,7 @@ public static class MainController
             StationMonitoringThread.StopMonitoring();
             StopServer();
             wrapperManager?.ShutDownWrapper();
-            Logger.WriteLog("Station stopped", MockConsole.LogLevel.Normal);
+            Logger.WriteLog("Station stopped", Enums.LogLevel.Normal);
         }).Start();
     }
 
@@ -280,7 +281,7 @@ public static class MainController
     public static async void RestartProgram()
     {
         StopProgram();
-        Logger.WriteLog("Station restarting", MockConsole.LogLevel.Normal);
+        Logger.WriteLog("Station restarting", Enums.LogLevel.Normal);
         await Task.Delay(2000);
         StartProgram();
     }
@@ -296,7 +297,7 @@ public static class MainController
     {
         server?.Stop();
         serverThread?.Interrupt();
-        MockConsole.WriteLine("Server stopped", MockConsole.LogLevel.Debug);
+        MockConsole.WriteLine("Server stopped", Enums.LogLevel.Debug);
     }
 
     /// <summary>
@@ -314,14 +315,14 @@ public static class MainController
             versionNumber = Updater.GetVersionNumber();
             localEndPoint = new IPEndPoint(ip.Address, LocalPort);
 
-            Logger.WriteLog("Server IP Address is: " + localEndPoint.Address, MockConsole.LogLevel.Normal);
-            Logger.WriteLog("MAC Address is: " + macAddress, MockConsole.LogLevel.Normal);
-            Logger.WriteLog("Version is: " + versionNumber, MockConsole.LogLevel.Normal);
+            Logger.WriteLog("Server IP Address is: " + localEndPoint.Address, Enums.LogLevel.Normal);
+            Logger.WriteLog("MAC Address is: " + macAddress, Enums.LogLevel.Normal);
+            Logger.WriteLog("Version is: " + versionNumber, Enums.LogLevel.Normal);
             return true;
         }
         catch (Exception e)
         {
-            Logger.WriteLog($"SetupServerDetails - Sentry Exception: {e}", MockConsole.LogLevel.Error);
+            Logger.WriteLog($"SetupServerDetails - Sentry Exception: {e}", Enums.LogLevel.Error);
             SentrySdk.CaptureException(e);
             return false;
         }
@@ -347,7 +348,7 @@ public static class MainController
             }
             catch (Exception e)
             {
-                Logger.WriteLog($"Unexpected exception AttemptIPAddressRetrieval (attempt {attempts}): {e}", MockConsole.LogLevel.Error);
+                Logger.WriteLog($"Unexpected exception AttemptIPAddressRetrieval (attempt {attempts}): {e}", Enums.LogLevel.Error);
             }
 
             Task.Delay(15000).Wait();
@@ -377,7 +378,7 @@ public static class MainController
         }
         catch (Exception e)
         {
-            Logger.WriteLog($"SetRemoteEndPoint - Sentry Exception: {e}", MockConsole.LogLevel.Error);
+            Logger.WriteLog($"SetRemoteEndPoint - Sentry Exception: {e}", Enums.LogLevel.Error);
             SentrySdk.CaptureException(e);
         }
 
@@ -394,7 +395,7 @@ public static class MainController
         Tuple<bool, string> output = RegistryHelper.ValidateElectronInstallDirectory(softwareType);
         if (output.Item2.Equals("Install location already correct.")) return;
         
-        Logger.WriteLog($"{output.Item2}", MockConsole.LogLevel.Error);
+        Logger.WriteLog($"{output.Item2}", Enums.LogLevel.Error);
         SentrySdk.CaptureMessage($"{output.Item2}. Location: {Environment.GetEnvironmentVariable("LabLocation", EnvironmentVariableTarget.Process) ?? "Unknown"}");
     }
 }

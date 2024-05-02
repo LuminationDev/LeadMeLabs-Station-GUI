@@ -21,7 +21,7 @@ public static class DotEnv
         {
             if (!File.Exists(FilePath))
             {
-                MockConsole.WriteLine($"StationError, Config file not found:{FilePath}", MockConsole.LogLevel.Error);
+                MockConsole.WriteLine($"StationError, Config file not found:{FilePath}", Enums.LogLevel.Error);
                 return Task.FromResult(false);
             }
 
@@ -29,7 +29,7 @@ public static class DotEnv
             string decryptedText = EncryptionHelper.DetectFileEncryption(FilePath);
             if (string.IsNullOrEmpty(decryptedText))
             {
-                MockConsole.WriteLine($"StationError, Config file empty:{FilePath}", MockConsole.LogLevel.Error);
+                MockConsole.WriteLine($"StationError, Config file empty:{FilePath}", Enums.LogLevel.Error);
                 return Task.FromResult(false);
             }
 
@@ -45,7 +45,7 @@ public static class DotEnv
                     case <= 0:
                         continue;
                     case 1 when parts[0] != "Directory":
-                        MockConsole.WriteLine($"StationError,Config incomplete:{parts[0]} has no value", MockConsole.LogLevel.Error);
+                        MockConsole.WriteLine($"StationError,Config incomplete:{parts[0]} has no value", Enums.LogLevel.Error);
                         return Task.FromResult(false);
                     default:
                         Environment.SetEnvironmentVariable(parts[0], parts[1]);
@@ -55,7 +55,7 @@ public static class DotEnv
         } 
         catch (Exception ex)
         {
-            MockConsole.WriteLine(ex.ToString(), MockConsole.LogLevel.Error);
+            MockConsole.WriteLine(ex.ToString(), Enums.LogLevel.Error);
         }
 
         return Task.FromResult(true);

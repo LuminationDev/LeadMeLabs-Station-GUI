@@ -62,7 +62,7 @@ public static class EmbeddedScripts
             // Check if the root folder exists
             if (!Directory.Exists(rootFolder))
             {
-                MockConsole.WriteLine($"Root folder does not exist: {rootFolder}", MockConsole.LogLevel.Error);
+                MockConsole.WriteLine($"Root folder does not exist: {rootFolder}", Enums.LogLevel.Error);
                 return null;
             }
             
@@ -74,7 +74,7 @@ public static class EmbeddedScripts
                 string configFilePath = Path.Combine(subfolder, "leadme_config.json");
                 if (!File.Exists(configFilePath))
                 {
-                    MockConsole.WriteLine($"config.json not found in {subfolder}", MockConsole.LogLevel.Error);
+                    MockConsole.WriteLine($"config.json not found in {subfolder}", Enums.LogLevel.Error);
                     continue;
                 }
 
@@ -116,14 +116,14 @@ public static class EmbeddedScripts
                 }
                 catch (Exception e)
                 {
-                    MockConsole.WriteLine($"Exception in {configFilePath}", MockConsole.LogLevel.Error);
-                    MockConsole.WriteLine($"Exception: {e}", MockConsole.LogLevel.Error);
+                    MockConsole.WriteLine($"Exception in {configFilePath}", Enums.LogLevel.Error);
+                    MockConsole.WriteLine($"Exception: {e}", Enums.LogLevel.Error);
                 }
             }
         }
         catch (Exception ex)
         {
-            MockConsole.WriteLine($"Error processing root folder {rootFolder}: {ex.Message}", MockConsole.LogLevel.Error);
+            MockConsole.WriteLine($"Error processing root folder {rootFolder}: {ex.Message}", Enums.LogLevel.Error);
         }
         
         return config.ToString();
@@ -161,7 +161,7 @@ public static class EmbeddedScripts
         
         if (CommandLine.StationLocation == null)
         {
-            Logger.WriteLog("EmbeddedScripts - LoadAvailableExperiences: Cannot find working directory for embedded experiences", MockConsole.LogLevel.Error);
+            Logger.WriteLog("EmbeddedScripts - LoadAvailableExperiences: Cannot find working directory for embedded experiences", Enums.LogLevel.Error);
             return null;
         }
         
@@ -199,8 +199,8 @@ public static class EmbeddedScripts
             }
             catch (Exception e)
             {
-                MockConsole.WriteLine("No subtype detected", MockConsole.LogLevel.Error);
-                MockConsole.WriteLine(e.ToString(), MockConsole.LogLevel.Error);
+                MockConsole.WriteLine("No subtype detected", Enums.LogLevel.Error);
+                MockConsole.WriteLine(e.ToString(), Enums.LogLevel.Error);
             }
             
             // Basic application requirements

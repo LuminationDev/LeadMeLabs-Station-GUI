@@ -6,9 +6,9 @@ using System.IO;
 using System.Reflection;
 using System.Windows;
 using System.Windows.Forms;
+using LeadMeLabsLibrary;
 using Station._details;
 using Station.Components._commandLine;
-using Station.Components._notification;
 using Station.Components._utils;
 using Station.Components._utils._steamConfig;
 using Application = System.Windows.Application;
@@ -143,7 +143,7 @@ public class NotifyIconWrapper : FrameworkElement, IDisposable
 
         if (location == null)
         {
-            Logger.WriteLog("NotifyIconWrapper - GoToLogsOnClick: Station location not found.", MockConsole.LogLevel.Error);
+            Logger.WriteLog("NotifyIconWrapper - GoToLogsOnClick: Station location not found.", Enums.LogLevel.Error);
             return;
         }
         
@@ -155,7 +155,7 @@ public class NotifyIconWrapper : FrameworkElement, IDisposable
         }
         catch (Exception ex)
         {
-            Logger.WriteLog("NotifyIconWrapper - GoToLogsOnClick: An error occurred: " + ex.Message, MockConsole.LogLevel.Error);
+            Logger.WriteLog("NotifyIconWrapper - GoToLogsOnClick: An error occurred: " + ex.Message, Enums.LogLevel.Error);
         }
     }
 

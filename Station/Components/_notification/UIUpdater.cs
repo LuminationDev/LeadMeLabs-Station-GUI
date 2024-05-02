@@ -2,6 +2,7 @@
 using System.Runtime.CompilerServices;
 using System.Windows;
 using System.Windows.Media.Imaging;
+using LeadMeLabsLibrary;
 using Station.MVC.View;
 
 namespace Station.Components._notification;
@@ -138,7 +139,7 @@ public static class UiUpdater
         catch (Exception ex)
         {
             // Handle any exceptions that may occur during loading
-            MockConsole.WriteLine($"Error loading image: {ex.Message}", MockConsole.LogLevel.Error);
+            MockConsole.WriteLine($"Error loading image: {ex.Message}", Enums.LogLevel.Error);
         }
     }
 
