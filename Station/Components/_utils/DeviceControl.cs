@@ -57,9 +57,6 @@ public static class DeviceControl
             RestartProgram();
             return true;
         }
-
-        //TODO Disabled until there is an update to fully test on
-        return false;
         
         // Only perform Windows updates on the third Thursday of the month
         if (IsThirdThursdayOfMonth())
