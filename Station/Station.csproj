@@ -8,9 +8,9 @@
 		<ApplicationIcon>./Assets/Icons/icon.ico</ApplicationIcon>
 		<Configurations>Debug;Release;DevDebug;DevRelease</Configurations>
 		<Version>1.1.28</Version>
-        <SelfContained>false</SelfContained>
-        <RuntimeIdentifier>win-x64</RuntimeIdentifier>
-        <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
+    <SelfContained>false</SelfContained>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
 	</PropertyGroup>
 
 	<ItemGroup>

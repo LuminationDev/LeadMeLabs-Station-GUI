@@ -368,8 +368,12 @@ public class OpenVrManager
         {
             ScheduledTaskQueue.EnqueueTask(() =>
             {
-                if (!(WrapperManager.currentWrapper?.LaunchFailedFromOpenVrTimeout() ?? false)) return;
-                
+                if (!(WrapperManager.currentWrapper?.LaunchFailedFromOpenVrTimeout() ?? false))
+                {
+                    WrapperManager.currentWrapper?.SetLaunchingExperience(false);
+                    return;
+                }
+
                 WrapperManager.currentWrapper.StopCurrentProcess();
                 UiUpdater.ResetUiDisplay();
                 
@@ -443,7 +447,7 @@ public class OpenVrManager
         }
 
         string currentAppName = appNameBuffer.ToString();
-        if (currentAppName.Equals("nwjs 119"))
+        if (currentAppName.StartsWith("nwjs"))
         {
             currentAppName = WrapperManager.currentWrapper?.GetLastExperience()?.Name ?? appNameBuffer.ToString();
         }

@@ -140,10 +140,6 @@ internal class EmbeddedWrapper : IWrapper
 
     public void SetCurrentProcess(Process process)
     {
-        if (currentProcess != null)
-        {
-            currentProcess.Kill(true);
-        }
         _launchWillHaveFailedFromOpenVrTimeout = false;
         currentProcess = process;
         ListenForClose();
@@ -153,6 +149,8 @@ internal class EmbeddedWrapper : IWrapper
     {
         // Safe cast for potential vr profile
         VrProfile? vrProfile = Profile.CastToType<VrProfile>(SessionController.StationProfile);
+        
+        StopNwJsOrphans();
         
         _launchWillHaveFailedFromOpenVrTimeout = false;
         if(CommandLine.StationLocation == null)
@@ -233,6 +231,7 @@ internal class EmbeddedWrapper : IWrapper
                 if (OpenVrManager.LaunchApplication(experience.ID))
                 {
                     Logger.WriteLog($"EmbeddedWrapper.WrapProcess: Launching {experience.Name} via OpenVR", Enums.LogLevel.Verbose);
+                    FindCurrentProcess();
                     return;
                 }
                 _launchWillHaveFailedFromOpenVrTimeout = false;
@@ -392,7 +391,7 @@ internal class EmbeddedWrapper : IWrapper
         Logger.WriteLog($"Application found: {proc.MainWindowTitle}/{lastExperience.ID}", Enums.LogLevel.Debug);
         UiUpdater.UpdateProcess(proc.MainWindowTitle);
         UiUpdater.UpdateStatus("Running...");
-            
+
         return proc;
 
     }
@@ -452,18 +451,45 @@ internal class EmbeddedWrapper : IWrapper
     /// </summary>
     public void StopCurrentProcess()
     {
-        if (currentProcess != null)
+        // close legacy mirror if open
+        if (CommandLine.GetProcessIdFromMainWindowTitle("Legacy Mirror") != null)
         {
-            currentProcess.Kill(true);
-            currentProcess = GetExperienceProcess();
-            if (currentProcess != null)
-            {
-                currentProcess.Kill();
-            }
-            WrapperMonitoringThread.StopMonitoring();
+            CommandLine.ToggleSteamVrLegacyMirror();
         }
         
+        if (currentProcess != null)
+        {
+            PassMessageToProcess("shutdown");
+
+            ScheduledTaskQueue.EnqueueTask(() => // if it hasn't cleaned itself up
+            {
+                currentProcess = GetExperienceProcess();
+                if (currentProcess != null)
+                {
+                    currentProcess.Kill(true);
+                    currentProcess = GetExperienceProcess();
+                    if (currentProcess != null)
+                    {
+                        currentProcess.Kill();
+                    }
+                }
+            }, TimeSpan.FromSeconds(3));
+            
+            WrapperMonitoringThread.StopMonitoring();
+        }
         lastExperience.Name = null; //Reset for correct headset state
+    }
+    
+    /// <summary>
+    /// hyper-specific function to clean up orphans that prevent LeadMe WebXR from launching or connecting to pipe server
+    /// </summary>
+    private void StopNwJsOrphans()
+    {
+        Process[] processes = Process.GetProcessesByName("leadme-webxr-viewer");
+        foreach (var process in processes)
+        {
+            process.Kill(true);
+        }
     }
 
     public void RestartCurrentExperience()
