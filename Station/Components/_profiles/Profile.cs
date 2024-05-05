@@ -3,8 +3,8 @@ using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Timers;
+using LeadMeLabsLibrary;
 using Station.Components._commandLine;
-using Station.Components._notification;
 using Station.Components._utils;
 
 namespace Station.Components._profiles;
@@ -57,10 +57,10 @@ public class Profile
     {
         if (!InternalDebugger.GetMinimisePrograms()) return;
         
-        Logger.WriteLog("minimizing processes", MockConsole.LogLevel.Verbose);
+        Logger.WriteLog("minimizing processes", Enums.LogLevel.Verbose);
         foreach (var process in processes.Select(ProcessManager.GetProcessesByName).SelectMany(selectedProcesses => selectedProcesses))
         {
-            Logger.WriteLog($"minimizing: {process.ProcessName}", MockConsole.LogLevel.Verbose);
+            Logger.WriteLog($"minimizing: {process.ProcessName}", Enums.LogLevel.Verbose);
             WindowManager.MinimizeProcess(process);
         }
     }

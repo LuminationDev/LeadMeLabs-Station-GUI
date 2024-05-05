@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Threading.Tasks;
+using LeadMeLabsLibrary;
 using Newtonsoft.Json.Linq;
 using Station.Components._interfaces;
 using Station.Components._managers;
@@ -57,7 +58,7 @@ public static class ViveScripts
 
         //Wait for the Vive Check
         Logger.WriteLog("WaitForVive - Attempting to launch an application, vive status is: " +
-            Enum.GetName(typeof(DeviceStatus), vrProfile.VrHeadset.GetHeadsetManagementSoftwareStatus()), MockConsole.LogLevel.Normal);
+            Enum.GetName(typeof(DeviceStatus), vrProfile.VrHeadset.GetHeadsetManagementSoftwareStatus()), Enums.LogLevel.Normal);
         if (WrapperManager.currentWrapper?.GetLaunchingExperience() ?? false)
         {
             JObject message = new JObject
@@ -94,10 +95,10 @@ public static class ViveScripts
         int count = 0;
 
         MockConsole.WriteLine("ViveCheck - About to launch a steam app, vive status is: " + 
-            Enum.GetName(typeof(DeviceStatus), vrProfile.VrHeadset.GetHeadsetManagementSoftwareStatus()), MockConsole.LogLevel.Normal);
+            Enum.GetName(typeof(DeviceStatus), vrProfile.VrHeadset.GetHeadsetManagementSoftwareStatus()), Enums.LogLevel.Normal);
         while (vrProfile.VrHeadset.GetHeadsetManagementSoftwareStatus() != DeviceStatus.Connected)
         {
-            MockConsole.WriteLine("Vive check looping", MockConsole.LogLevel.Debug);
+            MockConsole.WriteLine("Vive check looping", Enums.LogLevel.Debug);
 
             activelyMonitoring = true;
 

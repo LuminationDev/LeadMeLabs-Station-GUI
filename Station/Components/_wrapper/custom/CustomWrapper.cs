@@ -77,7 +77,7 @@ internal class CustomWrapper : IWrapper
 
             if (CommandLine.StationLocation == null)
             {
-                MockConsole.WriteLine($"Station working directory not found while searching for header file", MockConsole.LogLevel.Error);
+                MockConsole.WriteLine($"Station working directory not found while searching for header file", Enums.LogLevel.Error);
                 
                 JObject message = new JObject
                 {
@@ -103,7 +103,7 @@ internal class CustomWrapper : IWrapper
 
             if (!File.Exists(filePath))
             {
-                MockConsole.WriteLine($"File not found:{filePath}", MockConsole.LogLevel.Error);
+                MockConsole.WriteLine($"File not found:{filePath}", Enums.LogLevel.Error);
                 
                 JObject message = new JObject
                 {
@@ -122,7 +122,7 @@ internal class CustomWrapper : IWrapper
             //Queue the send function for invoking
             TaskQueue.Queue(false, sendImage);
 
-            MockConsole.WriteLine($"Thumbnail for experience: {experienceName} now queued for transfer.", MockConsole.LogLevel.Info);
+            MockConsole.WriteLine($"Thumbnail for experience: {experienceName} now queued for transfer.", Enums.LogLevel.Info);
         });
     }
 
@@ -155,26 +155,26 @@ internal class CustomWrapper : IWrapper
         _launchWillHaveFailedFromOpenVrTimeout = false;
         if(CommandLine.StationLocation == null)
         {
-            Logger.WriteLog("CustomWrapper - WrapProcess: Cannot find working directory", MockConsole.LogLevel.Error);
+            Logger.WriteLog("CustomWrapper - WrapProcess: Cannot find working directory", Enums.LogLevel.Error);
             return "Cannot find working directory";
         }
 
         if (vrProfile == null && experience.IsVr)
         {
-            Logger.WriteLog("CustomWrapper - WrapProcess: No VR headset set.", MockConsole.LogLevel.Error);
+            Logger.WriteLog("CustomWrapper - WrapProcess: No VR headset set.", Enums.LogLevel.Error);
             return "No VR headset set.";
         }
 
         if (experience.Name == null || experience.ID == null)
         {
-            Logger.WriteLog("CustomWrapper.WrapProcess - Experience name cannot be null.", MockConsole.LogLevel.Error);
+            Logger.WriteLog("CustomWrapper.WrapProcess - Experience name cannot be null.", Enums.LogLevel.Error);
             return "CustomWrapper.WrapProcess - Experience name cannot be null.";
         }
 
         //Close any open custom processes before opening the next one
         if (currentProcess != null)
         {
-            MockConsole.WriteLine($"Closing existing process: {lastExperience.Name}", MockConsole.LogLevel.Normal);
+            MockConsole.WriteLine($"Closing existing process: {lastExperience.Name}", Enums.LogLevel.Normal);
             currentProcess.Kill(true);
         }
 
@@ -206,7 +206,7 @@ internal class CustomWrapper : IWrapper
             }
         }
 
-        MockConsole.WriteLine($"Launching process: {experience.Name} - {experience.ID}", MockConsole.LogLevel.Normal);
+        MockConsole.WriteLine($"Launching process: {experience.Name} - {experience.ID}", Enums.LogLevel.Normal);
         Task.Factory.StartNew(() =>
         {
             if (experience.IsVr)
@@ -215,7 +215,7 @@ internal class CustomWrapper : IWrapper
                 _launchWillHaveFailedFromOpenVrTimeout = true;
                 if (OpenVrManager.LaunchApplication(experience.ID))
                 {
-                    Logger.WriteLog($"CustomWrapper.WrapProcess: Launching {experience.Name} via OpenVR", MockConsole.LogLevel.Verbose);
+                    Logger.WriteLog($"CustomWrapper.WrapProcess: Launching {experience.Name} via OpenVR", Enums.LogLevel.Verbose);
                     return;
                 }
                 _launchWillHaveFailedFromOpenVrTimeout = false;
@@ -225,7 +225,7 @@ internal class CustomWrapper : IWrapper
             }
             
             //Fall back to the alternate if it fails or is not a registered VR experience in the vrmanifest
-            Logger.WriteLog($"CustomWrapper.WrapProcess - Using AlternateLaunchProcess", MockConsole.LogLevel.Normal);
+            Logger.WriteLog($"CustomWrapper.WrapProcess - Using AlternateLaunchProcess", Enums.LogLevel.Normal);
             AlternateLaunchProcess(experience);
         });
         return "launching";
@@ -246,7 +246,7 @@ internal class CustomWrapper : IWrapper
     {
         if (CommandLine.StationLocation == null)
         {
-            Logger.WriteLog("CustomWrapper - WrapProcess: Cannot find working directory", MockConsole.LogLevel.Error);
+            Logger.WriteLog("CustomWrapper - WrapProcess: Cannot find working directory", Enums.LogLevel.Error);
             return;
         }
 
@@ -298,7 +298,7 @@ internal class CustomWrapper : IWrapper
         while (child == null && attempts < 20)
         {
             attempts++;
-            MockConsole.WriteLine($"Checking for child process...", MockConsole.LogLevel.Debug);
+            MockConsole.WriteLine($"Checking for child process...", Enums.LogLevel.Debug);
             Task.Delay(3000).Wait();
             child = GetExperienceProcess();
         }
@@ -332,7 +332,7 @@ internal class CustomWrapper : IWrapper
             response.Add("responseData", responseData);
             MessageController.SendResponse("NUC", "QA", response.ToString());
 
-            MockConsole.WriteLine($"Application launching: {currentProcess?.MainWindowTitle}/{lastExperience.ID}", MockConsole.LogLevel.Normal);
+            MockConsole.WriteLine($"Application launching: {currentProcess?.MainWindowTitle}/{lastExperience.ID}", Enums.LogLevel.Normal);
 
             ListenForClose();
         }
@@ -366,7 +366,7 @@ internal class CustomWrapper : IWrapper
     private Process? GetExperienceProcess()
     {
         string? altPathWithoutExe = Path.GetDirectoryName(lastExperience.AltPath);
-        Logger.WriteLog($"Attempting to get id for " + altPathWithoutExe, MockConsole.LogLevel.Debug);
+        Logger.WriteLog($"Attempting to get id for " + altPathWithoutExe, Enums.LogLevel.Debug);
         if (string.IsNullOrEmpty(altPathWithoutExe))
         {
             return null;
@@ -382,7 +382,7 @@ internal class CustomWrapper : IWrapper
         //Get the steam process name from the CommandLine function and compare here instead of removing any external child processes
         if (proc == null) return null;
         
-        Logger.WriteLog($"Application found: {proc.MainWindowTitle}/{lastExperience.ID}", MockConsole.LogLevel.Debug);
+        Logger.WriteLog($"Application found: {proc.MainWindowTitle}/{lastExperience.ID}", Enums.LogLevel.Debug);
         UiUpdater.UpdateProcess(proc.MainWindowTitle);
         UiUpdater.UpdateStatus("Running...");
             

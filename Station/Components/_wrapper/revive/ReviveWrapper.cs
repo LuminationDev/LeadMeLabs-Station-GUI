@@ -77,7 +77,7 @@ public class ReviveWrapper : IWrapper
 
             if (!File.Exists(filePath))
             {
-                MockConsole.WriteLine($"File not found:{filePath}", MockConsole.LogLevel.Error);
+                MockConsole.WriteLine($"File not found:{filePath}", Enums.LogLevel.Error);
                 
                 JObject message = new JObject
                 {
@@ -96,7 +96,7 @@ public class ReviveWrapper : IWrapper
             //Queue the send function for invoking
             TaskQueue.Queue(false, sendImage);
 
-            MockConsole.WriteLine($"Thumbnail for experience: {experienceKey} now queued for transfer.", MockConsole.LogLevel.Normal);
+            MockConsole.WriteLine($"Thumbnail for experience: {experienceKey} now queued for transfer.", Enums.LogLevel.Normal);
         });
     }
 
@@ -136,7 +136,7 @@ public class ReviveWrapper : IWrapper
 
         if (vrProfile?.VrHeadset == null)
         {
-            Logger.WriteLog("ReviveWrapper - WrapProcess: No VR headset set.", MockConsole.LogLevel.Error);
+            Logger.WriteLog("ReviveWrapper - WrapProcess: No VR headset set.", Enums.LogLevel.Error);
             return "No VR headset set.";
         }
 
@@ -151,11 +151,11 @@ public class ReviveWrapper : IWrapper
                 { "value", "GameLaunchFailed:Fail to find experience" }
             };
             SessionController.PassStationMessage(message);
-            Logger.WriteLog($"Unable to find Revive experience details (name) for: {experience.Name}", MockConsole.LogLevel.Normal);
+            Logger.WriteLog($"Unable to find Revive experience details (name) for: {experience.Name}", Enums.LogLevel.Normal);
             return $"Unable to find Revive experience details (name & install directory) for: {experience.Name}";
         }
 
-        MockConsole.WriteLine($"Wrapping: {experienceName}", MockConsole.LogLevel.Debug);
+        MockConsole.WriteLine($"Wrapping: {experienceName}", Enums.LogLevel.Debug);
 
         //Start the external processes to handle SteamVR
         SessionController.StartSession(WrapperType);
@@ -186,7 +186,7 @@ public class ReviveWrapper : IWrapper
             _launchWillHaveFailedFromOpenVrTimeout = true;
             if (OpenVrManager.LaunchApplication(experience.ID))
             {
-                Logger.WriteLog($"SteamWrapper.WrapProcess: Launching {experience.Name} via OpenVR", MockConsole.LogLevel.Verbose);
+                Logger.WriteLog($"SteamWrapper.WrapProcess: Launching {experience.Name} via OpenVR", Enums.LogLevel.Verbose);
                 return;
             }
 
@@ -249,7 +249,7 @@ public class ReviveWrapper : IWrapper
             }
             catch (InvalidOperationException e)
             {
-                Logger.WriteLog($"StopCurrentProcess - ERROR: {e}", MockConsole.LogLevel.Error);
+                Logger.WriteLog($"StopCurrentProcess - ERROR: {e}", Enums.LogLevel.Error);
             }
         }
 

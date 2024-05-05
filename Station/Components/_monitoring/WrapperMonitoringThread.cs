@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading;
+using LeadMeLabsLibrary;
 using Newtonsoft.Json.Linq;
 using Station.Components._commandLine;
 using Station.Components._notification;
@@ -80,7 +81,7 @@ public static class WrapperMonitoringThread
                 break;
 
             default:
-                Logger.WriteLog($"Monitoring type not supported: {type}", MockConsole.LogLevel.Error);
+                Logger.WriteLog($"Monitoring type not supported: {type}", Enums.LogLevel.Error);
                 return;
         }
 
@@ -102,7 +103,7 @@ public static class WrapperMonitoringThread
 
     private static void CallSteamCheck(Object? source, System.Timers.ElapsedEventArgs e, bool isVr)
     {
-        MockConsole.WriteLine("Checked Steam status", MockConsole.LogLevel.Verbose);
+        MockConsole.WriteLine("Checked Steam status", Enums.LogLevel.Verbose);
         ProcessesAreResponding(isVr);
         SteamCheck(isVr);
 
@@ -111,7 +112,7 @@ public static class WrapperMonitoringThread
     
     private static void CallReviveCheck(Object? source, System.Timers.ElapsedEventArgs e, bool isVr)
     {
-        MockConsole.WriteLine("Checked Revive status", MockConsole.LogLevel.Verbose);
+        MockConsole.WriteLine("Checked Revive status", Enums.LogLevel.Verbose);
         ProcessesAreResponding(isVr);
         SteamCheck(isVr);
 
@@ -148,8 +149,8 @@ public static class WrapperMonitoringThread
         List<Process> processes = ProcessManager.GetProcessesByNames(combinedProcesses);
         bool processesAreAllResponding = ProcessManager.CheckThatAllProcessesAreResponding(processes);
         
-        MockConsole.WriteLine($"Just checked that all processes are responding. Result: {processesAreAllResponding}", MockConsole.LogLevel.Verbose);
-        MockConsole.WriteLine($"Just checked that all processes are running. Result: {allProcessesAreRunning}", MockConsole.LogLevel.Verbose);
+        MockConsole.WriteLine($"Just checked that all processes are responding. Result: {processesAreAllResponding}", Enums.LogLevel.Verbose);
+        MockConsole.WriteLine($"Just checked that all processes are running. Result: {allProcessesAreRunning}", Enums.LogLevel.Verbose);
 
         if (processesAreAllResponding == processesAreResponding) return;
         
@@ -193,7 +194,7 @@ public static class WrapperMonitoringThread
             Process[] steamVrErrorDialogs = ProcessManager.GetProcessesByName("steamtours");
             foreach (var process in steamVrErrorDialogs)
             {
-                Logger.WriteLog($"Killing steam error process: {process.MainWindowTitle}", MockConsole.LogLevel.Error);
+                Logger.WriteLog($"Killing steam error process: {process.MainWindowTitle}", Enums.LogLevel.Error);
                 process.Kill();
             }
         }

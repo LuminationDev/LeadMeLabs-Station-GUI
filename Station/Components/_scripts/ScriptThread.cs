@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using LeadMeLabsLibrary;
 using Newtonsoft.Json.Linq;
 using Station.Components._legacy;
 using Station.Components._managers;
@@ -143,25 +144,25 @@ public class ScriptThread
         string[] split = additionalData.Split(":", 4);
         if (split.Length < 4)
         {
-            Logger.WriteLog($"Could not parse display change for additional data {additionalData}", MockConsole.LogLevel.Error);
+            Logger.WriteLog($"Could not parse display change for additional data {additionalData}", Enums.LogLevel.Error);
             return;
         }
         string heightString = split[1];
         string widthString = split[3];
         if (!Int32.TryParse(heightString, out var height) || !Int32.TryParse(widthString, out var width))
         {
-            Logger.WriteLog($"Could not parse display change for values Height: {heightString}, Width: {widthString}", MockConsole.LogLevel.Error);
+            Logger.WriteLog($"Could not parse display change for values Height: {heightString}, Width: {widthString}", Enums.LogLevel.Error);
             return;
         }
 
         if (!DisplayController.IsDisplayModeSupported(width, height, 32))
         {
-            Logger.WriteLog($"Invalid display change for values Height: {heightString}, Width: {widthString}", MockConsole.LogLevel.Error);
+            Logger.WriteLog($"Invalid display change for values Height: {heightString}, Width: {widthString}", Enums.LogLevel.Error);
             return;
         }
 
         DisplayController.ChangeDisplaySettings(width, height, 32);
-        Logger.WriteLog($"Changed display settings to Height: {heightString}, Width: {widthString}", MockConsole.LogLevel.Debug);
+        Logger.WriteLog($"Changed display settings to Height: {heightString}, Width: {widthString}", Enums.LogLevel.Debug);
     }
     
     /// <summary>
@@ -197,7 +198,7 @@ public class ScriptThread
         }
         catch (Exception e)
         {
-            MockConsole.WriteLine(e.ToString(), MockConsole.LogLevel.Error);
+            MockConsole.WriteLine(e.ToString(), Enums.LogLevel.Error);
             return;
         }
 

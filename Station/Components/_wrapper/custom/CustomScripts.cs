@@ -9,7 +9,6 @@ using Station.Components._managers;
 using Station.Components._models;
 using Station.Components._notification;
 using Station.Components._utils;
-using Station.MVC.Controller;
 
 namespace Station.Components._wrapper.custom;
 
@@ -28,7 +27,7 @@ public static class CustomScripts
     {
         if (CommandLine.StationLocation == null)
         {
-            MockConsole.WriteLine("Cannot find working directory for custom experiences", MockConsole.LogLevel.Error);
+            MockConsole.WriteLine("Cannot find working directory for custom experiences", Enums.LogLevel.Error);
             return null;
         }
 
@@ -43,7 +42,7 @@ public static class CustomScripts
         }
 
         // Read the manifest and modify the file if required
-        string? decryptedText = EncryptionHelper.DetectFileEncryption(manifestPath);
+        string decryptedText = EncryptionHelper.DetectFileEncryption(manifestPath);
         if (string.IsNullOrEmpty(decryptedText)) return null;
 
         dynamic? array = JsonConvert.DeserializeObject(decryptedText);
@@ -55,8 +54,8 @@ public static class CustomScripts
         
         foreach (var item in array)
         {
-            // Do not collect the Station or NUC application from the manifest file.
-            if (item.type == "LeadMe" || item.type == "Launcher") continue;
+            // Do not collect the anything other than the custom applications from the manifest file.
+            if (item.type != "Custom") continue;
             
             // Determine if it is a VR experience
             bool isVr = CustomManifestApplicationList.IsApplicationInstalledAndVrCompatible("custom.app." + item.id.ToString());

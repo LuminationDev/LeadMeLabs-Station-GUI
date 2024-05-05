@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using LeadMeLabsLibrary;
 using Station.Components._interfaces;
 using Station.Components._notification;
 using Station.Components._profiles;
@@ -27,7 +28,7 @@ public class VrBaseStation
         private set
         {
             if (_tracking == value) return;
-            MockConsole.WriteLine($"VrBaseStation {_serialNumber} tracking updated to {value} from {_tracking}", MockConsole.LogLevel.Verbose);
+            MockConsole.WriteLine($"VrBaseStation {_serialNumber} tracking updated to {value} from {_tracking}", Enums.LogLevel.Verbose);
             _tracking = value;
             
             OnTrackingChanged(value.ToString());
@@ -44,7 +45,7 @@ public class VrBaseStation
         UiUpdater.UpdateOpenVrStatus("baseStationActive", active.ToString());
 
         string message = $"BaseStation:{active}:{Statuses.baseStations.Count}";
-        MockConsole.WriteLine($"DeviceStatus:{message}", MockConsole.LogLevel.Debug);
+        MockConsole.WriteLine($"DeviceStatus:{message}", Enums.LogLevel.Debug);
 
         TrackingChanged?.Invoke(this, new GenericEventArgs<string>(message));
     }
@@ -81,7 +82,7 @@ public class VrBaseStation
 
             default:
                 MockConsole.WriteLine($"VrBaseStation.UpdateProperty - Invalid property name: {propertyName}",
-                        MockConsole.LogLevel.Error);
+                    Enums.LogLevel.Error);
                 break;
         }
     }
@@ -102,7 +103,7 @@ public class VrBaseStation
         else
         {
             MockConsole.WriteLine($"VrController.UpdateProperty - {errorMsg}: {newValue}",
-                MockConsole.LogLevel.Info);
+                Enums.LogLevel.Info);
         }
     }
 }
