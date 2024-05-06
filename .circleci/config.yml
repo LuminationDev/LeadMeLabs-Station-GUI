@@ -101,6 +101,9 @@ commands:
           root: ~/circleci-working/<<pipeline.id>>
           paths:
             - Station/bin/<<parameters.buildType>>/net6.0-windows/win-x64/
+            - Station/Station.zip
+            - version
+
   
   sign:
     parameters:
