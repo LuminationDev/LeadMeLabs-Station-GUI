@@ -88,7 +88,7 @@ commands:
           command: cd ~/circleci-working/<<pipeline.id>>; msbuild.exe -v:normal .\Station\Station.csproj -p:Configuration=<<parameters.buildType>>
       - run:
           name: "Generate version file"
-          command: cd ~/circleci-working/<<pipeline.id>>; ([xml](Get-Content -Path .\Station\Station.csproj)).Project.PropertyGroup.Version > version
+          command: cd ~/circleci-working/<<pipeline.id>>; ([xml](Get-Content -Path .\Station\Station.csproj)).Project.PropertyGroup.Version | Out-File -Encoding utf8 version
       - store_artifacts:
           path: ~/circleci-working/<<pipeline.id>>/Station/Station.zip
       - store_artifacts:
