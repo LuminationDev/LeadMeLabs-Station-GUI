@@ -175,8 +175,8 @@ jobs:
              cd ~/circleci-working/<<pipeline.id>>/ &&
              ls &&
              s3cmd --access_key=$VULTR_ACCESS --limit-rate=1024k --secret_key=$VULTR_SECRET --region=us-east-1 --host=sgp1.vultrobjects.com --host-bucket=leadme-tools.sgp1.vultrobjects.com -s del s3://<<parameters.bucket>>/Station/Station.zip &&
-             s3cmd --access_key=$VULTR_ACCESS --limit-rate=1024k --secret_key=$VULTR_SECRET --region=us-east-1 --host=sgp1.vultrobjects.com --host-bucket=leadme-tools.sgp1.vultrobjects.com -s put -P ./Station/Station.zip s3://<<parameters.bucket>>/Station/
-             s3cmd --access_key=$VULTR_ACCESS --limit-rate=1024k --secret_key=$VULTR_SECRET --region=us-east-1 --host=sgp1.vultrobjects.com --host-bucket=leadme-tools.sgp1.vultrobjects.com -s put -P ./version s3://<<parameters.bucket>>/Station/
+             s3cmd --access_key=$VULTR_ACCESS --limit-rate=1024k --secret_key=$VULTR_SECRET --region=us-east-1 --host=sgp1.vultrobjects.com --host-bucket=leadme-tools.sgp1.vultrobjects.com -s put -P ./Station/Station.zip s3://<<parameters.bucket>>/Station/Station.zip
+             s3cmd --access_key=$VULTR_ACCESS --limit-rate=1024k --secret_key=$VULTR_SECRET --region=us-east-1 --host=sgp1.vultrobjects.com --host-bucket=leadme-tools.sgp1.vultrobjects.com -s put -P ./version s3://<<parameters.bucket>>/Station/version
 
 workflows:
   build_debug:
