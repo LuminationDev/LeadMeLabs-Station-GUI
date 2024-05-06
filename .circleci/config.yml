@@ -171,6 +171,7 @@ jobs:
           name: "install s3cmd and upload"
           command: brew install s3cmd && 
              cd ~/circleci-working/<<pipeline.id>>/ &&
+             s3cmd --access_key=$VULTR_ACCESS --limit-rate=1024k --secret_key=$VULTR_SECRET --region=us-east-1 --host=sgp1.vultrobjects.com --host-bucket=<<parameters.bucket>>.sgp1.vultrobjects.com -s del s3://<<parameters.bucket>>/Station/Station.zip &&
              s3cmd --access_key=$VULTR_ACCESS --limit-rate=1024k --secret_key=$VULTR_SECRET --region=us-east-1 --host=sgp1.vultrobjects.com --host-bucket=<<parameters.bucket>>.sgp1.vultrobjects.com -s put -P ./Station/Station.zip s3://<<parameters.bucket>>/Station/Station.zip
              s3cmd --access_key=$VULTR_ACCESS --limit-rate=1024k --secret_key=$VULTR_SECRET --region=us-east-1 --host=sgp1.vultrobjects.com --host-bucket=<<parameters.bucket>>.sgp1.vultrobjects.com -s put -P ./version s3://<<parameters.bucket>>/Station/version.txt
 
@@ -184,10 +185,10 @@ workflows:
           buildType: "Debug"
           requires:
             - hold
-      # - sign:
-      #     buildType: "Debug"
-      #     requires:
-      #       - build
+      - sign:
+          buildType: "Debug"
+          requires:
+            - build
       # - commit-and-push:
       #     branch: "development"
       #     requires:
@@ -195,7 +196,7 @@ workflows:
       - vultr-upload:
           bucket: "leadme-internal-debug"
           requires:
-            - build
+            - sign
   build_release:
     jobs:
       - hold:
