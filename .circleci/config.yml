@@ -89,6 +89,10 @@ commands:
       - run:
           name: "Generate version file"
           command: cd ~/circleci-working/<<pipeline.id>>; ([xml](Get-Content -Path .\Station\Station.csproj)).Project.PropertyGroup.Version > version
+      - run:
+          name: Compress built files to Station.zip
+          command: cd <<pipeline.id>>; Compress-Archive -Path ~/circleci-working/<<pipeline.id>>/Station/bin/<<parameters.buildType>>/net6.0-windows/win-x64/* -DestinationPath ~/circleci-working/<<pipeline.id>>/Station/Station.zip
+          shell: powershell.exe
       - store_artifacts:
           path: ~/circleci-working/<<pipeline.id>>/Station/Station.zip
       - store_artifacts:
@@ -172,8 +176,9 @@ jobs:
           command: brew install s3cmd &&
              cd ~/circleci-working/<<pipeline.id>>/ &&
              ls ~/circleci-working/<<pipeline.id>>/Station &&
-             s3cmd --access_key=$VULTR_ACCESS --limit-rate=1024k --secret_key=$VULTR_SECRET --region=us-east-1 --host=sgp1.vultrobjects.com --host-bucket=<<parameters.bucket>>.sgp1.vultrobjects.com -s put -P ~/circleci-working/<<pipeline.id>>/Station/Station.zip s3://<<parameters.bucket>>/Station/Station.zip
-             s3cmd --access_key=$VULTR_ACCESS --limit-rate=1024k --secret_key=$VULTR_SECRET --region=us-east-1 --host=sgp1.vultrobjects.com --host-bucket=<<parameters.bucket>>.sgp1.vultrobjects.com -s put -P ~/circleci-working/<<pipeline.id>>/version s3://<<parameters.bucket>>/Station/version
+             s3cmd --access_key=$VULTR_ACCESS --limit-rate=1024k --secret_key=$VULTR_SECRET --region=us-east-1 --host=sgp1.vultrobjects.com --host-bucket=<<parameters.bucket>>.sgp1.vultrobjects.com -s del s3://<<parameters.bucket>>/Station/Station.zip
+             s3cmd --access_key=$VULTR_ACCESS --limit-rate=1024k --secret_key=$VULTR_SECRET --region=us-east-1 --host=sgp1.vultrobjects.com --host-bucket=<<parameters.bucket>>.sgp1.vultrobjects.com -s put -P ~/circleci-working/<<pipeline.id>>/Station/Station.zip s3://<<parameters.bucket>>/Station/
+             s3cmd --access_key=$VULTR_ACCESS --limit-rate=1024k --secret_key=$VULTR_SECRET --region=us-east-1 --host=sgp1.vultrobjects.com --host-bucket=<<parameters.bucket>>.sgp1.vultrobjects.com -s put -P ~/circleci-working/<<pipeline.id>>/version s3://<<parameters.bucket>>/Station/
 
 workflows:
   build_debug:
@@ -185,10 +190,10 @@ workflows:
           buildType: "Debug"
           requires:
             - hold
-      - sign:
-          buildType: "Debug"
-          requires:
-            - build
+      # - sign:
+      #     buildType: "Debug"
+      #     requires:
+      #       - build
       # - commit-and-push:
       #     branch: "development"
       #     requires:
@@ -196,7 +201,7 @@ workflows:
       - vultr-upload:
           bucket: "leadme-internal-debug"
           requires:
-            - sign
+            - build
   build_release:
     jobs:
       - hold:
