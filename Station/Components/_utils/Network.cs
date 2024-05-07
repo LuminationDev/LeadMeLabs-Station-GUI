@@ -13,7 +13,7 @@ public static class Network
         {
             using var httpClient = new HttpClient();
             httpClient.Timeout = TimeSpan.FromSeconds(10);
-            var response = httpClient.GetAsync("http://learninglablauncher.herokuapp.com/program-station-version").GetAwaiter().GetResult();
+            var response = httpClient.GetAsync("https://leadme-internal.sgp1.vultrobjects.com/Station/version").GetAwaiter().GetResult();
             connected = response.IsSuccessStatusCode;
             return response.IsSuccessStatusCode;
         }
