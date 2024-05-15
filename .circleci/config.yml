@@ -86,12 +86,19 @@ commands:
       - run:
           name: "Build dotnet <<parameters.buildType>>"
           command: cd ~/circleci-working/<<pipeline.id>>; msbuild.exe -v:normal .\Station\Station.csproj -p:Configuration=<<parameters.buildType>>
+      - run:
+          name: "Generate version file"
+          command: cd ~/circleci-working/<<pipeline.id>>; ([xml](Get-Content -Path .\Station\Station.csproj)).Project.PropertyGroup.Version | Out-File -Encoding utf8 version
       - store_artifacts:
           path: ~/circleci-working/<<pipeline.id>>/Station/Station.zip
+      - store_artifacts:
+          path: ~/circleci-working/<<pipeline.id>>/version
       - persist_to_workspace:
           root: ~/circleci-working/<<pipeline.id>>
           paths:
             - Station/bin/<<parameters.buildType>>/net6.0-windows/win-x64/
+            - version
+
   
   sign:
     parameters:
@@ -114,6 +121,7 @@ commands:
           root: ~/circleci-working/<<pipeline.id>>
           paths:
             - Station/Station.zip
+            - version
 
 jobs:
   build:
@@ -152,6 +160,24 @@ jobs:
           at: ~/circleci-working/<<pipeline.id>>
       - copy_and_push:
           branch: <<parameters.branch>>
+  
+  vultr-upload:
+    docker:
+      - image: homebrew/brew
+    parameters:
+      bucket:
+        type: string
+    steps:
+      - attach_workspace:
+          at: ~/circleci-working/<<pipeline.id>>
+      - run:
+          name: "install s3cmd and upload"
+          command: brew install s3cmd &&
+             cd ~/circleci-working/<<pipeline.id>>/ &&
+             ls ~/circleci-working/<<pipeline.id>>/Station &&
+             s3cmd --access_key=$VULTR_ACCESS --limit-rate=1024k --secret_key=$VULTR_SECRET --region=us-east-1 --host=sgp1.vultrobjects.com --host-bucket=<<parameters.bucket>>.sgp1.vultrobjects.com -s del s3://<<parameters.bucket>>/Station/Station.zip &&
+             s3cmd --access_key=$VULTR_ACCESS --limit-rate=1024k --secret_key=$VULTR_SECRET --region=us-east-1 --host=sgp1.vultrobjects.com --host-bucket=<<parameters.bucket>>.sgp1.vultrobjects.com -s put -P ./Station/Station.zip s3://<<parameters.bucket>>/Station/Station.zip &&
+             s3cmd --access_key=$VULTR_ACCESS --limit-rate=1024k --secret_key=$VULTR_SECRET --region=us-east-1 --host=sgp1.vultrobjects.com --host-bucket=<<parameters.bucket>>.sgp1.vultrobjects.com -s put -P ./version s3://<<parameters.bucket>>/Station/version
 
 workflows:
   build_debug:
@@ -169,6 +195,10 @@ workflows:
             - build
       - commit-and-push:
           branch: "development"
+          requires:
+            - sign
+      - vultr-upload:
+          bucket: "leadme-internal-debug"
           requires:
             - sign
   build_release:
@@ -190,5 +220,9 @@ workflows:
             - build
       - commit-and-push:
           branch: "main"
+          requires:
+            - sign
+      - vultr-upload:
+          bucket: "leadme-internal"
           requires:
             - sign
