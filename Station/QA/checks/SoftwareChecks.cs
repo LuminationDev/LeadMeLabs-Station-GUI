@@ -52,7 +52,7 @@ public class SoftwareChecks
         {
             using var httpClient = new HttpClient();
             httpClient.Timeout = TimeSpan.FromSeconds(10);
-            var response = httpClient.GetAsync("http://learninglablauncher.herokuapp.com/program-station-version").GetAwaiter().GetResult();
+            var response = httpClient.GetAsync("https://leadme-internal.sgp1.vultrobjects.com/Station/version").GetAwaiter().GetResult();
 
             string remoteVersion = "";
             // Check if the request was successful (status code 200 OK)
@@ -65,7 +65,7 @@ public class SoftwareChecks
             }
             else
             {
-                qaCheck.SetFailed($"learninglablauncher.herokuapp.com/program-nuc-version request failed with status code: {response.StatusCode}");
+                qaCheck.SetFailed($"https://leadme-internal.sgp1.vultrobjects.com/Station/version request failed with status code: {response.StatusCode}");
             }
             
             string localVersion = Updater.GetVersionNumber() ?? "Unknown";
