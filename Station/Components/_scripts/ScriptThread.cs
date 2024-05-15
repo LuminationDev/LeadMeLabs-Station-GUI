@@ -162,6 +162,11 @@ public class ScriptThread
                     break;
             }
         }
+        
+        if (additionalData.StartsWith("AcceptEulas"))
+        {
+            WrapperManager.AcceptUnacceptedEulas();
+        }
     }
 
     /// <summary>

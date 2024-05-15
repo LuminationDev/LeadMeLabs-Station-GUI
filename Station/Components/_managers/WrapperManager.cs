@@ -12,6 +12,7 @@ using Station.Components._interfaces;
 using Station.Components._models;
 using Station.Components._monitoring;
 using Station.Components._notification;
+using Station.Components._overlay;
 using Station.Components._profiles;
 using Station.Components._utils;
 using Station.Components._utils._steamConfig;
@@ -45,6 +46,7 @@ public class WrapperManager
     public static readonly Dictionary<string, Experience> ApplicationList = new();
     
     public static bool steamManifestCorrupted = false;
+    public static bool acceptingEulas = false;
 
     /// <summary>
     /// Open the pipe server for message to and from external applications (Steam, Custom, etc..) and setup
@@ -426,10 +428,19 @@ public class WrapperManager
             ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage(message),
                 TimeSpan.FromSeconds(1));
         }
+    }
 
-        // todo - Move this to run from a user response to the accept question
+    public static void AcceptUnacceptedEulas()
+    {
+        if (SessionController.StationProfile == null)
+        {
+            return;
+        }
+
+        OverlayManager.OverlayThreadManual("Auto-accepting EULAs", 100);
+        StopCommonProcesses();
+        SessionController.StationProfile.StartDevToolsSession();
         Profile.WaitForSteamLogin();
-
 
         string handle = CommandLine.PowershellGetDevToolsChildProcessWindowHandle();
         if (handle.Equals(""))
@@ -444,16 +455,17 @@ public class WrapperManager
             return;
         }
 
+        acceptingEulas = true;
+
         int index = 1;
-        App.windowEventTracker.Unsubscribe();
+        App.windowEventTracker.SetMinimisingEnabled(false);
+        
         foreach (string installedExperienceWithUnacceptedEula in SteamWrapper.installedExperiencesWithUnacceptedEulas)
         {
             string[] eulaDetails = installedExperienceWithUnacceptedEula.Split(":");
             if (eulaDetails.Length < 3)
             {
                 continue;
-                
-                
             }
             ScheduledTaskQueue.EnqueueTask(() => CommandLine.EnterAcceptEula(Int32.Parse(handle), eulaDetails[0], eulaDetails[1], eulaDetails[2]),
                 TimeSpan.FromSeconds(index * 1.5));
@@ -462,7 +474,10 @@ public class WrapperManager
         ScheduledTaskQueue.EnqueueTask(() =>
             {
                 CommandLine.EnterAltF4(Int32.Parse(handle));
-                App.windowEventTracker.Subscribe("Steam", null);
+                App.windowEventTracker.SetMinimisingEnabled(true);
+                SessionController.StationProfile.MinimizeSoftware(1);
+                OverlayManager.ManualStop(100);
+                acceptingEulas = false;
             },
             TimeSpan.FromSeconds(++index * 1.5));
     }
@@ -626,6 +641,12 @@ public class WrapperManager
     /// </summary>
     public static async Task<string> StartAProcess(string appId)
     {
+        if (!acceptingEulas)
+        {
+            MessageController.SendResponse("Android", "Station", "AcceptingEulas");
+            return "Error: Accepting Eulas";
+        }
+
         //Check if steamapps.vrmanifest was corrupted and wait for the fix
         bool wasCorrupted = steamManifestCorrupted;
         bool manifestCorrupted = await Helper.MonitorLoop(() => steamManifestCorrupted, 10);

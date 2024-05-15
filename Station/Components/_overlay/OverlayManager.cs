@@ -45,7 +45,7 @@ static class OverlayManager
         overlay.Show();
     }
 
-    public static void OverlayThreadManual(string? text = null)
+    public static void OverlayThreadManual(string? text = null, int opacityTarget = 80)
     {
         Logger.WriteLog("Running overlay.", MockConsole.LogLevel.Normal);
 
@@ -55,12 +55,12 @@ static class OverlayManager
         Application.Current.Dispatcher.Invoke((Action)delegate
         {
             overlay = new Overlay(text);
-            _ = overlay.ManualRun();
+            _ = overlay.ManualRun(opacityTarget);
             overlay.Show();
         });
     }
 
-    public static void ManualStop()
+    public static void ManualStop(int opacityTarget = 80)
     {
         Logger.WriteLog("Stopping overlay.", MockConsole.LogLevel.Normal);
 
@@ -70,7 +70,7 @@ static class OverlayManager
         }
         Application.Current.Dispatcher.Invoke((Action)delegate
         {
-            _ = overlay.ManualStop();
+            _ = overlay.ManualStop(opacityTarget);
         });
     }
     

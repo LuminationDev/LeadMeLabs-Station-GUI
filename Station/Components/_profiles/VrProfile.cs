@@ -105,8 +105,19 @@ public class VrProfile: Profile, IProfile
         };
         ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage(message), TimeSpan.FromSeconds(0));
 
-        VrHeadset?.StartVrSession();
+        VrHeadset?.StartVrSession(false);
         MinimizeSoftware();
+    }
+    
+    public void StartDevToolsSession()
+    {
+        JObject message = new JObject
+        {
+            { "action", "SoftwareState" },
+            { "value", "Restarting Processes" }
+        };
+        ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage(message), TimeSpan.FromSeconds(0));
+        VrHeadset?.StartVrSession(true);
     }
 
     /// <summary>
