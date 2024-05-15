@@ -518,21 +518,33 @@ public static class CommandLine
     {
         ShowWindow(windowHandle, SW_SHOWNORMAL);   
         SetForegroundWindow(windowHandle);
+        await Task.Delay(10);
+        SendKeysToActiveWindow("^+p");
+        await Task.Delay(200);
+        ShowWindow(windowHandle, SW_SHOWNORMAL);   
+        SetForegroundWindow(windowHandle);
+        await Task.Delay(10);
+        SendKeysToActiveWindow("Show Console");
+        await Task.Delay(200);
+        ShowWindow(windowHandle, SW_SHOWNORMAL);   
+        SetForegroundWindow(windowHandle);
+        await Task.Delay(10);
+        SendKeysToActiveWindow("{Enter}");
+        await Task.Delay(200);
+        ShowWindow(windowHandle, SW_SHOWNORMAL);   
+        SetForegroundWindow(windowHandle);
+        await Task.Delay(10);
         SendKeysToActiveWindow("this.SteamClient.Apps.MarkEulaAccepted{(}" + $"{appId}, \"{eulaName}\", {eulaVersion}" + "{)}");
-        ScheduledTaskQueue.EnqueueTask(() =>
-            {
-                ShowWindow(windowHandle, SW_SHOWNORMAL);   
-                SetForegroundWindow(windowHandle);
-                SendKeysToActiveWindow("{Enter}");
-            },
-            TimeSpan.FromSeconds(0.2));
-        ScheduledTaskQueue.EnqueueTask(() =>
-            {
-                ShowWindow(windowHandle, SW_SHOWNORMAL);   
-                SetForegroundWindow(windowHandle);
-                SendKeysToActiveWindow("{Enter}");
-            },
-            TimeSpan.FromSeconds(0.4));
+        await Task.Delay(200);
+        ShowWindow(windowHandle, SW_SHOWNORMAL);   
+        SetForegroundWindow(windowHandle);
+        await Task.Delay(10);
+        SendKeysToActiveWindow("{Enter}");
+        await Task.Delay(200);
+         ShowWindow(windowHandle, SW_SHOWNORMAL);   
+         SetForegroundWindow(windowHandle);
+         await Task.Delay(10);
+         SendKeysToActiveWindow("{Enter}");
     }
     
     public static void EnterAltF4(int windowHandle)
@@ -544,33 +556,14 @@ public static class CommandLine
 
     public static string PowershellGetDevToolsChildProcessWindowHandle()
     {
-        Process? cmd = SetupCommand(StationPowershell);
-        if (cmd == null)
+        List<WinStruct> list = ApiDef.GetWindows();
+        list = list.FindAll(win => win.WinTitle.Equals("DevTools"));
+        if (list.Count == 0)
         {
-            Logger.WriteLog($"Cannot start: {StationPowershell}, PowershellCommand (cmd) -> SetupCommand returned null value.", MockConsole.LogLevel.Error);
             return "";
         }
-        cmd.Start();
-        /*
-         * thanks Bacon Bits https://stackoverflow.com/a/25772008
-         *
-         * This is right now really specific to the Steam DevTools,
-         * we can modify this in future if needed
-         *
-         * As Steam DevTools is a child process, the MainWindowHandle
-         * will only return the entire Steam Handle. This means we need
-         * to get the child process with 'DevTools' as the name in order
-         * to work with the correct process
-         */
-        cmd.StandardInput.WriteLine("$TypeDef = @\"\n\nusing System;\nusing System.Text;\nusing System.Collections.Generic;\nusing System.Runtime.InteropServices;\n\nnamespace Api\n{\n\n public class WinStruct\n {\n   public string WinTitle {get; set; }\n   public int WinHwnd { get; set; }\n }\n\n public class ApiDef\n {\n   private delegate bool CallBackPtr(int hwnd, int lParam);\n   private static CallBackPtr callBackPtr = Callback;\n   private static List<WinStruct> _WinStructList = new List<WinStruct>();\n\n   [DllImport(\"User32.dll\")]\n   [return: MarshalAs(UnmanagedType.Bool)]\n   private static extern bool EnumWindows(CallBackPtr lpEnumFunc, IntPtr lParam);\n\n   [DllImport(\"user32.dll\", CharSet = CharSet.Auto, SetLastError = true)]\n   static extern int GetWindowText(IntPtr hWnd, StringBuilder lpString, int nMaxCount);\n\n   private static bool Callback(int hWnd, int lparam)\n   {\n       StringBuilder sb = new StringBuilder(256);\n       int res = GetWindowText((IntPtr)hWnd, sb, 256);\n      _WinStructList.Add(new WinStruct { WinHwnd = hWnd, WinTitle = sb.ToString() });\n       return true;\n   }   \n\n   public static List<WinStruct> GetWindows()\n   {\n      _WinStructList = new List<WinStruct>();\n      EnumWindows(callBackPtr, IntPtr.Zero);\n      return _WinStructList;\n   }\n\n }\n}\n\"@\n\nAdd-Type -TypeDefinition $TypeDef -Language CSharpVersion3\n\n[Api.Apidef]::GetWindows() | Where-Object { $_.WinTitle -eq \"DevTools\" } | Sort-Object -Property WinTitle | Select-Object WinHwnd");
-        string result = Outcome(cmd) ?? "";
-        string[] resultArr = result.Split('\n');
-        if (resultArr.Length == 65)
-        {
-            return resultArr[59].Trim();
-        }
 
-        return "";
+        return list.First().WinHwnd.ToString();
     }
 
     /// <summary>

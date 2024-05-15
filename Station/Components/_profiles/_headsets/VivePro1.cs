@@ -63,8 +63,11 @@ public class VivePro1 : IVrHeadset
         SteamConfig.VerifySteamConfig();
         CommandLine.StartProgram(SessionController.Steam, (openDevTools ? " -opendevtools" : "") + " -login " + 
                                                           Environment.GetEnvironmentVariable("SteamUserName", EnvironmentVariableTarget.Process) + " " + 
-                                                          Environment.GetEnvironmentVariable("SteamPassword", EnvironmentVariableTarget.Process) + " steam://rungameid/250820"); //Open up steam and run steamVR
-        CommandLine.StartProgram(Vive); //Start ViveWireless up
+                                                          Environment.GetEnvironmentVariable("SteamPassword", EnvironmentVariableTarget.Process) + (openDevTools ? "" : " steam://rungameid/250820")); //Open up steam and run steamVR
+        if (!openDevTools)
+        {
+            CommandLine.StartProgram(Vive); //Start ViveWireless up
+        }
     }
 
     public void MonitorVrConnection()
