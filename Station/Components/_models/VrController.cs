@@ -1,4 +1,5 @@
 ﻿using System;
+using LeadMeLabsLibrary;
 using Station.Components._interfaces;
 using Station.Components._notification;
 using Station.Components._profiles;
@@ -35,7 +36,7 @@ public class VrController
 
             OnTrackingChanged(value.ToString());
             MockConsole.WriteLine($"VrController {serialNumber} tracking updated to {value} from {_tracking}",
-                        MockConsole.LogLevel.Verbose);
+                Enums.LogLevel.Verbose);
 
             UiUpdater.UpdateOpenVrStatus(Role == DeviceRole.Left ? "leftControllerConnection" : "rightControllerConnection",
                 Enum.GetName(typeof(DeviceStatus), value) ?? "Lost");
@@ -73,7 +74,7 @@ public class VrController
 
             OnBatteryChanged(value.ToString());
             MockConsole.WriteLine($"VrController {serialNumber} battery updated to {value}% from {_battery}%",
-                        MockConsole.LogLevel.Verbose);
+                Enums.LogLevel.Verbose);
 
             UiUpdater.UpdateOpenVrStatus(Role == DeviceRole.Left ? "leftControllerBattery" : "rightControllerBattery",
                 value.ToString() ?? "0");
@@ -134,7 +135,7 @@ public class VrController
 
             default:
                 MockConsole.WriteLine($"VrController.UpdateProperty - Invalid property name: {propertyName}",
-                    MockConsole.LogLevel.Error);
+                    Enums.LogLevel.Error);
                 break;
         }
     }
@@ -155,7 +156,7 @@ public class VrController
         else
         {
             MockConsole.WriteLine($"VrController.UpdateProperty - {errorMsg}: {newValue}",
-                MockConsole.LogLevel.Info);
+                Enums.LogLevel.Info);
         }
     }
 }

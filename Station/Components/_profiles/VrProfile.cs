@@ -1,8 +1,8 @@
 using System;
 using System.Collections.Generic;
+using LeadMeLabsLibrary;
 using Newtonsoft.Json.Linq;
 using Station.Components._interfaces;
-using Station.Components._notification;
 using Station.Components._profiles._headsets;
 using Station.Components._utils;
 using Station.Components._wrapper.vive;
@@ -59,11 +59,12 @@ public class VrProfile: Profile, IProfile
             case "VivePro2":
                 VrHeadset = new VivePro2();
                 break;
-            case "ViveFocus3":
-                VrHeadset = new ViveFocus3();
+            case "ViveFocus3": //Backwards compatability
+            case "ViveBusinessStreaming":
+                VrHeadset = new ViveBusinessStreaming();
                 break;
             default:
-                Logger.WriteLog("No headset type specified.", MockConsole.LogLevel.Error);
+                Logger.WriteLog("No headset type specified.", Enums.LogLevel.Error);
                 break;
         }
     }
@@ -132,10 +133,11 @@ public class VrProfile: Profile, IProfile
         {
             case "VivePro1":
             case "VivePro2":
-            case "ViveFocus3":
+            case "ViveFocus3": //Backwards compatability
+            case "ViveBusinessStreaming":
                 return ViveScripts.WaitForVive(wrapperType).Result;
             default:
-                Logger.WriteLog("WaitForConnection - No headset type specified.", MockConsole.LogLevel.Error);
+                Logger.WriteLog("WaitForConnection - No headset type specified.", Enums.LogLevel.Error);
                 return false;
         }
     }

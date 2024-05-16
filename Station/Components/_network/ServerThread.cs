@@ -6,6 +6,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using LeadMeLabsLibrary;
+using Newtonsoft.Json.Linq;
 using Station.Components._commandLine;
 using Station.Components._notification;
 using Station.Components._utils;
@@ -50,7 +51,7 @@ public class ServerThread
         {
             if (server == null)
             {
-                Logger.WriteLog("Server not initialised..", MockConsole.LogLevel.Error);
+                Logger.WriteLog("Server not initialised..", Enums.LogLevel.Error);
                 return;
             }
 
@@ -64,7 +65,7 @@ public class ServerThread
             //Enter listening loop
             while (true)
             {
-                Logger.WriteLog("Waiting for a connection on: " + MainController.localEndPoint.Address + ":" + MainController.localEndPoint.Port, MockConsole.LogLevel.Debug, false);
+                Logger.WriteLog("Waiting for a connection on: " + MainController.localEndPoint.Address + ":" + MainController.localEndPoint.Port, Enums.LogLevel.Debug, false);
                 TcpClient clientConnection = await server.AcceptTcpClientAsync();
 
                 //Start new Task so the server loop can continue straight away
@@ -73,11 +74,11 @@ public class ServerThread
         }
         catch (SocketException e)
         {
-            Logger.WriteLog($"SocketException: {e}", MockConsole.LogLevel.Error);
+            Logger.WriteLog($"SocketException: {e}", Enums.LogLevel.Error);
         }
         catch (Exception e)
         {
-            Logger.WriteLog($"Unexpected exception : {e}", MockConsole.LogLevel.Error);
+            Logger.WriteLog($"Unexpected exception : {e}", Enums.LogLevel.Error);
         }
         finally
         {
@@ -98,7 +99,7 @@ public class ServerThread
 
         if (endPoint == null)
         {
-            MockConsole.WriteLine("Unknown server connection discarded.", MockConsole.LogLevel.Debug);
+            MockConsole.WriteLine("Unknown server connection discarded.", Enums.LogLevel.Debug);
             return;
         }
 
@@ -126,7 +127,7 @@ public class ServerThread
             await memoryStream.ReadAsync(headerLengthBytes, 0, headerLengthBytes.Length);
             int headerLength = BitConverter.ToInt32(headerLengthBytes, 0);
 
-            MockConsole.WriteLine($"Header length: {headerLength}", MockConsole.LogLevel.Debug);
+            MockConsole.WriteLine($"Header length: {headerLength}", Enums.LogLevel.Debug);
             
             // Read the header message type
             byte[] headerMessageTypeBytes = new byte[headerLength];
@@ -154,13 +155,13 @@ public class ServerThread
                     await FileMessageReceivedAsync(memoryStream);
                     break;
                 default:
-                    Logger.WriteLog($"Unknown header connection attempt: {headerMessageType}", MockConsole.LogLevel.Error);
+                    Logger.WriteLog($"Unknown header connection attempt: {headerMessageType}", Enums.LogLevel.Error);
                     break;
             }
         }
         catch (Exception e)
         {
-            Logger.WriteLog($"Unknown connection event: {e}", MockConsole.LogLevel.Error);
+            Logger.WriteLog($"Unknown connection event: {e}", Enums.LogLevel.Error);
         }
     }
 
@@ -193,7 +194,7 @@ public class ServerThread
         }
         catch (Exception e)
         {
-            MockConsole.WriteLine($"Cannot Get string: {e}", MockConsole.LogLevel.Normal);
+            MockConsole.WriteLine($"Cannot Get string: {e}", Enums.LogLevel.Normal);
         }
     }
 
@@ -218,14 +219,14 @@ public class ServerThread
         //No point continuing if the data is null
         if (data.Length == 0) return;
         
-        MockConsole.WriteLine($"Encrypted Text received : {data}", MockConsole.LogLevel.Verbose);
+        MockConsole.WriteLine($"Encrypted Text received : {data}", Enums.LogLevel.Verbose);
         
         //Check for the encryption key
         string? key = Environment.GetEnvironmentVariable("AppKey", EnvironmentVariableTarget.Process);
 
         if (key == null)
         {
-            Logger.WriteLog($"Encryption key is not set in: ServerThread, StringMessageReceivedAsync()", MockConsole.LogLevel.Normal);
+            Logger.WriteLog($"Encryption key is not set in: ServerThread, StringMessageReceivedAsync()", Enums.LogLevel.Normal);
             return;
         };
 
@@ -239,14 +240,26 @@ public class ServerThread
         }
         
         //Data should never be null at this point
-        Logger.WriteLog($"From {endPoint}, Decrypted Text received: {data}", MockConsole.LogLevel.Debug, !data.Contains(":Ping:"));
+        Logger.WriteLog($"From {endPoint}, Decrypted Text received: {data}", Enums.LogLevel.Debug, !data.Contains(":Ping:"));
 
         //If the data is not a ping run the additional tasks
         if (data.Contains(":Ping:")) return;
         
         //If the task relates to an experience restart the VR processes
-        if (data.Contains(":Experience:") && InternalDebugger.GetIdleModeActive())
+        if (data.Contains(":Experience:") && InternalDebugger.GetIdleModeActive() && Helper.GetStationMode().Equals(Helper.STATION_MODE_VR))
         {
+            //Check that the Station is not already exiting idle mode
+            if (ModeTracker.GetExitingIdleMode())
+            {
+                JObject message = new JObject
+                {
+                    { "action", "MessageToAndroid" },
+                    { "value", "AlreadyExitingIdleMode" }
+                };
+                SessionController.PassStationMessage(message);
+                return;
+            }
+            
             //Reset the idle timer
             bool success = await ModeTracker.ResetTimer();
             if (!success) return;
@@ -275,13 +288,13 @@ public class ServerThread
         string? path = DetermineFileType(fileName);
         if (path == null)
         {
-            Logger.WriteLog($"File: {fileName} could not find a save path from 'DetermineFileType'.", MockConsole.LogLevel.Error);
+            Logger.WriteLog($"File: {fileName} could not find a save path from 'DetermineFileType'.", Enums.LogLevel.Error);
             return;
         }
 
         if (File.Exists($@"{path}\{fileName}"))
         {
-            Logger.WriteLog($"File: {fileName} is already present on the system.", MockConsole.LogLevel.Info);
+            Logger.WriteLog($"File: {fileName} is already present on the system.", Enums.LogLevel.Info);
             return;
         }
         // Open the output file stream
@@ -302,7 +315,7 @@ public class ServerThread
             fileStream.Close();
         }
 
-        Logger.WriteLog($"New File saved: {fileName} at {path}", MockConsole.LogLevel.Info);
+        Logger.WriteLog($"New File saved: {fileName} at {path}", Enums.LogLevel.Info);
 
         // Close the client connection
         await stream.DisposeAsync();
@@ -327,7 +340,7 @@ public class ServerThread
                 folderPath = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
                 break;
             default:
-                Logger.WriteLog($"Unknown file type trying to be saved: {fileName}", MockConsole.LogLevel.Error);
+                Logger.WriteLog($"Unknown file type trying to be saved: {fileName}", Enums.LogLevel.Error);
                 break;
         }
 

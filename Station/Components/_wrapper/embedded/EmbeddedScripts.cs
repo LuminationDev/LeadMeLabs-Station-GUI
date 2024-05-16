@@ -10,16 +10,15 @@ using Station.Components._managers;
 using Station.Components._models;
 using Station.Components._notification;
 using Station.Components._utils;
-using Station.MVC.Controller;
 
 namespace Station.Components._wrapper.embedded;
 
 public static class EmbeddedScripts
 {
-    private static readonly string EmbeddedManifest = Path.GetFullPath(Path.Combine(CommandLine.StationLocation, "_embedded", "manifest.json"));
-    private static readonly string EmbeddedDirectory = Path.GetFullPath(Path.Combine(CommandLine.StationLocation, "_embedded"));
+    private static readonly string EmbeddedManifest = Path.GetFullPath(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "leadme_apps", "Embedded", "manifest.json"));
+    private static readonly string EmbeddedDirectory = Path.GetFullPath(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "leadme_apps", "Embedded"));
     
-    public static readonly string EmbeddedVrManifest = Path.GetFullPath(Path.Combine(CommandLine.StationLocation, @"_embedded\embeddedapps.vrmanifest"));
+    public static readonly string EmbeddedVrManifest = Path.GetFullPath(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "leadme_apps", "embeddedapps.vrmanifest"));
     private static ManifestReader.ManifestApplicationList? embeddedManifestApplicationList;
     
     /// <summary>
@@ -27,16 +26,24 @@ public static class EmbeddedScripts
     /// </summary>
     private static void RegenerateEmbeddedManifests()
     {
+        // Create a blank canvas for if the vr manifest does not exist
+        if (!File.Exists(EmbeddedVrManifest))
+        {
+            ManifestReader.CreateVrManifestFile(EmbeddedVrManifest, "embedded");
+        }
+        
         // Clear the old embeddedapps.vrmanifest to not include applications that may not be there anymore
         ManifestReader.ClearApplicationList(EmbeddedVrManifest);
         
         // Regenerate the Embedded/manifest.json and embeddedapps.vrmanifest
-        string manifestData = GenerateManifests(EmbeddedDirectory);
+        string? manifestData = GenerateManifests(EmbeddedDirectory);
+        if (manifestData == null) return;
+        
         string encryptedText = EncryptionHelper.UnicodeEncryptNode(manifestData);
         File.WriteAllText(EmbeddedManifest, encryptedText);
         
         // Create the manifest list of regeneration
-        embeddedManifestApplicationList = new (EmbeddedVrManifest);
+        embeddedManifestApplicationList = new ManifestReader.ManifestApplicationList(EmbeddedVrManifest);
     }
     
     /// <summary>
@@ -46,7 +53,7 @@ public static class EmbeddedScripts
     /// </summary>
     /// <param name="rootFolder">The root folder path to start the search from.</param>
     /// <returns>A JSON string representing the generated manifest.</returns>
-    private static string GenerateManifests(string rootFolder)
+    private static string? GenerateManifests(string rootFolder)
     {
         JArray config = new();
         
@@ -55,7 +62,8 @@ public static class EmbeddedScripts
             // Check if the root folder exists
             if (!Directory.Exists(rootFolder))
             {
-                MockConsole.WriteLine($"Root folder does not exist: {rootFolder}", MockConsole.LogLevel.Error);
+                MockConsole.WriteLine($"Root folder does not exist: {rootFolder}", Enums.LogLevel.Error);
+                return null;
             }
             
             // Get the immediate subdirectories (top-level folders)
@@ -66,7 +74,7 @@ public static class EmbeddedScripts
                 string configFilePath = Path.Combine(subfolder, "leadme_config.json");
                 if (!File.Exists(configFilePath))
                 {
-                    MockConsole.WriteLine($"config.json not found in {subfolder}", MockConsole.LogLevel.Error);
+                    MockConsole.WriteLine($"config.json not found in {subfolder}", Enums.LogLevel.Error);
                     continue;
                 }
 
@@ -108,14 +116,14 @@ public static class EmbeddedScripts
                 }
                 catch (Exception e)
                 {
-                    MockConsole.WriteLine($"Exception in {configFilePath}", MockConsole.LogLevel.Error);
-                    MockConsole.WriteLine($"Exception: {e}", MockConsole.LogLevel.Error);
+                    MockConsole.WriteLine($"Exception in {configFilePath}", Enums.LogLevel.Error);
+                    MockConsole.WriteLine($"Exception: {e}", Enums.LogLevel.Error);
                 }
             }
         }
         catch (Exception ex)
         {
-            MockConsole.WriteLine($"Error processing root folder {rootFolder}: {ex.Message}", MockConsole.LogLevel.Error);
+            MockConsole.WriteLine($"Error processing root folder {rootFolder}: {ex.Message}", Enums.LogLevel.Error);
         }
         
         return config.ToString();
@@ -153,7 +161,7 @@ public static class EmbeddedScripts
         
         if (CommandLine.StationLocation == null)
         {
-            Logger.WriteLog("EmbeddedScripts - LoadAvailableExperiences: Cannot find working directory for embedded experiences", MockConsole.LogLevel.Error);
+            Logger.WriteLog("EmbeddedScripts - LoadAvailableExperiences: Cannot find working directory for embedded experiences", Enums.LogLevel.Error);
             return null;
         }
         
@@ -166,8 +174,8 @@ public static class EmbeddedScripts
         }
         
         // Read the manifest and modify the file if required
-        string? encryptedText = File.ReadAllText(EmbeddedManifest);
-        string? decryptedText = EncryptionHelper.UnicodeDecryptNode(encryptedText);
+        string encryptedText = File.ReadAllText(EmbeddedManifest);
+        string decryptedText = EncryptionHelper.UnicodeDecryptNode(encryptedText);
         
         if (string.IsNullOrEmpty(decryptedText)) return null;
 
@@ -191,8 +199,8 @@ public static class EmbeddedScripts
             }
             catch (Exception e)
             {
-                MockConsole.WriteLine("No subtype detected", MockConsole.LogLevel.Error);
-                MockConsole.WriteLine(e.ToString(), MockConsole.LogLevel.Error);
+                MockConsole.WriteLine("No subtype detected", Enums.LogLevel.Error);
+                MockConsole.WriteLine(e.ToString(), Enums.LogLevel.Error);
             }
             
             // Basic application requirements

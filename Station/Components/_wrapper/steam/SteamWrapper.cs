@@ -6,6 +6,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Timers;
+using LeadMeLabsLibrary;
 using Newtonsoft.Json.Linq;
 using Sentry;
 using Station.Components._commandLine;
@@ -172,7 +173,7 @@ public class SteamWrapper : IWrapper
 
         if (vrProfile?.VrHeadset == null && experience.IsVr)
         {
-            Logger.WriteLog("SteamWrapper - WrapProcess: No VR headset set.", MockConsole.LogLevel.Error);
+            Logger.WriteLog("SteamWrapper - WrapProcess: No VR headset set.", Enums.LogLevel.Error);
             return "No VR headset set.";
         }
 
@@ -187,11 +188,11 @@ public class SteamWrapper : IWrapper
                 { "value", "GameLaunchFailed:Fail to find experience" }
             };
             SessionController.PassStationMessage(message);
-            Logger.WriteLog($"Unable to find Steam experience details (name & install directory) for: {experience.Name}", MockConsole.LogLevel.Normal);
+            Logger.WriteLog($"Unable to find Steam experience details (name & install directory) for: {experience.Name}", Enums.LogLevel.Normal);
             return $"Unable to find Steam experience details (name & install directory) for: {experience.Name}";
         }
 
-        MockConsole.WriteLine($"Wrapping: {experienceName}", MockConsole.LogLevel.Debug);
+        MockConsole.WriteLine($"Wrapping: {experienceName}", Enums.LogLevel.Debug);
 
         //Start the external processes to handle SteamVR
         if (experience.IsVr)
@@ -248,7 +249,7 @@ public class SteamWrapper : IWrapper
                 _launchWillHaveFailedFromOpenVrTimeout = true;
                 if (OpenVrManager.LaunchApplication(experience.ID))
                 {
-                    Logger.WriteLog($"SteamWrapper.WrapProcess: Launching {experience.Name} via OpenVR", MockConsole.LogLevel.Verbose);
+                    Logger.WriteLog($"SteamWrapper.WrapProcess: Launching {experience.Name} via OpenVR", Enums.LogLevel.Verbose);
                     return;
                 }
 
@@ -259,7 +260,7 @@ public class SteamWrapper : IWrapper
                 vrProfile?.VrHeadset?.StopProcessesBeforeLaunch();
             }
 
-            Logger.WriteLog($"SteamWrapper.WrapProcess: Using AlternateLaunchProcess", MockConsole.LogLevel.Normal);
+            Logger.WriteLog($"SteamWrapper.WrapProcess: Using AlternateLaunchProcess", Enums.LogLevel.Normal);
             AlternateLaunchProcess(experience);
         });
         return "launching";
@@ -282,7 +283,7 @@ public class SteamWrapper : IWrapper
             }
         }
 
-        Logger.WriteLog($"Steam experience file location: {fileLocation}", MockConsole.LogLevel.Normal);
+        Logger.WriteLog($"Steam experience file location: {fileLocation}", Enums.LogLevel.Normal);
 
         experienceName = null;
         installDir = null;
@@ -305,7 +306,7 @@ public class SteamWrapper : IWrapper
             }
         }
 
-        Logger.WriteLog($"Steam experience install directory: {installDir}", MockConsole.LogLevel.Normal);
+        Logger.WriteLog($"Steam experience install directory: {installDir}", Enums.LogLevel.Normal);
     }
 
     #region Alternate Launch Process
@@ -347,7 +348,7 @@ public class SteamWrapper : IWrapper
         while(child == null && attempts < 10)
         {
             attempts++;
-            MockConsole.WriteLine($"Checking for child process...", MockConsole.LogLevel.Debug);
+            MockConsole.WriteLine($"Checking for child process...", Enums.LogLevel.Debug);
             Task.Delay(3000).Wait();
             child = GetExperienceProcess();
         }
@@ -356,7 +357,7 @@ public class SteamWrapper : IWrapper
 
         if(child != null)
         {
-            Logger.WriteLog($"Child process found: {child.Id}, {child.MainWindowTitle}, {child.ProcessName}", MockConsole.LogLevel.Normal);
+            Logger.WriteLog($"Child process found: {child.Id}, {child.MainWindowTitle}, {child.ProcessName}", Enums.LogLevel.Normal);
 
             SteamScripts.popupDetect = false;
             ListenForClose();
@@ -385,7 +386,7 @@ public class SteamWrapper : IWrapper
             MessageController.SendResponse("NUC", "QA", response.ToString());
         } else
         {
-            Logger.WriteLog("Game launch failure: " + lastExperience.Name, MockConsole.LogLevel.Normal);
+            Logger.WriteLog("Game launch failure: " + lastExperience.Name, Enums.LogLevel.Normal);
             UiUpdater.ResetUiDisplay();
             
             JObject message = new JObject
@@ -425,14 +426,14 @@ public class SteamWrapper : IWrapper
         processId = CommandLine.GetProcessIdFromDir(steamPath);
         if (processId != null)
         {
-            Logger.WriteLog("A proccess ID was found: " + processId, MockConsole.LogLevel.Normal);
+            Logger.WriteLog("A proccess ID was found: " + processId, Enums.LogLevel.Normal);
             activeProcessId = processId;
         }
 
         if (activeProcessId == null) return null;
         
         Process? proc = ProcessManager.GetProcessById(Int32.Parse(activeProcessId));
-        Logger.WriteLog($"Application found: {proc.MainWindowTitle}/{proc.Id}", MockConsole.LogLevel.Debug);
+        Logger.WriteLog($"Application found: {proc.MainWindowTitle}/{proc.Id}", Enums.LogLevel.Debug);
 
         UiUpdater.UpdateProcess(proc.MainWindowTitle);
         UiUpdater.UpdateStatus("Running...");
@@ -477,7 +478,7 @@ public class SteamWrapper : IWrapper
             }
             catch (InvalidOperationException e)
             {
-                Logger.WriteLog($"StopCurrentProcess - ERROR: {e}", MockConsole.LogLevel.Error);
+                Logger.WriteLog($"StopCurrentProcess - ERROR: {e}", Enums.LogLevel.Error);
             }
         }
         CommandLine.StartProgram(SessionController.Steam, " +app_stop " + lastExperience.ID);
@@ -519,13 +520,13 @@ public class SteamWrapper : IWrapper
                 List<Process> list = ProcessManager.GetProcessesByNames(new List<string> { "steam" });
                 foreach (Process process in list)
                 {
-                    Logger.WriteLog($"Looking for steam sign in process: Process: {process.ProcessName} ID: {process.Id}, MainWindowTitle: {process.MainWindowTitle}", MockConsole.LogLevel.Debug);
+                    Logger.WriteLog($"Looking for steam sign in process: Process: {process.ProcessName} ID: {process.Id}, MainWindowTitle: {process.MainWindowTitle}", Enums.LogLevel.Debug);
 
                     if (process.MainWindowTitle.Equals("Steam Sign In"))
                     {
                         steamSignInWindow = process;
                         timer.Stop();
-                        MockConsole.WriteLine($"Time for powershell command", MockConsole.LogLevel.Debug);
+                        MockConsole.WriteLine($"Time for powershell command", Enums.LogLevel.Debug);
                         CommandLine.PowershellCommand(steamSignInWindow);
                     }
                 }

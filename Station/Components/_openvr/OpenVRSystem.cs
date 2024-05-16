@@ -1,4 +1,5 @@
 ﻿using System;
+using LeadMeLabsLibrary;
 using Station.Components._notification;
 using Valve.VR;
 
@@ -78,7 +79,7 @@ public class OpenVrSystem
             }
             catch (Exception error)
             {
-                MockConsole.WriteLine(error.ToString(), MockConsole.LogLevel.Debug);
+                MockConsole.WriteLine(error.ToString(), Enums.LogLevel.Debug);
                 OVRSystem = null;
             }
         }

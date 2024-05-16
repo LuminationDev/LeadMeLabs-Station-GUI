@@ -8,6 +8,7 @@ using System.Net.Http.Headers;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
+using LeadMeLabsLibrary;
 using Newtonsoft.Json.Linq;
 using Sentry;
 using Station.Components._notification;
@@ -109,7 +110,7 @@ public static class CommandLine
         Process? cmd = SetupCommand(executable);
         if(cmd == null)
         {
-            Logger.WriteLog($"Cannot start: {executable}, StartProgram -> SetupCommand returned null value.", MockConsole.LogLevel.Error);
+            Logger.WriteLog($"Cannot start: {executable}, StartProgram -> SetupCommand returned null value.", Enums.LogLevel.Error);
             return;
         }
 
@@ -123,7 +124,7 @@ public static class CommandLine
         Process? cmd = SetupCommand(executable);
         if (cmd == null)
         {
-            Logger.WriteLog($"Cannot start: {executable}, RunProgramWithOutput -> SetupCommand returned null value.", MockConsole.LogLevel.Error);
+            Logger.WriteLog($"Cannot start: {executable}, RunProgramWithOutput -> SetupCommand returned null value.", Enums.LogLevel.Error);
             return null;
         }
 
@@ -146,7 +147,7 @@ public static class CommandLine
         Process? cmd = SetupCommand(StationCmd);
         if (cmd == null)
         {
-            Logger.WriteLog($"Cannot start: {StationCmd} and run '{command}', ExecuteStationCommand -> SetupCommand returned null value.", MockConsole.LogLevel.Error);
+            Logger.WriteLog($"Cannot start: {StationCmd} and run '{command}', ExecuteStationCommand -> SetupCommand returned null value.", Enums.LogLevel.Error);
             return null;
         }
         cmd.Start();
@@ -176,42 +177,26 @@ public static class CommandLine
 
     public static string? ShutdownStation(int time)
     {
+        if (DeviceControl.GetIsUpdating())
+        {
+            Logger.WriteLog("ShutdownStation - Cannot shutdown, currently updating.", Enums.LogLevel.Info);
+            return "Updating";
+        }
+        
         string? output = ExecuteStationCommand("shutdown /s /t " + time);
         return output;
     }
 
     public static string? RestartStation(int time)
     {
+        if (DeviceControl.GetIsUpdating())
+        {
+            Logger.WriteLog("RestartStation - Cannot restart, currently updating.", Enums.LogLevel.Info);
+            return "Updating";
+        }
+        
         string? output = ExecuteStationCommand("shutdown /r /t " + time);
         return output;
-    }
-
-    /// <summary>
-    /// Kill off the launcher program if the time is between a set amount. The Software_Checker scheduler task will
-    /// automatically restart the application within the next five minutes, updating the Launcher and Station software.
-    /// </summary>
-    public static void RestartProgram()
-    {
-        //Log the daily restart and write the Work Queue before exiting.
-        Logger.WriteLog("Daily restart", MockConsole.LogLevel.Verbose);
-        Logger.WorkQueue();
-
-        Process[] processes = ProcessManager.GetProcessesByName("LeadMe");
-
-        foreach (Process process in processes)
-        {
-            try
-            {
-                process.Kill(true);
-            }
-            catch (Exception e)
-            {
-                Logger.WriteLog($"Error: {e}", MockConsole.LogLevel.Normal);
-            }
-        }
-
-        // Exit the application
-        Environment.Exit(0);
     }
 
     ///////////////////////////////////////////////
@@ -231,7 +216,7 @@ public static class CommandLine
 
         if (string.IsNullOrEmpty(StationLocation))
         {
-            Logger.WriteLog($"Station location null or empty: cannot run '{command}', MonitorSteamConfiguration -> SetupCommand returned null value.", MockConsole.LogLevel.Error);
+            Logger.WriteLog($"Station location null or empty: cannot run '{command}', MonitorSteamConfiguration -> SetupCommand returned null value.", Enums.LogLevel.Error);
             return;
         }
         string fullPath = StationLocation + steamCmd;
@@ -239,7 +224,7 @@ public static class CommandLine
         Process ? cmd = SetupCommand(fullPath);
         if (cmd == null)
         {
-            Logger.WriteLog($"Cannot start: {fullPath} and run '{command}', MonitorSteamConfiguration -> SetupCommand returned null value.", MockConsole.LogLevel.Error);
+            Logger.WriteLog($"Cannot start: {fullPath} and run '{command}', MonitorSteamConfiguration -> SetupCommand returned null value.", Enums.LogLevel.Error);
             return;
         }
 
@@ -251,23 +236,23 @@ public static class CommandLine
 
         if (output == null)
         {
-            Logger.WriteLog("Unable to read output", MockConsole.LogLevel.Normal);
+            Logger.WriteLog("Unable to read output", Enums.LogLevel.Normal);
             MessageController.SendResponse("Android", "Station", "SetValue:steamCMD:error");
             configuringSteam = false;
             return;
         }
 
-        Logger.WriteLog(output, MockConsole.LogLevel.Normal);
+        Logger.WriteLog(output, Enums.LogLevel.Normal);
 
         if (output.Contains("FAILED (Invalid Login Auth Code)"))
         {
-            Logger.WriteLog("AUTH FAILED", MockConsole.LogLevel.Normal);
+            Logger.WriteLog("AUTH FAILED", Enums.LogLevel.Normal);
             MessageController.SendResponse("Android", "Station", "SetValue:steamCMD:failure");
             configuringSteam = false;
         }
         else if (output.Contains("OK"))
         {
-            Logger.WriteLog("AUTH SUCCESS, restarting VR system", MockConsole.LogLevel.Normal);
+            Logger.WriteLog("AUTH SUCCESS, restarting VR system", Enums.LogLevel.Normal);
             MessageController.SendResponse("Android", "Station", "SetValue:steamCMD:configured");
 
             //Recollect the installed experiences
@@ -290,7 +275,7 @@ public static class CommandLine
     {
         if (string.IsNullOrEmpty(StationLocation))
         {
-            Logger.WriteLog($"Station location null or empty: cannot run '{command}', MonitorSteamConfiguration -> SetupCommand returned null value.", MockConsole.LogLevel.Error);
+            Logger.WriteLog($"Station location null or empty: cannot run '{command}', MonitorSteamConfiguration -> SetupCommand returned null value.", Enums.LogLevel.Error);
             return null;
         }
         string fullPath = StationLocation + steamCmd;
@@ -310,7 +295,7 @@ public static class CommandLine
         Process? cmd = SetupCommand(fullPath);
         if (cmd == null)
         {
-            Logger.WriteLog($"Cannot start: {fullPath} and run '{command}', ExecuteSteamCommand -> SetupCommand returned null value.", MockConsole.LogLevel.Error);
+            Logger.WriteLog($"Cannot start: {fullPath} and run '{command}', ExecuteSteamCommand -> SetupCommand returned null value.", Enums.LogLevel.Error);
             return null;
         }
         cmd.StartInfo.Arguments = "\"+force_install_dir \\\"C:/Program Files (x86)/Steam\\\"\" " + command;
@@ -320,7 +305,7 @@ public static class CommandLine
 
         if (output == null)
         {
-            Logger.WriteLog($"ExecuteSteamCommand -> SteamCMD output returned null value.", MockConsole.LogLevel.Error);
+            Logger.WriteLog($"ExecuteSteamCommand -> SteamCMD output returned null value.", Enums.LogLevel.Error);
             return null;
         }
 
@@ -352,7 +337,7 @@ public static class CommandLine
     {
         if (string.IsNullOrEmpty(StationLocation))
         {
-            Logger.WriteLog($"Station location null or empty: cannot run '{command}', MonitorSteamConfiguration -> SetupCommand returned null value.", MockConsole.LogLevel.Error);
+            Logger.WriteLog($"Station location null or empty: cannot run '{command}', MonitorSteamConfiguration -> SetupCommand returned null value.", Enums.LogLevel.Error);
             return null;
         }
         string fullPath = StationLocation + steamCmd;
@@ -371,7 +356,7 @@ public static class CommandLine
         Process? cmd = SetupCommand(fullPath);
         if (cmd == null)
         {
-            Logger.WriteLog($"Cannot start: {fullPath} and run '{command}', ExecuteSteamCommandSDrive -> SetupCommand returned null value.", MockConsole.LogLevel.Error);
+            Logger.WriteLog($"Cannot start: {fullPath} and run '{command}', ExecuteSteamCommandSDrive -> SetupCommand returned null value.", Enums.LogLevel.Error);
             return null;
         }
         cmd.StartInfo.Arguments = "\"+force_install_dir \\\"S:/SteamLibrary\\\"\" " + command;
@@ -390,13 +375,13 @@ public static class CommandLine
         {
             Logger.WriteLog(
                 $"Inside kill steam signin: Process: {process.ProcessName} ID: {process.Id}, MainWindowTitle: {process.MainWindowTitle}",
-                MockConsole.LogLevel.Debug);
+                Enums.LogLevel.Debug);
 
             if (process.MainWindowTitle.Equals("Steam Sign In"))
             {
                 Logger.WriteLog(
                     $"Killing Process: {process.ProcessName} ID: {process.Id}, MainWindowTitle: {process.MainWindowTitle}",
-                    MockConsole.LogLevel.Debug);
+                    Enums.LogLevel.Debug);
                 process.Kill();
             }
         }
@@ -414,7 +399,7 @@ public static class CommandLine
 
         foreach (Process process in list)
         {
-            Logger.WriteLog($"Process: {process.ProcessName} ID: {process.Id}", MockConsole.LogLevel.Verbose);
+            Logger.WriteLog($"Process: {process.ProcessName} ID: {process.Id}", Enums.LogLevel.Verbose);
 
             if (!kill) continue;
             
@@ -442,7 +427,7 @@ public static class CommandLine
             Process? cmd = SetupCommand(StationPowershell);
             if (cmd == null)
             {
-                Logger.WriteLog($"Cannot start: {StationPowershell}, GetFreeStorage -> SetupCommand returned null value.", MockConsole.LogLevel.Error);
+                Logger.WriteLog($"Cannot start: {StationPowershell}, GetFreeStorage -> SetupCommand returned null value.", Enums.LogLevel.Error);
                 return 9999;
             }
             cmd.Start();
@@ -470,7 +455,7 @@ public static class CommandLine
         }
         catch (Exception e)
         {
-            Logger.WriteLog($"GetFreeStorage - Sentry Exception: {e}", MockConsole.LogLevel.Error);
+            Logger.WriteLog($"GetFreeStorage - Sentry Exception: {e}", Enums.LogLevel.Error);
             SentrySdk.CaptureException(e);
         }
 
@@ -582,7 +567,7 @@ public static class CommandLine
     {
         for (int attempt = 0; attempt < 5; attempt++)
         {
-            MockConsole.WriteLine($"Searching for confirmation window: {windowTitleToFind}", MockConsole.LogLevel.Normal);
+            MockConsole.WriteLine($"Searching for confirmation window: {windowTitleToFind}", Enums.LogLevel.Normal);
             
             // Retrieve all processes
             Process[] processes = Process.GetProcesses();
@@ -596,7 +581,7 @@ public static class CommandLine
                 // Print process information
                 Console.WriteLine($"Process Name: {process.ProcessName}, Window Title: {process.MainWindowTitle}, Process ID: {process.Id}");
                 
-                MockConsole.WriteLine($"Confirmation window found attempting to bypass: {windowTitleToFind}", MockConsole.LogLevel.Normal);
+                MockConsole.WriteLine($"Confirmation window found attempting to bypass: {windowTitleToFind}", Enums.LogLevel.Normal);
 
                 // Set the found window as foreground and perform action
                 SetForegroundWindow(process.MainWindowHandle.ToInt32());
@@ -610,7 +595,7 @@ public static class CommandLine
             await Task.Delay(5000);
         }
         
-        MockConsole.WriteLine($"Confirmation window not found, unable to bypass: {windowTitleToFind}", MockConsole.LogLevel.Normal);
+        MockConsole.WriteLine($"Confirmation window not found, unable to bypass: {windowTitleToFind}", Enums.LogLevel.Normal);
     }
 
     private static void PressEnterOnActiveWindow()
@@ -618,7 +603,7 @@ public static class CommandLine
         Process? cmd = SetupCommand(StationPowershell);
         if (cmd == null)
         {
-            Logger.WriteLog($"Cannot start: {StationPowershell}, PowershellCommand (cmd) -> SetupCommand returned null value.", MockConsole.LogLevel.Error);
+            Logger.WriteLog($"Cannot start: {StationPowershell}, PowershellCommand (cmd) -> SetupCommand returned null value.", Enums.LogLevel.Error);
             return;
         }
         cmd.Start();
@@ -650,11 +635,11 @@ public static class CommandLine
         OverlayManager.SetText(LoadingMessages[2]);
         await Task.Delay(5000);
         OverlayManager.SetText(LoadingMessages[3]);
-        Logger.WriteLog($"Tabbing back out of offline warning", MockConsole.LogLevel.Debug);
+        Logger.WriteLog($"Tabbing back out of offline warning", Enums.LogLevel.Debug);
         Process? cmd = SetupCommand(StationPowershell);
         if (cmd == null)
         {
-            Logger.WriteLog($"Cannot start: {StationPowershell}, PowershellCommand (cmd) -> SetupCommand returned null value.", MockConsole.LogLevel.Error);
+            Logger.WriteLog($"Cannot start: {StationPowershell}, PowershellCommand (cmd) -> SetupCommand returned null value.", Enums.LogLevel.Error);
             return;
         }
         cmd.Start();
@@ -667,11 +652,11 @@ public static class CommandLine
         
         await Task.Delay(2000);
         OverlayManager.SetText(LoadingMessages[4]);
-        Logger.WriteLog($"Entering steam details", MockConsole.LogLevel.Debug);
+        Logger.WriteLog($"Entering steam details", Enums.LogLevel.Debug);
         Process? cmd2 = SetupCommand(StationPowershell);
         if (cmd2 == null)
         {
-            Logger.WriteLog($"Cannot start: {StationPowershell}, PowershellCommand (cmd2) -> SetupCommand returned null value.", MockConsole.LogLevel.Error);
+            Logger.WriteLog($"Cannot start: {StationPowershell}, PowershellCommand (cmd2) -> SetupCommand returned null value.", Enums.LogLevel.Error);
             return;
         }
         cmd2.Start();
@@ -688,11 +673,11 @@ public static class CommandLine
         OverlayManager.SetText(LoadingMessages[5]);
         await Task.Delay(5000);
         OverlayManager.SetText(LoadingMessages[6]);
-        Logger.WriteLog($"Submitting offline form", MockConsole.LogLevel.Debug);
+        Logger.WriteLog($"Submitting offline form", Enums.LogLevel.Debug);
         Process cmd3 = SetupCommand(StationPowershell);
         if (cmd3 == null)
         {
-            Logger.WriteLog($"Cannot start: {StationPowershell}, PowershellCommand (cmd3) -> SetupCommand returned null value.", MockConsole.LogLevel.Error);
+            Logger.WriteLog($"Cannot start: {StationPowershell}, PowershellCommand (cmd3) -> SetupCommand returned null value.", Enums.LogLevel.Error);
             return;
         }
         cmd3.Start();
@@ -713,7 +698,7 @@ public static class CommandLine
         Process? cmd = SetupCommand(StationPowershell);
         if (cmd == null)
         {
-            Logger.WriteLog($"Cannot start: {StationPowershell}, PowershellCommand (cmd) -> SetupCommand returned null value.", MockConsole.LogLevel.Error);
+            Logger.WriteLog($"Cannot start: {StationPowershell}, PowershellCommand (cmd) -> SetupCommand returned null value.", Enums.LogLevel.Error);
             return;
         }
         cmd.Start();
@@ -723,12 +708,12 @@ public static class CommandLine
 
     public static string? GetProcessIdFromMainWindowTitle(string mainWindowTitle)
     {
-        Logger.WriteLog("gps | where {$_.MainWindowTitle -Like \"*" + mainWindowTitle + "*\"} | select ID", MockConsole.LogLevel.Debug);
+        Logger.WriteLog("gps | where {$_.MainWindowTitle -Like \"*" + mainWindowTitle + "*\"} | select ID", Enums.LogLevel.Debug);
 
         Process? cmd = SetupCommand(StationPowershell);
         if (cmd == null)
         {
-            Logger.WriteLog($"Cannot start: {StationPowershell}, GetProcessIdFromDir -> SetupCommand returned null value.", MockConsole.LogLevel.Error);
+            Logger.WriteLog($"Cannot start: {StationPowershell}, GetProcessIdFromDir -> SetupCommand returned null value.", Enums.LogLevel.Error);
             return null;
         }
         cmd.Start();
@@ -738,11 +723,11 @@ public static class CommandLine
 
         if (output == null)
         {
-            Logger.WriteLog($"No output recorded for {mainWindowTitle}", MockConsole.LogLevel.Debug);
+            Logger.WriteLog($"No output recorded for {mainWindowTitle}", Enums.LogLevel.Debug);
             return null;
         }
 
-        Logger.WriteLog(output, MockConsole.LogLevel.Debug);
+        Logger.WriteLog(output, Enums.LogLevel.Debug);
 
         string[] outputP = output.Split("\n");
 
@@ -750,7 +735,7 @@ public static class CommandLine
         int iterator = 0;
         while (iterator < outputP.Length)
         {
-            Logger.WriteLog($"Output line {iterator}: {outputP[iterator].Trim()}", MockConsole.LogLevel.Debug);
+            Logger.WriteLog($"Output line {iterator}: {outputP[iterator].Trim()}", Enums.LogLevel.Debug);
 
             if (outputP[iterator].Trim().Equals("Id"))
             {
@@ -765,7 +750,7 @@ public static class CommandLine
             return null;
         }
 
-        Logger.WriteLog($"ID: {outputP[iterator + 2].Trim()}", MockConsole.LogLevel.Debug);
+        Logger.WriteLog($"ID: {outputP[iterator + 2].Trim()}", Enums.LogLevel.Debug);
 
         return outputP[iterator + 2].Trim();
     }
@@ -777,12 +762,12 @@ public static class CommandLine
     /// <returns>Process id if the application is running</returns>
     public static string? GetProcessIdFromDir(string dir)
     {
-        Logger.WriteLog("gps | where {$_.Path -Like \"" + dir + "*\"} | where {$_.MainWindowHandle -ne 0} | select ID", MockConsole.LogLevel.Debug);
+        Logger.WriteLog("gps | where {$_.Path -Like \"" + dir + "*\"} | where {$_.MainWindowHandle -ne 0} | select ID", Enums.LogLevel.Debug);
 
         Process? cmd = SetupCommand(StationPowershell);
         if (cmd == null)
         {
-            Logger.WriteLog($"Cannot start: {StationPowershell}, GetProcessIdFromDir -> SetupCommand returned null value.", MockConsole.LogLevel.Error);
+            Logger.WriteLog($"Cannot start: {StationPowershell}, GetProcessIdFromDir -> SetupCommand returned null value.", Enums.LogLevel.Error);
             return null;
         }
         cmd.Start();
@@ -797,11 +782,11 @@ public static class CommandLine
 
         if (output == null)
         {
-            Logger.WriteLog($"No output recorded for {dir}", MockConsole.LogLevel.Debug);
+            Logger.WriteLog($"No output recorded for {dir}", Enums.LogLevel.Debug);
             return null;
         }
 
-        Logger.WriteLog(output, MockConsole.LogLevel.Debug);
+        Logger.WriteLog(output, Enums.LogLevel.Debug);
 
         string[] outputP = output.Split("\n");
 
@@ -809,7 +794,7 @@ public static class CommandLine
         int iterator = 0;
         while (iterator < outputP.Length)
         {
-            Logger.WriteLog($"Output line {iterator}: {outputP[iterator].Trim()}", MockConsole.LogLevel.Debug);
+            Logger.WriteLog($"Output line {iterator}: {outputP[iterator].Trim()}", Enums.LogLevel.Debug);
 
             if (outputP[iterator].Trim().Equals("Id"))
             {
@@ -824,7 +809,7 @@ public static class CommandLine
             return null;
         }
 
-        Logger.WriteLog($"ID: {outputP[iterator + 2].Trim()}", MockConsole.LogLevel.Debug);
+        Logger.WriteLog($"ID: {outputP[iterator + 2].Trim()}", Enums.LogLevel.Debug);
 
         return outputP[iterator + 2].Trim();
     }

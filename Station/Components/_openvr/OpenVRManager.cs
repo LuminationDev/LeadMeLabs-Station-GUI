@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Numerics;
 using System.Text;
 using System.Threading.Tasks;
+using LeadMeLabsLibrary;
 using Newtonsoft.Json.Linq;
 using Station.Components._commandLine;
 using Station.Components._interfaces;
@@ -70,33 +71,33 @@ public class OpenVrManager
         //OpenVR is already initialised and running
         if (openVrSystem is { OVRSystem: not null })
         {
-            MockConsole.WriteLine("OpenVRSystem.OVRSystem initialised.", MockConsole.LogLevel.Verbose);
+            MockConsole.WriteLine("OpenVRSystem.OVRSystem initialised.", Enums.LogLevel.Verbose);
             return true;
         }
         
         //Do not double up. new OpenVRSystem takes time to recognise OpenVR status/connection.
         if (_initialising)
         {
-            MockConsole.WriteLine("OpenVRSystem.OVRSystem already initialising.", MockConsole.LogLevel.Verbose);
+            MockConsole.WriteLine("OpenVRSystem.OVRSystem already initialising.", Enums.LogLevel.Verbose);
             return false;
         }
         _initialising = true;
 
-        MockConsole.WriteLine("Attempting to initialise OpenVRSystem.OVRSystem", MockConsole.LogLevel.Debug);
+        MockConsole.WriteLine("Attempting to initialise OpenVRSystem.OVRSystem", Enums.LogLevel.Debug);
 
         //This requires SteamVR being open and running (WITH A HEADSET CONNECTED).
         openVrSystem = new OpenVrSystem(OpenVrSystem.ApplicationType.Other);
 
         if (openVrSystem.OVRSystem == null)
         {
-            MockConsole.WriteLine("OpenVRSystem.OVRSystem has not been initialised.", MockConsole.LogLevel.Debug);
+            MockConsole.WriteLine("OpenVRSystem.OVRSystem has not been initialised.", Enums.LogLevel.Debug);
             _initialising = false;
             return false;
         }
 
         _ovrSystem = openVrSystem.OVRSystem;
         _quiting = false;
-        Logger.WriteLog("OpenVRSystem.OVRSystem has been initialised.", MockConsole.LogLevel.Debug);
+        Logger.WriteLog("OpenVRSystem.OVRSystem has been initialised.", Enums.LogLevel.Debug);
         
         try
         {
@@ -105,7 +106,7 @@ public class OpenVrManager
         }
         catch (Exception e)
         {
-            Logger.WriteLog($"OnVREvent.LoadManifests task Error: {e}", MockConsole.LogLevel.Error);
+            Logger.WriteLog($"OnVREvent.LoadManifests task Error: {e}", Enums.LogLevel.Error);
         }
         
         //Create a listener for VR events - this handles the gentle exit of SteamVR
@@ -125,7 +126,7 @@ public class OpenVrManager
     {
         if (OpenVR.Applications == null)
         {
-            MockConsole.WriteLine($"Cannot load manifests when SteamVR isn't open.", MockConsole.LogLevel.Normal);
+            MockConsole.WriteLine($"Cannot load manifests when SteamVR isn't open.", Enums.LogLevel.Normal);
             return;
         }
 
@@ -155,13 +156,13 @@ public class OpenVrManager
         if (vrProfile?.VrHeadset == null) return false;
 
         MockConsole.WriteLine($"WaitForOpenVR - Checking SteamVR. Vive status: {Enum.GetName(typeof(DeviceStatus), vrProfile.VrHeadset.GetHeadsetManagementSoftwareStatus())} " +
-            $"- OpenVR status: {MainController.openVrManager?.InitialiseOpenVr() ?? false}", MockConsole.LogLevel.Normal);
+            $"- OpenVR status: {MainController.openVrManager?.InitialiseOpenVr() ?? false}", Enums.LogLevel.Normal);
 
         //If Vive is connect but OpenVR is not/cannot be initialised, restart SteamVR and check again.
         if (vrProfile.VrHeadset.GetHeadsetManagementSoftwareStatus() == DeviceStatus.Connected && (!MainController.openVrManager?.InitialiseOpenVr() ?? true))
         {
             Logger.WriteLog($"OpenVRManager.WaitForOpenVR - Vive status: {vrProfile.VrHeadset.GetHeadsetManagementSoftwareStatus()}, " +
-                $"OpenVR connection not established - restarting SteamVR", MockConsole.LogLevel.Normal);
+                $"OpenVR connection not established - restarting SteamVR", Enums.LogLevel.Normal);
 
             //Send message to the tablet (Updating what is happening)
             JObject message = new JObject
@@ -193,7 +194,7 @@ public class OpenVrManager
             }
 
             Logger.WriteLog($"OpenVRManager.WaitForOpenVR - Vive status: {vrProfile.VrHeadset.GetHeadsetManagementSoftwareStatus()}, " +
-                $"SteamVR restarted successfully", MockConsole.LogLevel.Normal);
+                $"SteamVR restarted successfully", Enums.LogLevel.Normal);
 
             //Send message to the tablet (Updating what is happening)
             JObject stateMessage = new JObject
@@ -217,7 +218,7 @@ public class OpenVrManager
             }
 
             Logger.WriteLog($"OpenVRManager.WaitForOpenVR - Vive status: {vrProfile.VrHeadset.GetHeadsetManagementSoftwareStatus()}, " +
-                $"OpenVR connection established", MockConsole.LogLevel.Normal);
+                $"OpenVR connection established", Enums.LogLevel.Normal);
         }
 
         return true;
@@ -248,12 +249,12 @@ public class OpenVrManager
                 case EVREventType.VREvent_RestartRequested:
                     //TODO send a message to the nuc?/Handle restart?
                     //IDEA: SteamVR is in the _steamManifest, check if launching it closes the current steamvr program and opens a new one? Essentially a restart
-                    Logger.WriteLog("OpenVRManager.OnVREvent - SteamVR requires a restart", MockConsole.LogLevel.Normal);
+                    Logger.WriteLog("OpenVRManager.OnVREvent - SteamVR requires a restart", Enums.LogLevel.Normal);
                     break;
 
                 case EVREventType.VREvent_Quit:
                     _quiting = true;
-                    Logger.WriteLog("SteamVR quitting", MockConsole.LogLevel.Normal);
+                    Logger.WriteLog("SteamVR quitting", Enums.LogLevel.Normal);
                     _ovrSystem.AcknowledgeQuit_Exiting();
                     openVrSystem?.Shutdown();
                     openVrSystem = null;
@@ -302,7 +303,7 @@ public class OpenVrManager
                 //                 $"Application Index: {index} " +
                 //                 $"Application Type: {applicationLaunchType}";
                     
-                //Logger.WriteLog(output, MockConsole.LogLevel.Normal);
+                //Logger.WriteLog(output, Enums.LogLevel.Normal);
 
                 vrApplicationCount++;
 
@@ -337,11 +338,11 @@ public class OpenVrManager
             }
             else
             {
-                MockConsole.WriteLine($"Failed to get the Steam pch key. Error: {error}", MockConsole.LogLevel.Debug);
+                MockConsole.WriteLine($"Failed to get the Steam pch key. Error: {error}", Enums.LogLevel.Debug);
             }
         }
 
-        Logger.WriteLog($"OpenVRManager.LoadVrManifest: VR application count: {vrApplicationCount}", MockConsole.LogLevel.Verbose);
+        Logger.WriteLog($"OpenVRManager.LoadVrManifest: VR application count: {vrApplicationCount}", Enums.LogLevel.Verbose);
     }
 
     /// <summary>
@@ -358,7 +359,7 @@ public class OpenVrManager
         if (pchKey == null)
         {
             Logger.WriteLog($"OPENVR: {appId} has no pchKey. Make sure OpenVR has been initialised and " +
-                            $"manifests have been loaded", MockConsole.LogLevel.Normal);
+                            $"manifests have been loaded", Enums.LogLevel.Normal);
             return false;
         }
         
@@ -367,8 +368,12 @@ public class OpenVrManager
         {
             ScheduledTaskQueue.EnqueueTask(() =>
             {
-                if (!(WrapperManager.currentWrapper?.LaunchFailedFromOpenVrTimeout() ?? false)) return;
-                
+                if (!(WrapperManager.currentWrapper?.LaunchFailedFromOpenVrTimeout() ?? false))
+                {
+                    WrapperManager.currentWrapper?.SetLaunchingExperience(false);
+                    return;
+                }
+
                 WrapperManager.currentWrapper.StopCurrentProcess();
                 UiUpdater.ResetUiDisplay();
                 
@@ -413,7 +418,7 @@ public class OpenVrManager
 
         if (error != EVRApplicationError.None)
         {
-            MockConsole.WriteLine($"Failed to get the current application key. Error: {error}", MockConsole.LogLevel.Debug);
+            MockConsole.WriteLine($"Failed to get the current application key. Error: {error}", Enums.LogLevel.Debug);
             return;
         }
 
@@ -437,12 +442,12 @@ public class OpenVrManager
         if (getAppNameError != EVRApplicationError.None)
         {
             Logger.WriteLog($"OpenVRManager.QueryCurrentApplication - Failed to get the application name. Error: {getAppNameError}", 
-                MockConsole.LogLevel.Debug);
+                Enums.LogLevel.Debug);
             return;
         }
 
         string currentAppName = appNameBuffer.ToString();
-        if (currentAppName.Equals("nwjs 119"))
+        if (currentAppName.StartsWith("nwjs"))
         {
             currentAppName = WrapperManager.currentWrapper?.GetLastExperience()?.Name ?? appNameBuffer.ToString();
         }
@@ -455,14 +460,14 @@ public class OpenVrManager
         //                 $"Currently Running Application Key: {currentAppKey}\n" +
         //                 $"Currently Running Application Name: {currentAppName}";
         //
-        // Logger.WriteLog(output, MockConsole.LogLevel.Verbose);
+        // Logger.WriteLog(output, Enums.LogLevel.Verbose);
 
         // Get the process associated with the _appId
         Process? targetProcess = ProcessManager.GetProcessById((int)_processId);
         if (targetProcess == null)
         {
             Logger.WriteLog($"OpenVRManager.QueryCurrentApplication - Target Process NOT found.",
-                MockConsole.LogLevel.Normal);
+                Enums.LogLevel.Normal);
             _processId = 0;
             return;
         }
@@ -502,13 +507,11 @@ public class OpenVrManager
         };
         SessionController.PassStationMessage(message);
             
-        JObject response = new JObject();
-        response.Add("response", "ExperienceLaunched");
-        JObject responseData = new JObject();
-        responseData.Add("experienceId", experienceId);
+        JObject response = new JObject { { "response", "ExperienceLaunched" } };
+        JObject responseData = new JObject { { "experienceId", experienceId } };
         response.Add("responseData", responseData);
         
-        Logger.WriteLog($"Application launching: {targetProcess.MainWindowTitle}/{experienceId}/{targetProcess.Id}", MockConsole.LogLevel.Normal);
+        Logger.WriteLog($"Application launching: {targetProcess.MainWindowTitle}/{experienceId}/{targetProcess.Id}", Enums.LogLevel.Normal);
             
         MessageController.SendResponse("NUC", "QA", response.ToString());
 
@@ -577,7 +580,7 @@ public class OpenVrManager
         }
 
         if (controllerCount != 0) return;
-        MockConsole.WriteLine($"No controllers currently connected.", MockConsole.LogLevel.Debug);
+        MockConsole.WriteLine($"No controllers currently connected.", Enums.LogLevel.Debug);
     }
 
     #region Boundary Details
@@ -597,7 +600,7 @@ public class OpenVrManager
         {
             return;
         }
-        MockConsole.WriteLine($"CVRChaperone CalibrationState: {chaperone.GetCalibrationState()}", MockConsole.LogLevel.Verbose);
+        MockConsole.WriteLine($"CVRChaperone CalibrationState: {chaperone.GetCalibrationState()}", Enums.LogLevel.Verbose);
     }
 
     /// <summary>
@@ -660,19 +663,19 @@ public class OpenVrManager
         //                 $"Headset Position: {headsetPosition}\n" +
         //                 $"Headset Orientation: {headsetOrientation}";
 
-        //Logger.WriteLog(output, MockConsole.LogLevel.Verbose);
+        //Logger.WriteLog(output, Enums.LogLevel.Verbose);
 
         if (headsetPosition == new Vector3(0, 0, 0) && headsetOrientation == new Quaternion(1, 0, 0, 0))
         {
             _tracking = false;
             vrProfile.VrHeadset?.GetStatusManager().UpdateHeadset(VrManager.OpenVR, DeviceStatus.Lost);
-            MockConsole.WriteLine("Headset lost", MockConsole.LogLevel.Debug);
+            MockConsole.WriteLine("Headset lost", Enums.LogLevel.Debug);
         }
         else if (headsetPosition != new Vector3(0, 0, 0) && headsetOrientation != new Quaternion(1, 0, 0, 0))
         {
             _tracking = true;
             vrProfile.VrHeadset?.GetStatusManager().UpdateHeadset(VrManager.OpenVR, DeviceStatus.Connected);
-            MockConsole.WriteLine("Headset found", MockConsole.LogLevel.Debug);
+            MockConsole.WriteLine("Headset found", Enums.LogLevel.Debug);
         }
 
         vrProfile.VrHeadset?.GetStatusManager().UpdateHeadsetFirmwareStatus(GetFirmwareUpdateRequired(headsetIndex));
@@ -690,7 +693,7 @@ public class OpenVrManager
                 renderModelName, OpenVR.k_unMaxPropertyStringSize, ref error);
 
             MockConsole.WriteLine($"Headset description: {renderModelName}",
-                MockConsole.LogLevel.Verbose);
+                Enums.LogLevel.Verbose);
 
             if (error == ETrackedPropertyError.TrackedProp_Success)
             {
@@ -762,7 +765,7 @@ public class OpenVrManager
                 $"Controller {controllerIndex} (Role: {Enum.GetName(typeof (DeviceRole), controllerRole)} - " +
                 $"Serial Number: {serialNumber}, " +
                 $"Battery Level: {formattedBatteryLevel}%", 
-                MockConsole.LogLevel.Verbose);
+                Enums.LogLevel.Verbose);
             
             vrProfile.VrHeadset?.GetStatusManager().UpdateController(
                 serialNumber, controllerRole, "battery", formattedBatteryLevel);
@@ -772,7 +775,7 @@ public class OpenVrManager
             // Handle the case when battery level retrieval fails
             MockConsole.WriteLine(
                 $"Failed to get the battery level for controller {controllerIndex}. Error: {error}", 
-                MockConsole.LogLevel.Verbose);
+                Enums.LogLevel.Verbose);
         }
     }
     #endregion
@@ -895,7 +898,7 @@ public class OpenVrManager
                         $"Device Position: {headsetPosition}\n" +
                         $"Device Orientation: {headsetOrientation}";
         
-        MockConsole.WriteLine(output, MockConsole.LogLevel.Verbose);
+        MockConsole.WriteLine(output, Enums.LogLevel.Verbose);
         return poses[deviceIndex].bDeviceIsConnected;
     }
     #endregion

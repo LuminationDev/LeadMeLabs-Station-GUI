@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading;
-using Station.Components._notification;
+using LeadMeLabsLibrary;
 using Station.Components._utils;
 
 namespace Station.Components._commandLine;
@@ -127,11 +127,11 @@ public static class ProcessManager
     {
         foreach (var process in allProcesses.Where(process => !process.Responding))
         {
-            Logger.WriteLog($"Process is not responding: {process.ProcessName}", MockConsole.LogLevel.Normal);
+            Logger.WriteLog($"Process is not responding: {process.ProcessName}", Enums.LogLevel.Normal);
             return false;
         }
 
-        Logger.WriteLog("All processes are responding", MockConsole.LogLevel.Verbose, false);
+        Logger.WriteLog("All processes are responding", Enums.LogLevel.Verbose, false);
         return true;
     }
 }

@@ -5,6 +5,7 @@ using System.Linq;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
+using LeadMeLabsLibrary;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Sentry;
@@ -49,7 +50,7 @@ public class SteamConfig
         {
             Logger.WriteLog(
                 "Could not get steamid " +
-                location, MockConsole.LogLevel.Error);
+                location, Enums.LogLevel.Error);
             return "";
         }
 
@@ -58,7 +59,7 @@ public class SteamConfig
         {
             Logger.WriteLog(
                 "Could not get SteamUserName from environment variables " +
-                location, MockConsole.LogLevel.Error);
+                location, Enums.LogLevel.Error);
             return "";
         }
 
@@ -85,7 +86,7 @@ public class SteamConfig
             {
                 Logger.WriteLog(
                 "Could not get steamId: " +
-                location, MockConsole.LogLevel.Error);
+                location, Enums.LogLevel.Error);
                 return "";
             }
 
@@ -93,7 +94,7 @@ public class SteamConfig
         }
         catch (Exception e)
         {
-            Logger.WriteLog($"GetSteamId - Sentry Exception: {e}", MockConsole.LogLevel.Error);
+            Logger.WriteLog($"GetSteamId - Sentry Exception: {e}", Enums.LogLevel.Error);
             SentrySdk.CaptureException(e);
         }
 
@@ -106,7 +107,7 @@ public class SteamConfig
         {
             Logger.WriteLog(
                 "Could not find steamId: " +
-                location, MockConsole.LogLevel.Error);
+                location, Enums.LogLevel.Error);
             return;
         }
         string fileLocation = $"C:\\Program Files (x86)\\Steam\\userdata\\{steamId}\\config\\localconfig.vdf";
@@ -114,7 +115,7 @@ public class SteamConfig
         {
             Logger.WriteLog(
                 "Could not verify steam hide notification info: " +
-                location, MockConsole.LogLevel.Error);
+                location, Enums.LogLevel.Error);
             return;
         }
 
@@ -146,7 +147,7 @@ public class SteamConfig
         }
         catch (Exception e)
         {
-            Logger.WriteLog($"VerifySteamHideNotificationConfig - Sentry Exception: {e}", MockConsole.LogLevel.Error);
+            Logger.WriteLog($"VerifySteamHideNotificationConfig - Sentry Exception: {e}", Enums.LogLevel.Error);
             SentrySdk.CaptureException(e);
         }
     }
@@ -157,7 +158,7 @@ public class SteamConfig
         {
             Logger.WriteLog(
                 "Could not find steamId: " +
-                location, MockConsole.LogLevel.Error);
+                location, Enums.LogLevel.Error);
             return new List<string>();
         }
         string fileLocation = $"C:\\Program Files (x86)\\Steam\\userdata\\{steamId}\\config\\localconfig.vdf";
@@ -165,7 +166,7 @@ public class SteamConfig
         {
             Logger.WriteLog(
                 "Could not verify steam hide notification info: " +
-                location, MockConsole.LogLevel.Error);
+                location, Enums.LogLevel.Error);
             return new List<string>();
         }
 
@@ -190,7 +191,7 @@ public class SteamConfig
         }
         catch (Exception e)
         {
-            Logger.WriteLog($"GetAcceptedEulasForAppId - Sentry Exception: {e}", MockConsole.LogLevel.Error);
+            Logger.WriteLog($"GetAcceptedEulasForAppId - Sentry Exception: {e}", Enums.LogLevel.Error);
             SentrySdk.CaptureException(e);
         }
 
@@ -285,7 +286,7 @@ public class SteamConfig
         {
             Logger.WriteLog(
                 "Could not find steamId: " +
-                location, MockConsole.LogLevel.Error);
+                location, Enums.LogLevel.Error);
             return;
         }
         string fileLocation = $"C:\\Program Files (x86)\\Steam\\userdata\\{steamId}\\config\\sharedconfig.vdf";
@@ -307,7 +308,7 @@ public class SteamConfig
             }
             catch (Exception e)
             {
-                Logger.WriteLog($"VerifyConfigSharedConfigFile - Sentry Exception: {e}", MockConsole.LogLevel.Error);
+                Logger.WriteLog($"VerifyConfigSharedConfigFile - Sentry Exception: {e}", Enums.LogLevel.Error);
                 SentrySdk.CaptureException(e);
             }
         }
@@ -336,7 +337,7 @@ public class SteamConfig
             }
             catch (Exception e)
             {
-                Logger.WriteLog($"VerifyConfigSharedConfigFile - Sentry Exception: {e}", MockConsole.LogLevel.Error);
+                Logger.WriteLog($"VerifyConfigSharedConfigFile - Sentry Exception: {e}", Enums.LogLevel.Error);
                 SentrySdk.CaptureException(e);
             }
         }
@@ -348,7 +349,7 @@ public class SteamConfig
         {
             Logger.WriteLog(
                 "Could not find steamId: " +
-                location, MockConsole.LogLevel.Error);
+                location, Enums.LogLevel.Error);
             return;
         }
         string fileLocation = $"C:\\Program Files (x86)\\Steam\\userdata\\{steamId}\\7\\remote\\sharedconfig.vdf";
@@ -356,7 +357,7 @@ public class SteamConfig
         {
             Logger.WriteLog(
                 "Could not verify steam default page info: " +
-                location, MockConsole.LogLevel.Error);
+                location, Enums.LogLevel.Error);
             return;
         }
 
@@ -401,7 +402,7 @@ public class SteamConfig
         }
         catch (Exception e)
         {
-            Logger.WriteLog($"VerifySteamDefaultPageConfig - Sentry Exception: {e}", MockConsole.LogLevel.Error);
+            Logger.WriteLog($"VerifySteamDefaultPageConfig - Sentry Exception: {e}", Enums.LogLevel.Error);
             SentrySdk.CaptureException(e);
         }
     }
@@ -413,7 +414,7 @@ public class SteamConfig
         {
             Logger.WriteLog(
                 "Could not verify steam login info: " +
-                location, MockConsole.LogLevel.Error);
+                location, Enums.LogLevel.Error);
             return;
         }
 
@@ -445,7 +446,7 @@ public class SteamConfig
         }
         catch (Exception e)
         {
-            Logger.WriteLog($"VerifySteamLoginUserConfig - Sentry Exception: {e}", MockConsole.LogLevel.Error);
+            Logger.WriteLog($"VerifySteamLoginUserConfig - Sentry Exception: {e}", Enums.LogLevel.Error);
             SentrySdk.CaptureException(e);
         }
     }
@@ -461,7 +462,7 @@ public class SteamConfig
         {
             Logger.WriteLog(
                 "Could not find steamId: " +
-                location, MockConsole.LogLevel.Error);
+                location, Enums.LogLevel.Error);
             return;
         }
 
@@ -470,7 +471,7 @@ public class SteamConfig
         {
             Logger.WriteLog(
                 "Could not get steam stats: " +
-                location, MockConsole.LogLevel.Error);
+                location, Enums.LogLevel.Error);
             return;
         }
         
@@ -551,7 +552,7 @@ public class SteamConfig
                     else
                     {
                         string msg = $"Steam capture failed with response code {result.StatusCode}";
-                        Logger.WriteLog($"VerifySteamLoginUserConfig - Sentry Message: {msg}", MockConsole.LogLevel.Error);
+                        Logger.WriteLog($"VerifySteamLoginUserConfig - Sentry Message: {msg}", Enums.LogLevel.Error);
                         SentrySdk.CaptureMessage(msg);
                     }
                 }
@@ -559,7 +560,7 @@ public class SteamConfig
         }
         catch (Exception e)
         {
-            Logger.WriteLog($"ReadAndReportSteamStats - Sentry Exception: {e}", MockConsole.LogLevel.Error);
+            Logger.WriteLog($"ReadAndReportSteamStats - Sentry Exception: {e}", Enums.LogLevel.Error);
             SentrySdk.CaptureException(e);
         }
     }
@@ -571,7 +572,7 @@ public class SteamConfig
         {
             Logger.WriteLog(
                 "Could not update SteamVR settings: " +
-                location, MockConsole.LogLevel.Error);
+                location, Enums.LogLevel.Error);
             return;
         }
 
@@ -598,7 +599,7 @@ public class SteamConfig
         }
         catch (Exception e)
         {
-            Logger.WriteLog($"UpdateSteamVRSettings - Sentry Exception: {e}", MockConsole.LogLevel.Error);
+            Logger.WriteLog($"UpdateSteamVRSettings - Sentry Exception: {e}", Enums.LogLevel.Error);
             SentrySdk.CaptureException(e);
         }
     }

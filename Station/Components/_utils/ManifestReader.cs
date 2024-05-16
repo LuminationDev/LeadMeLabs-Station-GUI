@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using LeadMeLabsLibrary;
 using Newtonsoft.Json.Linq;
 using Station.Components._managers;
 using Station.Components._models;
@@ -39,6 +40,30 @@ public static class ManifestReader
     }
     
     /// <summary>
+    /// Creates a .vrmanifest file with the specified source and an empty list of applications.
+    /// </summary>
+    /// <param name="filePath">The path to the .vrmanifest file to be created.</param>
+    /// <param name="source">The source value to be included in the .vrmanifest file.</param>
+    public static void CreateVrManifestFile(string filePath, string source)
+    {
+        string jsonContent = $@"{{
+            ""source"": ""{source}"",
+            ""applications"": []
+        }}";
+
+        try
+        {
+            // Write the JSON content to the file
+            File.WriteAllText(filePath, jsonContent);
+            Logger.WriteLog($"{source} - VR Manifest file created successfully.", Enums.LogLevel.Normal);
+        }
+        catch (Exception ex)
+        {
+            Logger.WriteLog($"{source} - ERROR: VR Manifest file not created. {ex.Message}", Enums.LogLevel.Error);
+        }
+    }
+    
+    /// <summary>
     /// Reads the content of a VR manifest file from the specified file path and converts it to a JObject.
     /// </summary>
     /// <param name="filePath">The path to the VR manifest file.</param>
@@ -48,7 +73,7 @@ public static class ManifestReader
     {
         if (string.IsNullOrEmpty(filePath) || !File.Exists(filePath))
         {
-            Logger.WriteLog($"Manifest file not found at path: {filePath}.", MockConsole.LogLevel.Error);
+            Logger.WriteLog($"Manifest file not found at path: {filePath}.", Enums.LogLevel.Error);
             return null;
         }
 
@@ -59,7 +84,7 @@ public static class ManifestReader
         }
         catch (Exception ex)
         {
-            Logger.WriteLog($"Error reading vr manifest file: {filePath}, message: {ex}", MockConsole.LogLevel.Error);
+            Logger.WriteLog($"Error reading vr manifest file: {filePath}, message: {ex}", Enums.LogLevel.Error);
             return null;
         }
     }
@@ -131,7 +156,7 @@ public static class ManifestReader
                 break;
         }
         
-        Logger.WriteLog($"Manifest file is not in the expected format: {filePath}.", MockConsole.LogLevel.Error);
+        Logger.WriteLog($"Manifest file is not in the expected format: {filePath}.", Enums.LogLevel.Error);
         return true;
     }
 
@@ -303,13 +328,13 @@ public static class ManifestReader
         Experience experience = WrapperManager.ApplicationList.GetValueOrDefault(appId);
         if (experience.IsNull())
         {
-            MockConsole.WriteLine($"No application found: {appId}", MockConsole.LogLevel.Normal);
+            MockConsole.WriteLine($"No application found: {appId}", Enums.LogLevel.Normal);
             return;
         }
 
         if(experience.Type == null)
         {
-            MockConsole.WriteLine($"No wrapper associated with experience {appId}.", MockConsole.LogLevel.Normal);
+            MockConsole.WriteLine($"No wrapper associated with experience {appId}.", Enums.LogLevel.Normal);
             return;
         }
         

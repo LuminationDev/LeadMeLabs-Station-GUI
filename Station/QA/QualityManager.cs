@@ -42,36 +42,28 @@ public static class QualityManager
     {
         JObject requestData = JObject.Parse(additionalData);
         var action = requestData.GetValue("action").ToString();
-        var actionData = (JObject) requestData.GetValue("actionData");
-        var parameters = (JObject) actionData?.GetValue("parameters");
+        var actionData = (JObject?) requestData.GetValue("actionData");
+        var parameters = (JObject?) actionData?.GetValue("parameters");
         labType = actionData?.GetValue("labType")?.ToString() ?? "Online";
 
         switch (action)
         {
             case "ConnectStation":
             {
-                JObject response = new JObject();
-                response.Add("response", "StationConnected");
-                
-                JObject responseData = new JObject();
-                responseData.Add("ipAddress", SystemInformation.GetIPAddress().ToString());
-                responseData.Add("nucIpAddress", Environment.GetEnvironmentVariable("NucAddress", EnvironmentVariableTarget.Process) ?? "Not found");
-                responseData.Add("id", Environment.GetEnvironmentVariable("StationId", EnvironmentVariableTarget.Process) ?? "Not found");
-                responseData.Add("labLocation", Environment.GetEnvironmentVariable("LabLocation", EnvironmentVariableTarget.Process) ?? "Not found");
-                responseData.Add("stationMode", Environment.GetEnvironmentVariable("StationMode", EnvironmentVariableTarget.Process) ?? "Not found");
-                responseData.Add("room", Environment.GetEnvironmentVariable("room", EnvironmentVariableTarget.Process) ?? "Not found");
-                responseData.Add("macAddress", SystemInformation.GetMACAddress());
-                responseData.Add("expectedStationId", actionData.GetValue("expectedStationId"));
+                JObject response = new JObject { { "response", "StationConnected" } };
+
+                JObject responseData = ConfigChecks.GetLocalStationDetails();
+                responseData.Add("expectedStationId", actionData?.GetValue("expectedStationId"));
                 response.Add("responseData", responseData);
             
-                MessageController.SendResponse("QA:" + requestData.GetValue("qaToolAddress") , "QA", response.ToString());
+                MessageController.SendResponse("QA:" + requestData?.GetValue("qaToolAddress") , "QA", response.ToString());
                 break;
             }
             
             case "RunGroup":
             {
                 string group = actionData.GetValue("group").ToString();
-                string result = "";
+                string result;
                 switch (group)
                 {
                     case "station_connection_checks":
@@ -91,11 +83,12 @@ public static class QualityManager
                         new Thread(() =>
                         {
                             string output = JsonConvert.SerializeObject(SoftwareChecks.RunSlowQaChecks(labType));
-                            JObject response = new JObject();
-                            response.Add("response", "RunGroup");
-                            JObject responseData = new JObject();
-                            responseData.Add("group", group);
-                            responseData.Add("data", output);
+                            JObject response = new JObject { { "response", "RunGroup" } };
+                            JObject responseData = new JObject
+                            {
+                                { "group", group },
+                                { "data", output }
+                            };
                             response.Add("responseData", responseData);
             
                             MessageController.SendResponse("NUC", "QA", response.ToString());
@@ -115,7 +108,7 @@ public static class QualityManager
                             {
                                 int stationId =
                                     Int32.Parse(Environment.GetEnvironmentVariable("StationId",
-                                        EnvironmentVariableTarget.Process));
+                                        EnvironmentVariableTarget.Process) ?? "-1");
                                 if (stationId > 10)
                                 {
                                     stationId = 1; // in testing we used 101+ for our ids
@@ -125,14 +118,14 @@ public static class QualityManager
 
                                 InternetSpeedCheck internetSpeedCheck = new InternetSpeedCheck();
                                 QaCheck qaCheck = internetSpeedCheck.RunInternetSpeedTest();
-                                List<QaCheck> qaCheckList = new List<QaCheck>();
-                                qaCheckList.Add(qaCheck);
+                                List<QaCheck> qaCheckList = new List<QaCheck> { qaCheck };
 
-                                JObject response = new JObject();
-                                response.Add("response", "RunGroup");
-                                JObject responseData = new JObject();
-                                responseData.Add("group", "network_checks");
-                                responseData.Add("data", JsonConvert.SerializeObject(qaCheckList));
+                                JObject response = new JObject { { "response", "RunGroup" } };
+                                JObject responseData = new JObject
+                                {
+                                    { "group", "network_checks" },
+                                    { "data", JsonConvert.SerializeObject(qaCheckList) }
+                                };
                                 response.Add("responseData", responseData);
 
                                 MessageController.SendResponse("NUC", "QA", response.ToString());
@@ -149,11 +142,12 @@ public static class QualityManager
                         return;
                 }
 
-                JObject response = new JObject();
-                response.Add("response", "RunGroup");
-                JObject responseData = new JObject();
-                responseData.Add("group", group);
-                responseData.Add("data", result);
+                JObject response = new JObject { { "response", "RunGroup" } };
+                JObject responseData = new JObject
+                {
+                    { "group", group },
+                    { "data", result }
+                };
                 response.Add("responseData", responseData);
             
                 MessageController.SendResponse("NUC", "QA", response.ToString());
@@ -165,8 +159,7 @@ public static class QualityManager
                 string experienceId = actionData.GetValue("experienceId").ToString();
                 Experience experience = WrapperManager.ApplicationList.GetValueOrDefault(experienceId);
 
-                JObject response = new JObject();
-                response.Add("response", "ExperienceLaunchAttempt");
+                JObject response = new JObject { { "response", "ExperienceLaunchAttempt" } };
                 JObject responseData = new JObject();
                 
                 if (!Helper.GetStationMode().Equals(Helper.STATION_MODE_VR) && experience.IsVr)
@@ -182,7 +175,7 @@ public static class QualityManager
                 // check if there is an unaccepted EULA
                 // first get app info from steamcmd to get the list of eulas
                 // then read the localconfig.vdf file to see what eulas are in the list
-                string details = CommandLine.ExecuteSteamCommand($"+app_info_print {experienceId} +quit");
+                string? details = CommandLine.ExecuteSteamCommand($"+app_info_print {experienceId} +quit");
                 var data = new List<string>(details.Split("\n")).Where(line => line.Contains("_eula_")).Where(line => !line.Contains("http"));
                 List<string> neededEulas = new List<string>();
                 foreach (var eula in data)
@@ -192,11 +185,11 @@ public static class QualityManager
             
                 List<string> acceptedEulas = SteamConfig.GetAcceptedEulasForAppId(experienceId);
                 bool allEulasAccepted = !neededEulas.Except(acceptedEulas).Any();
-                string experienceLaunchResponse = "";
+                string experienceLaunchResponse;
                 if (allEulasAccepted)
                 {
                     WrapperManager.StopAProcess();
-                    Task.Delay(3000);
+                    Task.Delay(5000).Wait();
                     experienceLaunchResponse = await WrapperManager.StartAProcess(experienceId);
                     responseData.Add("result", experienceLaunchResponse.ToLower().Equals("launching") ? "launching" : "failed");
                 }
@@ -216,8 +209,7 @@ public static class QualityManager
             
             case "GetVrStatuses":
             {
-                JObject response = new JObject();
-                response.Add("response", "GetVrStatuses");
+                JObject response = new JObject { { "response", "GetVrStatuses" } };
                 JObject responseData = new JObject();
                 response.Add("responseData", responseData);
                 
@@ -231,7 +223,7 @@ public static class QualityManager
             }
             
             default:
-                MockConsole.WriteLine($"Unknown QA request {additionalData}", MockConsole.LogLevel.Normal);
+                MockConsole.WriteLine($"Unknown QA request {additionalData}", Enums.LogLevel.Normal);
                 break;
         }
     }
@@ -321,18 +313,18 @@ public static class QualityManager
 
         if (result.IsSuccessStatusCode)
         {
-            Logger.WriteLog($"Uploaded QA test results to Firebase.", MockConsole.LogLevel.Normal);
+            Logger.WriteLog($"Uploaded QA test results to Firebase.", Enums.LogLevel.Normal);
         }
         else
         {
-            Logger.WriteLog($"Qa check capture failed with response code {result.StatusCode}", MockConsole.LogLevel.Normal);
+            Logger.WriteLog($"Qa check capture failed with response code {result.StatusCode}", Enums.LogLevel.Normal);
             SentrySdk.CaptureMessage($"Qa check capture failed with response code {result.StatusCode}");
         }
         
         // Achieve that the upload has either succeed or failed
         if (CommandLine.StationLocation == null) return;
 
-        string? version = Updater.GetVersionNumber();
+        string version = Updater.GetVersionNumber();
         string details = $"{version}\n{result.IsSuccessStatusCode}";
         WriteFile(CommandLine.StationLocation, details);
     }
@@ -346,9 +338,9 @@ public static class QualityManager
     /// </returns>
     private static bool HasUploadAlreadyBeenCompleted()
     {
-        string? version = Updater.GetVersionNumber();
+        string version = Updater.GetVersionNumber();
 
-        if (CommandLine.StationLocation == null || version == null) return false;
+        if (CommandLine.StationLocation == null || version.Equals("Unknown")) return false;
 
         // Path to the saved file
         string filePath = $"{CommandLine.StationLocation}\\_logs\\uploaded.txt";
@@ -360,7 +352,7 @@ public static class QualityManager
         }
 
         // Current version of your software
-        Version? currentVersion = new Version(version);
+        Version currentVersion = new Version(version);
 
         try
         {
@@ -370,7 +362,7 @@ public static class QualityManager
             // Parse version number from the first line
             if (lines.Length == 0)
             {
-                Logger.WriteLog("HasUploadAlreadyBeenCompleted - File is empty - Uploading.", MockConsole.LogLevel.Normal);
+                Logger.WriteLog("HasUploadAlreadyBeenCompleted - File is empty - Uploading.", Enums.LogLevel.Normal);
                 return false;
             }
             
@@ -381,7 +373,7 @@ public static class QualityManager
             switch (versionComparison)
             {
                 case < 0:
-                    Logger.WriteLog("HasUploadAlreadyBeenCompleted - File version is greater than current software version - Uploading", MockConsole.LogLevel.Normal);
+                    Logger.WriteLog("HasUploadAlreadyBeenCompleted - File version is greater than current software version - Uploading", Enums.LogLevel.Normal);
                     return false;
                     
                 case 0 when lines.Length > 1:
@@ -389,18 +381,18 @@ public static class QualityManager
                     // Parse boolean value from the second line
                     if (bool.TryParse(lines[1], out bool isEnabled))
                     {
-                        Logger.WriteLog($"HasUploadAlreadyBeenCompleted - Version numbers match. Second line value: {isEnabled}", MockConsole.LogLevel.Normal);
+                        Logger.WriteLog($"HasUploadAlreadyBeenCompleted - Version numbers match. Second line value: {isEnabled}", Enums.LogLevel.Normal);
                         return isEnabled;
                     }
 
-                    Logger.WriteLog("HasUploadAlreadyBeenCompleted - Second line does not contain a valid boolean value - Uploading", MockConsole.LogLevel.Normal);
+                    Logger.WriteLog("HasUploadAlreadyBeenCompleted - Second line does not contain a valid boolean value - Uploading", Enums.LogLevel.Normal);
                     return false;
                 }
             }
         }
         catch (Exception ex)
         {
-            Logger.WriteLog($"HasUploadAlreadyBeenCompleted - An error occurred: {ex.Message}", MockConsole.LogLevel.Normal);
+            Logger.WriteLog($"HasUploadAlreadyBeenCompleted - An error occurred: {ex.Message}", Enums.LogLevel.Normal);
             return false;
         }
 

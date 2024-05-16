@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using leadme_api;
+using LeadMeLabsLibrary;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Sentry;
@@ -110,7 +111,7 @@ public class WrapperManager
         }
         catch (Exception e)
         {
-            Logger.WriteLog($"Pipe Server was not started yet - {e}", MockConsole.LogLevel.Info);
+            Logger.WriteLog($"Pipe Server was not started yet - {e}", Enums.LogLevel.Info);
         }
     }
 
@@ -120,7 +121,7 @@ public class WrapperManager
     /// <param name="message">A string of the log to be displayed</param>
     private static void LogHandler(string message)
     {
-        Logger.WriteLog(message, MockConsole.LogLevel.Debug);
+        Logger.WriteLog(message, Enums.LogLevel.Debug);
     }
 
     /// <summary>
@@ -130,7 +131,7 @@ public class WrapperManager
     /// <returns>An async task associated with the action</returns>
     private static void ExternalActionHandler(string message)
     {
-        Logger.WriteLog($"Pipe message: {message}", MockConsole.LogLevel.Normal);
+        Logger.WriteLog($"Pipe message: {message}", Enums.LogLevel.Normal);
         if (message.Contains("Command received")) return;
 
         //Token break down
@@ -249,6 +250,12 @@ public class WrapperManager
     /// <param name="silently">A bool for if the function should use the saved experiences (hence not interfering with the current operation).</param>
     private static void CollectApplications<T>(Func<List<T>, object> convertFunc, string messageType, bool silently = false)
     {
+        //Reset the idle timer and current mode type
+        if (InternalDebugger.GetIdleModeActive())
+        {
+            ModeTracker.ResetMode();
+        }
+        
         List<T> applications = new List<T>();
 
         List<T>? customApplications = CustomWrapper.CollectApplications<T>();
@@ -291,18 +298,20 @@ public class WrapperManager
         object convertedApplications = convertFunc(applications);
 
         // Send the JSON message here as the PassStationMessage method splits the supplied message by ','
-        if (messageType.Equals("ApplicationJson"))
+        if (!messageType.Equals("ApplicationJson")) return;
+        MessageController.SendResponse("Android", "Station",
+            $"SetValue:installedJsonApplications:{convertedApplications}");
+
+        if (SteamScripts.blockedByFamilyMode.Count == 0 && SteamScripts.noLicenses.Count == 0) return;
+
+        JObject blockedApplications = new JObject
         {
-            MessageController.SendResponse("Android", "Station", "SetValue:installedJsonApplications:" + convertedApplications);
-            return;
-        }
-        
-        JObject message = new JObject
-        {
-            { "action", messageType },
-            { "value", $"{convertedApplications}" }
+            { "noLicense", JsonConvert.SerializeObject(SteamScripts.noLicenses) },
+            { "blockedFamilyMode", JsonConvert.SerializeObject(SteamScripts.blockedByFamilyMode) }
         };
-        SessionController.PassStationMessage(message);
+
+        MessageController.SendResponse("Android", "Station",
+            $"SetValue:blockedApplications:{blockedApplications}");
     }
     
     /// <summary>
@@ -334,7 +343,7 @@ public class WrapperManager
         StopCommonProcesses();
         if (SessionController.StationProfile == null)
         {
-            MockConsole.WriteLine("No profile type specified.", MockConsole.LogLevel.Normal);
+            MockConsole.WriteLine("No profile type specified.", Enums.LogLevel.Normal);
             JObject message = new JObject
             {
                 { "action", "Processing" },
@@ -667,13 +676,13 @@ public class WrapperManager
         Experience experience = ApplicationList.GetValueOrDefault(appId);
         if (experience.IsNull())
         {
-            MockConsole.WriteLine($"No application found: {appId}", MockConsole.LogLevel.Normal);
+            MockConsole.WriteLine($"No application found: {appId}", Enums.LogLevel.Normal);
             return $"No application found: {appId}";
         }
 
         if(experience.Type == null)
         {
-            MockConsole.WriteLine($"No wrapper associated with experience {appId}.", MockConsole.LogLevel.Normal);
+            MockConsole.WriteLine($"No wrapper associated with experience {appId}.", Enums.LogLevel.Normal);
             return $"No wrapper associated with experience {appId}.";
         }
 
@@ -681,7 +690,7 @@ public class WrapperManager
         LoadWrapper(experience.Type);
         if (currentWrapper == null)
         {
-            MockConsole.WriteLine("No process wrapper created.", MockConsole.LogLevel.Normal);
+            MockConsole.WriteLine("No process wrapper created.", Enums.LogLevel.Normal);
             return "No process wrapper created.";
         }
 
@@ -746,7 +755,7 @@ public class WrapperManager
     {
         if (currentWrapper == null)
         {
-            MockConsole.WriteLine("No process wrapper present.", MockConsole.LogLevel.Normal);
+            MockConsole.WriteLine("No process wrapper present.", Enums.LogLevel.Normal);
             return;
         }
 
@@ -760,7 +769,7 @@ public class WrapperManager
     {
         if (currentWrapper == null)
         {
-            MockConsole.WriteLine("No process wrapper present, checking internal.", MockConsole.LogLevel.Normal);
+            MockConsole.WriteLine("No process wrapper present, checking internal.", Enums.LogLevel.Normal);
 
             if (InternalWrapper.GetCurrentExperienceName() != null)
             {
@@ -768,7 +777,7 @@ public class WrapperManager
                 return;
             }
 
-            MockConsole.WriteLine("No internal wrapper present.", MockConsole.LogLevel.Normal);
+            MockConsole.WriteLine("No internal wrapper present.", Enums.LogLevel.Normal);
             return;
         }
 
@@ -788,7 +797,7 @@ public class WrapperManager
                 return;
             }
 
-            MockConsole.WriteLine("No internal wrapper present.", MockConsole.LogLevel.Normal);
+            MockConsole.WriteLine("No internal wrapper present.", Enums.LogLevel.Normal);
             return;
         }
         Task.Factory.StartNew(() => currentWrapper.RestartCurrentExperience());
@@ -804,7 +813,7 @@ public class WrapperManager
 
         if (currentWrapper == null)
         {
-            MockConsole.WriteLine("No process wrapper present.", MockConsole.LogLevel.Normal);
+            MockConsole.WriteLine("No process wrapper present.", Enums.LogLevel.Normal);
             
             if (InternalWrapper.GetCurrentExperienceName() != null)
             {
@@ -812,7 +821,7 @@ public class WrapperManager
                 return;
             }
 
-            MockConsole.WriteLine("No internal wrapper present.", MockConsole.LogLevel.Normal);
+            MockConsole.WriteLine("No internal wrapper present.", Enums.LogLevel.Normal);
             return;
         }
 
@@ -829,7 +838,7 @@ public class WrapperManager
     /// <returns>An async task associated with the action</returns>
     public void ActionHandler(string type, string message = "")
     {
-        MockConsole.WriteLine($"Wrapper action type: {type}, message: {message}", MockConsole.LogLevel.Debug);
+        MockConsole.WriteLine($"Wrapper action type: {type}, message: {message}", Enums.LogLevel.Debug);
 
         //Determine the action to take
         switch (type)
@@ -887,7 +896,7 @@ public class WrapperManager
             {
                 MockConsole.WriteLine(
                     $"InternalWrapper - WrapProcess: Waiting for the software to collect experiences.",
-                    MockConsole.LogLevel.Normal);
+                    Enums.LogLevel.Normal);
                 Task.Delay(2000).Wait();
             } while (ApplicationList.Count == 0 || alreadyCollecting);
 

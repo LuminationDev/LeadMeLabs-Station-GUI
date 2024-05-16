@@ -1,6 +1,7 @@
 ﻿using System;
 using System.IO;
 using System.Linq;
+using LeadMeLabsLibrary;
 using Station.Components._notification;
 using Station.Components._utils;
 using Xunit;
@@ -18,7 +19,7 @@ public class LoggerTests
     {
         // Arrange
         string message = "Test message";
-        MockConsole.LogLevel logLevel = MockConsole.LogLevel.Error;
+        Enums.LogLevel logLevel = Enums.LogLevel.Error;
 
         // Act
         Logger.WriteLog(message, logLevel);
@@ -43,7 +44,7 @@ public class LoggerTests
         // Arrange
         string logFilePath = "_logs/" + DateTime.Now.ToString("yyyy_MM_dd") + "_log.txt";
         Directory.CreateDirectory("_logs");
-        Logger.WriteLog("Test message", MockConsole.LogLevel.Error);
+        Logger.WriteLog("Test message", Enums.LogLevel.Error);
 
         // Act
         Logger.WorkQueue();
@@ -69,7 +70,7 @@ public class LoggerTests
     {
         // Arrange
         string? message = null;
-        MockConsole.LogLevel logLevel = MockConsole.LogLevel.Error;
+        Enums.LogLevel logLevel = Enums.LogLevel.Error;
 
         // Act
         Logger.WriteLog(message, logLevel);
@@ -86,7 +87,7 @@ public class LoggerTests
     //{
     //    // Arrange
     //    string message = "Test message";
-    //    MockConsole.LogLevel logLevel = MockConsole.LogLevel.Error;
+    //    Enums.LogLevel logLevel = Enums.LogLevel.Error;
 
     //    // Act
     //    Logger.WriteLog(message, logLevel, false);

@@ -2,6 +2,7 @@
 using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
+using LeadMeLabsLibrary;
 using Sentry;
 using Station.Components._commandLine;
 using Station.Components._interfaces;
@@ -18,7 +19,6 @@ public static class StationMonitoringThread
     private static Thread? monitoringThread;
     private static DateTime latestHighTemperatureWarning = DateTime.Now;
     private static System.Timers.Timer? timer;
-    private static bool restarting;
 
     /// <summary>
     /// Start a new thread with the Vive monitor check.
@@ -55,11 +55,9 @@ public static class StationMonitoringThread
     /// </summary>
     private static void CallCheck(Object? source, System.Timers.ElapsedEventArgs e)
     {
-        //Restart if the time equals xx::yy::zz
-        if (TimeCheck(DateTime.Now.ToString("HH:mm:ss").Split(':')))
+        //Check for any actions that are required to be done at a certain time.
+        if (DeviceControl.CheckForTimedActions())
         {
-            restarting = true; //do not double up on the command
-            CommandLine.RestartProgram();
             return;
         }
 
@@ -67,7 +65,6 @@ public static class StationMonitoringThread
         {
             new Task(OpenVrCheck).Start(); //Perform as separate task in case SteamVR is restarting.
         }
-        SetVolCheck();
         TemperatureCheck();
         
         // Only check if a VR profile or the Content profile's account list has 'Steam' in it
@@ -88,6 +85,9 @@ public static class StationMonitoringThread
     /// </summary>
     private static void OpenVrCheck()
     {
+        // If in Idle mode to not attempt the check
+        if (ModeTracker.IsIdle()) return;
+        
         ExternalSoftwareCheck();
         
         //An early exit if the vrmonitor (SteamVR) process is not currently running
@@ -97,7 +97,7 @@ public static class StationMonitoringThread
         if (MainController.openVrManager?.InitialiseOpenVr() ?? false)
         {
             MainController.openVrManager.QueryCurrentApplication();
-            MainController.openVrManager?.StartDeviceChecks(); //Start a loop instead of continuously checking
+            MainController.openVrManager.StartDeviceChecks(); //Start a loop instead of continuously checking
         } 
         else
         {
@@ -123,24 +123,7 @@ public static class StationMonitoringThread
         vrProfile.VrHeadset.MonitorVrConnection();
         MockConsole.WriteLine(
             $"VR SoftwareStatus: {vrProfile.VrHeadset.GetHeadsetManagementSoftwareStatus()}", 
-            MockConsole.LogLevel.Debug);
-    }
-
-    /// <summary>
-    /// Retrieves a list of running processes with the name "SetVol" using `ProcessManager.GetProcessesByName`.
-    /// Iterates through the list and, if a process has a non-empty main window title (which represents an error, 
-    /// logs its termination and forcefully terminates the process using `process.Kill()`.
-    /// </summary>
-    private static void SetVolCheck()
-    {
-        Process[] setVolErrors = ProcessManager.GetProcessesByName("SetVol");
-        foreach (var process in setVolErrors)
-        {
-            if (string.IsNullOrEmpty(process.MainWindowTitle)) continue;
-            
-            Logger.WriteLog($"Killing SetVol process: {process.MainWindowTitle}", MockConsole.LogLevel.Normal);
-            process.Kill();
-        }
+            Enums.LogLevel.Debug);
     }
 
     private static void NewSteamProcessesCheck()
@@ -151,20 +134,19 @@ public static class StationMonitoringThread
             if (string.IsNullOrEmpty(process.MainWindowTitle)) continue;
             if (!process.MainWindowTitle.Equals("Steam")) continue;
 
-            if (App.steamProcessId != process.Id)
+            if (App.steamProcessId == process.Id) continue;
+            
+            try
             {
-                try
-                {
-                    App.windowEventTracker.Subscribe("Steam", null);
-                }
-                catch (Exception e)
-                {
-                    Logger.WriteLog($"NewSteamProcessesCheck - Sentry Exception: {e}", MockConsole.LogLevel.Error);
-                    SentrySdk.CaptureException(e);
-                }
-                
-                App.steamProcessId = process.Id;
+                App.windowEventTracker?.Subscribe("Steam", null);
             }
+            catch (Exception e)
+            {
+                Logger.WriteLog($"NewSteamProcessesCheck - Sentry Exception: {e}", Enums.LogLevel.Error);
+                SentrySdk.CaptureException(e);
+            }
+                
+            App.steamProcessId = process.Id;
         }
     }
 
@@ -193,22 +175,8 @@ public static class StationMonitoringThread
             SentrySdk.CaptureMessage("High temperature detected (" + temperature + ") at: " +
                 (Environment.GetEnvironmentVariable("LabLocation", EnvironmentVariableTarget.Process) ?? "Unknown"));
             Logger.WriteLog("High temperature detected (" + temperature + ") at: " +
-                (Environment.GetEnvironmentVariable("LabLocation", EnvironmentVariableTarget.Process) ?? "Unknown"), MockConsole.LogLevel.Error);
+                (Environment.GetEnvironmentVariable("LabLocation", EnvironmentVariableTarget.Process) ?? "Unknown"), Enums.LogLevel.Error);
             latestHighTemperatureWarning = DateTime.Now;
         }
-    }
-
-    /// <summary>
-    /// Check if the time is within the window for restarting and that the program is not already restarting.
-    /// </summary>
-    /// <param name="time"></param>
-    /// <returns>A boolean representing if the system should continue with restart</returns>
-    private static bool TimeCheck(string[] time)
-    {
-        //Set the time when the program should restart
-        string hour = "03"; //24-hour time
-        string minute = "00";
-
-        return time[0].Equals(hour) && time[1].Equals(minute) && (Int32.Parse(time[2]) >= 0 || Int32.Parse(time[2]) < 10) && !restarting;
     }
 }

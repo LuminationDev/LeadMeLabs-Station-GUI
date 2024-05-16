@@ -76,7 +76,7 @@ internal class EmbeddedWrapper : IWrapper
 
             if (CommandLine.StationLocation == null)
             {
-                MockConsole.WriteLine($"Station working directory not found while searching for header file", MockConsole.LogLevel.Error);
+                MockConsole.WriteLine($"Station working directory not found while searching for header file", Enums.LogLevel.Error);
                 JObject message = new JObject
                 {
                     { "action", "StationError" },
@@ -90,13 +90,13 @@ internal class EmbeddedWrapper : IWrapper
 
             if (experienceName == null)
             {
-                MockConsole.WriteLine($"No experience name found for: {experienceId}", MockConsole.LogLevel.Error);
+                MockConsole.WriteLine($"No experience name found for: {experienceId}", Enums.LogLevel.Error);
                 return;
             }
             
             if (experience.AltPath == null)
             {
-                MockConsole.WriteLine($"No executable path found for experience: {experienceName}", MockConsole.LogLevel.Error);
+                MockConsole.WriteLine($"No executable path found for experience: {experienceName}", Enums.LogLevel.Error);
                 return;
             }
             
@@ -104,7 +104,7 @@ internal class EmbeddedWrapper : IWrapper
             string filePath = experience.HeaderPath ?? Path.GetFullPath(Path.Combine(experience.AltPath, "..", "header.jpg"));
             if (!File.Exists(filePath))
             {
-                MockConsole.WriteLine($"File not found:{filePath}", MockConsole.LogLevel.Error);
+                MockConsole.WriteLine($"File not found:{filePath}", Enums.LogLevel.Error);
                 JObject message = new JObject
                 {
                     { "action", "StationError" },
@@ -121,7 +121,7 @@ internal class EmbeddedWrapper : IWrapper
             //Queue the send function for invoking
             TaskQueue.Queue(false, SendImage);
 
-            MockConsole.WriteLine($"Thumbnail for experience: {experienceName} now queued for transfer.", MockConsole.LogLevel.Error);
+            MockConsole.WriteLine($"Thumbnail for experience: {experienceName} now queued for transfer.", Enums.LogLevel.Error);
             return;
 
             void SendImage() => socketImage.Send();
@@ -140,10 +140,6 @@ internal class EmbeddedWrapper : IWrapper
 
     public void SetCurrentProcess(Process process)
     {
-        if (currentProcess != null)
-        {
-            currentProcess.Kill(true);
-        }
         _launchWillHaveFailedFromOpenVrTimeout = false;
         currentProcess = process;
         ListenForClose();
@@ -153,6 +149,8 @@ internal class EmbeddedWrapper : IWrapper
     {
         // Safe cast for potential vr profile
         VrProfile? vrProfile = Profile.CastToType<VrProfile>(SessionController.StationProfile);
+        
+        StopNwJsOrphans();
         
         _launchWillHaveFailedFromOpenVrTimeout = false;
         if(CommandLine.StationLocation == null)
@@ -191,7 +189,7 @@ internal class EmbeddedWrapper : IWrapper
         //Close any open processes before opening the next one
         if (currentProcess != null)
         {
-            MockConsole.WriteLine($"Closing existing process: {lastExperience.Name}", MockConsole.LogLevel.Normal);
+            MockConsole.WriteLine($"Closing existing process: {lastExperience.Name}", Enums.LogLevel.Normal);
             currentProcess.Kill(true);
         }
 
@@ -223,7 +221,7 @@ internal class EmbeddedWrapper : IWrapper
             }
         }
 
-        MockConsole.WriteLine($"Launching process: {experience.Name} - {experience.ID}", MockConsole.LogLevel.Normal);
+        MockConsole.WriteLine($"Launching process: {experience.Name} - {experience.ID}", Enums.LogLevel.Normal);
         Task.Factory.StartNew(() =>
         {
             if (experience.IsVr)
@@ -232,7 +230,8 @@ internal class EmbeddedWrapper : IWrapper
                 _launchWillHaveFailedFromOpenVrTimeout = true;
                 if (OpenVrManager.LaunchApplication(experience.ID))
                 {
-                    Logger.WriteLog($"EmbeddedWrapper.WrapProcess: Launching {experience.Name} via OpenVR", MockConsole.LogLevel.Verbose);
+                    Logger.WriteLog($"EmbeddedWrapper.WrapProcess: Launching {experience.Name} via OpenVR", Enums.LogLevel.Verbose);
+                    FindCurrentProcess();
                     return;
                 }
                 _launchWillHaveFailedFromOpenVrTimeout = false;
@@ -242,7 +241,7 @@ internal class EmbeddedWrapper : IWrapper
             }
             
             //Fall back to the alternate if it fails or is not a registered VR experience in the vrmanifest
-            Logger.WriteLog($"EmbeddedWrapper.WrapProcess - Using AlternateLaunchProcess", MockConsole.LogLevel.Normal);
+            Logger.WriteLog($"EmbeddedWrapper.WrapProcess - Using AlternateLaunchProcess", Enums.LogLevel.Normal);
             AlternateLaunchProcess(experience);
         });
         return "launching";
@@ -309,7 +308,7 @@ internal class EmbeddedWrapper : IWrapper
         while (child == null && attempts < 20)
         {
             attempts++;
-            MockConsole.WriteLine($"Checking for child process...", MockConsole.LogLevel.Debug);
+            MockConsole.WriteLine($"Checking for child process...", Enums.LogLevel.Debug);
             Task.Delay(3000).Wait();
             child = GetExperienceProcess();
         }
@@ -341,7 +340,7 @@ internal class EmbeddedWrapper : IWrapper
             response.Add("responseData", responseData);
             MessageController.SendResponse("NUC", "QA", response.ToString());
 
-            Logger.WriteLog($"Application launching: {currentProcess.MainWindowTitle}/{lastExperience.ID}/{currentProcess.Id}", MockConsole.LogLevel.Normal);
+            Logger.WriteLog($"Application launching: {currentProcess.MainWindowTitle}/{lastExperience.ID}/{currentProcess.Id}", Enums.LogLevel.Normal);
 
             ListenForClose();
         }
@@ -373,7 +372,7 @@ internal class EmbeddedWrapper : IWrapper
     private Process? GetExperienceProcess()
     {
         string? altPathWithoutExe = Path.GetDirectoryName(lastExperience.AltPath);
-        Logger.WriteLog($"Attempting to get id for " + altPathWithoutExe, MockConsole.LogLevel.Debug);
+        Logger.WriteLog($"Attempting to get id for " + altPathWithoutExe, Enums.LogLevel.Debug);
         if (string.IsNullOrEmpty(altPathWithoutExe))
         {
             return null;
@@ -389,10 +388,10 @@ internal class EmbeddedWrapper : IWrapper
         //Get the steam process name from the CommandLine function and compare here instead of removing any external child processes
         if (proc == null) return null;
         
-        Logger.WriteLog($"Application found: {proc.MainWindowTitle}/{lastExperience.ID}", MockConsole.LogLevel.Debug);
+        Logger.WriteLog($"Application found: {proc.MainWindowTitle}/{lastExperience.ID}", Enums.LogLevel.Debug);
         UiUpdater.UpdateProcess(proc.MainWindowTitle);
         UiUpdater.UpdateStatus("Running...");
-            
+
         return proc;
 
     }
@@ -452,18 +451,45 @@ internal class EmbeddedWrapper : IWrapper
     /// </summary>
     public void StopCurrentProcess()
     {
-        if (currentProcess != null)
+        // close legacy mirror if open
+        if (CommandLine.GetProcessIdFromMainWindowTitle("Legacy Mirror") != null)
         {
-            currentProcess.Kill(true);
-            currentProcess = GetExperienceProcess();
-            if (currentProcess != null)
-            {
-                currentProcess.Kill();
-            }
-            WrapperMonitoringThread.StopMonitoring();
+            CommandLine.ToggleSteamVrLegacyMirror();
         }
         
+        if (currentProcess != null)
+        {
+            PassMessageToProcess("shutdown");
+
+            ScheduledTaskQueue.EnqueueTask(() => // if it hasn't cleaned itself up
+            {
+                currentProcess = GetExperienceProcess();
+                if (currentProcess != null)
+                {
+                    currentProcess.Kill(true);
+                    currentProcess = GetExperienceProcess();
+                    if (currentProcess != null)
+                    {
+                        currentProcess.Kill();
+                    }
+                }
+            }, TimeSpan.FromSeconds(3));
+            
+            WrapperMonitoringThread.StopMonitoring();
+        }
         lastExperience.Name = null; //Reset for correct headset state
+    }
+    
+    /// <summary>
+    /// hyper-specific function to clean up orphans that prevent LeadMe WebXR from launching or connecting to pipe server
+    /// </summary>
+    private void StopNwJsOrphans()
+    {
+        Process[] processes = Process.GetProcessesByName("leadme-webxr-viewer");
+        foreach (var process in processes)
+        {
+            process.Kill(true);
+        }
     }
 
     public void RestartCurrentExperience()

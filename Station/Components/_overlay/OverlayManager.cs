@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Windows;
+using LeadMeLabsLibrary;
 using Station.Components._notification;
 using Station.Components._utils;
 
@@ -47,7 +48,7 @@ static class OverlayManager
 
     public static void OverlayThreadManual(string? text = null, int opacityTarget = 80)
     {
-        Logger.WriteLog("Running overlay.", MockConsole.LogLevel.Normal);
+        Logger.WriteLog("Running overlay.", Enums.LogLevel.Normal);
 
         running = true;
 
@@ -62,7 +63,7 @@ static class OverlayManager
 
     public static void ManualStop(int opacityTarget = 80)
     {
-        Logger.WriteLog("Stopping overlay.", MockConsole.LogLevel.Normal);
+        Logger.WriteLog("Stopping overlay.", Enums.LogLevel.Normal);
 
         if (overlay == null)
         {

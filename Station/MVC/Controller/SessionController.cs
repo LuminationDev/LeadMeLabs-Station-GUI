@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Threading;
 using System.Threading.Tasks;
+using LeadMeLabsLibrary;
 using Newtonsoft.Json.Linq;
 using Station.Components._interfaces;
 using Station.Components._managers;
@@ -59,7 +60,7 @@ public static class SessionController
                 StationProfile = new ContentProfile();
                 break;
             default:
-                Logger.WriteLog($"SessionController - SetupStationProfile: Unknown profile selected: {profile}", MockConsole.LogLevel.Error);
+                Logger.WriteLog($"SessionController - SetupStationProfile: Unknown profile selected: {profile}", Enums.LogLevel.Error);
                 break;
         }
     }
@@ -83,7 +84,7 @@ public static class SessionController
                 StationProfile?.StartSession();
                 break;
             case "Vive":
-                MockConsole.WriteLine("startVRSession not implemented for type: Vive.", MockConsole.LogLevel.Error);
+                MockConsole.WriteLine("startVRSession not implemented for type: Vive.", Enums.LogLevel.Error);
                 break;
         }
         
@@ -96,6 +97,12 @@ public static class SessionController
     /// </summary>
     public static void RestartVrSession()
     {
+        //Reset the idle timer and current mode type
+        if (InternalDebugger.GetIdleModeActive())
+        {
+            ModeTracker.ResetMode();
+        }
+        
         JObject message = new JObject
         {
             { "action", "SoftwareState" },
@@ -106,7 +113,7 @@ public static class SessionController
 
         if (ExperienceType == null)
         {
-            MockConsole.WriteLine("No experience is currently running.", MockConsole.LogLevel.Normal);
+            MockConsole.WriteLine("No experience is currently running.", Enums.LogLevel.Normal);
             return;
         }
 
@@ -114,28 +121,22 @@ public static class SessionController
         {
             case "Custom":
             case "Embedded":
-                MockConsole.WriteLine("restartVRSession not implemented for type: Custom.", MockConsole.LogLevel.Error);
+                MockConsole.WriteLine("restartVRSession not implemented for type: Custom.", Enums.LogLevel.Error);
                 break;
             case "Revive":
             case "Steam":
                 ViveScripts.StopMonitoring();
                 break;
             case "Vive":
-                MockConsole.WriteLine("restartVRSession not implemented for type: Vive.", MockConsole.LogLevel.Error);
+                MockConsole.WriteLine("restartVRSession not implemented for type: Vive.", Enums.LogLevel.Error);
                 break;
             default:
-                MockConsole.WriteLine("Wrapper: No experience type set.", MockConsole.LogLevel.Error);
+                MockConsole.WriteLine("Wrapper: No experience type set.", Enums.LogLevel.Error);
                 break;
         }
         
         //Attempt to minimise other applications (mostly Steam)
         StationProfile?.MinimizeSoftware(2);
-        
-        //Reset the idle timer and current mode type
-        if (InternalDebugger.GetIdleModeActive())
-        {
-            ModeTracker.ResetMode();
-        }
     }
 
     /// <summary>
@@ -147,17 +148,17 @@ public static class SessionController
         {
             case "Custom":
             case "Embedded":
-                MockConsole.WriteLine("endVRSession not implemented for type: Custom.", MockConsole.LogLevel.Error);
+                MockConsole.WriteLine("endVRSession not implemented for type: Custom.", Enums.LogLevel.Error);
                 break;
             case "Revive":
             case "Steam":
                 ViveScripts.StopMonitoring();
                 break;
             case "Vive":
-                MockConsole.WriteLine("endVRSession not implemented for type: Vive.", MockConsole.LogLevel.Error);
+                MockConsole.WriteLine("endVRSession not implemented for type: Vive.", Enums.LogLevel.Error);
                 break;
             default:
-                MockConsole.WriteLine("Wrapper: No experience type set.", MockConsole.LogLevel.Error);
+                MockConsole.WriteLine("Wrapper: No experience type set.", Enums.LogLevel.Error);
                 break;
         }
 
@@ -184,7 +185,7 @@ public static class SessionController
     public static void PassStationMessage(JObject message)
     {
         new Thread(() => {
-            MockConsole.WriteLine("Action: " + message, MockConsole.LogLevel.Debug);
+            MockConsole.WriteLine("Action: " + message, Enums.LogLevel.Debug);
             
             string? action = (string?)message.GetValue("action");
             if (action == null) return;
@@ -240,7 +241,7 @@ public static class SessionController
                     break;
 
                 default:
-                    MockConsole.WriteLine("Non-primary command", MockConsole.LogLevel.Debug);
+                    MockConsole.WriteLine("Non-primary command", Enums.LogLevel.Debug);
                     break;
             }
         }).Start();

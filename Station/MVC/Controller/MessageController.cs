@@ -3,7 +3,7 @@ using System.Net;
 using System.Threading;
 using LeadMeLabsLibrary;
 using Station.Components._network;
-using Station.Components._notification;
+using Station.Components._profiles;
 using Station.Components._scripts;
 using Station.Components._utils;
 
@@ -16,6 +16,14 @@ public static class MessageController
     /// </summary>
     public static void InitialStartUp()
     {
+        // Only send the headset if is a vr profile Station
+        // Safe cast for potential vr profile
+        VrProfile? vrProfile = Profile.CastToType<VrProfile>(SessionController.StationProfile);
+        if (vrProfile?.VrHeadset != null)
+        {
+            SendResponse("NUC", "Station", $"SetValue:headsetType:{Environment.GetEnvironmentVariable("HeadsetType", EnvironmentVariableTarget.Process)}");
+        }
+        
         SendResponse("NUC", "Station", "SetValue:status:On");
         SendResponse("NUC", "Station", "SetValue:gameName:");
         SendResponse("Android", "Station", "SetValue:gameId:");
@@ -55,11 +63,11 @@ public static class MessageController
         }
         if (response == null) return;
 
-        Logger.WriteLog($"Sending: {response}", MockConsole.LogLevel.Normal, writeToLog);
+        Logger.WriteLog($"Sending: {response}", Enums.LogLevel.Normal, writeToLog);
 
         string? key = Environment.GetEnvironmentVariable("AppKey", EnvironmentVariableTarget.Process);
         if (key is null) {
-            Logger.WriteLog("Encryption key not set", MockConsole.LogLevel.Normal);
+            Logger.WriteLog("Encryption key not set", Enums.LogLevel.Normal);
             return;
         }
 

@@ -1,11 +1,4 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-	<Target Name="GenerateVersionFile" AfterTargets="AfterBuild" Condition="'true'">
-		<PropertyGroup>
-			<VersionFilePath>$(OutputPath)\..\$(MSBuildProjectName)_Version.txt</VersionFilePath>
-		</PropertyGroup>
-		<WriteLinesToFile File="$(VersionFilePath)" Lines="$(Version)" Overwrite="true" />
-	</Target>
-	
 	<PropertyGroup>
 		<OutputType>WinExe</OutputType>
 		<TargetFramework>net6.0-windows</TargetFramework>
@@ -14,7 +7,10 @@
 		<Nullable>enable</Nullable>
 		<ApplicationIcon>./Assets/Icons/icon.ico</ApplicationIcon>
 		<Configurations>Debug;Release;DevDebug;DevRelease</Configurations>
-		<Version>1.1.22</Version>
+		<Version>1.1.31</Version>
+    <SelfContained>false</SelfContained>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
 	</PropertyGroup>
 
 	<ItemGroup>
@@ -72,20 +68,6 @@
     <Content Include="AudioDeviceCmdlets.dll">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <None Remove="Embedded\embeddedapps.vrmanifest" />
-    <Content Include="_embedded\embeddedapps.vrmanifest">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <None Remove="Embedded\manifest.json" />
-    <Content Include="_embedded\manifest.json">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Update="embedded\.gitkeep">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Update="embedded\leadme_config_example.txt">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
     <Content Update="Assets\Images\LuminationLogo.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
@@ -125,12 +107,13 @@
 
   <ItemGroup>
 	<PackageReference Include="CommunityToolkit.Mvvm" Version="8.2.0" />
-	<PackageReference Include="LeadMeLabsLibrary" Version="1.0.19" />
+	<PackageReference Include="LeadMeLabsLibrary" Version="1.0.21" />
 	<PackageReference Include="leadme_api" Version="1.0.2" />
 	<PackageReference Include="MediaInfo.Wrapper.Core" Version="21.9.3" />
 	<PackageReference Include="Microsoft.Build.Framework" Version="17.6.3" />
 	<PackageReference Include="Microsoft.Extensions.Logging" Version="9.0.0-preview.1.24080.9" />
 	<PackageReference Include="Microsoft.Extensions.Logging.Console" Version="9.0.0-preview.1.24080.9" />
+	<PackageReference Include="Microsoft.Management.Infrastructure.Runtime.Win" Version="3.0.0" />
 	<PackageReference Include="Microsoft.PowerShell.SDK" Version="7.2.18" />
 	<PackageReference Include="Microsoft.WindowsAPICodePack.Shell" Version="1.1.0" />
 	<PackageReference Include="Microsoft.Xaml.Behaviors.Wpf" Version="1.1.39" />

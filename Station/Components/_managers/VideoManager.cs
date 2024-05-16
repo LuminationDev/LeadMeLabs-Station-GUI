@@ -76,7 +76,7 @@ public static class VideoManager
         }
         catch (Exception e)
         {
-            InternalLogger.WriteLog($"VideoManager - UpdateVideoPlayerDetails: Unexpected value: {details}. ERROR {e}", MockConsole.LogLevel.Error);
+            InternalLogger.WriteLog($"VideoManager - UpdateVideoPlayerDetails: Unexpected value: {details}. ERROR {e}", Enums.LogLevel.Error);
         }
     }
     
@@ -108,7 +108,7 @@ public static class VideoManager
         }
         else
         {
-            MockConsole.WriteLine($"VideoManager - UpdatePlaybackTime: {timeString} is not of type int", MockConsole.LogLevel.Normal);
+            MockConsole.WriteLine($"VideoManager - UpdatePlaybackTime: {timeString} is not of type int", Enums.LogLevel.Normal);
         }
     }
     
@@ -189,7 +189,7 @@ public static class VideoManager
         // Bail out early if folder does not exist
         if (!Directory.Exists(folderPath))
         {
-            InternalLogger.WriteLog($"VideoManager - Folder does not exist {folderPath}", MockConsole.LogLevel.Normal);
+            InternalLogger.WriteLog($"VideoManager - Folder does not exist {folderPath}", Enums.LogLevel.Normal);
             return;
         }
 
@@ -246,7 +246,7 @@ public static class VideoManager
                 }
                 catch (Exception e)
                 {
-                    InternalLogger.WriteLog($"LoadLocalVideoFiles - Sentry Exception: {e}", MockConsole.LogLevel.Error);
+                    InternalLogger.WriteLog($"LoadLocalVideoFiles - Sentry Exception: {e}", Enums.LogLevel.Error);
                     SentrySdk.CaptureException(e);
                 }
             }
@@ -272,7 +272,7 @@ public static class VideoManager
         catch (Exception ex)
         {
             // Log the exception using Sentry for monitoring purposes
-            InternalLogger.WriteLog($"GetVideoDuration - Unable to calculate duration from ({filePath}), Error: {ex}", MockConsole.LogLevel.Error);
+            InternalLogger.WriteLog($"GetVideoDuration - Unable to calculate duration from ({filePath}), Error: {ex}", Enums.LogLevel.Error);
             SentrySdk.CaptureMessage($"Unable to calculate duration from ({filePath}), Error: {ex}");
         }
 
@@ -392,7 +392,7 @@ public static class VideoManager
         // Collect the file path based on the id
         if (!VideoFiles.TryGetValue(id, out Video? video))
         {
-            InternalLogger.WriteLog($"Thumbnail for video: {id} could not be found.", MockConsole.LogLevel.Error);
+            InternalLogger.WriteLog($"Thumbnail for video: {id} could not be found.", Enums.LogLevel.Error);
             return;
         }
         string filePath = video.source;
@@ -427,7 +427,7 @@ public static class VideoManager
         // Queue the send function for invoking
         TaskQueue.Queue(false, () => socketImage.Send());
 
-        MockConsole.WriteLine($"Thumbnail for video: {filePath} now queued for transfer.", MockConsole.LogLevel.Normal);
+        MockConsole.WriteLine($"Thumbnail for video: {filePath} now queued for transfer.", Enums.LogLevel.Normal);
     }
     
     /// <summary>
@@ -447,11 +447,11 @@ public static class VideoManager
             thumbnail.Save(savePath, System.Drawing.Imaging.ImageFormat.Jpeg);
             thumbnail.Dispose();
 
-            InternalLogger.WriteLog("VideoManager - SaveThumbnail: Thumbnail generated successfully.", MockConsole.LogLevel.Info);
+            InternalLogger.WriteLog("VideoManager - SaveThumbnail: Thumbnail generated successfully.", Enums.LogLevel.Info);
             return true;
         }
 
-        InternalLogger.WriteLog("VideoManager - SaveThumbnail: Failed to generate thumbnail.", MockConsole.LogLevel.Error);
+        InternalLogger.WriteLog("VideoManager - SaveThumbnail: Failed to generate thumbnail.", Enums.LogLevel.Error);
         return false;
     }
     

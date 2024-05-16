@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
+using LeadMeLabsLibrary;
 using Newtonsoft.Json.Linq;
 using Station.Components._legacy;
 using Station.Components._managers;
@@ -9,7 +9,6 @@ using Station.Components._models;
 using Station.Components._notification;
 using Station.Components._profiles;
 using Station.Components._utils;
-using Station.Components._wrapper.steam;
 using Station.MVC.Controller;
 using Station.QA;
 
@@ -25,7 +24,7 @@ public class ScriptThread
 
     public ScriptThread(string data)
     {
-        this._data = data;
+        _data = data;
         string[] dataParts = data.Split(":", 4);
         _source = dataParts[0];
         _destination = dataParts[1];
@@ -93,80 +92,27 @@ public class ScriptThread
     private void HandleConnection(string? additionalData)
     {
         if (additionalData == null) return;
-        if (additionalData.Contains("Connect"))
+        if (!additionalData.Contains("Connect")) return;
+        
+        // Only send the headset if is a vr profile Station
+        // Safe cast for potential vr profile
+        VrProfile? vrProfile = Profile.CastToType<VrProfile>(SessionController.StationProfile);
+        if (vrProfile?.VrHeadset != null)
         {
-            MessageController.SendResponse(_source, "Station", "SetValue:status:On");
-            MessageController.SendResponse(_source, "Station", $"SetValue:state:{SessionController.CurrentState}");
-            MessageController.SendResponse(_source, "Station", "SetValue:gameName:");
-            MessageController.SendResponse("Android", "Station", "SetValue:gameId:");
-            AudioManager.Initialise();
-            VideoManager.Initialise();
+            MessageController.SendResponse(_source, "Station", $"SetValue:headsetType:{Environment.GetEnvironmentVariable("HeadsetType", EnvironmentVariableTarget.Process)}");
         }
+            
+        MessageController.SendResponse(_source, "Station", "SetValue:status:On");
+        MessageController.SendResponse(_source, "Station", $"SetValue:state:{SessionController.CurrentState}");
+        MessageController.SendResponse(_source, "Station", "SetValue:gameName:");
+        MessageController.SendResponse("Android", "Station", "SetValue:gameId:");
+        AudioManager.Initialise();
+        VideoManager.Initialise();
     }
 
-    private async void HandleStation(string additionalData)
+    private void HandleStation(string jObjectData)
     {
-        if (additionalData.StartsWith("GetValue"))
-        {
-            string key = additionalData.Split(":", 2)[1];
-            switch (key)
-            {
-                case "installedApplications":
-                    Logger.WriteLog("Collecting station experiences", MockConsole.LogLevel.Normal);
-                    MainController.wrapperManager?.ActionHandler("CollectApplications");
-                    break;
-
-                case "volume":
-                    string currentVolume = await AudioManager.GetVolume();
-                    MessageController.SendResponse(_source, "Station", "SetValue:" + key + ":" + currentVolume);
-                    break;
-
-                case "muted":
-                    string isMuted = await AudioManager.GetMuted();
-                    MessageController.SendResponse(_source, "Station", "SetValue:" + key + ":" + isMuted);
-                    break;
-
-                case "devices":
-                    //When a tablet connects/reconnects to the NUC, send through the current VR device statuses.
-                    // Safe cast for potential vr profile
-                    VrProfile? vrProfile = Profile.CastToType<VrProfile>(SessionController.StationProfile);
-                    if (vrProfile?.VrHeadset == null) return;
-
-                    vrProfile.VrHeadset?.GetStatusManager().QueryStatuses();
-                    break;
-            }
-        }
-        
-        if (additionalData.StartsWith("SetValue"))
-        {
-            string[] keyValue = additionalData.Split(":", 3);
-            string key = keyValue[1];
-            string value = keyValue[2];
-            
-            switch (key)
-            {
-                case "volume":
-                    AudioManager.SetVolume(value);
-                    break;
-
-                case "activeAudioDevice":
-                    AudioManager.SetCurrentAudioDevice(value);
-                    break;
-
-                case "muted":
-                    AudioManager.SetMuted(value);
-                    break;
-
-                case "steamCMD":
-                    SteamScripts.ConfigureSteamCommand(value);
-                    break;
-            }
-        }
-        
-        if (additionalData.StartsWith("AcceptEulas"))
-        {
-            WrapperManager.AcceptUnacceptedEulas();
-        }
+        LegacyMessage.HandleStationString(_source, jObjectData);
     }
 
     /// <summary>
@@ -198,27 +144,25 @@ public class ScriptThread
         string[] split = additionalData.Split(":", 4);
         if (split.Length < 4)
         {
-            Logger.WriteLog($"Could not parse display change for additional data {additionalData}", MockConsole.LogLevel.Error);
+            Logger.WriteLog($"Could not parse display change for additional data {additionalData}", Enums.LogLevel.Error);
             return;
         }
         string heightString = split[1];
         string widthString = split[3];
-        int height = 0;
-        int width = 0;
-        if (!Int32.TryParse(heightString, out height) || !Int32.TryParse(widthString, out width))
+        if (!Int32.TryParse(heightString, out var height) || !Int32.TryParse(widthString, out var width))
         {
-            Logger.WriteLog($"Could not parse display change for values Height: {heightString}, Width: {widthString}", MockConsole.LogLevel.Error);
+            Logger.WriteLog($"Could not parse display change for values Height: {heightString}, Width: {widthString}", Enums.LogLevel.Error);
             return;
         }
 
         if (!DisplayController.IsDisplayModeSupported(width, height, 32))
         {
-            Logger.WriteLog($"Invalid display change for values Height: {heightString}, Width: {widthString}", MockConsole.LogLevel.Error);
+            Logger.WriteLog($"Invalid display change for values Height: {heightString}, Width: {widthString}", Enums.LogLevel.Error);
             return;
         }
 
         DisplayController.ChangeDisplaySettings(width, height, 32);
-        Logger.WriteLog($"Changed display settings to Height: {heightString}, Width: {widthString}", MockConsole.LogLevel.Debug);
+        Logger.WriteLog($"Changed display settings to Height: {heightString}, Width: {widthString}", Enums.LogLevel.Debug);
     }
     
     /// <summary>
@@ -254,7 +198,7 @@ public class ScriptThread
         }
         catch (Exception e)
         {
-            MockConsole.WriteLine(e.ToString(), MockConsole.LogLevel.Error);
+            MockConsole.WriteLine(e.ToString(), Enums.LogLevel.Error);
             return;
         }
 

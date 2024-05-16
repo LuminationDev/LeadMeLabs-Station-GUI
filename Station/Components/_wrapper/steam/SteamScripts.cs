@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using LeadMeLabsLibrary;
 using LeadMeLabsLibrary.Station;
 using Newtonsoft.Json.Linq;
 using Station.Components._commandLine;
@@ -45,6 +46,10 @@ public static class SteamScripts
     private static readonly List<string> BlacklistedGames = new() {"1635730"}; // vive console
     private static readonly List<string> AvailableLicenses = new();
     private static List<string> approvedGames = new();
+    
+    //Track experiences with no licenses or blocked by family mode
+    public static List<string> noLicenses = new();
+    public static List<string> blockedByFamilyMode = new();
 
     private static ManifestReader.ManifestApplicationList steamManifestApplicationList = new (SteamManifest);
     public static void RefreshVrManifest()
@@ -85,14 +90,14 @@ public static class SteamScripts
                     //Send a message to the tablet advising the Station be restarted.
                     if(restartAttempts > 2)
                     {
-                        Logger.WriteLog("CheckForSteamLogError - SteamVR Error: restarts failed, sending message to tablet.", MockConsole.LogLevel.Normal);
+                        Logger.WriteLog("CheckForSteamLogError - SteamVR Error: restarts failed, sending message to tablet.", Enums.LogLevel.Normal);
                         
                         MessageController.SendResponse("Android", "Station", "SteamVRError");
                         MessageController.SendResponse("NUC", "Analytics", "SteamVRError");
                         break;
                     }
 
-                    Logger.WriteLog("CheckForSteamLogError - SteamVR Error: restarting SteamVR", MockConsole.LogLevel.Normal);
+                    Logger.WriteLog("CheckForSteamLogError - SteamVR Error: restarting SteamVR", Enums.LogLevel.Normal);
 
                     //Kill SteamVR
                     CommandLine.QueryProcesses(new List<string> { "vrmonitor" }, true);
@@ -109,13 +114,13 @@ public static class SteamScripts
                 if (current.Contains("================================================================================================"))
                 {
                     restartAttempts = 0;
-                    MockConsole.WriteLine("SteamVR awaiting headset connection", MockConsole.LogLevel.Verbose);
+                    MockConsole.WriteLine("SteamVR awaiting headset connection", Enums.LogLevel.Verbose);
                     enumerator.Dispose();
                 }
             } while (enumerator.MoveNext());
         } catch (Exception e)
         {
-            MockConsole.WriteLine($"CheckForSteamLogError - Reading vrserver file failed: {e}", MockConsole.LogLevel.Normal);
+            MockConsole.WriteLine($"CheckForSteamLogError - Reading vrserver file failed: {e}", Enums.LogLevel.Normal);
         }
     }
 
@@ -160,7 +165,7 @@ public static class SteamScripts
     {
         approvedGames = GetParentalApprovedGames();
         
-        Logger.WriteLog("Approved games length: " + approvedGames.Count, MockConsole.LogLevel.Debug);
+        Logger.WriteLog("Approved games length: " + approvedGames.Count, Enums.LogLevel.Debug);
         if (!Directory.Exists(directoryPath)) return list;
         
         DirectoryInfo directoryInfo = new DirectoryInfo(directoryPath);
@@ -236,7 +241,7 @@ public static class SteamScripts
         
         if(!File.Exists(filePath))
         {
-            Logger.WriteLog($"SteamCMD not initialised yet. Initialising now.", MockConsole.LogLevel.Info);
+            Logger.WriteLog($"SteamCMD not initialised yet. Initialising now.", Enums.LogLevel.Info);
             MessageController.SendResponse("Android", "Station", "SetValue:steamCMD:required");
             
             steamCmdConfigured = "Missing";
@@ -294,11 +299,15 @@ public static class SteamScripts
     /// </summary>
     public static List<T> FilterAvailableExperiences<T>()
     {
+        //Reset the lists as to not double up each refresh //TODO SEND THESE LISTS TO THE NUC?? OR JUST QA??
+        noLicenses = new List<string>();
+        blockedByFamilyMode = new List<string>();
+        
          List<T> apps = new List<T>();
         approvedGames = GetParentalApprovedGames();
-        Logger.WriteLog("Approved games length: " + approvedGames.Count, MockConsole.LogLevel.Debug);
+        Logger.WriteLog("Approved games length: " + approvedGames.Count, Enums.LogLevel.Debug);
 
-        Logger.WriteLog("Within loadAvailableGames", MockConsole.LogLevel.Debug);
+        Logger.WriteLog("Within loadAvailableGames", Enums.LogLevel.Debug);
 
         // support for stations without Steam Guard disabled
         installedGames.AddRange(
@@ -320,24 +329,26 @@ public static class SteamScripts
 
         foreach (var line in installedGames)
         {
-            Logger.WriteLog(line, MockConsole.LogLevel.Debug);
+            Logger.WriteLog(line, Enums.LogLevel.Debug);
 
             List<string> filter = line.Split("|").ToList();
             string id = filter[1];
 
             if (!AvailableLicenses.Contains(id))
             {
-                Logger.WriteLog($"SteamScripts - FilterAvailableExperiences: Experience does not have available license: {id}", MockConsole.LogLevel.Info);
+                Logger.WriteLog($"SteamScripts - FilterAvailableExperiences: Experience does not have available license: {id}", Enums.LogLevel.Info);
+                noLicenses.Add(id);
                 continue;
             }
             if (BlacklistedGames.Contains(id))
             {
-                Logger.WriteLog($"SteamScripts - FilterAvailableExperiences: Experience is black listed: {id}", MockConsole.LogLevel.Info);
+                Logger.WriteLog($"SteamScripts - FilterAvailableExperiences: Experience is black listed: {id}", Enums.LogLevel.Info);
                 continue;
             } 
             if (approvedGames.Count != 0 && !approvedGames.Contains(id)) 
             {
-                Logger.WriteLog($"SteamScripts - FilterAvailableExperiences: Experience is not on approved games list: {id}", MockConsole.LogLevel.Info);
+                Logger.WriteLog($"SteamScripts - FilterAvailableExperiences: Experience is not on approved games list: {id}", Enums.LogLevel.Info);
+                blockedByFamilyMode.Add(id);
                 continue; // if count is zero then all games are approved
             }
 
@@ -346,21 +357,21 @@ public static class SteamScripts
             // support for stations without Steam Guard disabled
             if (name.Contains("appid_")) // as a backup if steamcmd doesn't load the game name, we get it from the acf file
             {
-                Logger.WriteLog($"SteamScripts - FilterAvailableExperiences: Experience name not provided got: {name}", MockConsole.LogLevel.Info);
+                Logger.WriteLog($"SteamScripts - FilterAvailableExperiences: Experience name not provided got: {name}", Enums.LogLevel.Info);
                 
                 AcfReader acfReader = new AcfReader(id);
                 acfReader.ACFFileToStruct();
                 if (!string.IsNullOrEmpty(acfReader.gameName))
                 {
                     name = acfReader.gameName;
-                    Logger.WriteLog($"SteamScripts - FilterAvailableExperiences: Experience name from acf file: {name}", MockConsole.LogLevel.Info);
+                    Logger.WriteLog($"SteamScripts - FilterAvailableExperiences: Experience name from acf file: {name}", Enums.LogLevel.Info);
                 }
             }
             //Determine if it is a VR experience
             bool isVr = steamManifestApplicationList.IsApplicationInstalledAndVrCompatible("steam.app." + id);
             if (!Helper.GetStationMode().Equals(Helper.STATION_MODE_VR) && isVr) continue;
             
-            Logger.WriteLog($"SteamScripts - FilterAvailableExperiences: Storing new experience: {SteamWrapper.WrapperType}|{id}|{name}|{isVr}", MockConsole.LogLevel.Info);
+            Logger.WriteLog($"SteamScripts - FilterAvailableExperiences: Storing new experience: {SteamWrapper.WrapperType}|{id}|{name}|{isVr}", Enums.LogLevel.Info);
             //item.parameters may be null here
             WrapperManager.StoreApplication(SteamWrapper.WrapperType, id, name, isVr);
             // Basic application requirements
@@ -404,24 +415,24 @@ public static class SteamScripts
 
             if (current.Contains("No custom list"))
             {
-                Logger.WriteLog("No custom list of steam applications", MockConsole.LogLevel.Info);
+                Logger.WriteLog("No custom list of steam applications", Enums.LogLevel.Info);
                 break;
             }
             if (current.Contains("Custom list"))
             {
-                Logger.WriteLog("Reached end of parental approved list", MockConsole.LogLevel.Info);
+                Logger.WriteLog("Reached end of parental approved list", Enums.LogLevel.Info);
                 break;
             }
             if (current.Contains("Custom list"))
             {
-                Logger.WriteLog("Reached end of parental approved list", MockConsole.LogLevel.Info);
+                Logger.WriteLog("Reached end of parental approved list", Enums.LogLevel.Info);
                 
                 // check for if family mode is not enabled
                 enumerator.MoveNext();
                 enumerator.MoveNext();
                 if (enumerator.Current.Contains("Enabled: false"))
                 {
-                    Logger.WriteLog("Reached end of parental approved list, but enabled is false, returning empty list", MockConsole.LogLevel.Info);
+                    Logger.WriteLog("Reached end of parental approved list, but enabled is false, returning empty list", Enums.LogLevel.Info);
                     return new List<string>(); // return an empty list, as this indicates all approved
                 }
                 break;
@@ -452,7 +463,7 @@ public static class SteamScripts
         // If the local file does not exist, exit the function
         if (!File.Exists(luminationHome))
         {
-            MockConsole.WriteLine($"No custom home image detected: {luminationHome}", MockConsole.LogLevel.Normal);
+            MockConsole.WriteLine($"No custom home image detected: {luminationHome}", Enums.LogLevel.Normal);
             return;
         }
 
@@ -484,7 +495,7 @@ public static class SteamScripts
         }
         catch (Exception e)
         {
-            Logger.WriteLog($"Unable to read steamvr.vrsettings: {e}", MockConsole.LogLevel.Normal);
+            Logger.WriteLog($"Unable to read steamvr.vrsettings: {e}", Enums.LogLevel.Normal);
         }
 
         // Delete the ViveBusinessStreaming image file
@@ -496,17 +507,17 @@ public static class SteamScripts
             {
                 // Delete the file
                 File.Delete(viveBusinessStreamingImagePath);
-                MockConsole.WriteLine("Image deleted successfully.", MockConsole.LogLevel.Normal);
+                MockConsole.WriteLine("Image deleted successfully.", Enums.LogLevel.Normal);
             }
             else
             {
-                MockConsole.WriteLine("The specified image file does not exist.", MockConsole.LogLevel.Normal);
+                MockConsole.WriteLine("The specified image file does not exist.", Enums.LogLevel.Normal);
             }
         }
         catch (Exception ex)
         {
             // Handle any exceptions that may occur during the deletion process
-            Logger.WriteLog($"An error occurred while deleting the image: {ex.Message}", MockConsole.LogLevel.Error);
+            Logger.WriteLog($"An error occurred while deleting the image: {ex.Message}", Enums.LogLevel.Error);
         }
     }
 }

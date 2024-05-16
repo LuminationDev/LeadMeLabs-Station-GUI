@@ -10,11 +10,12 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="LeadMeLabsLibrary" Version="1.0.19" />
+    <PackageReference Include="LeadMeLabsLibrary" Version="1.0.21" />
     <PackageReference Include="leadme_api" Version="1.0.2" />
     <PackageReference Include="MediaInfo.Wrapper.Core" Version="21.9.3" />
     <PackageReference Include="Microsoft.Extensions.Logging" Version="9.0.0-preview.1.24080.9" />
     <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="9.0.0-preview.1.24080.9" />
+    <PackageReference Include="Microsoft.Management.Infrastructure.Runtime.Win" Version="3.0.0" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.6.2" />
     <PackageReference Include="Microsoft.PowerShell.SDK" Version="7.2.18" />
     <PackageReference Include="Microsoft.WindowsAPICodePack.Shell" Version="1.1.0" />

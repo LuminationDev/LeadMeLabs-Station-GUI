@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using LeadMeLabsLibrary;
 using Newtonsoft.Json.Linq;
 using Station.Components._commandLine;
 using Station.Components._interfaces;
@@ -61,7 +62,7 @@ public class Statuses
     public event EventHandler<GenericEventArgs<string>>? SoftwareTrackingChanged;
     protected virtual void OnSoftwareTrackingChanged(string newValue)
     {
-        MockConsole.WriteLine($"DeviceStatus:Headset:tracking:Vive:{newValue}", MockConsole.LogLevel.Debug);
+        MockConsole.WriteLine($"DeviceStatus:Headset:tracking:Vive:{newValue}", Enums.LogLevel.Debug);
         string message = $"Headset:Vive:tracking:{newValue}";
         SoftwareTrackingChanged?.Invoke(this, new GenericEventArgs<string>(message));
         
@@ -76,7 +77,7 @@ public class Statuses
     {
         private set
         {
-            MockConsole.WriteLine($"New connection: {value}", MockConsole.LogLevel.Verbose);
+            MockConsole.WriteLine($"New connection: {value}", Enums.LogLevel.Verbose);
             if (_openVRStatus == value) return;
 
             OnOpenVRTrackingChanged(value.ToString());
@@ -89,7 +90,7 @@ public class Statuses
     public event EventHandler<GenericEventArgs<string>>? OpenVRTrackingChanged;
     protected virtual void OnOpenVRTrackingChanged(string newValue)
     {
-        MockConsole.WriteLine($"DeviceStatus:Headset:tracking:OpenVR:{newValue}", MockConsole.LogLevel.Debug);
+        MockConsole.WriteLine($"DeviceStatus:Headset:tracking:OpenVR:{newValue}", Enums.LogLevel.Debug);
         string message = $"Headset:OpenVR:tracking:{newValue}";
         OpenVRTrackingChanged?.Invoke(this, new GenericEventArgs<string>(message));
         
@@ -151,7 +152,7 @@ public class Statuses
     public void UpdateHeadset(VrManager manager, DeviceStatus status)
     {
         MockConsole.WriteLine($"Updating Headset:{Enum.GetName(typeof(VrManager), manager)}:{Enum.GetName(typeof(DeviceStatus), status)}", 
-            MockConsole.LogLevel.Debug);
+            Enums.LogLevel.Debug);
 
         switch (manager)
         {
@@ -228,7 +229,7 @@ public class Statuses
             else
             {
                 Logger.WriteLog($"VrStatus.UpdateController - A Controller entry is invalid removing {serialNumber}",
-                    MockConsole.LogLevel.Error);
+                    Enums.LogLevel.Error);
 
                 Controllers.Remove(serialNumber);
             }
@@ -246,7 +247,7 @@ public class Statuses
                     {
                         vrController.Value.UpdateProperty("battery", 0);
                         vrController.Value.UpdateProperty("tracking", DeviceStatus.Lost);
-                        MockConsole.WriteLine($"Duplicate controller - Role: {Enum.GetName(typeof(DeviceRole), role)}. Reseting dictionary.", MockConsole.LogLevel.Normal);
+                        MockConsole.WriteLine($"Duplicate controller - Role: {Enum.GetName(typeof(DeviceRole), role)}. Reseting dictionary.", Enums.LogLevel.Normal);
                     }
                 }
                 Controllers.Clear();
@@ -254,7 +255,7 @@ public class Statuses
             }
 
             //Add a new controller entry
-            MockConsole.WriteLine($"Found a new controller: {serialNumber} - Role: {Enum.GetName(typeof(DeviceRole), role)}", MockConsole.LogLevel.Normal);
+            MockConsole.WriteLine($"Found a new controller: {serialNumber} - Role: {Enum.GetName(typeof(DeviceRole), role)}", Enums.LogLevel.Normal);
             VrController temp = new VrController(serialNumber, (DeviceRole)role);
             temp.UpdateProperty(propertyName, value);
             Controllers.Add(serialNumber, temp);
@@ -262,7 +263,7 @@ public class Statuses
         else
         {
             //If there is no entry and no role then do not add the controller yet
-            MockConsole.WriteLine($"Found a new controller: {serialNumber} - Role invalid: {role}, not adding.", MockConsole.LogLevel.Normal);
+            MockConsole.WriteLine($"Found a new controller: {serialNumber} - Role invalid: {role}, not adding.", Enums.LogLevel.Normal);
         }
     }
 
@@ -284,7 +285,7 @@ public class Statuses
             else
             {
                 Logger.WriteLog($"VrStatus.UpdateBaseStation - A Base Station entry is invalid removing {serialNumber}",
-                    MockConsole.LogLevel.Error);
+                    Enums.LogLevel.Error);
 
                 baseStations.Remove(serialNumber);
             }
@@ -292,7 +293,7 @@ public class Statuses
         else
         {
             //Add a new base station entry
-            MockConsole.WriteLine($"Found a new base station: {serialNumber}", MockConsole.LogLevel.Normal);
+            MockConsole.WriteLine($"Found a new base station: {serialNumber}", Enums.LogLevel.Normal);
             VrBaseStation temp = new VrBaseStation(serialNumber);
             temp.UpdateProperty(propertyName, value);
             baseStations.Add(serialNumber, temp);

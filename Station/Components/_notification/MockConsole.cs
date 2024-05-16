@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Text;
+using LeadMeLabsLibrary;
 using Station.Components._utils;
 using Station.MVC.View;
 using Station.MVC.ViewModel;
@@ -15,32 +16,18 @@ public static class MockConsole
         viewModel = newViewModel;
     }
 
-    /// <summary>
-    /// Describe the different levels of logging, only the most essential messages are printed at None.
-    /// The levels are [None - essential only, Normal - basic messages and commands, Debug - anything that can be used for information, Verbose - everything].
-    /// </summary>
-    public enum LogLevel
-    {
-        Off,
-        Error,
-        Info,
-        Normal,
-        Debug,
-        Verbose
-    }
-
     private const int LineLimit = 100;
-    private static LogLevel logLevel = LogLevel.Normal;
+    private static Enums.LogLevel logLevel = Enums.LogLevel.Normal;
 
     /// <summary>
-    /// Cycle through the Loglevels, if it has reach the max (Verbose) then reset
+    /// Cycle through the Loglevels, if it has reach the max (Update) then reset
     /// back to None.
     /// </summary>
     public static void ChangeLogLevel()
     {
-        if (logLevel == LogLevel.Verbose)
+        if (logLevel == Enums.LogLevel.Update)
         {
-            logLevel = LogLevel.Off;
+            logLevel = Enums.LogLevel.Off;
         }
         else
         {
@@ -62,7 +49,7 @@ public static class MockConsole
     {
         if (viewModel == null) return;
         viewModel.ConsoleText = "";
-        WriteLine("Cleared", LogLevel.Error);
+        WriteLine("Cleared", Enums.LogLevel.Error);
     }
 
     /// <summary>
@@ -75,7 +62,7 @@ public static class MockConsole
         if (!InternalDebugger.viewConsoleWindow) return;
         
         if (message.Trim() == "" || viewModel == null) return;
-        if (logLevel == LogLevel.Off) return;
+        if (logLevel == Enums.LogLevel.Off) return;
 
         var builder = new StringBuilder(viewModel.ConsoleText);
 
@@ -101,12 +88,12 @@ public static class MockConsole
     /// </summary>
     /// <param name="message">A string to be printed to the console.</param>
     /// <param name="level">A Loglevel enum representing if it should be displayed at the current logging level.</param>
-    public static void WriteLine(string message, LogLevel level)
+    public static void WriteLine(string message, Enums.LogLevel level)
     {
         if (!InternalDebugger.viewConsoleWindow) return;
         
         if (message.Trim() == "" || viewModel == null) return;
-        if (level > logLevel || logLevel == LogLevel.Off) return;
+        if (level > logLevel || logLevel == Enums.LogLevel.Off) return;
         
         var builder = new StringBuilder(viewModel.ConsoleText);
 

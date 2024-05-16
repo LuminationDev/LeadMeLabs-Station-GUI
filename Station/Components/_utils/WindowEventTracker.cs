@@ -2,7 +2,7 @@
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
-using Station.Components._notification;
+using LeadMeLabsLibrary;
 using Station.Components._utils;
 using Station.MVC.Controller;
 
@@ -150,7 +150,7 @@ public class WindowEventTracker
         }
         else
         {
-            Logger.WriteLog(eventType.ToString(), MockConsole.LogLevel.Debug);
+            Logger.WriteLog(eventType.ToString(), Enums.LogLevel.Debug);
         }
     }
     

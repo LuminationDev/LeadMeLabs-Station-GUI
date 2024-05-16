@@ -5,7 +5,7 @@ using System.Net;
 using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
-using Station.Components._notification;
+using LeadMeLabsLibrary;
 using Station.Components._utils;
 using Station.MVC.Controller;
 
@@ -153,7 +153,7 @@ public class SocketFile
                 
                 stream.Write(fileNameBytes, 0, fileNameBytes.Length);
 
-                Logger.WriteLog($"Socket connected to {_client.Client.RemoteEndPoint}", MockConsole.LogLevel.Debug, writeToLog);
+                Logger.WriteLog($"Socket connected to {_client.Client.RemoteEndPoint}", Enums.LogLevel.Debug, writeToLog);
 
                 // Turn the image into a data byte stream and send the image data
                 FileStream fs = new FileStream(_filePath, FileMode.Open, FileAccess.Read);
@@ -163,7 +163,7 @@ public class SocketFile
                 // Send the message to the connected TcpServer.
                 stream.Write(buffer, 0, (int)fs.Length);
 
-                Logger.WriteLog($"Sent {this._type}: {_filePath}", MockConsole.LogLevel.Normal, writeToLog);
+                Logger.WriteLog($"Sent {this._type}: {_filePath}", Enums.LogLevel.Normal, writeToLog);
 
                 // Close everything.
                 fs.Close();
@@ -172,15 +172,15 @@ public class SocketFile
             }
             catch (ArgumentNullException ane)
             {
-                Logger.WriteLog($"ArgumentNullException : {ane}", MockConsole.LogLevel.Error);
+                Logger.WriteLog($"ArgumentNullException : {ane}", Enums.LogLevel.Error);
             }
             catch (SocketException se)
             {
-                Logger.WriteLog($"SocketException : {se}", MockConsole.LogLevel.Error);
+                Logger.WriteLog($"SocketException : {se}", Enums.LogLevel.Error);
             }
             catch (Exception e)
             {
-                Logger.WriteLog($"Unexpected exception : {e}", MockConsole.LogLevel.Error);
+                Logger.WriteLog($"Unexpected exception : {e}", Enums.LogLevel.Error);
             }
         }
         catch (Exception e)
@@ -188,7 +188,7 @@ public class SocketFile
             _client?.Dispose();
             _client?.Close();
 
-            Logger.WriteLog($"Unexpected exception : {e}", MockConsole.LogLevel.Error);
+            Logger.WriteLog($"Unexpected exception : {e}", Enums.LogLevel.Error);
 
             if (this._type.Equals("file"))
             {
