@@ -42,7 +42,10 @@ public class ContentProfile: Profile, IProfile
         {
             _accounts.Add("Steam");
             _processesToQuery.Add("steam");
-            _startupFunctions.AddStartupFunction(StartSteam);
+            _startupFunctions.AddStartupFunction(() =>
+            {
+                 StartSteam(false);
+            });
         }
     }
 
@@ -99,15 +102,26 @@ public class ContentProfile: Profile, IProfile
         _startupFunctions.ExecuteStartupFunctions();
         MinimizeSoftware();
     }
+    
+    public void StartDevToolsSession()
+    {
+        JObject message = new JObject
+        {
+            { "action", "SoftwareState" },
+            { "value", "Restarting Processes" }
+        };
+        ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage(message), TimeSpan.FromSeconds(0));
+        StartSteam(true);
+    }
 
     /// <summary>
     /// Start steam.exe with the auto login details provided.
     /// </summary>
-    private void StartSteam()
+    private void StartSteam(bool devTools = false)
     {
         CommandLine.KillSteamSigninWindow();
         SteamConfig.VerifySteamConfig();
-        CommandLine.StartProgram(SessionController.Steam, "-noreactlogin -login " +
+        CommandLine.StartProgram(SessionController.Steam, (devTools ? "-opendevtools " : "") + "-noreactlogin -login " +
                                                           Environment.GetEnvironmentVariable("SteamUserName", EnvironmentVariableTarget.Process) + " " +
                                                           Environment.GetEnvironmentVariable("SteamPassword", EnvironmentVariableTarget.Process));
     }

@@ -13,6 +13,7 @@ public interface IProfile
     public Variant GetVariant();
 
     void StartSession();
+    void StartDevToolsSession();
 
     List<string> GetProcessesToQuery();
 

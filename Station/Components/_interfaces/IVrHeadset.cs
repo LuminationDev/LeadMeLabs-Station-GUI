@@ -32,7 +32,7 @@ public interface IVrHeadset
     
     List<string> GetProcesses(ProcessListType type);
 
-    void StartVrSession();
+    void StartVrSession(bool openDevTools = false);
 
     void MonitorVrConnection();
 

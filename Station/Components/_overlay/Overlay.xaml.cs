@@ -50,11 +50,11 @@ public partial class Overlay
         OverlayManager.running = false;
     }
 
-    public async Task ManualRun()
+    public async Task ManualRun(int opacityTarget = 80)
     {
         Spinner.Visibility = Visibility.Visible;
         _current.Opacity = 0.1;
-        for (int i = 0; i < 80; i++)
+        for (int i = 0; i < opacityTarget; i++)
         {
             double level = (double)i / 100;
             _current.Opacity = level;
@@ -62,9 +62,9 @@ public partial class Overlay
         }
     }
     
-    public async Task ManualStop()
+    public async Task ManualStop(int opacityTarget = 80)
     {
-        for (int i = 80; i > 0; i--)
+        for (int i = opacityTarget; i > 0; i--)
         {
             double level = (double)i / 100;
             _current.Opacity = level;
