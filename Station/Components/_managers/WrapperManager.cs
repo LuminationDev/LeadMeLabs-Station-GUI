@@ -446,7 +446,7 @@ public class WrapperManager
             return;
         }
 
-        OverlayManager.OverlayThreadManual("Auto-accepting EULAs", 100);
+        OverlayManager.OverlayThreadManual("Auto-accepting EULAs", 90);
         StopCommonProcesses();
         SessionController.StationProfile.StartDevToolsSession();
         Profile.WaitForSteamLogin();
@@ -477,7 +477,7 @@ public class WrapperManager
                 continue;
             }
             ScheduledTaskQueue.EnqueueTask(() => CommandLine.EnterAcceptEula(Int32.Parse(handle), eulaDetails[0], eulaDetails[1], eulaDetails[2]),
-                TimeSpan.FromSeconds(index * 1.5));
+                TimeSpan.FromSeconds((index * 1.5) + 3));
             index++;
         }
         ScheduledTaskQueue.EnqueueTask(() =>
@@ -485,10 +485,11 @@ public class WrapperManager
                 CommandLine.EnterAltF4(Int32.Parse(handle));
                 App.windowEventTracker.SetMinimisingEnabled(true);
                 SessionController.StationProfile.MinimizeSoftware(1);
-                OverlayManager.ManualStop(100);
+                OverlayManager.ManualStop(90);
                 acceptingEulas = false;
+                SessionController.StationProfile.StartSession();
             },
-            TimeSpan.FromSeconds(++index * 1.5));
+            TimeSpan.FromSeconds(((index + 2) * 1.5) + 3));
     }
     
     /// <summary>

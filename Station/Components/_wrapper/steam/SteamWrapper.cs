@@ -118,15 +118,17 @@ public class SteamWrapper : IWrapper
         {
             return (unacceptedEulas.Find(eula => eula.StartsWith(experienceId)) + ":" + idToNameMap[experienceId]) ?? "";
         });
-        // installedExperiencesWithUnacceptedEulas.Add("1514840:1514840_eula_0:0:All:in:One Sports VR");
+        // uncomment the below for testing
+        // installedExperiencesWithUnacceptedEulas.Add("1514840:1514840_eula_0:0:All in One Sports VR");
         if (installedExperiencesWithUnacceptedEulas.Count > 0)
         {
             SentrySdk.CaptureMessage($"{installedExperiencesWithUnacceptedEulas.Count} unaccepted EULAs at location: {Environment.GetEnvironmentVariable("LabLocation", EnvironmentVariableTarget.Process) ?? "Unknown"}. IDs: {string.Join(',', installedExperiencesWithUnacceptedEulas)}");
-            ScheduledTaskQueue.EnqueueTask(() =>
-            {
-                Profile.WaitForSteamLogin();
-                MessageController.SendResponse("Android", "Station", "UnacceptedEulas:" + string.Join(',', installedExperiencesWithUnacceptedEulas));
-            }, TimeSpan.FromSeconds(1));
+            // todo - uncomment the below to enable EULA feature
+            // ScheduledTaskQueue.EnqueueTask(() =>
+            // {
+            //     Profile.WaitForSteamLogin();
+            //     MessageController.SendResponse("Android", "Station", "UnacceptedEulas:" + string.Join(',', installedExperiencesWithUnacceptedEulas));
+            // }, TimeSpan.FromSeconds(1));
         }
 
         alreadyCheckedEulas = true;
