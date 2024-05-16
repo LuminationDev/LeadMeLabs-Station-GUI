@@ -75,6 +75,11 @@ public static class LegacyMessage
                     SteamScripts.ConfigureSteamCommand(value);
                     break;
             }
+            
+            if (additionalData.StartsWith("AcceptEulas"))
+            {
+                WrapperManager.AcceptUnacceptedEulas();
+            }
         }
     }
     
