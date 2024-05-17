@@ -7,7 +7,7 @@
 		<Nullable>enable</Nullable>
 		<ApplicationIcon>./Assets/Icons/icon.ico</ApplicationIcon>
 		<Configurations>Debug;Release;DevDebug;DevRelease</Configurations>
-		<Version>1.1.33</Version>
+		<Version>1.1.34</Version>
     <SelfContained>false</SelfContained>
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
     <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
@@ -62,6 +62,9 @@
     <Content Include="_logs\.gitkeep">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
+      <Content Include="_embedded\LeadMePython.exe">
+          <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </Content>
     <None Remove="Assets\openvr_offline.ico" />
     <None Remove="Assets\openvr_online.ico" />
     <None Remove="AudioDeviceCmdlets.dll" />
