@@ -221,7 +221,7 @@ public static class SteamScripts
         List<string> licenses = SteamConfig.GetAllLicenses();
         
         // this is a backup for when Steam Guard is still disabled on the account
-        if (licenses.Count == 3 && (licenses[0].Equals("") || licenses[0].Equals("Enter email code: ")))
+        if ((licenses.Count == 3 && (licenses[0].Equals("") || licenses[0].Equals("Enter email code: "))) || (licenses.Count == 1 && licenses[0].Equals("")))
         {
             LoadAvailableGamesUsingSteamCmd<T>();
         }
