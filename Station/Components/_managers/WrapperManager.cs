@@ -651,7 +651,7 @@ public class WrapperManager
     /// </summary>
     public static async Task<string> StartAProcess(string appId)
     {
-        if (!acceptingEulas)
+        if (acceptingEulas)
         {
             MessageController.SendResponse("Android", "Station", "AcceptingEulas");
             return "Error: Accepting Eulas";
