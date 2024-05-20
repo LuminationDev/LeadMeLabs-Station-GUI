@@ -56,14 +56,17 @@ public class ViveBusinessStreaming : Profile, IVrHeadset
         }
     }
 
-    public void StartVrSession()
+    public void StartVrSession(bool openDevTools = false)
     {
         CommandLine.KillSteamSigninWindow();
         SteamConfig.VerifySteamConfig();
-        CommandLine.StartProgram(SessionController.Steam, " -login " + 
-            Environment.GetEnvironmentVariable("SteamUserName", EnvironmentVariableTarget.Process) + " " + 
-            Environment.GetEnvironmentVariable("SteamPassword", EnvironmentVariableTarget.Process) + " steam://rungameid/250820"); //Open up steam and run steamVR
-        CommandLine.StartProgram(Vive); //Start Vive business streaming
+        CommandLine.StartProgram(SessionController.Steam, (openDevTools ? " -opendevtools" : "") + " -login " + 
+                                                          Environment.GetEnvironmentVariable("SteamUserName", EnvironmentVariableTarget.Process) + " " + 
+                                                          Environment.GetEnvironmentVariable("SteamPassword", EnvironmentVariableTarget.Process) + (openDevTools ? "" : " steam://rungameid/250820")); //Open up steam and run steamVR
+        if (!openDevTools)
+        {
+            CommandLine.StartProgram(Vive); //Start Vive business streaming
+        }
     }
 
     public void MonitorVrConnection()

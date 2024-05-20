@@ -113,7 +113,7 @@ public class NetworkChecks
         {
             using var httpClient = new HttpClient();
             httpClient.Timeout = TimeSpan.FromSeconds(10);
-            var response = httpClient.GetAsync("http://learninglablauncher.herokuapp.com/program-station-version").GetAwaiter().GetResult();
+            var response = httpClient.GetAsync("https://leadme-internal.sgp1.vultrobjects.com/Station/version").GetAwaiter().GetResult();
             if (response.IsSuccessStatusCode)
             {
                 qaCheck.SetPassed(null);
@@ -138,7 +138,7 @@ public class NetworkChecks
         {
             using var httpClient = new HttpClient();
             httpClient.Timeout = TimeSpan.FromSeconds(10);
-            var response = httpClient.GetAsync("http://electronlauncher.herokuapp.com/static/electron-launcher/latest.yml").GetAwaiter().GetResult();
+            var response = httpClient.GetAsync("https://leadme-tools.sgp1.vultrobjects.com/leadme-launcher/latest.yml").GetAwaiter().GetResult();
             if (response.IsSuccessStatusCode)
             {
                 qaCheck.SetPassed(null);

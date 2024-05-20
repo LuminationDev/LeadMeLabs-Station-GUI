@@ -22,6 +22,8 @@ public class WindowEventTracker
     
     private static DateTime lastInteraction = DateTime.Now;
 
+    private bool _minimisingEnabled = true;
+
     /**
      * Keeping this function here as it was quite tricky to write
      */
@@ -137,12 +139,14 @@ public class WindowEventTracker
         else if (eventType == 23) // Starts
         {
             // Console.WriteLine("maximise");
-            if ((DateTime.Now < lastInteraction.AddSeconds(1) ||  DateTime.Now > lastInteraction.AddSeconds(10)) && InternalDebugger.GetMinimisePrograms())
+            if (_minimisingEnabled)
             {
-                WindowManager.MinimizeProcess(Process.GetProcessById(Convert.ToInt32(m_processId)));
-                lastInteraction = DateTime.Now;
+                if ((DateTime.Now < lastInteraction.AddSeconds(1) ||  DateTime.Now > lastInteraction.AddSeconds(10)) && InternalDebugger.GetMinimisePrograms())
+                {
+                    WindowManager.MinimizeProcess(Process.GetProcessById(Convert.ToInt32(m_processId)));
+                    lastInteraction = DateTime.Now;
+                }
             }
-            
         }
         else
         {
@@ -160,4 +164,9 @@ public class WindowEventTracker
     }
 
     private delegate void WinEventDelegate(IntPtr hWinEventHook, uint eventType, IntPtr hwnd, int idObject, int idChild, uint dwEventThread, uint dwmsEventTime);
+
+    public void SetMinimisingEnabled(bool value)
+    {
+        this._minimisingEnabled = value;
+    }
 }

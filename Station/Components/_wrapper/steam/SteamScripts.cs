@@ -13,6 +13,7 @@ using Station.Components._models;
 using Station.Components._monitoring;
 using Station.Components._notification;
 using Station.Components._utils;
+using Station.Components._utils._steamConfig;
 using Station.MVC.Controller;
 
 namespace Station.Components._wrapper.steam;
@@ -41,6 +42,7 @@ public static class SteamScripts
     
     //Experience constants and lists
     private static List<string> steamCmdInstalledGames = new();
+    private static List<string> installedGames = new();
     private static readonly List<string> BlacklistedGames = new() {"1635730"}; // vive console
     private static readonly List<string> AvailableLicenses = new();
     private static List<string> approvedGames = new();
@@ -216,6 +218,24 @@ public static class SteamScripts
 
     private static List<T>? LoadAvailableGamesUsingInternetConnection<T>()
     {
+        List<string> licenses = SteamConfig.GetAllLicenses();
+        
+        // this is a backup for when Steam Guard is still disabled on the account
+        if ((licenses.Count == 3 && (licenses[0].Equals("") || licenses[0].Equals("Enter email code: "))) || (licenses.Count == 1 && licenses[0].Equals("")))
+        {
+            LoadAvailableGamesUsingSteamCmd<T>();
+        }
+        else
+        {
+            installedGames = LoadAvailableGamesWithoutUsingInternetConnection<string>().ToList();
+            AvailableLicenses.AddRange(licenses);
+        }
+
+        return FilterAvailableExperiences<T>();
+    }
+    
+    private static List<T>? LoadAvailableGamesUsingSteamCmd<T>()
+    {
         //Check if SteamCMD has been initialised
         string filePath = CommandLine.StationLocation + @"\external\steamcmd\steamerrorreporter.exe";
         
@@ -289,12 +309,30 @@ public static class SteamScripts
 
         Logger.WriteLog("Within loadAvailableGames", Enums.LogLevel.Debug);
 
-        foreach (var line in steamCmdInstalledGames.Where(line => line.StartsWith("AppID")))
+        // support for stations without Steam Guard disabled
+        installedGames.AddRange(
+            steamCmdInstalledGames
+                .Where(line => line.StartsWith("AppID"))
+                .ToList()
+                .ConvertAll(line =>
+                {
+                    List<string> split = line.Split(":").ToList();
+                    string id = split[0].Replace("AppID", "").Trim();
+                    split.RemoveAt(0); // remove AppID prefix
+                    split.RemoveAt(split.Count - 1); // remove file location
+                    split.RemoveAt(split.Count - 1); // remove drive name
+                    string name = string.Join(":", split.ToArray()).Replace("\\", "").Trim();
+                    name = name.Replace("\"", "").Trim();
+                    return $"Steam|{id}|{name}";
+                })
+            );
+
+        foreach (var line in installedGames)
         {
             Logger.WriteLog(line, Enums.LogLevel.Debug);
 
-            List<string> filter = line.Split(":").ToList();
-            string id = filter[0].Replace("AppID", "").Trim();
+            List<string> filter = line.Split("|").ToList();
+            string id = filter[1];
 
             if (!AvailableLicenses.Contains(id))
             {
@@ -314,11 +352,9 @@ public static class SteamScripts
                 continue; // if count is zero then all games are approved
             }
 
-            filter.RemoveAt(0); // remove AppID prefix
-            filter.RemoveAt(filter.Count - 1); // remove file location
-            filter.RemoveAt(filter.Count - 1); // remove drive name
-            string name = string.Join(":", filter.ToArray()).Replace("\\", "").Trim();
-            name = name.Replace("\"", "").Trim();
+            string name = filter[2];
+            
+            // support for stations without Steam Guard disabled
             if (name.Contains("appid_")) // as a backup if steamcmd doesn't load the game name, we get it from the acf file
             {
                 Logger.WriteLog($"SteamScripts - FilterAvailableExperiences: Experience name not provided got: {name}", Enums.LogLevel.Info);

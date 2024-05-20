@@ -387,6 +387,13 @@ public class OpenVrManager
                 JObject response = new JObject { { "response", "ExperienceLaunchFailed" } };
                 JObject responseData = new JObject { { "experienceId", WrapperManager.currentWrapper.GetLastExperience()?.ID } };
                 response.Add("responseData", responseData);
+                
+                // close legacy mirror if open
+                if (CommandLine.GetProcessIdFromMainWindowTitle("Legacy Mirror") != null)
+                {
+                    CommandLine.ToggleSteamVrLegacyMirror();
+                }
+                WrapperManager.currentWrapper.SetLaunchingExperience(false);
             
                 MessageController.SendResponse("NUC", "QA", response.ToString());
             }, TimeSpan.FromSeconds(30));

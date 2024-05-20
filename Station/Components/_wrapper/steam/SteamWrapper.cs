@@ -2,11 +2,13 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Timers;
 using LeadMeLabsLibrary;
 using Newtonsoft.Json.Linq;
+using Sentry;
 using Station.Components._commandLine;
 using Station.Components._interfaces;
 using Station.Components._managers;
@@ -17,6 +19,7 @@ using Station.Components._openvr;
 using Station.Components._overlay;
 using Station.Components._profiles;
 using Station.Components._utils;
+using Station.Components._utils._steamConfig;
 using Station.Components._wrapper.vive;
 using Station.MVC.Controller;
 using Timer = System.Timers.Timer;
@@ -34,6 +37,8 @@ public class SteamWrapper : IWrapper
     private static string? installDir;
     private static Experience lastExperience;
     private bool _launchWillHaveFailedFromOpenVrTimeout = true;
+    public static List<string> installedExperiencesWithUnacceptedEulas = new List<string>();
+    public static bool alreadyCheckedEulas = false;
 
     /// <summary>
     /// Track if an experience is being launched.
@@ -72,7 +77,63 @@ public class SteamWrapper : IWrapper
     
     public List<T>? CollectApplications<T>()
     {
-        return SteamScripts.LoadAvailableExperiences<T>();
+        List<T>? experiences = SteamScripts.LoadAvailableExperiences<T>();
+
+        if (experiences == null)
+        {
+            return null;
+        }
+
+        if (alreadyCheckedEulas)
+        {
+            return experiences;
+        }
+        List<string> unacceptedEulas = SteamConfig.GetUnacceptedEulas();
+        List<string> unacceptedEulaIds = unacceptedEulas.ConvertAll<string>(eula => eula.Split(":")[0]);
+        Dictionary<string, string> idToNameMap = new Dictionary<string, string>();
+        List<string> experienceIds = experiences.ConvertAll<string>(experience =>
+        {
+            if (experience == null)
+            {
+                return "";
+            }
+
+            if (experience.GetType() == typeof(ExperienceDetails))
+            {
+                idToNameMap.TryAdd(((ExperienceDetails) (object) experience).Id, ((ExperienceDetails) (object) experience).Name);
+                return ((ExperienceDetails) (object) experience).Id;
+            }
+
+            if (experience is string)
+            {
+                
+                idToNameMap.TryAdd(((string) (object) experience).Split("|")[1], ((string) (object) experience).Split("|")[2]);
+                return ((string) (object) experience).Split("|")[1];
+            }
+
+            return "";
+        });
+        installedExperiencesWithUnacceptedEulas = experienceIds.Intersect(unacceptedEulaIds).ToList();
+        installedExperiencesWithUnacceptedEulas = installedExperiencesWithUnacceptedEulas.ConvertAll(experienceId =>
+        {
+            return (unacceptedEulas.Find(eula => eula.StartsWith(experienceId)) + ":" + idToNameMap[experienceId]) ?? "";
+        });
+        // uncomment the below for testing
+        // installedExperiencesWithUnacceptedEulas.Add("1514840:1514840_eula_0:0:All in One Sports VR");
+        if (installedExperiencesWithUnacceptedEulas.Count > 0)
+        {
+            SentrySdk.CaptureMessage($"{installedExperiencesWithUnacceptedEulas.Count} unaccepted EULAs at location: {(Environment.GetEnvironmentVariable("LabLocation", EnvironmentVariableTarget.Process) ?? "Unknown") + (Environment.GetEnvironmentVariable("StationId", EnvironmentVariableTarget.Process) ?? "Unknown")}. IDs: {string.Join(',', installedExperiencesWithUnacceptedEulas)}");
+            // todo - uncomment the below to enable EULA feature
+            // ScheduledTaskQueue.EnqueueTask(() =>
+            // {
+            //     Profile.WaitForSteamLogin();
+            //     MessageController.SendResponse("Android", "Station", "UnacceptedEulas:" + string.Join(',', installedExperiencesWithUnacceptedEulas));
+            // }, TimeSpan.FromSeconds(1));
+        }
+
+        alreadyCheckedEulas = true;
+
+        return experiences;
     }
 
     public void CollectHeaderImage(string experienceNameToCollect)

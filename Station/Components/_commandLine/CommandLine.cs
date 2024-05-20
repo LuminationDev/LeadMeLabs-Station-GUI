@@ -498,6 +498,59 @@ public static class CommandLine
         "Almost there..."
     };
 
+    private const int SW_SHOWNORMAL = 1;
+    public static async void EnterAcceptEula(int windowHandle, string appId, string eulaName, string eulaVersion)
+    {
+        ShowWindow(windowHandle, SW_SHOWNORMAL);   
+        SetForegroundWindow(windowHandle);
+        await Task.Delay(10);
+        SendKeysToActiveWindow("^+p");
+        await Task.Delay(200);
+        ShowWindow(windowHandle, SW_SHOWNORMAL);   
+        SetForegroundWindow(windowHandle);
+        await Task.Delay(10);
+        SendKeysToActiveWindow("Show Console");
+        await Task.Delay(200);
+        ShowWindow(windowHandle, SW_SHOWNORMAL);   
+        SetForegroundWindow(windowHandle);
+        await Task.Delay(10);
+        SendKeysToActiveWindow("{Enter}");
+        await Task.Delay(200);
+        ShowWindow(windowHandle, SW_SHOWNORMAL);   
+        SetForegroundWindow(windowHandle);
+        await Task.Delay(10);
+        SendKeysToActiveWindow("this.SteamClient.Apps.MarkEulaAccepted{(}" + $"{appId}, \"{eulaName}\", {eulaVersion}" + "{)}");
+        await Task.Delay(200);
+        ShowWindow(windowHandle, SW_SHOWNORMAL);   
+        SetForegroundWindow(windowHandle);
+        await Task.Delay(10);
+        SendKeysToActiveWindow("{Enter}");
+        await Task.Delay(200);
+         ShowWindow(windowHandle, SW_SHOWNORMAL);   
+         SetForegroundWindow(windowHandle);
+         await Task.Delay(10);
+         SendKeysToActiveWindow("{Enter}");
+    }
+    
+    public static void EnterAltF4(int windowHandle)
+    {
+        ShowWindow(windowHandle, SW_SHOWNORMAL);
+        SetForegroundWindow(windowHandle);
+        SendKeysToActiveWindow("%({F4})"); // % = Alt, {F4} = F4
+    }
+
+    public static string PowershellGetDevToolsChildProcessWindowHandle()
+    {
+        List<WinStruct> list = ApiDef.GetWindows();
+        list = list.FindAll(win => win.WinTitle.Equals("DevTools"));
+        if (list.Count == 0)
+        {
+            return "";
+        }
+
+        return list.First().WinHwnd.ToString();
+    }
+
     /// <summary>
     /// Attempts to bypass the experience confirmation window of a specified process by bringing its main window to the foreground and simulating a key press.
     /// </summary>
@@ -549,6 +602,20 @@ public static class CommandLine
         cmd.Start();
         cmd.StandardInput.WriteLine("$StartDHCP = New-Object -ComObject wscript.shell;");
         cmd.StandardInput.WriteLine("$StartDHCP.SendKeys('{ENTER}')");
+        Outcome(cmd);
+    }
+
+    private static void SendKeysToActiveWindow(string keys)
+    {
+        Process? cmd = SetupCommand(StationPowershell);
+        if (cmd == null)
+        {
+            Logger.WriteLog($"Cannot start: {StationPowershell}, PowershellCommand (cmd) -> SetupCommand returned null value.", Enums.LogLevel.Error);
+            return;
+        }
+        cmd.Start();
+        cmd.StandardInput.WriteLine("$StartDHCP = New-Object -ComObject wscript.shell;");
+        cmd.StandardInput.WriteLine($"$StartDHCP.SendKeys('{keys}')");
         Outcome(cmd);
     }
 

@@ -313,7 +313,7 @@ internal class EmbeddedWrapper : IWrapper
             child = GetExperienceProcess();
         }
         currentProcess = child;
-        launchingExperience = false;
+        SetLaunchingExperience(false);
 
         if (child != null && currentProcess != null && lastExperience.ExeName != null)
         {
@@ -355,6 +355,7 @@ internal class EmbeddedWrapper : IWrapper
                 { "value", $"GameLaunchFailed:{lastExperience.Name}" }
             };
             SessionController.PassStationMessage(message);
+            SetLaunchingExperience(false);
             
             JObject response = new JObject { { "response", "ExperienceLaunchFailed" } };
             JObject responseData = new JObject { { "experienceId", lastExperience.ID } };

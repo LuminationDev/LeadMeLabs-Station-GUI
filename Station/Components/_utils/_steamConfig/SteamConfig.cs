@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
@@ -8,6 +9,8 @@ using LeadMeLabsLibrary;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Sentry;
+using Station.Components._commandLine;
+using Station.Components._notification;
 
 namespace Station.Components._utils._steamConfig;
 
@@ -194,6 +197,94 @@ public class SteamConfig
 
         return acceptedEulas;
     }
+    
+    public static List<string> GetAllAcceptedEulas()
+    {
+        if (steamId.Length == 0)
+        {
+            Logger.WriteLog(
+                "Could not find steamId: " +
+                location, Enums.LogLevel.Error);
+            return new List<string>();
+        }
+        string fileLocation = $"C:\\Program Files (x86)\\Steam\\userdata\\{steamId}\\config\\localconfig.vdf";
+        if (!File.Exists(fileLocation))
+        {
+            Logger.WriteLog(
+                "Could not verify steam hide notification info: " +
+                location, Enums.LogLevel.Error);
+            return new List<string>();
+        }
+
+
+        List<string> acceptedEulas = new List<string>();
+        try
+        {
+            string[] lines = File.ReadAllLines(fileLocation);
+            for (int i = 0; i < lines.Length; i++)
+            {
+                if (lines[i].Contains("eula"))
+                {
+                    // The line will look like the below
+                    // 348250_eula_0        "0"
+                    // ^ Eula name           ^ Eula version
+                    string[] eulaDetails = lines[i].Trim('\t').Trim('\"').Split("\t");
+                    string eulaName = eulaDetails[0].Trim('\"');
+                    string appId = eulaName.Split('_')[0];
+                    string eulaVersion = eulaDetails[2].Trim('\"');
+                    acceptedEulas.Add($"{appId}:{eulaName}:{eulaVersion}");
+                }
+            }
+        }
+        catch (Exception e)
+        {
+            Logger.WriteLog($"GetAllAcceptedEulas - Sentry Exception: {e}", Enums.LogLevel.Error);
+            SentrySdk.CaptureException(e);
+        }
+
+        return acceptedEulas;
+    }
+
+    public static List<string> GetAllEulas()
+    {
+        string filePath = CommandLine.StationLocation + @"\_embedded\LeadMePython.exe";
+        if (!File.Exists(filePath))
+        {
+            SentrySdk.CaptureMessage("LeadMePython missing at " +
+                                     (Environment.GetEnvironmentVariable("LabLocation",
+                                         EnvironmentVariableTarget.Process) ?? "Unknown"));
+            return new List<string>();
+        }
+
+        string output = CommandLine.RunProgramWithOutput(filePath, "all_eulas");
+        List<string> eulas = new List<string>();
+        eulas.AddRange(output.Split("\n"));
+        return eulas;
+    }
+    
+    public static List<string> GetAllLicenses()
+    {
+        string filePath = CommandLine.StationLocation + @"\_embedded\LeadMePython.exe";
+        if (!File.Exists(filePath))
+        {
+            SentrySdk.CaptureMessage("LeadMePython missing at " +
+                                     (Environment.GetEnvironmentVariable("LabLocation",
+                                         EnvironmentVariableTarget.Process) ?? "Unknown"));
+            return new List<string>() {""};
+        }
+
+        string output = CommandLine.RunProgramWithOutput(filePath, $"licenses {Environment.GetEnvironmentVariable("SteamUserName", EnvironmentVariableTarget.Process)} {Environment.GetEnvironmentVariable("SteamPassword", EnvironmentVariableTarget.Process)}");
+        List<string> licensedAppIds = new List<string>();
+        licensedAppIds.AddRange(output.Split("\n"));
+        return licensedAppIds;
+    }
+
+    public static List<string> GetUnacceptedEulas()
+    {
+        List<string> acceptedEulas = GetAllAcceptedEulas();
+        List<string> allEulas = GetAllEulas();
+        return allEulas.Except(acceptedEulas).ToList();
+    }
 
     private static void VerifyConfigSharedConfigFile()
     {
@@ -229,7 +320,7 @@ public class SteamConfig
         }
         else
         {
-            try
+            try 
             {
                 string[] lines = new[]
                 {
