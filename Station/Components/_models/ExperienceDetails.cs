@@ -4,9 +4,9 @@ namespace Station.Components._models;
 
 public class ExperienceDetails
 {
-    private string WrapperType { get; }
-    private string Name { get; }
-    private string Id { get; }
+    public string WrapperType { get; }
+    public string Name { get; }
+    public string Id { get; }
     private bool IsVr { get; }
     
     /// <summary>

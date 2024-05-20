@@ -1,8 +1,10 @@
-﻿using Newtonsoft.Json;
+﻿using System.ComponentModel;
+using System.Runtime.CompilerServices;
+using Newtonsoft.Json;
 
 namespace Station.QA;
 
-public class QaCheck
+public class QaCheck : INotifyPropertyChanged
 {
     [JsonProperty]
     private string? _passedStatus;
@@ -64,6 +66,36 @@ public class QaCheck
         set
         {
             _id = value;
+            OnPropertyChanged();
         }
+    }
+    
+    [JsonIgnore]
+    public string? PassedStatus
+    {
+        get => _passedStatus;
+        set
+        {
+            _passedStatus = value;
+            OnPropertyChanged();
+        }
+    }
+
+    [JsonIgnore]
+    public string? Message
+    {
+        get => _message;
+        set
+        {
+            _message = value;
+            OnPropertyChanged();
+        }
+    }
+    
+    public event PropertyChangedEventHandler? PropertyChanged;
+
+    protected virtual void OnPropertyChanged([CallerMemberName] string? propertyName = null)
+    {
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
     }
 }

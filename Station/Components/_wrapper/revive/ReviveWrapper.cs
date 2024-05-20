@@ -225,7 +225,7 @@ public class ReviveWrapper : IWrapper
                 { "action", "ApplicationClosed" }
             };
             SessionController.PassStationMessage(message);
-            UiUpdater.ResetUiDisplay();
+            UiController.UpdateProcessMessages("reset");
         });
     }
 

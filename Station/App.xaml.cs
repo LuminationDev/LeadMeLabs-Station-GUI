@@ -4,7 +4,6 @@ using LeadMeLabsLibrary;
 using Sentry;
 using Station.Components._commandLine;
 using Station.Components._managers;
-using Station.Components._notification;
 using Station.Components._utils;
 using Station.Components._utils._steamConfig;
 using Station.MVC.Controller;
@@ -58,21 +57,6 @@ namespace Station
             }
         }
 
-        /// <summary>
-        /// Update the title of the MainWindow, this is designed to show the User the Station ID as well as the Current IP address.
-        /// </summary>
-        /// <param name="title"></param>
-        public static void SetWindowTitle(string title)
-        {
-            Current.Dispatcher.BeginInvoke(new Action(() =>
-            {
-                if (Current.MainWindow != null)
-                {
-                    Current.MainWindow.Title = title;
-                }
-            }));
-        }
-
         static void UnhandledExceptionHandler(object sender, UnhandledExceptionEventArgs args)
         {
             Exception e = (Exception)args.ExceptionObject;
@@ -109,12 +93,10 @@ namespace Station
 
         private static void InitSentry()
         {
-            string? sentryDsn;
-
 #if DEBUG
-            sentryDsn = "https://ca9abb6c77444340802da0c5a3805841@o1294571.ingest.sentry.io/6704982"; //Development
+            var sentryDsn = "https://ca9abb6c77444340802da0c5a3805841@o1294571.ingest.sentry.io/6704982"; //Development
 #elif RELEASE
-	        sentryDsn = "https://812f2b29bf3c4d129071683c7cf62361@o1294571.ingest.sentry.io/6518754"; //Production
+	        var sentryDsn = "https://812f2b29bf3c4d129071683c7cf62361@o1294571.ingest.sentry.io/6518754"; //Production
 #endif
             if (sentryDsn is not { Length: > 0 }) return;
             

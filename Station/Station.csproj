@@ -5,7 +5,7 @@
 		<UseWPF>true</UseWPF>
 		<UseWindowsForms>true</UseWindowsForms>
 		<Nullable>enable</Nullable>
-		<ApplicationIcon>./Assets/Icons/icon.ico</ApplicationIcon>
+		<ApplicationIcon>./Assets/Icons/tray_neutral.ico</ApplicationIcon>
 		<Configurations>Debug;Release;DevDebug;DevRelease</Configurations>
 		<Version>1.1.31</Version>
     <SelfContained>false</SelfContained>
@@ -41,15 +41,12 @@
 	</ItemGroup>
 
   <ItemGroup>
-    <Content Include="Assets\Icons\offline.ico">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    <Content Include="Assets\Icons\openvr_offline.ico" />
+    <Content Include="Assets\Icons\openvr_online.ico" />
+    <Content Include="Assets\Images\default_header.jpg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="Assets\Icons\online.ico">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="Assets\Icons\refresh.ico">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
+    <Content Include="Assets\Images\LuminationLogo.png" />
     <Content Include="openvr_api.dll">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
@@ -69,12 +66,12 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
     <Content Update="Assets\Images\LuminationLogo.png">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Update="Assets\Gifs\loadingspinner.gif">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Content Update="Assets\Icons\icon.ico">
+    <Content Update="Assets\Icons\tray_neutral.ico">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
     <Content Update="Assets\Icons\openvr_offline.ico">
@@ -83,25 +80,82 @@
     <Content Update="Assets\Icons\openvr_online.ico">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <None Remove="Assets\Icons\icon.ico" />
-    <Content Include="Assets\Icons\icon.ico">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
+    <None Remove="Assets\Icons\tray_neutral.ico" />
     <None Remove="Assets\Gifs\loadingspinner.gif" />
-    <Content Include="Assets\Gifs\loadingspinner.gif">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    <Content Include="Assets\Gifs\loadingSpinner.gif">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <None Remove="Assets\Images\LuminationLogo.png" />
-    <Content Include="Assets\Images\LuminationLogo.png">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
     <None Remove="Assets\Icons\openvr_online.ico" />
-    <Content Include="Assets\Icons\openvr_online.ico">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
     <None Remove="Assets\Icons\openvr_offline.ico" />
-    <Content Include="Assets\Icons\openvr_offline.ico">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    <None Remove="Assets\Icons\experience_play.png" />
+    <Content Include="Assets\Icons\experience_play.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <None Remove="Assets\Icons\experience_stop.png" />
+    <Content Include="Assets\Icons\experience_stop.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <None Remove="Assets\Icons\power_restart.png" />
+    <Content Include="Assets\Icons\power_restart.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <None Remove="Assets\Icons\power_software.png" />
+    <Content Include="Assets\Icons\power_software.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <None Remove="Assets\Icons\tray_neutral.ico" />
+    <Content Include="Assets\Icons\tray_neutral.ico">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <None Remove="Assets\Icons\tray_offline.ico" />
+    <Content Include="Assets\Icons\tray_offline.ico">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <None Remove="Assets\Icons\tray_online.ico" />
+    <Content Include="Assets\Icons\tray_online.ico">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <None Remove="Assets\Gifs\loadingSpinnerTransparent.gif" />
+    <Content Include="Assets\Gifs\loadingSpinnerTransparent.gif">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <None Remove="Assets\Images\default_header.jpg" />
+    <None Remove="Assets\Images\vr_basestation.svg" />
+    <Content Include="Assets\Images\vr_basestation.svg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <None Remove="Assets\Images\vr_battery_full.png" />
+    <Content Include="Assets\Images\vr_battery_full.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <None Remove="Assets\Images\vr_battery_low.png" />
+    <Content Include="Assets\Images\vr_battery_low.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <None Remove="Assets\Images\vr_battery_med.png" />
+    <Content Include="Assets\Images\vr_battery_med.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <None Remove="Assets\Images\vr_battery_off.png" />
+    <Content Include="Assets\Images\vr_battery_off.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <None Remove="Assets\Images\vr_controller.svg" />
+    <Content Include="Assets\Images\vr_controller.svg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <None Remove="Assets\Images\vr_headset.svg" />
+    <Content Include="Assets\Images\vr_headset.svg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <None Remove="Assets\Icons\log_filter.png" />
+    <Content Include="Assets\Icons\log_filter.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <None Remove="Assets\Icons\log_reset.png" />
+    <Content Include="Assets\Icons\log_reset.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
 

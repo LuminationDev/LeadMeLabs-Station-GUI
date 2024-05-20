@@ -128,8 +128,8 @@ public class InternalWrapper : IWrapper
             lastExperience = experience;
         
             //Update the UI, NUC and Tablet
-            UiUpdater.UpdateProcess(lastExperience.Name ?? "Unknown");
-            UiUpdater.UpdateStatus("Running...");
+            UiController.UpdateProcessMessages("processName", lastExperience.Name ?? "Unknown");
+            UiController.UpdateProcessMessages("processStatus", "Running");
 
             JObject experienceInformation = new JObject
             {
@@ -164,7 +164,7 @@ public class InternalWrapper : IWrapper
                 { "action", "ApplicationClosed" },
             };
             SessionController.PassStationMessage(message);
-            UiUpdater.ResetUiDisplay();
+            UiController.UpdateProcessMessages("reset");
         });
     }
 
@@ -193,7 +193,7 @@ public class InternalWrapper : IWrapper
             { "action", "ApplicationClosed" },
         };
         SessionController.PassStationMessage(message);
-        UiUpdater.ResetUiDisplay();
+        UiController.UpdateProcessMessages("reset");
     }
 
     public void StopCurrentProcess()
@@ -214,7 +214,7 @@ public class InternalWrapper : IWrapper
             { "action", "ApplicationClosed" },
         };
         SessionController.PassStationMessage(message);
-        UiUpdater.ResetUiDisplay();
+        UiController.UpdateProcessMessages("reset");
     }
 
     public void RestartCurrentExperience()

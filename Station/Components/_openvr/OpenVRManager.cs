@@ -18,7 +18,7 @@ using Station.Components._wrapper.embedded;
 using Station.Components._wrapper.revive;
 using Station.Components._wrapper.steam;
 using Station.MVC.Controller;
-using Station.MVC.View;
+using Station.MVC.ViewModel;
 using Valve.VR;
 
 namespace Station.Components._openvr;
@@ -112,7 +112,7 @@ public class OpenVrManager
         //Create a listener for VR events - this handles the gentle exit of SteamVR
         new Task(OnVREvent).Start();
 
-        UiUpdater.LoadImageFromAssetFolder("OpenVR", true);
+        UiController.UpdateVrConnection("openVr", "Connected");
 
         _initialising = false;
         return true;
@@ -258,7 +258,7 @@ public class OpenVrManager
                     _ovrSystem.AcknowledgeQuit_Exiting();
                     openVrSystem?.Shutdown();
                     openVrSystem = null;
-                    UiUpdater.LoadImageFromAssetFolder("OpenVR", false);
+                    UiController.UpdateVrConnection("openVr", "Off");
                     break;
             }
 
@@ -375,7 +375,7 @@ public class OpenVrManager
                 }
 
                 WrapperManager.currentWrapper.StopCurrentProcess();
-                UiUpdater.ResetUiDisplay();
+                UiController.UpdateProcessMessages("reset");
                 
                 JObject message = new JObject
                 {
@@ -515,9 +515,9 @@ public class OpenVrManager
             
         MessageController.SendResponse("NUC", "QA", response.ToString());
 
-        // Update the Station UI
-        UiUpdater.UpdateProcess(targetProcess.MainWindowTitle);
-        UiUpdater.UpdateStatus("Running...");
+        // Update the home page UI
+        UiController.UpdateProcessMessages("processName", targetProcess.MainWindowTitle);
+        UiController.UpdateProcessMessages("processStatus", "Running");
     }
     #endregion
 
@@ -681,9 +681,9 @@ public class OpenVrManager
         vrProfile.VrHeadset?.GetStatusManager().UpdateHeadsetFirmwareStatus(GetFirmwareUpdateRequired(headsetIndex));
 
         //Collect the headset model - only do this if it hasn't been set already.
-        if (MainWindow.headsetDescription != null && 
+        if (MainViewModel.ViewModelManager.HomeViewModel.HeadsetDescription != null && 
             ((vrProfile.VrHeadset?.GetStatusManager().HeadsetDescription.Equals("") ?? true) || 
-            (vrProfile.VrHeadset?.GetStatusManager().HeadsetDescription.Equals("Unknown") ?? true))
+             (vrProfile.VrHeadset?.GetStatusManager().HeadsetDescription.Equals("Unknown") ?? true))
         )
         {
             var error = ETrackedPropertyError.TrackedProp_Success;
@@ -698,7 +698,7 @@ public class OpenVrManager
             if (error == ETrackedPropertyError.TrackedProp_Success)
             {
                 vrProfile.VrHeadset?.GetStatusManager().SetHeadsetDescription(renderModelName.ToString());
-                UiUpdater.UpdateOpenVrStatus("headsetDescription", renderModelName.ToString());
+                UiController.UpdateHeadsetDescription(renderModelName.ToString());
             }
         }
     }

@@ -18,6 +18,7 @@ using Station.Components._profiles;
 using Station.Components._utils;
 using Station.Components._utils._steamConfig;
 using Station.MVC.Controller;
+using Station.MVC.ViewModel;
 using Station.QA.checks;
 
 namespace Station.QA;
@@ -235,6 +236,7 @@ public static class QualityManager
     public static async void HandleLocalQualityAssurance(bool upload)
     {
         string location = Environment.GetEnvironmentVariable("LabLocation", EnvironmentVariableTarget.Process) ?? "Unknown";
+        UiController.UpdateCurrentState("Checking network");
         
         // Check if there is a network connection (or if it is Adelaide/Australian Science and Mathematics School)
         JObject message = new JObject
@@ -246,7 +248,12 @@ public static class QualityManager
         if (location.ToLower().Contains("science and mathematics school") || !Network.CheckIfConnectedToInternet(true)) return;
         
         // Check if the QA has already been uploaded
-        if (HasUploadAlreadyBeenCompleted()) return;
+        if (HasUploadAlreadyBeenCompleted() && upload) return;
+        UiController.UpdateCurrentState("Running QA");
+        
+        MainViewModel.ViewModelManager.QaViewModel.IsLoading = true;
+        MainViewModel.ViewModelManager.QaViewModel.ClearQaChecks();
+        
         JObject qaMessage = new JObject
         {
             { "action", "SoftwareState" },
@@ -262,6 +269,17 @@ public static class QualityManager
         AddChecksToDictionary("Software Checks", await SoftwareChecks.RunQa(labType));
         AddChecksToDictionary("Network Checks", NetworkChecks.RunQa(""));
         AddChecksToDictionary("Steam Config Checks", SteamConfigChecks.RunQa(labType));
+        
+        // Update the UI
+        // Iterate over each key-value pair in the qaCheckDictionary
+        foreach (var kvp in qaCheckDictionary)
+        {
+            // Iterate over each QaCheck in the nested dictionary
+            foreach (var qaCheckKvp in kvp.Value)
+            {
+                MainViewModel.ViewModelManager.QaViewModel.AddQaCheck(qaCheckKvp.Value);
+            }
+        }
 
         // Convert to JObject
         JObject jsonObject = JObject.FromObject(qaCheckDictionary);
@@ -275,6 +293,8 @@ public static class QualityManager
         
         // Add it with an '_' so it will always be in the same position on Firebase
         jsonObject.Add("_Timestamp", readableTime);
+        
+        MainViewModel.ViewModelManager.QaViewModel.IsLoading = false;
         
         // Upload to Firebase
         if (upload)

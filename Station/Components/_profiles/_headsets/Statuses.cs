@@ -50,6 +50,7 @@ public class Statuses
 
             OnSoftwareTrackingChanged(value.ToString());
             _softwareStatus = value;
+            UiController.UpdateVrConnection("thirdParty", Enum.GetName(typeof(DeviceStatus), value) ?? "Unknown");
             //Silently collect the applications again if the Steam manifest was corrupted
             if (value == DeviceStatus.Connected && WrapperManager.steamManifestCorrupted)
             {
@@ -82,7 +83,7 @@ public class Statuses
 
             OnOpenVRTrackingChanged(value.ToString());
             _openVRStatus = value;
-            UiUpdater.UpdateOpenVrStatus("headsetConnection", Enum.GetName(typeof(DeviceStatus), value));
+            UiController.UpdateVrConnection("openVr", Enum.GetName(typeof(DeviceStatus), value) ?? "Unknown");
         }
         get => _openVRStatus;
     }
@@ -159,7 +160,7 @@ public class Statuses
             case VrManager.Software:
                 SendLostMessage(SoftwareStatus == DeviceStatus.Connected, status);
                 SoftwareStatus = status;
-                UiUpdater.LoadImageFromAssetFolder("ThirdParty", SoftwareStatus == DeviceStatus.Connected);
+                UiController.UpdateVrUi("headset", Enum.GetName(typeof(DeviceStatus), status) ?? "Off");
                 break;
             
             case VrManager.OpenVR:
@@ -297,7 +298,15 @@ public class Statuses
             VrBaseStation temp = new VrBaseStation(serialNumber);
             temp.UpdateProperty(propertyName, value);
             baseStations.Add(serialNumber, temp);
-            UiUpdater.UpdateOpenVrStatus("baseStationAmount", baseStations.Count.ToString());
+            
+            //TODO update for Vive Business Streaming headsets
+            string num = baseStations.Count switch
+            {
+                0 => "Off",
+                < 3 => "Lost",
+                _ => "Connected"
+            };
+            UiController.UpdateVrUi("baseStation", num);
         }
     }
 
@@ -310,7 +319,7 @@ public class Statuses
         HeadsetDescription = "Unknown";
         SoftwareStatus = DeviceStatus.Off;
         OpenVRStatus = DeviceStatus.Off;
-        UiUpdater.UpdateOpenVrStatus("headsetDescription", HeadsetDescription);
+        UiController.UpdateHeadsetDescription(HeadsetDescription);
 
         //Reset controllers
         foreach (var vrController in Controllers)

@@ -18,6 +18,7 @@ public struct Experience
     public string? ExeName { get; set; }
     public string? Parameters { get; private set; }
     public string? AltPath { get; set; }
+    public string? Status { get; set; } = "Stopped";
     public bool IsVr { get; set; }
     public string? HeaderPath { get; set; }
     

@@ -42,7 +42,6 @@ public class VrBaseStation
         //Get the current active base stations
         int active =
             Statuses.baseStations.Count(vrBaseStation => vrBaseStation.Value.Tracking == DeviceStatus.Connected);
-        UiUpdater.UpdateOpenVrStatus("baseStationActive", active.ToString());
 
         string message = $"BaseStation:{active}:{Statuses.baseStations.Count}";
         MockConsole.WriteLine($"DeviceStatus:{message}", Enums.LogLevel.Debug);

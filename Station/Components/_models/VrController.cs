@@ -38,15 +38,16 @@ public class VrController
             MockConsole.WriteLine($"VrController {serialNumber} tracking updated to {value} from {_tracking}",
                 Enums.LogLevel.Verbose);
 
-            UiUpdater.UpdateOpenVrStatus(Role == DeviceRole.Left ? "leftControllerConnection" : "rightControllerConnection",
-                Enum.GetName(typeof(DeviceStatus), value) ?? "Lost");
+            UiController.UpdateVrUi(
+                Role == DeviceRole.Left ? "leftController" : "rightController", 
+                Enum.GetName(typeof(DeviceStatus), value) ?? "Lost"
+            );
 
             // Set the battery to 0 if it has lost connection
             if (value == DeviceStatus.Lost)
             {
                 Battery = 0;
-                UiUpdater.UpdateOpenVrStatus(Role == DeviceRole.Left ? "leftControllerBattery" : "rightControllerBattery",
-                    Battery.ToString() ?? "0");
+                UiController.UpdateVrBatteryUi(Role == DeviceRole.Left ? "leftController" : "rightController", 0);
             }
 
             _tracking = value;
@@ -76,8 +77,7 @@ public class VrController
             MockConsole.WriteLine($"VrController {serialNumber} battery updated to {value}% from {_battery}%",
                 Enums.LogLevel.Verbose);
 
-            UiUpdater.UpdateOpenVrStatus(Role == DeviceRole.Left ? "leftControllerBattery" : "rightControllerBattery",
-                value.ToString() ?? "0");
+            UiController.UpdateVrBatteryUi(Role == DeviceRole.Left ? "leftController" : "rightController", value);
 
             _battery = value;
         }

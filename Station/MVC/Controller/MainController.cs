@@ -11,6 +11,7 @@ using Station.Components._monitoring;
 using Station.Components._network;
 using Station.Components._notification;
 using Station.Components._openvr;
+using Station.Components._organisers;
 using Station.Components._profiles;
 using Station.Components._utils;
 using Station.Components._utils._steamConfig;
@@ -18,6 +19,8 @@ using Station.Components._wrapper.steam;
 using Station.QA;
 
 namespace Station.MVC.Controller;
+
+//TODO finish the UiController implementations and fix the errors
 
 /// <summary>
 /// A class to control the main aspects of the program and hold static values for
@@ -78,36 +81,28 @@ public static class MainController
     /// </summary>
     public static async void StartProgram()
     {
-        MockConsole.ClearConsole();
+        //Update the power settings
+        UiController.UpdateStationPowerStatus("On");
         
-        Logger.WriteLog("Loading ENV variables", Enums.LogLevel.Error);
+        // Set and log version information
+        SetVersionInformation();
         Environment.SetEnvironmentVariable("POWERSHELL_TELEMETRY_OPTOUT", "1");
         
-        //Check if the Encryption key and env variables are set correctly before starting anything else
-        bool result = false;
-        try
-        {
-            result = await DotEnv.Load();
-        }
-        catch (Exception ex)
-        {
-            Logger.WriteLog($"DotEnv Error: {ex}", Enums.LogLevel.Error);
-        }
+        // Load environment variables
+        bool envVariablesLoaded = await LoadEnvironmentVariablesAsync();
+        
+        // Setup server details
+        bool serverSetupSuccessful = SetupServerDetails();
 
-        //Even if DotEnv fails, still load up the server details to show the details to the user.
-        Logger.WriteLog("Setting up server.", Enums.LogLevel.Normal);
-        bool connected = SetupServerDetails();
-        if (!connected)
+        if (!serverSetupSuccessful)
         {
             Logger.WriteLog("Server details were not collected.", Enums.LogLevel.Error);
             return;
         }
-        
-        //Do not continue if environment variable file is incomplete
-        if (!result)
+
+        if (!envVariablesLoaded)
         {
-            App.SetWindowTitle("Station - Failed to load ENV variables.");
-            Logger.WriteLog("Failed loading ENV variables", Enums.LogLevel.Error);
+            UiController.UpdateCurrentState("No config...");
             return;
         }
         
@@ -119,49 +114,65 @@ public static class MainController
             return;
         }
 
+        // Update the Station mode (this controls the VR status view on the home page)
+        UiController.UpdateStationMode(Helper.GetStationMode().Equals(Helper.STATION_MODE_VR));
+
+        // Set the Id of the Station for UI binding
+        UiController.UpdateStationId(Environment.GetEnvironmentVariable("stationId", EnvironmentVariableTarget.Process) ?? "");
+
+        // Continue with additional tasks if environment variables are loaded successfully
+        MockConsole.WriteLine("ENV variables loaded", Enums.LogLevel.Error);
+        
         ValidateInstall("Station");
         
         // Collect audio devices and videos before starting the server
         AudioManager.Initialise();
         VideoManager.Initialise();
+        FileManager.Initialise();
         
-        // Additional tasks - Start a new task as to now hold up the UI
-        new Task(() =>
-        {
-            StartServer();
-            
-            // Run the local Quality checks before continuing with the setup
-            try
-            {
-                QualityManager.HandleLocalQualityAssurance(true);
-            }
-            catch (Exception e)
-            {
-                Logger.WriteLog($"StartProgram - Sentry Exception: {e}", Enums.LogLevel.Error);
-                SentrySdk.CaptureException(e);
-            }
-
-            //Cannot be any higher - encryption key does not exist before the DotEnv.Load()
-            JObject message = new JObject
-            {
-                { "action", "SoftwareState" },
-                { "value", "Launching Software" }
-            };
-            ScheduledTaskQueue.EnqueueTask(
-                () => SessionController.PassStationMessage(message),
-                TimeSpan.FromSeconds(0));
-
-            App.SetWindowTitle(
-                $"Station({Environment.GetEnvironmentVariable("StationId", EnvironmentVariableTarget.Process)}) -- {localEndPoint.Address} -- {macAddress} -- {versionNumber}");
-            Logger.WriteLog("ENV variables loaded", Enums.LogLevel.Info);
-
-            //Call as a new task to stop UI and server start up from hanging whilst reading the files
-            new Thread(Initialisation).Start();
-        }).Start();
-
+        // Additional tasks
+        ThumbnailOrganiser.LoadCache();
+        StartServer();
+        
+        //Cannot be any higher - encryption key does not exist before the DotEnv.Load()
+        new Task(Initialisation).Start(); //Call as a new task to stop UI and server start up from hanging whilst reading the files
         if (InternalDebugger.GetIdleModeActive())
         {
             ModeTracker.Initialise(); //Start tracking any idle time
+        }
+    }
+    
+    /// <summary>
+    /// Sets the version information in the view model and then logs version information, including the current version
+    /// and a loading message.
+    /// </summary>
+    private static void SetVersionInformation()
+    {
+        string? currentVersion = Updater.GetVersionNumber();
+        string? currentName = "Ice Cream Sandwich";
+        
+        UiController.UpdateSoftwareDetails("versionNumber", currentVersion);
+        UiController.UpdateSoftwareDetails("versionName", currentName);
+        
+        Logger.WriteLog($"Version number: {currentVersion}, name: {currentName}", Enums.LogLevel.Error);
+        MockConsole.WriteLine("Loading ENV variables", Enums.LogLevel.Error);
+    }
+    
+    /// <summary>
+    /// Loads environment variables asynchronously and handles any exceptions that may occur.
+    /// </summary>
+    /// <returns>True if the environment variables are loaded successfully, false otherwise.</returns>
+    private static async Task<bool> LoadEnvironmentVariablesAsync()
+    {
+        try
+        {
+            return await DotEnv.Load();
+        }
+        catch (Exception ex)
+        {
+            Logger.WriteLog("Failed loading ENV variables", Enums.LogLevel.Error);
+            Logger.WriteLog(ex, Enums.LogLevel.Error);
+            return false;
         }
     }
 
@@ -170,6 +181,24 @@ public static class MainController
     /// </summary>
     private static void Initialisation()
     {
+        // Run the local Quality checks before continuing with the setup
+        try
+        {
+            QualityManager.HandleLocalQualityAssurance(true);
+        }
+        catch (Exception e)
+        {
+            Logger.WriteLog($"StartProgram - Sentry Exception: {e}", Enums.LogLevel.Error);
+            SentrySdk.CaptureException(e);
+        }
+        
+        JObject launchMessage = new JObject
+        {
+            { "action", "SoftwareState" },
+            { "value", "Launching Software" }
+        };
+        ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage(launchMessage), TimeSpan.FromSeconds(0));
+        
         JObject message = new JObject
         {
             { "action", "SoftwareState" },
@@ -263,16 +292,19 @@ public static class MainController
     /// <summary>
     /// Stop all instances of the Station program running
     /// </summary>
-    public static void StopProgram()
+    public static void StopProgram(bool restarting)
     {
-        new Thread(() =>
+        if (!restarting)
         {
-            StopVariableTimer();
-            StationMonitoringThread.StopMonitoring();
-            StopServer();
-            wrapperManager?.ShutDownWrapper();
-            Logger.WriteLog("Station stopped", Enums.LogLevel.Normal);
-        }).Start();
+            UiController.UpdateStationPowerStatus("Off");
+            UiController.UpdateCurrentState("Stopped...");
+        }
+        
+        StopVariableTimer();
+        StationMonitoringThread.StopMonitoring();
+        StopServer();
+        wrapperManager?.ShutDownWrapper();
+        Logger.WriteLog("Station stopped", Enums.LogLevel.Normal);
     }
 
     /// <summary>
@@ -280,7 +312,7 @@ public static class MainController
     /// </summary>
     public static async void RestartProgram()
     {
-        StopProgram();
+        StopProgram(true);
         Logger.WriteLog("Station restarting", Enums.LogLevel.Normal);
         await Task.Delay(2000);
         StartProgram();
@@ -312,8 +344,12 @@ public static class MainController
             if (ip == null) throw new Exception("Manager class: Server IP Address could not be found");
 
             macAddress = SystemInformation.GetMACAddress();
-            versionNumber = Updater.GetVersionNumber();
+            versionNumber = Updater.GetVersionNumber(); 
             localEndPoint = new IPEndPoint(ip.Address, LocalPort);
+            
+            //Update the home panel UI
+            UiController.UpdateSoftwareDetails("ipAddress", localEndPoint.Address.ToString());
+            UiController.UpdateSoftwareDetails("macAddress", macAddress);
 
             Logger.WriteLog("Server IP Address is: " + localEndPoint.Address, Enums.LogLevel.Normal);
             Logger.WriteLog("MAC Address is: " + macAddress, Enums.LogLevel.Normal);

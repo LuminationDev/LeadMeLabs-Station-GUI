@@ -5,11 +5,6 @@ namespace Station.Components._utils;
 public static class InternalDebugger
 {
     /// <summary>
-    /// Used to toggle the console window on or off
-    /// </summary>
-    public static bool viewConsoleWindow = true;
-    
-    /// <summary>
     /// Used to control if the VR programs should minimise or not
     /// </summary>
     public static bool minimiseVrPrograms = true;
@@ -23,6 +18,14 @@ public static class InternalDebugger
         return minimiseVrPrograms;
     }
     
+    /// <summary>
+    /// Used to control if the VR programs should minimise or not
+    /// </summary>
+    public static bool autoScroll = true;
+    public static bool GetAutoScroll()
+    {
+        return autoScroll;
+    }
     
     /// <summary>
     /// Used to control if the VR programs should minimise or not

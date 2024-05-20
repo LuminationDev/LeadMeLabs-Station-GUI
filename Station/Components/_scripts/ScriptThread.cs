@@ -108,6 +108,7 @@ public class ScriptThread
         MessageController.SendResponse("Android", "Station", "SetValue:gameId:");
         AudioManager.Initialise();
         VideoManager.Initialise();
+        FileManager.Initialise();
     }
 
     private void HandleStation(string jObjectData)

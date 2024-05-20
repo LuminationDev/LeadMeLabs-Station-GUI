@@ -328,7 +328,7 @@ public class SteamWrapper : IWrapper
         } else
         {
             Logger.WriteLog("Game launch failure: " + lastExperience.Name, Enums.LogLevel.Normal);
-            UiUpdater.ResetUiDisplay();
+            UiController.UpdateProcessMessages("reset");
             
             JObject message = new JObject
             {
@@ -376,8 +376,9 @@ public class SteamWrapper : IWrapper
         Process? proc = ProcessManager.GetProcessById(Int32.Parse(activeProcessId));
         Logger.WriteLog($"Application found: {proc.MainWindowTitle}/{proc.Id}", Enums.LogLevel.Debug);
 
-        UiUpdater.UpdateProcess(proc.MainWindowTitle);
-        UiUpdater.UpdateStatus("Running...");
+        // Update the home page UI
+        UiController.UpdateProcessMessages("processName", proc?.MainWindowTitle);
+        UiController.UpdateProcessMessages("processStatus", "Running");
         return proc;
     }
     #endregion
@@ -395,7 +396,7 @@ public class SteamWrapper : IWrapper
                 { "action", "ApplicationClosed" },
             };
             SessionController.PassStationMessage(message);
-            UiUpdater.ResetUiDisplay();
+            UiController.UpdateProcessMessages("reset");
         });
     }
 

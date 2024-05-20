@@ -1,15 +1,10 @@
 ﻿using System;
 using System.ComponentModel;
-using System.Diagnostics;
 using System.Drawing;
 using System.IO;
 using System.Reflection;
 using System.Windows;
 using System.Windows.Forms;
-using LeadMeLabsLibrary;
-using Station._details;
-using Station.Components._commandLine;
-using Station.Components._utils;
 using Station.Components._utils._steamConfig;
 using Application = System.Windows.Application;
 
@@ -53,7 +48,7 @@ public class NotifyIconWrapper : FrameworkElement, IDisposable
             return;
         _notifyIcon = new NotifyIcon
         {
-            Icon = Icon.ExtractAssociatedIcon(_iconPath + @"\Assets\Icons\icon.ico"),
+            Icon = Icon.ExtractAssociatedIcon($@"{_iconPath}\Assets\Icons\tray_neutral.ico"),
             Visible = true,
             Text = "Station",
             ContextMenuStrip = CreateContextMenu()
@@ -98,19 +93,13 @@ public class NotifyIconWrapper : FrameworkElement, IDisposable
         var openItem = new ToolStripMenuItem("Open");
         openItem.Click += OpenItemOnClick;
 
-        var openDetails = new ToolStripMenuItem("Details");
-        openDetails.Click += OpenDetailsOnClick;
-
         var roomSetup = new ToolStripMenuItem("Save room setup");
         roomSetup.Click += SaveRoomSetupClick;
-
-        var goToLogs = new ToolStripMenuItem("Logs");
-        goToLogs.Click += GoToLogsOnClick;
 
         var exitItem = new ToolStripMenuItem("Exit");
         exitItem.Click += ExitItemOnClick;
 
-        var contextMenu = new ContextMenuStrip { Items = { openItem, openDetails, roomSetup, goToLogs, exitItem } };
+        var contextMenu = new ContextMenuStrip { Items = { openItem, roomSetup, exitItem } };
         return contextMenu;
     }
 
@@ -119,13 +108,7 @@ public class NotifyIconWrapper : FrameworkElement, IDisposable
         var args = new RoutedEventArgs(OpenSelectedEvent);
         RaiseEvent(args);
     }
-
-    private void OpenDetailsOnClick(object? sender, EventArgs eventArgs)
-    {
-        DetailsWindow details = new DetailsWindow();
-        details.Show();
-    }
-
+    
     private void SaveRoomSetupClick(object? sender, EventArgs eventArgs)
     {
         string message = RoomSetup.SaveRoomSetup();
@@ -135,28 +118,6 @@ public class NotifyIconWrapper : FrameworkElement, IDisposable
             Text = message,
             Duration = 5000
         };
-    }
-
-    private void GoToLogsOnClick(object? sender, EventArgs eventArgs)
-    {
-        string? location = CommandLine.StationLocation;
-
-        if (location == null)
-        {
-            Logger.WriteLog("NotifyIconWrapper - GoToLogsOnClick: Station location not found.", Enums.LogLevel.Error);
-            return;
-        }
-        
-        string path = Path.GetFullPath(Path.Combine(location, "_logs"));
-
-        try
-        {
-            Process.Start("explorer.exe", path);
-        }
-        catch (Exception ex)
-        {
-            Logger.WriteLog("NotifyIconWrapper - GoToLogsOnClick: An error occurred: " + ex.Message, Enums.LogLevel.Error);
-        }
     }
 
     private void ExitItemOnClick(object? sender, EventArgs eventArgs)
@@ -184,7 +145,7 @@ public class NotifyIconWrapper : FrameworkElement, IDisposable
             return;
         }
 
-        //Don't continously set the icon if it is the same
+        //Don't continuously set the icon if it is the same
         if (_iconPath.Contains(status))
         {
             return;
@@ -193,17 +154,22 @@ public class NotifyIconWrapper : FrameworkElement, IDisposable
         switch (status)
         {
             case "offline":
-                _iconPath = @"\Assets\Icons\offline.ico";
+                _iconPath = @"\Assets\Icons\tray_offline.ico";
+                break;
+            case "warning":
+                _iconPath = @"\Assets\Icons\tray_warning.ico";
                 break;
             case "online":
-                _iconPath = @"\Assets\Icons\online.ico";
+                _iconPath = @"\Assets\Icons\tray_online.ico";
                 break;
             default:
-                _iconPath = @"\Assets\Icons\icon.ico";
+                _iconPath = @"\Assets\Icons\tray_neutral.ico";
                 break;
         }
 
-        _notifyIcon.Icon = Icon.ExtractAssociatedIcon(CommandLine.StationLocation + _iconPath);
+        _notifyIcon.Icon = Icon.ExtractAssociatedIcon(_softwareLocation + _iconPath);
         _notifyIcon.Text = $"Station - {status}";
     }
+        
+    private readonly string? _softwareLocation = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
 }

@@ -10,6 +10,7 @@ using Station.Components._profiles;
 using Station.Components._scripts;
 using Station.Components._utils;
 using Station.Components._wrapper.vive;
+using Station.MVC.ViewModel;
 
 namespace Station.MVC.Controller;
 
@@ -42,6 +43,7 @@ public static class SessionController
         {
             currentState = value;
             MessageController.SendResponse("Android", "Station", $"SetValue:state:{value}");
+            UiController.UpdateCurrentState(value); //Update the home page UI
         }
     }
 
@@ -217,6 +219,8 @@ public static class SessionController
                     {
                         MessageController.SendResponse("Android", "Station", $"SetValue:gameId:{appId}");
                         MessageController.SendResponse("Android", "Station", $"SetValue:gameType:{wrapper}");
+                        //Update the ExperienceView UI
+                        MainViewModel.ViewModelManager.ExperiencesViewModel.UpdateExperience(appId, "status", "Running");
                     }
                     else
                     {
@@ -234,6 +238,9 @@ public static class SessionController
                     MessageController.SendResponse("Android", "Station", "SetValue:gameName:");
                     MessageController.SendResponse("Android", "Station", "SetValue:gameId:");
                     MessageController.SendResponse("Android", "Station", "SetValue:gameType:");
+                    
+                    //Update the ExperienceView UI
+                    MainViewModel.ViewModelManager.ExperiencesViewModel.ExperienceStopped();
                     break;
 
                 case "StationError":

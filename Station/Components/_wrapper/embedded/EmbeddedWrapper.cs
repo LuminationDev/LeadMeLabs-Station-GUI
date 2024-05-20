@@ -317,8 +317,8 @@ internal class EmbeddedWrapper : IWrapper
 
         if (child != null && currentProcess != null && lastExperience.ExeName != null)
         {
-            UiUpdater.UpdateProcess(lastExperience.Name ?? "Unknown");
-            UiUpdater.UpdateStatus("Running...");
+            UiController.UpdateProcessMessages("processName", lastExperience.Name ?? "Unknown");
+            UiController.UpdateProcessMessages("processStatus", "Running");
             WindowManager.MaximizeProcess(child); //Maximise the process experience
             
             JObject experienceInformation = new JObject
@@ -347,7 +347,7 @@ internal class EmbeddedWrapper : IWrapper
         else
         {
             StopCurrentProcess();
-            UiUpdater.ResetUiDisplay();
+            UiController.UpdateProcessMessages("reset");
             
             JObject message = new JObject
             {
@@ -389,9 +389,8 @@ internal class EmbeddedWrapper : IWrapper
         if (proc == null) return null;
         
         Logger.WriteLog($"Application found: {proc.MainWindowTitle}/{lastExperience.ID}", Enums.LogLevel.Debug);
-        UiUpdater.UpdateProcess(proc.MainWindowTitle);
-        UiUpdater.UpdateStatus("Running...");
-
+        UiController.UpdateProcessMessages("processName", proc.MainWindowTitle);
+        UiController.UpdateProcessMessages("processStatus", "Running");
         return proc;
 
     }
@@ -434,7 +433,7 @@ internal class EmbeddedWrapper : IWrapper
                 { "action", "ApplicationClosed" },
             };
             SessionController.PassStationMessage(message);
-            UiUpdater.ResetUiDisplay();
+            UiController.UpdateProcessMessages("reset");
         });
     }
 

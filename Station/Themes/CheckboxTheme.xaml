@@ -1,0 +1,75 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    
+    <Style x:Key="CustomCheckBox" TargetType="CheckBox">
+        <Setter Property="Foreground" Value="#333"/>
+        <Setter Property="FontSize" Value="14"/>
+        <Setter Property="Height" Value="25"/>
+        <Setter Property="Width" Value="Auto"/>
+        <Setter Property="VerticalAlignment" Value="Center"/>
+        <Setter Property="HorizontalAlignment" Value="Center"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="CheckBox">
+                    <Grid>
+                        <!-- Checkbox background -->
+                        <Border x:Name="Border"
+                                CornerRadius="5"
+                                Background="#EEE"
+                                BorderThickness="1"
+                                BorderBrush="#BBB"
+                                Padding="10, 0">
+                            
+                            <Grid HorizontalAlignment="Center">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                
+                                <!-- Checkmark -->
+                                <Path x:Name="CheckMark"
+                                      Width="10"
+                                      Height="10"
+                                      Grid.Column="0"
+                                      HorizontalAlignment="Center"
+                                      VerticalAlignment="Center"
+                                      Stroke="#FFF"
+                                      StrokeThickness="2"
+                                      Data="M 0 5 L 2 7 L 6 3"/>
+                                
+                                <!-- Content -->
+                                <ContentPresenter Grid.Column="1"
+                                                  Margin="5,0,0,0"
+                                                  VerticalAlignment="Center"
+                                                  HorizontalAlignment="Left"
+                                                  RecognizesAccessKey="True"/>
+                            </Grid>
+                        </Border>
+                    </Grid>
+                    
+                    <!-- Trigger for IsChecked -->
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsChecked" Value="True">
+                            <Setter TargetName="Border" Property="Background">
+                                <Setter.Value>
+                                    <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                                        <GradientStop Offset="0" Color="#4CAF50"/>
+                                        <GradientStop Offset="1" Color="#388E3C"/>
+                                    </LinearGradientBrush>
+                                </Setter.Value>
+                            </Setter>
+                            <Setter TargetName="CheckMark" Property="Stroke" Value="#FFF"/>
+                        </Trigger>
+                        <Trigger Property="IsChecked" Value="False">
+                            <Setter TargetName="Border" Property="Background" Value="#EEE"/>
+                            <Setter TargetName="CheckMark" Property="Stroke" Value="#FFF"/>
+                        </Trigger>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter Property="Cursor" Value="Hand"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+</ResourceDictionary>

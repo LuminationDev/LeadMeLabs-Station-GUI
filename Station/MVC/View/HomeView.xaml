@@ -1,0 +1,394 @@
+﻿<UserControl x:Class="Station.MVC.View.HomeView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:converters="clr-namespace:Station.Converters"
+             mc:Ignorable="d"
+             Background="Transparent"
+             d:DesignHeight="560" d:DesignWidth="700">
+    
+    <UserControl.Resources>
+        <converters:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
+    </UserControl.Resources>
+    
+    <DockPanel Margin="10, 0, 0, 0">
+        <Grid DockPanel.Dock="Top">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="50"/>
+                <RowDefinition />
+            </Grid.RowDefinitions>
+        
+            <TextBlock Grid.Row="0" 
+                       Text="Software Status"
+                       FontFamily="../../Fonts/#Poppins"
+                       Foreground="White"
+                       FontSize="28"
+                       HorizontalAlignment="Left"/>
+            
+            <StackPanel Grid.Row="1" Orientation="Horizontal">
+
+                <!--Software details-->
+                <Border Width="300" Height="250">
+                    <Border.Background>
+                        <LinearGradientBrush StartPoint="0,0" EndPoint="1,2">
+                            <GradientStop Color="#ffc138" Offset="0.0"/>
+                            <GradientStop Color="#ed3738" Offset="1"/>
+                        </LinearGradientBrush>
+                    </Border.Background>
+                    
+                    <Border.Clip>
+                        <RectangleGeometry RadiusX="10" 
+                                           RadiusY="10" 
+                                           Rect="0,0,300,250"/>
+                    </Border.Clip>
+                    
+                    <StackPanel>
+                        <!--Version Name & Number-->
+                        <TextBlock Text="Details"
+                                   Margin="10"
+                                   Foreground="White"
+                                   FontSize="28"
+                                   FontWeight="Bold"
+                                   FontFamily="../../Fonts/#Poppins"/>
+
+                        <TextBlock Text="Version"
+                                   Margin="20, 0, 0, 5"
+                                   Foreground="GhostWhite"
+                                   FontSize="22"
+                                   FontWeight="Bold"
+                                   FontFamily="../../Fonts/#Poppins"/>
+                        
+                        <TextBlock Text="{Binding VersionNumber, FallbackValue=1.0.0}"
+                                   Margin="40, 0, 0, 5"
+                                   Foreground="GhostWhite"
+                                   FontSize="18"
+                                   FontFamily="../../Fonts/#Poppins"/>
+
+                        <TextBlock Text="{Binding VersionName, FallbackValue=Unknown}"
+                                   Margin="40, 0, 0, 20"
+                                   Foreground="GhostWhite"
+                                   FontSize="18"
+                                   FontFamily="../../Fonts/#Poppins"/>
+                        
+                        <!--Process details-->
+                        <TextBlock Text="Process"
+                                   Margin="20, 0, 0, 5"
+                                   Foreground="GhostWhite"
+                                   FontSize="22"
+                                   FontWeight="Bold"
+                                   FontFamily="../../Fonts/#Poppins"/>
+                        
+                        <TextBlock Text="{Binding ProcessName, FallbackValue=Unknown}"
+                                   Margin="40, 0, 0, 5"
+                                   Foreground="GhostWhite"
+                                   FontSize="18"
+                                   FontFamily="../../Fonts/#Poppins"/>
+                        
+                        <TextBlock Text="{Binding ProcessStatus, FallbackValue=Unknown}"
+                                   Margin="40, 0, 0, 0"
+                                   Foreground="GhostWhite"
+                                   FontSize="18"
+                                   FontFamily="../../Fonts/#Poppins"/>
+                    </StackPanel>
+                </Border>
+                
+                <!--VR Status (for VR stations only)-->
+                <Border Margin="50, 0, 0, 0" Width="300" Height="250" 
+                        Visibility="{Binding IsVr, Converter={StaticResource BooleanToVisibilityConverter}}">
+                    <Border.Background>
+                        <LinearGradientBrush StartPoint="0,0" EndPoint="1,2">
+                            <GradientStop Color="#d08fff" Offset="0.0"/>
+                            <GradientStop Color="#ee5253" Offset="1"/>
+                        </LinearGradientBrush>
+                    </Border.Background>
+                    
+                    <Border.Clip>
+                        <RectangleGeometry RadiusX="10" 
+                                           RadiusY="10" 
+                                           Rect="0,0,300,250"/>
+                    </Border.Clip>
+                    
+                    <StackPanel>
+                        <TextBlock Text="VR Status"
+                                   Margin="10"
+                                   Foreground="White"
+                                   FontSize="28"
+                                   FontWeight="Bold"
+                                   FontFamily="../../Fonts/#Poppins"/>
+                        
+                        <TextBlock Text="Headset:"
+                                   Margin="20, 0, 0, 5"
+                                   Foreground="White"
+                                   FontSize="22"
+                                   FontWeight="Bold"
+                                   FontFamily="../../Fonts/#Poppins"/>
+                        
+                        <TextBlock Text="{Binding HeadsetDescription, FallbackValue=Unknown}"
+                                   Margin="40,0,0,5"
+                                   Foreground="White"
+                                   FontSize="18"
+                                   FontFamily="../../Fonts/#Poppins"/>
+                        
+                        <!--Third party headset connection-->
+                        <DockPanel Margin="0,0,0,5">
+                            <TextBlock Text="Third Party:"
+                                       Margin="40,0,0,0"
+                                       Foreground="White"
+                                       FontSize="18"
+                                       FontFamily="../../Fonts/#Poppins"/>
+                            
+                            <TextBlock DockPanel.Dock="Right" 
+                                       Text="{Binding ThirdPartyConnection, FallbackValue=Off}"
+                                       Margin="0,0,20,0"
+                                       HorizontalAlignment="Right"
+                                       Foreground="White"
+                                       FontSize="18"
+                                       FontFamily="../../Fonts/#Poppins"/>
+                        </DockPanel>
+                        
+                        <!--OpenVR headset connection-->
+                        <DockPanel Margin="0,0,0,5">
+                            <TextBlock Text="OpenVR:"
+                                       Margin="40,0,0,0"
+                                       Foreground="White"
+                                       FontSize="18"
+                                       FontFamily="../../Fonts/#Poppins"/>
+                            
+                            <TextBlock DockPanel.Dock="Right"
+                                       Text="{Binding OpenVrConnection, FallbackValue=Off}"
+                                       Margin="0,0,20,0"
+                                       HorizontalAlignment="Right"
+                                       Foreground="White"
+                                       FontSize="18"
+                                       FontFamily="../../Fonts/#Poppins"/>
+                        </DockPanel>
+                        
+                        <Grid HorizontalAlignment="Center" Margin="0,15,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            
+                            <!--Headset Icon-->
+                            <Viewbox Grid.Column="0" Width="78" Height="60" Margin="0,0,10,0">
+                                <Path Data="M2.23828 6.09775V22.6831C2.23828 23.9769 2.75222 25.2176 3.66703 26.1324C4.58184 27.0472 5.82259 27.5612 7.11633 27.5612H9.18462C10.0623 27.5594
+                                10.9283 27.3604 11.7187 26.9787C12.509 26.5971 13.2034 26.0426 13.7505 25.3563L16.7554 21.6099C17.121 21.1542 17.5844 20.7863 18.1112 20.5336C18.638 20.2808
+                                19.2149 20.1496 19.7993 20.1496C20.3836 20.1496 20.9605 20.2808 21.4873 20.5336C22.0141 20.7863 22.4775 21.1542 22.8432 21.6099L25.848 25.3563C26.3951 26.0426
+                                27.0895 26.5971 27.8799 26.9787C28.6702 27.3604 29.5362 27.5594 30.4139 27.5612H32.4822C33.7759 27.5612 35.0167 27.0472 35.9315 26.1324C36.8463 25.2176 37.3602
+                                23.9769 37.3602 22.6831V6.09775C37.3602 5.06276 36.9491 4.07016 36.2172 3.33831C35.4854 2.60646 34.4928 2.19531 33.4578 2.19531H6.14072C5.10573 2.19531 4.11313
+                                2.60646 3.38128 3.33831C2.64943 4.07016 2.23828 5.06276 2.23828 6.09775Z"
+                                          Fill="{Binding HeadsetColor}" Stroke="{Binding HeadsetColor}" StrokeThickness="3" StrokeLineJoin="Round"/>
+                            </Viewbox>
+                            
+                            <Grid Grid.Column="1" Width="60">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                        
+                                <!--Left Controller Icon-->
+                                <Viewbox Grid.Column="0" Width="56" Height="60">
+                                    <Path Fill="{Binding LeftControllerColor}" Data="M26.7605 7.57787C25.1771 5.81065 21.7058 2.48026 21.7058 2.48026C21.7058 2.48026 19.1157 0 14.1586 0C9.20153 0 6.61142 2.47973 6.61142 
+                                    2.47973C6.61142 2.47973 3.14016 5.81065 1.55678 7.57733C-0.302534 9.65219 0.995215 10.8843 0.995215 10.8843C0.995215 10.8843 2.05637 11.9056 2.67992 12.4002C3.51472 
+                                    13.0617 4.36462 12.2626 4.36462 12.2626C4.36462 12.2626 5.10726 11.5368 6.04932 10.6091C8.61894 12.0533 9.0813 15.4123 9.0813 15.4123C9.0813 15.4123 9.79004 21.8733 
+                                    10.1209 26.1314C10.4351 30.1706 13.8105 30.0181 14.1581 29.9926C14.5062 30.0186 17.881 30.1706 18.1952 26.1314C18.5261 21.8728 19.3873 15.4123 19.3873 15.4123C19.3873 
+                                    15.4123 19.6972 12.0538 22.2674 10.6091C23.2094 11.5368 23.9521 12.2626 23.9521 12.2626C23.9521 12.2626 24.802 13.0617 25.6368 12.4002C26.2609 11.9056 27.322 10.8843 
+                                    27.322 10.8843C27.322 10.8843 28.6198 9.65219 26.7605 7.57787ZM14.1581 7.16751C10.4427 7.12926 7.84458 5.93079 7.84458 4.69407C7.84458 3.45735 10.3128 2.25941 14.0282 
+                                    2.22062C17.7441 2.25888 20.2118 3.45735 20.2118 4.69407C20.2118 5.93079 17.874 7.12872 14.1581 7.16751Z"/>
+                                </Viewbox>
+                                
+                                <!--Left Controller Battery Icon-->
+                                <Image Grid.Column="1" VerticalAlignment="Bottom" Margin="-10,0,0,0" Width="20" Height="20">
+                                    <Image.Style>
+                                        <Style TargetType="Image">
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding LeftBatteryIndex}" Value="0">
+                                                    <Setter Property="Source" Value="../../Assets/Images/vr_battery_off.png"/>
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding LeftBatteryIndex}" Value="1">
+                                                    <Setter Property="Source" Value="../../Assets/Images/vr_battery_low.png"/>
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding LeftBatteryIndex}" Value="2">
+                                                    <Setter Property="Source" Value="../../Assets/Images/vr_battery_med.png"/>
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding LeftBatteryIndex}" Value="3">
+                                                    <Setter Property="Source" Value="../../Assets/Images/vr_battery_full.png"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                            <Setter Property="Source" Value="../../Assets/Images/vr_battery_off.png"/>
+                                        </Style>
+                                    </Image.Style>
+                                </Image>
+                            </Grid>
+                            
+                            <Grid Grid.Column="2" Width="60">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                            
+                                <!--Right Controller Icon-->
+                                <Viewbox Grid.Column="0" Width="56" Height="60">
+                                    <Path Fill="{Binding RightControllerColor}" Data="M26.7605 7.57787C25.1771 5.81065 21.7058 2.48026 21.7058 2.48026C21.7058 2.48026 19.1157 0 14.1586 0C9.20153 0 6.61142 2.47973 6.61142
+                                    2.47973C6.61142 2.47973 3.14016 5.81065 1.55678 7.57733C-0.302534 9.65219 0.995215 10.8843 0.995215 10.8843C0.995215 10.8843 2.05637 11.9056 2.67992 12.4002C3.51472
+                                    13.0617 4.36462 12.2626 4.36462 12.2626C4.36462 12.2626 5.10726 11.5368 6.04932 10.6091C8.61894 12.0533 9.0813 15.4123 9.0813 15.4123C9.0813 15.4123 9.79004 21.8733
+                                    10.1209 26.1314C10.4351 30.1706 13.8105 30.0181 14.1581 29.9926C14.5062 30.0186 17.881 30.1706 18.1952 26.1314C18.5261 21.8728 19.3873 15.4123 19.3873 15.4123C19.3873
+                                    15.4123 19.6972 12.0538 22.2674 10.6091C23.2094 11.5368 23.9521 12.2626 23.9521 12.2626C23.9521 12.2626 24.802 13.0617 25.6368 12.4002C26.2609 11.9056 27.322 10.8843
+                                    27.322 10.8843C27.322 10.8843 28.6198 9.65219 26.7605 7.57787ZM14.1581 7.16751C10.4427 7.12926 7.84458 5.93079 7.84458 4.69407C7.84458 3.45735 10.3128 2.25941 14.0282
+                                    2.22062C17.7441 2.25888 20.2118 3.45735 20.2118 4.69407C20.2118 5.93079 17.874 7.12872 14.1581 7.16751Z"/>
+                                </Viewbox>
+                                
+                                <!-- Right Controller Battery Icon -->
+                                <Image Grid.Column="1" VerticalAlignment="Bottom" Margin="-10,0,0,0" Width="20" Height="20">
+                                    <Image.Style>
+                                        <Style TargetType="Image">
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding RightBatteryIndex}" Value="0">
+                                                    <Setter Property="Source" Value="../../Assets/Images/vr_battery_off.png"/>
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding RightBatteryIndex}" Value="1">
+                                                    <Setter Property="Source" Value="../../Assets/Images/vr_battery_low.png"/>
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding RightBatteryIndex}" Value="2">
+                                                    <Setter Property="Source" Value="../../Assets/Images/vr_battery_med.png"/>
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding RightBatteryIndex}" Value="3">
+                                                    <Setter Property="Source" Value="../../Assets/Images/vr_battery_full.png"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                            <Setter Property="Source" Value="../../Assets/Images/vr_battery_off.png"/>
+                                        </Style>
+                                    </Image.Style>
+                                </Image>
+                            </Grid>
+                        
+                            <!--Base station Icon-->
+                            <Viewbox Grid.Column="3" Width="56" Height="60" Margin="10,0,0,0">
+                                <Canvas Width="28" Height="30">
+                                    <Rectangle Width="26.5356" Height="28.948" RadiusX="4" RadiusY="4" Canvas.Left="0.671875" Canvas.Top="0.499023" Fill="{Binding BaseStationColor}"/>
+                                    <Ellipse Width="4.82466" Height="4.82466" Canvas.Left="11.53195" Canvas.Top="5.73557" Fill="#DEE1EB"/>
+                                </Canvas>
+                            </Viewbox>
+                        </Grid>
+                    </StackPanel>
+                </Border>
+                
+            </StackPanel>
+        </Grid>
+        
+        <Grid DockPanel.Dock="Bottom" VerticalAlignment="Bottom" Margin="0, 0, 0, 50">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="40"/>
+                <RowDefinition/>
+            </Grid.RowDefinitions>
+        
+            <TextBlock Grid.Row="0" 
+                       FontFamily="../../Fonts/#Poppins"
+                       Text="Software Details"
+                       Foreground="White"
+                       FontSize="20"
+                       HorizontalAlignment="Left"/>
+            
+            <StackPanel Grid.Row="1" 
+                        Orientation="Horizontal">
+                
+                <!--Current Status-->
+                <Border Width="200" Height="100">
+                    <Border.Background>
+                        <LinearGradientBrush StartPoint="0,0" EndPoint="1,2">
+                            <GradientStop Color="#54a0ff" Offset="0.0"/>
+                            <GradientStop Color="#5f27cd" Offset="1"/>
+                        </LinearGradientBrush>
+                    </Border.Background>
+                    
+                    <Border.Clip>
+                        <RectangleGeometry RadiusX="10" 
+                                           RadiusY="10" 
+                                           Rect="0,0,200,100"/>
+                    </Border.Clip>
+                        
+                    <StackPanel>
+                        <TextBlock Text="Current State" 
+                                   Margin="10"
+                                   Foreground="White"
+                                   FontSize="20"
+                                   FontWeight="Bold"
+                                   FontFamily="../../Fonts/#Poppins"/>
+                        
+                        <TextBlock Text="{Binding CurrentState}" 
+                                   Margin="10, 0, 0, 0"
+                                   Foreground="GhostWhite"
+                                   FontSize="18"
+                                   FontFamily="../../Fonts/#Poppins"
+                                   TextWrapping="Wrap"/>
+                    </StackPanel>
+                </Border>
+                
+                <!--IP & MAC Address-->
+                <Border Width="200" Height="100" Margin="25, 0, 0, 0">
+                    <Border.Background>
+                        <LinearGradientBrush StartPoint="0,0" EndPoint="1,2">
+                            <GradientStop Color="#54a0ff" Offset="0.0"/>
+                            <GradientStop Color="#5f27cd" Offset="1"/>
+                        </LinearGradientBrush>
+                    </Border.Background>
+                    
+                    <Border.Clip>
+                        <RectangleGeometry RadiusX="10" 
+                                           RadiusY="10" 
+                                           Rect="0,0,200,100"/>
+                    </Border.Clip>
+                        
+                    <StackPanel>
+                        <TextBlock Text="IP Address"
+                                   Margin="10"
+                                   Foreground="White"
+                                   FontSize="20"
+                                   FontWeight="Bold"
+                                   FontFamily="../../Fonts/#Poppins"/>
+                        
+                        <TextBlock Text="{Binding IpAddress}"
+                                   Margin="10, 0, 0, 0"
+                                   Foreground="GhostWhite"
+                                   FontSize="18"
+                                   FontFamily="../../Fonts/#Poppins"/>
+                    </StackPanel>
+                </Border>
+                
+                <!--System Up Time-->
+                <Border Width="200" Height="100" Margin="25, 0, 0, 0">
+                    <Border.Background>
+                        <LinearGradientBrush StartPoint="0,0" EndPoint="1,2">
+                            <GradientStop Color="#54a0ff" Offset="0.0"/>
+                            <GradientStop Color="#5f27cd" Offset="1"/>
+                        </LinearGradientBrush>
+                    </Border.Background>
+                    
+                    <Border.Clip>
+                        <RectangleGeometry RadiusX="10" 
+                                           RadiusY="10" 
+                                           Rect="0,0,200,100"/>
+                    </Border.Clip>
+                        
+                    <StackPanel>
+                        <TextBlock Text="Mac Address"
+                                   Margin="10"
+                                   Foreground="White"
+                                   FontSize="20"
+                                   FontWeight="Bold"
+                                   FontFamily="../../Fonts/#Poppins"/>
+                        
+                        <TextBlock Text="{Binding MacAddress}"
+                                   Margin="10, 0, 0, 0"
+                                   Foreground="GhostWhite"
+                                   FontSize="18"
+                                   FontFamily="../../Fonts/#Poppins"/>
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+        </Grid>
+    </DockPanel>
+</UserControl>

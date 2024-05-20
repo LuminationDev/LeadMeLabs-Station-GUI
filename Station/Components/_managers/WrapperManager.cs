@@ -13,6 +13,7 @@ using Station.Components._interfaces;
 using Station.Components._models;
 using Station.Components._monitoring;
 using Station.Components._notification;
+using Station.Components._organisers;
 using Station.Components._profiles;
 using Station.Components._utils;
 using Station.Components._utils._steamConfig;
@@ -23,6 +24,7 @@ using Station.Components._wrapper.revive;
 using Station.Components._wrapper.steam;
 using Station.Components._wrapper.vive;
 using Station.MVC.Controller;
+using Station.MVC.ViewModel;
 
 namespace Station.Components._managers;
 
@@ -297,6 +299,9 @@ public class WrapperManager
 
         // Send the JSON message here as the PassStationMessage method splits the supplied message by ','
         if (!messageType.Equals("ApplicationJson")) return;
+        //Check for any missing thumbnails in the cache folder
+        Task.Factory.StartNew(() => ThumbnailOrganiser.CheckCache<ExperienceDetails>(convertedApplications.ToString()));
+        
         MessageController.SendResponse("Android", "Station",
             $"SetValue:installedJsonApplications:{convertedApplications}");
 
@@ -535,7 +540,22 @@ public class WrapperManager
         }
 
         var exeName = altPath != null ? Path.GetFileName(altPath) : name;
-        ApplicationList.TryAdd(id, new Experience(wrapperType, id, name, exeName, launchParameters, altPath, isVr, subtype, headerPath));
+        Experience newExperience = new Experience(wrapperType, id, name, exeName, launchParameters, altPath, isVr,
+            subtype, headerPath);
+        ApplicationList.TryAdd(id, newExperience);
+        if (wrapperType.Equals("Launcher")) return;
+        newExperience.Name = RemoveQuotesAtStartAndEnd(newExperience.Name); //Remove the " from either end
+        MainViewModel.ViewModelManager.ExperiencesViewModel.AddExperience(newExperience);
+    }
+    
+    /// <summary>
+    /// TrimStart removes leading quotes, TrimEnd removes trailing quotes.
+    /// </summary>
+    /// <param name="input"></param>
+    /// <returns></returns>
+    private static string RemoveQuotesAtStartAndEnd(string? input)
+    {
+        return input?.TrimStart('"').TrimEnd('"') ?? "Unknown";
     }
 
     /// <summary>
@@ -633,13 +653,17 @@ public class WrapperManager
             MockConsole.WriteLine("No process wrapper created.", Enums.LogLevel.Normal);
             return "No process wrapper created.";
         }
+        
+        //Update the experience UI
+        MainViewModel.ViewModelManager.ExperiencesViewModel.UpdateExperience(experience.ID, "status", "Launching");
 
         //Stop any current processes (regular or 'visible' internal) before trying to launch a new one
         currentWrapper.StopCurrentProcess();
         InternalWrapper.StopCurrentProcess();
-
-        UiUpdater.UpdateProcess("Launching");
-        UiUpdater.UpdateStatus("Loading...");
+        
+        //Update the home page UI
+        UiController.UpdateProcessMessages("processName", "Launching");
+        UiController.UpdateProcessMessages("processStatus", "Loading");
 
         //Determine what is need to launch the process(appID - Steam or name - Custom)
         //Pass in the launcher parameters if there are any
@@ -765,7 +789,7 @@ public class WrapperManager
             return;
         }
 
-        UiUpdater.ResetUiDisplay();
+        UiController.UpdateProcessMessages("reset");
         currentWrapper.StopCurrentProcess();
         WrapperMonitoringThread.StopMonitoring();
     }
