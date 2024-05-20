@@ -118,4 +118,75 @@ public static class FileManager
             }
         }
     }
+
+    /// <summary>
+    /// A file action has been requested, determine what the action is and triage it accordingly.
+    /// </summary>
+    /// <param name="data">A stringify JObject</param>
+    public static void HandleFileAction(string data)
+    {
+        JObject fileInformation = JObject.Parse(data);
+        if (!fileInformation.ContainsKey("Action")) return;
+
+        string? action = fileInformation.GetValue("Action")?.ToString();
+        if (action == null) return;
+        
+        switch (action)
+        {
+            case "delete":
+                DeleteFile(data);
+                break;
+            
+            default:
+                return;
+        }
+    }
+
+    /// <summary>
+    /// A delete action has been requested, get the file path and name from the supplied data. Only delete the file
+    /// located at the supplied path if it exists and matches the supplied name as well.
+    /// </summary>
+    /// <param name="data">A stringify JObject</param>
+    private static void DeleteFile(string data)
+    {
+        JObject fileInformation = JObject.Parse(data);
+        if (!fileInformation.ContainsKey("fileName") || !fileInformation.ContainsKey("filePath")) return;
+
+        string? fileNameWithoutExtension = fileInformation.GetValue("fileName")?.ToString();
+        string? filePath = fileInformation.GetValue("filePath")?.ToString();
+        
+        //Delete the file at the supplied path
+        try
+        {
+            // Check if the file exists
+            if (File.Exists(filePath))
+            {
+                // Extract the file name without extension from the file path
+                string fileName = Path.GetFileNameWithoutExtension(filePath);
+                
+                // Check if the extracted file name matches the provided file name
+                if (fileName.Equals(fileNameWithoutExtension, StringComparison.OrdinalIgnoreCase))
+                {
+                    // Delete the file
+                    File.Delete(filePath);
+                    Logger.WriteLog("File deleted successfully.", Enums.LogLevel.Info);
+                }
+                else
+                {
+                    Logger.WriteLog($"File does not match the provided file name: supplied {fileNameWithoutExtension}, found: {fileName}", Enums.LogLevel.Error);
+                }
+            }
+            else
+            {
+                Logger.WriteLog($"File does not exist. {filePath}", Enums.LogLevel.Error);
+            }
+        }
+        catch (Exception e)
+        {
+            Logger.WriteLog($"An error occurred: {e.Message}", Enums.LogLevel.Error);
+        }
+        
+        //Refresh the file list
+        Initialise();
+    }
 }

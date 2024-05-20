@@ -10,7 +10,7 @@
              d:DesignHeight="560" d:DesignWidth="700">
     
     <UserControl.Resources>
-        <converters:StringInHashSetConverter x:Key="StringInHashSetConverter"/>
+        <converters:StringInObservableCollectionConverter x:Key="StringInObservableCollectionConverter"/>
     </UserControl.Resources>
     
     <Grid Margin="10, 0, 0, 0">
@@ -125,7 +125,7 @@
                       Command="{Binding CheckBoxCommand}"
                       CommandParameter="E">
                 <CheckBox.IsChecked>
-                    <MultiBinding Converter="{StaticResource StringInHashSetConverter}" ConverterParameter='E' Mode="TwoWay">
+                    <MultiBinding Converter="{StaticResource StringInObservableCollectionConverter}" ConverterParameter='E' Mode="TwoWay">
                         <Binding Path="Name" RelativeSource="{RelativeSource Self}" />
                         <Binding Path="DataContext.CheckedMarkers"
                                  Mode="TwoWay"
@@ -141,7 +141,7 @@
                       Command="{Binding CheckBoxCommand}"
                       CommandParameter="I">
                 <CheckBox.IsChecked>
-                    <MultiBinding Converter="{StaticResource StringInHashSetConverter}" ConverterParameter='I' Mode="TwoWay">
+                    <MultiBinding Converter="{StaticResource StringInObservableCollectionConverter}" ConverterParameter='I' Mode="TwoWay">
                         <Binding Path="Name" RelativeSource="{RelativeSource Self}" />
                         <Binding Path="DataContext.CheckedMarkers"
                                  Mode="TwoWay"
@@ -157,7 +157,7 @@
                       Command="{Binding CheckBoxCommand}"
                       CommandParameter="N">
                 <CheckBox.IsChecked>
-                    <MultiBinding Converter="{StaticResource StringInHashSetConverter}" ConverterParameter='N' Mode="TwoWay">
+                    <MultiBinding Converter="{StaticResource StringInObservableCollectionConverter}" ConverterParameter='N' Mode="TwoWay">
                         <Binding Path="Name" RelativeSource="{RelativeSource Self}" />
                         <Binding Path="DataContext.CheckedMarkers"
                                  Mode="TwoWay"
@@ -173,7 +173,7 @@
                       Command="{Binding CheckBoxCommand}"
                       CommandParameter="D">
                 <CheckBox.IsChecked>
-                    <MultiBinding Converter="{StaticResource StringInHashSetConverter}" ConverterParameter='D' Mode="TwoWay">
+                    <MultiBinding Converter="{StaticResource StringInObservableCollectionConverter}" ConverterParameter='D' Mode="TwoWay">
                         <Binding Path="Name" RelativeSource="{RelativeSource Self}" />
                         <Binding Path="DataContext.CheckedMarkers"
                                  Mode="TwoWay"
@@ -189,7 +189,7 @@
                       Command="{Binding CheckBoxCommand}"
                       CommandParameter="V">
                 <CheckBox.IsChecked>
-                    <MultiBinding Converter="{StaticResource StringInHashSetConverter}" ConverterParameter='V' Mode="TwoWay">
+                    <MultiBinding Converter="{StaticResource StringInObservableCollectionConverter}" ConverterParameter='V' Mode="TwoWay">
                         <Binding Path="Name" RelativeSource="{RelativeSource Self}" />
                         <Binding Path="DataContext.CheckedMarkers"
                                  Mode="TwoWay"
@@ -205,7 +205,7 @@
                       Command="{Binding CheckBoxCommand}"
                       CommandParameter="U">
                 <CheckBox.IsChecked>
-                    <MultiBinding Converter="{StaticResource StringInHashSetConverter}" ConverterParameter='U' Mode="TwoWay">
+                    <MultiBinding Converter="{StaticResource StringInObservableCollectionConverter}" ConverterParameter='U' Mode="TwoWay">
                         <Binding Path="Name" RelativeSource="{RelativeSource Self}" />
                         <Binding Path="DataContext.CheckedMarkers"
                                  Mode="TwoWay"

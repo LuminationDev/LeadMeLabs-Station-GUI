@@ -1,10 +1,14 @@
 ﻿using System;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Drawing;
 using System.IO;
 using System.Reflection;
 using System.Windows;
 using System.Windows.Forms;
+using LeadMeLabsLibrary;
+using Station.Components._commandLine;
+using Station.Components._utils;
 using Station.Components._utils._steamConfig;
 using Application = System.Windows.Application;
 
@@ -95,11 +99,14 @@ public class NotifyIconWrapper : FrameworkElement, IDisposable
 
         var roomSetup = new ToolStripMenuItem("Save room setup");
         roomSetup.Click += SaveRoomSetupClick;
+        
+        var logItem = new ToolStripMenuItem("Logs");
+        logItem.Click += LogItemOnClick;
 
         var exitItem = new ToolStripMenuItem("Exit");
         exitItem.Click += ExitItemOnClick;
 
-        var contextMenu = new ContextMenuStrip { Items = { openItem, roomSetup, exitItem } };
+        var contextMenu = new ContextMenuStrip { Items = { openItem, roomSetup, logItem, exitItem } };
         return contextMenu;
     }
 
@@ -118,6 +125,24 @@ public class NotifyIconWrapper : FrameworkElement, IDisposable
             Text = message,
             Duration = 5000
         };
+    }
+    
+    /// <summary>
+    /// Open the local log folder.
+    /// </summary>
+    private void LogItemOnClick(object? sender, EventArgs eventArgs)
+    {
+        if (CommandLine.StationLocation == null) return;
+        string path = Path.GetFullPath(Path.Combine(CommandLine.StationLocation, "_logs"));
+    
+        try
+        {
+            Process.Start("explorer.exe", path);
+        }
+        catch (Exception ex)
+        {
+            Logger.WriteLog("An error occurred: " + ex.Message, Enums.LogLevel.Error);
+        }
     }
 
     private void ExitItemOnClick(object? sender, EventArgs eventArgs)

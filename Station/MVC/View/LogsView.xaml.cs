@@ -19,7 +19,7 @@ public partial class LogsView
     }
     
     /// <summary>
-    /// Refresh all values for the NUC.
+    /// Open the local log folder.
     /// </summary>
     /// <param name="sender">The button that was clicked.</param>
     /// <param name="e">The event arguments.</param>

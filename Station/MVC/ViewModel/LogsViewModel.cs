@@ -1,17 +1,20 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Collections.Specialized;
 using System.IO;
 using System.Linq;
 using System.Text;
 using Station.Components._commandLine;
 using Station.Core;
+using Station.Extensions;
 using OpenFileDialog = Microsoft.Win32.OpenFileDialog;
 
 namespace Station.MVC.ViewModel;
 
 public class LogsViewModel : ObservableObject
 {
+    private readonly List<string> _initialMarkers = new() { "E", "I", "N", "D", "V", "U" };
     private string? _currentFilePath;
     
     public RelayCommand LoadMostRecentCommand { get; }
@@ -22,6 +25,9 @@ public class LogsViewModel : ObservableObject
     
     public LogsViewModel()
     {
+        _checkedMarkers = new ObservableCollection<string>(_initialMarkers); 
+        _checkedMarkers.CollectionChanged += CheckedMarkers_CollectionChanged;
+        
         LoadMostRecentCommand = new RelayCommand(_ => LoadLatestLogFile());
         ReloadCurrentFileCommand = new RelayCommand(_ => LoadFile(_currentFilePath));
         LoadFileCommand = new RelayCommand(_ => LoadFileContentsAsync());
@@ -76,7 +82,6 @@ public class LogsViewModel : ObservableObject
     }
     #endregion
     
-    //TODO does not filter on load
     #region File Loading
     private string _fileText = "No file selected...";
     private string FileText
@@ -87,6 +92,7 @@ public class LogsViewModel : ObservableObject
             _fileText = value;
             OnPropertyChanged();
             FilteredLines = SplitLinesByMarkers(); // Update filtered lines whenever FileText changes
+            FilterFileText();
         }
     }
     
@@ -102,7 +108,7 @@ public class LogsViewModel : ObservableObject
     }
     
     /// <summary>
-    /// 
+    /// Find and load the most recent log file.
     /// </summary>
     private void LoadLatestLogFile()
     {
@@ -110,9 +116,12 @@ public class LogsViewModel : ObservableObject
     }
     
     /// <summary>
-    /// 
+    /// Retrieves the path of the latest log file within the log directory specified by the NucLocation property from the CommandLine.
+    /// If NucLocation is null or no log files are found, returns null.
+    /// If today's log file exists, returns its path.
+    /// If today's log file doesn't exist, finds the most recent log file before today and returns its path.
     /// </summary>
-    /// <returns></returns>
+    /// <returns>The path of the latest log file, or null if no log files are found.</returns>
     private string? GetLatestLogFile()
     {
         if (CommandLine.StationLocation == null) return null;
@@ -151,7 +160,10 @@ public class LogsViewModel : ObservableObject
     }
 
     /// <summary>
-    /// 
+    /// Opens a file dialog to allow the user to select a text file.
+    /// If a file is selected, its contents are loaded into the FileText property using the LoadFile method.
+    /// The initial directory for the file dialog is set to the log directory specified by the NucLocation property from the CommandLine.
+    /// If NucLocation is null, or if the user cancels the file dialog, no action is taken.
     /// </summary>
     private void LoadFileContentsAsync()
     {
@@ -170,6 +182,11 @@ public class LogsViewModel : ObservableObject
         }
     }
 
+    /// <summary>
+    /// Asynchronously loads the content of a file specified by the file path into the FileText property.
+    /// If the file path is null, the method returns without performing any action.
+    /// </summary>
+    /// <param name="filePath">The path to the file to be loaded. If null, no action is taken.</param>
     private async void LoadFile(string? filePath)
     {
         if (filePath == null) return;
@@ -180,9 +197,11 @@ public class LogsViewModel : ObservableObject
     }
 
     /// <summary>
-    /// 
+    /// Splits the text from FileText into segments based on markers.
+    /// A marker is defined as a line that starts with '[' and ends with ']' at the second character.
+    /// Each segment is separated by these markers and added to an ObservableCollection.
     /// </summary>
-    /// <returns></returns>
+    /// <returns>An <see cref="ObservableCollection{T}"/> containing the segmented lines from FileText.</returns>
     private ObservableCollection<string> SplitLinesByMarkers()
     {
         ObservableCollection<string> segments = new ObservableCollection<string>();
@@ -212,38 +231,39 @@ public class LogsViewModel : ObservableObject
     
     #region Checkbox Controls
     private const int MaxMarkers = 6;
-    private HashSet<string> _checkedMarkers = new() {"E", "I", "N", "D", "V", "U"};
-    public HashSet<string> CheckedMarkers
+    private ObservableCollection<string> _checkedMarkers;
+    public ObservableCollection<string> CheckedMarkers
     {
         get => _checkedMarkers;
         set
         {
-            Console.WriteLine("CHANGING");
             if (_checkedMarkers == value) return;
-            Console.WriteLine("CHANGED");
             _checkedMarkers = value;
             OnPropertyChanged();
         }
     }
     
-    //TODO unable to reset?
+    private void CheckedMarkers_CollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
+    {
+        OnPropertyChanged(nameof(CheckedMarkers));
+    }
+    
     /// <summary>
-    /// 
+    /// Resets the CheckedMarkers collection to its initial values and applies the filter.
+    /// This method clears the current CheckedMarkers collection and repopulates it with the initial markers.
+    /// After resetting the collection, the FilterFileText method is called to apply the filter.
     /// </summary>
     private void ResetFilters()
     {
-        Console.WriteLine("RESET");
-        //CheckedMarkers = new() {"E", "I", "N", "D", "V", "U"};
-        
-        ToggleMarker("E");
-        
+        CheckedMarkers.Reset(_initialMarkers);
         FilterFileText();
     }
     
     /// <summary>
-    /// 
+    /// Handles the event when a checkbox is checked by calling the ToggleMarker method.
+    /// The checkbox content, if it is a string, is passed to the ToggleMarker method to toggle its presence in the CheckedMarkers collection.
     /// </summary>
-    /// <param name="parameter"></param>
+    /// <param name="parameter">The content of the checkbox, expected to be of type <see cref="string"/>.</param>
     private void OnCheckBoxChecked(object parameter)
     {
         if (parameter is not string checkBoxContent) return;
@@ -251,26 +271,23 @@ public class LogsViewModel : ObservableObject
     }
     
     /// <summary>
-    /// 
+    /// Toggles the presence of a specified marker in the CheckedMarkers collection.
+    /// If the marker is present, it is removed; otherwise, it is added.
+    /// After updating the collection, the FilterFileText method is called to apply the filter.
     /// </summary>
-    /// <param name="parameter"></param>
+    /// <param name="parameter">The marker to be toggled, expected to be of type <see cref="string"/>.</param>
     private void ToggleMarker(object parameter)
     {
         if (parameter is not string marker) return;
-
-        //Temporary shallow copy
-        HashSet<string> temp = new HashSet<string>(CheckedMarkers);
         
-        if (temp.Contains(marker))
+        if (CheckedMarkers.Contains(marker))
         {
-            temp.Remove(marker);
+            CheckedMarkers.Remove(marker);
         }
         else
         {
-            temp.Add(marker);
+            CheckedMarkers.Add(marker);
         }
-        
-        CheckedMarkers = temp;
 
         FilterFileText();
     }

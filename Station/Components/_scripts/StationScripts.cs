@@ -1,4 +1,3 @@
-using System;
 using System.Threading;
 using System.Timers;
 using LeadMeLabsLibrary;
@@ -15,76 +14,49 @@ public static class StationScripts
     /// Track if a restart is in progress as to not que up multiple.
     /// </summary>
     public static bool processing = false;
-
-
     private static CancellationTokenSource? tokenSource = null;
-
-    /// <summary>
-    /// Track if an experience is being launched.
-    /// </summary>
-    public static bool launchingExperience = false;
 
     /// <summary>
     /// Determine what command is suppose to be run and execute the appropriate script.
     /// </summary>
-    /// <param name="command">A string containing the necessary information to run a specific command</param>
+    /// <param name="source">A string of where the command originated from</param>
+    /// <param name="additionalData">A string containing the necessary information to run a specific command</param>
     /// <returns>A string representing the outcome of the action.</returns>
     public static void Execute(string source, string additionalData)
     {
-        if (additionalData.StartsWith("URL"))
+        string[] dataTokens = additionalData.Split(':', 2);
+        if (dataTokens.Length == 0) return; 
+
+        switch (dataTokens[0])
         {
-            string[] urlCommand = additionalData.Split(':', 2);
-            if (urlCommand.Length == 2)
-            {
-                string url = urlCommand[1];
-                if (!url.StartsWith("https://") && !url.StartsWith("http://"))
-                {
-                    url = "https://" + url;
-                }
-                bool isValidUrl = Uri.IsWellFormedUriString(url, UriKind.Absolute);
-                if (isValidUrl)
-                {
-                    CommandLine.ExecuteBrowserCommand(url);
-                    MessageController.SendResponse(source, "Station", "SetValue:gameName:" + url);
-                    MessageController.SendResponse("Android", "Station", "SetValue:gameId:");
-                }
-            }
-        }
-        else if (additionalData.Equals("RestartVR"))
-        {
-            RestartVRSession();
-        }
-        else if (additionalData.Equals("EndVR"))
-        {
-            EndVRSession();
-        }
-        else if (additionalData.Equals("Restart"))
-        {
-            ShutdownOrRestartCommand(source, "restart");
-        }
-        else if (additionalData.Equals("Shutdown"))
-        {
-            ShutdownOrRestartCommand(source, "shutdown");
-        }
-        else if (additionalData.Equals("CancelShutdown"))
-        {
-            CommandLine.CancelShutdown();
-            tokenSource?.Cancel();
-        }
-        else if (additionalData.Equals("StopGame"))
-        {
-            MainController.wrapperManager?.ActionHandler("Stop");
-        }
-        else if (additionalData.StartsWith("IdentifyStation"))
-        {
-            OverlayManager.OverlayThread();
-        } else if (additionalData.StartsWith("UploadLogFile"))
-        {
-            CommandLine.UploadLogFile();
-        }
-        else
-        {
-            Logger.WriteLog("Unidentified command", Enums.LogLevel.Info);
+            case "RestartVR":
+                RestartVrSession();
+                break;
+            case "EndVR":
+                EndVrSession();
+                break;
+            case "Restart":
+                ShutdownOrRestartCommand(source, "restart");
+                break;
+            case "Shutdown":
+                ShutdownOrRestartCommand(source, "shutdown");
+                break;
+            case "CancelShutdown":
+                CommandLine.CancelShutdown();
+                tokenSource?.Cancel();
+                break;
+            case "StopGame":
+                MainController.wrapperManager?.ActionHandler("Stop");
+                break;
+            case "IdentifyStation":
+                OverlayManager.OverlayThread();
+                break;
+            case "UploadLogFile":
+                _ = CommandLine.UploadLogFile();
+                break;
+            default:
+                Logger.WriteLog("Unidentified command", Enums.LogLevel.Info);
+                break;
         }
     }
 
@@ -93,7 +65,7 @@ public static class StationScripts
     /// the necessary programs for a new VR session.
     /// </summary>
     /// <returns></returns>
-    public static void RestartVRSession()
+    private static void RestartVrSession()
     {
         MessageController.SendResponse("Android", "Station", "SetValue:status:On");
         if (!processing)
@@ -133,12 +105,17 @@ public static class StationScripts
         tokenSource = new CancellationTokenSource();
         var timer = new System.Timers.Timer(cancelTime);
 
-        void timerElapsed(object? obj, ElapsedEventArgs args)
+        timer.Elapsed += TimerElapsed;
+        timer.Enabled = true;
+        timer.AutoReset = false;
+        return;
+
+        void TimerElapsed(object? obj, ElapsedEventArgs args)
         {
             if (tokenSource is null) return;
             if (tokenSource.IsCancellationRequested) return;
 
-            EndVRSession();
+            EndVrSession();
 
             //Shut down the server first, so the NUC cannot send off any more Pings
             MainController.StopServer();
@@ -147,16 +124,12 @@ public static class StationScripts
             MessageController.SendResponse(source, "Station", "SetValue:gameName:");
             MessageController.SendResponse(source, "Station", "SetValue:gameId:");
         }
-
-        timer.Elapsed += timerElapsed;
-        timer.Enabled = true;
-        timer.AutoReset = false;
     }
 
     /// <summary>
     /// Stop all processes that are associated with a VR session.
     /// </summary>
-    public static void EndVRSession()
+    private static void EndVrSession()
     {
         MessageController.SendResponse("Android", "Station", "SetValue:status:On");
         MainController.wrapperManager?.ActionHandler("Session", "Stop");
