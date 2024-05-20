@@ -610,7 +610,7 @@ public static class CommandLine
         Process? cmd = SetupCommand(StationPowershell);
         if (cmd == null)
         {
-            Logger.WriteLog($"Cannot start: {StationPowershell}, PowershellCommand (cmd) -> SetupCommand returned null value.", MockConsole.LogLevel.Error);
+            Logger.WriteLog($"Cannot start: {StationPowershell}, PowershellCommand (cmd) -> SetupCommand returned null value.", Enums.LogLevel.Error);
             return;
         }
         cmd.Start();

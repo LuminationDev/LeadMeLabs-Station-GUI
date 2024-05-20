@@ -204,7 +204,7 @@ public class SteamConfig
         {
             Logger.WriteLog(
                 "Could not find steamId: " +
-                location, MockConsole.LogLevel.Error);
+                location, Enums.LogLevel.Error);
             return new List<string>();
         }
         string fileLocation = $"C:\\Program Files (x86)\\Steam\\userdata\\{steamId}\\config\\localconfig.vdf";
@@ -212,7 +212,7 @@ public class SteamConfig
         {
             Logger.WriteLog(
                 "Could not verify steam hide notification info: " +
-                location, MockConsole.LogLevel.Error);
+                location, Enums.LogLevel.Error);
             return new List<string>();
         }
 
@@ -238,7 +238,7 @@ public class SteamConfig
         }
         catch (Exception e)
         {
-            Logger.WriteLog($"GetAllAcceptedEulas - Sentry Exception: {e}", MockConsole.LogLevel.Error);
+            Logger.WriteLog($"GetAllAcceptedEulas - Sentry Exception: {e}", Enums.LogLevel.Error);
             SentrySdk.CaptureException(e);
         }
 
@@ -250,6 +250,9 @@ public class SteamConfig
         string filePath = CommandLine.StationLocation + @"\_embedded\LeadMePython.exe";
         if (!File.Exists(filePath))
         {
+            SentrySdk.CaptureMessage("LeadMePython missing at " +
+                                     (Environment.GetEnvironmentVariable("LabLocation",
+                                         EnvironmentVariableTarget.Process) ?? "Unknown"));
             return new List<string>();
         }
 
@@ -264,6 +267,9 @@ public class SteamConfig
         string filePath = CommandLine.StationLocation + @"\_embedded\LeadMePython.exe";
         if (!File.Exists(filePath))
         {
+            SentrySdk.CaptureMessage("LeadMePython missing at " +
+                                     (Environment.GetEnvironmentVariable("LabLocation",
+                                         EnvironmentVariableTarget.Process) ?? "Unknown"));
             return new List<string>() {""};
         }
 
