@@ -302,12 +302,11 @@ public class WrapperManager
         MessageController.SendResponse("Android", "Station",
             $"SetValue:installedJsonApplications:{convertedApplications}");
 
-        if (SteamScripts.blockedByFamilyMode.Count == 0 && SteamScripts.noLicenses.Count == 0) return;
-
         JObject blockedApplications = new JObject
         {
             { "noLicense", JsonConvert.SerializeObject(SteamScripts.noLicenses) },
-            { "blockedFamilyMode", JsonConvert.SerializeObject(SteamScripts.blockedByFamilyMode) }
+            { "blockedFamilyMode", JsonConvert.SerializeObject(SteamScripts.blockedByFamilyMode) },
+            { "unacceptedEulas", JsonConvert.SerializeObject(SteamWrapper.installedExperiencesWithUnacceptedEulas) }
         };
 
         MessageController.SendResponse("Android", "Station",
@@ -487,6 +486,7 @@ public class WrapperManager
                 SessionController.StationProfile.MinimizeSoftware(1);
                 OverlayManager.ManualStop(90);
                 acceptingEulas = false;
+                WrapperManager.CollectAllApplications();
                 SessionController.StationProfile.StartSession();
             },
             TimeSpan.FromSeconds(((index + 2) * 1.5) + 3));
