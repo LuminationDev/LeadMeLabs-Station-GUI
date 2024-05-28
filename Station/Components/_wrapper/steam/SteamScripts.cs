@@ -206,34 +206,38 @@ public static class SteamScripts
 
     private static List<T> LoadAvailableGamesWithoutUsingInternetConnection<T>()
     {
-        List<T> installedGames = new List<T>();
+        List<T> collectedExperiences = new List<T>();
 
-        installedGames =
-            AddInstalledSteamApplicationsFromDirectoryToList<T>(installedGames, "S:\\SteamLibrary\\steamapps");
-        installedGames =
-            AddInstalledSteamApplicationsFromDirectoryToList<T>(installedGames, "C:\\Program Files (x86)\\Steam\\steamapps");
+        collectedExperiences =
+            AddInstalledSteamApplicationsFromDirectoryToList<T>(collectedExperiences, "S:\\SteamLibrary\\steamapps");
+        collectedExperiences =
+            AddInstalledSteamApplicationsFromDirectoryToList<T>(collectedExperiences, "C:\\Program Files (x86)\\Steam\\steamapps");
 
-        return installedGames;
+        return collectedExperiences;
     }
 
     private static List<T>? LoadAvailableGamesUsingInternetConnection<T>()
     {
         List<string> licenses = SteamConfig.GetAllLicenses();
+        bool containsConnectionTimeout = licenses.Any(s => s.Contains("Connection attempt timed out"));
         
         // this is a backup for when Steam Guard is still disabled on the account
-        if ((licenses.Count == 3 && (licenses[0].Equals("") || licenses[0].Equals("Enter email code: "))) || (licenses.Count == 1 && licenses[0].Equals("")))
+        if (containsConnectionTimeout || (licenses.Count == 3 && (licenses[0].Equals("") || licenses[0].Equals("Enter email code: "))) || (licenses.Count == 1 && licenses[0].Equals("")))
         {
-            LoadAvailableGamesUsingSteamCmd<T>();
-        }
-        else
-        {
-            installedGames = LoadAvailableGamesWithoutUsingInternetConnection<string>().ToList();
-            AvailableLicenses.AddRange(licenses);
+            Logger.WriteLog("LeadMePython.exe unable to connect, attempting SteamCMD backup collection.", Enums.LogLevel.Error);
+            return LoadAvailableGamesUsingSteamCmd<T>();
         }
 
+        installedGames = LoadAvailableGamesWithoutUsingInternetConnection<string>().ToList();
+        AvailableLicenses.AddRange(licenses);
         return FilterAvailableExperiences<T>();
     }
     
+    /// <summary>
+    /// Legacy - use SteamCMD to collect the currently installed experiences and their associated licenses.
+    /// </summary>
+    /// <typeparam name="T">The type of applications to collect.</typeparam>
+    /// <returns>A list of experiences</returns>
     private static List<T>? LoadAvailableGamesUsingSteamCmd<T>()
     {
         //Check if SteamCMD has been initialised

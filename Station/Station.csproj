@@ -59,12 +59,13 @@
     <Content Include="_config\config.txt">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
+    <Content Include="_embedded\LeadMePython.exe">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
     <Content Include="_logs\.gitkeep">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-      <Content Include="_embedded\LeadMePython.exe">
-          <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-      </Content>
+      
     <None Remove="Assets\openvr_offline.ico" />
     <None Remove="Assets\openvr_online.ico" />
     <None Remove="AudioDeviceCmdlets.dll" />
@@ -106,6 +107,7 @@
     <Content Include="Assets\Icons\openvr_offline.ico">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
+    <None Remove="_embedded\LeadMePython.exe" />
   </ItemGroup>
 
   <ItemGroup>
