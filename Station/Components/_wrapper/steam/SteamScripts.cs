@@ -223,7 +223,7 @@ public static class SteamScripts
         bool containsConnectionTimeout = licenses.Any(s => s.Contains("Connection attempt timed out"));
         
         // this is a backup for when Steam Guard is still disabled on the account
-        if (containsConnectionTimeout || (licenses.Count == 3 && (licenses[0].Equals("") || licenses[0].Equals("Enter email code: "))) || (licenses.Count == 1 && licenses[0].Equals("")))
+        if (containsConnectionTimeout || (licenses.Count == 3 && (licenses[0].Equals("") || licenses[0].Contains("Enter email code:"))) || (licenses.Count == 1 && licenses[0].Equals("")))
         {
             Logger.WriteLog("LeadMePython.exe unable to connect, attempting SteamCMD backup collection.", Enums.LogLevel.Error);
             try
