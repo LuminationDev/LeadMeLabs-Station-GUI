@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using LeadMeLabsLibrary;
 using LeadMeLabsLibrary.Station;
 using Newtonsoft.Json.Linq;
+using Sentry;
 using Station.Components._commandLine;
 using Station.Components._managers;
 using Station.Components._models;
@@ -222,9 +223,20 @@ public static class SteamScripts
         bool containsConnectionTimeout = licenses.Any(s => s.Contains("Connection attempt timed out"));
         
         // this is a backup for when Steam Guard is still disabled on the account
-        if (containsConnectionTimeout || (licenses.Count == 3 && (licenses[0].Equals("") || licenses[0].Equals("Enter email code: "))) || (licenses.Count == 1 && licenses[0].Equals("")))
+        if (containsConnectionTimeout || (licenses.Count == 3 && (licenses[0].Equals("") || licenses[0].Contains("Enter email code:"))) || (licenses.Count == 1 && licenses[0].Equals("")))
         {
             Logger.WriteLog("LeadMePython.exe unable to connect, attempting SteamCMD backup collection.", Enums.LogLevel.Error);
+            try
+            {
+                SentrySdk.CaptureMessage("Could not collect licenses via python. containsConnectionTimeout: " +
+                                         containsConnectionTimeout + ", licenses[0]: " + licenses[0] + " at: " +
+                                         (Environment.GetEnvironmentVariable("LabLocation",
+                                             EnvironmentVariableTarget.Process) ?? "Unknown"));
+            }
+            catch (Exception e)
+            {
+                SentrySdk.CaptureException(e);
+            }
             return LoadAvailableGamesUsingSteamCmd<T>();
         }
 
