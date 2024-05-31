@@ -227,7 +227,7 @@ public static class MainController
             IPAddress? ip = SystemInformation.GetIPAddress();
             if(ip == null || !ip.Address.Equals(localEndPoint.Address.Address))
             {
-                throw new Exception($"ReChecked IP address is not the same. Original: {localEndPoint.Address.Address}, ReChecked: {ip.Address}");
+                throw new Exception($"ReChecked IP address is not the same. Original: {localEndPoint.Address.Address}, ReChecked: {ip.Address} at site: " + (Environment.GetEnvironmentVariable("LabLocation", EnvironmentVariableTarget.Process) ?? "Unknown"));
             }
 
             Logger.WriteLog("Re-checking software details after 5 minutes of operation.", Enums.LogLevel.Normal);

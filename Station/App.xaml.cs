@@ -145,6 +145,8 @@ namespace Station
                     }
 
                     sentryEvent.ServerName = null; // Never send Server Name to Sentry
+                    sentryEvent.SetTag("lab_location", Environment.GetEnvironmentVariable("LabLocation",
+                        EnvironmentVariableTarget.Process) ?? "Unknown");
                     return sentryEvent;
                 });
             });
