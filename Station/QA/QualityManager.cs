@@ -17,6 +17,7 @@ using Station.Components._notification;
 using Station.Components._profiles;
 using Station.Components._utils;
 using Station.Components._utils._steamConfig;
+using Station.Components._wrapper.steam;
 using Station.MVC.Controller;
 using Station.QA.checks;
 
@@ -171,32 +172,21 @@ public static class QualityManager
                     MessageController.SendResponse("NUC", "QA", response.ToString());
                     return;
                 }
-            
-                // check if there is an unaccepted EULA
-                // first get app info from steamcmd to get the list of eulas
-                // then read the localconfig.vdf file to see what eulas are in the list
-                string? details = CommandLine.ExecuteSteamCommand($"+app_info_print {experienceId} +quit");
-                var data = new List<string>(details.Split("\n")).Where(line => line.Contains("_eula_")).Where(line => !line.Contains("http"));
-                List<string> neededEulas = new List<string>();
-                foreach (var eula in data)
-                {
-                    neededEulas.Add(eula.Split("\t")[eula.Split("\t").Length - 1].Trim('"'));
-                }
-            
-                List<string> acceptedEulas = SteamConfig.GetAcceptedEulasForAppId(experienceId);
-                bool allEulasAccepted = !neededEulas.Except(acceptedEulas).Any();
+                
                 string experienceLaunchResponse;
-                if (allEulasAccepted)
+
+                if (SteamWrapper.installedExperiencesWithUnacceptedEulas.Find(element =>
+                        element.StartsWith(experienceId)) != null)
+                {
+                    experienceLaunchResponse = "Found unaccepted EULAs, did not attempt to launch";
+                    responseData.Add("result", "warning");
+                }
+                else
                 {
                     WrapperManager.StopAProcess();
                     Task.Delay(5000).Wait();
                     experienceLaunchResponse = await WrapperManager.StartAProcess(experienceId);
                     responseData.Add("result", experienceLaunchResponse.ToLower().Equals("launching") ? "launching" : "failed");
-                }
-                else
-                {
-                    experienceLaunchResponse = "Found unaccepted EULAs, did not attempt to launch";
-                    responseData.Add("result", "warning");
                 }
             
                 responseData.Add("message", experienceLaunchResponse);
