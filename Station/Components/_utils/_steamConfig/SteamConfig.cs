@@ -216,23 +216,31 @@ public class SteamConfig
             return new List<string>();
         }
 
-
         List<string> acceptedEulas = new List<string>();
         try
         {
             string[] lines = File.ReadAllLines(fileLocation);
             for (int i = 0; i < lines.Length; i++)
             {
-                if (lines[i].Contains("eula"))
+                try
                 {
-                    // The line will look like the below
-                    // 348250_eula_0        "0"
-                    // ^ Eula name           ^ Eula version
-                    string[] eulaDetails = lines[i].Trim('\t').Trim('\"').Split("\t");
-                    string eulaName = eulaDetails[0].Trim('\"');
-                    string appId = eulaName.Split('_')[0];
-                    string eulaVersion = eulaDetails[2].Trim('\"');
-                    acceptedEulas.Add($"{appId}:{eulaName}:{eulaVersion}");
+                    if (lines[i].Contains("eula"))
+                    {
+                        // The line will look like the below
+                        // 348250_eula_0        "0"
+                        // ^ Eula name           ^ Eula version
+                        string[] eulaDetails = lines[i].Trim('\t').Trim('\"').Split("\t");
+                        string eulaName = eulaDetails[0].Trim('\"');
+                        string appId = eulaName.Split('_')[0];
+                        string eulaVersion = eulaDetails[2].Trim('\"');
+                        acceptedEulas.Add($"{appId}:{eulaName}:{eulaVersion}");
+                    }
+                }
+                catch (Exception e)
+                {
+                    Logger.WriteLog($"GetAllAcceptedEulas - Sentry Exception: {e}, for: " + lines[i], Enums.LogLevel.Error);
+                    SentrySdk.CaptureException(e);
+                    SentrySdk.CaptureMessage("EULA processing threw an error for: " + lines[i]);
                 }
             }
         }
