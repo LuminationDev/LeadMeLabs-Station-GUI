@@ -7,7 +7,7 @@
 		<Nullable>enable</Nullable>
 		<ApplicationIcon>./Assets/Icons/tray_neutral.ico</ApplicationIcon>
 		<Configurations>Debug;Release;DevDebug;DevRelease</Configurations>
-		<Version>1.2.1</Version>
+		<Version>1.2.2</Version>
     <SelfContained>false</SelfContained>
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
     <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
@@ -56,12 +56,13 @@
     <Content Include="_config\config.txt">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
+    <Content Include="_embedded\LeadMePython.exe">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
     <Content Include="_logs\.gitkeep">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-      <Content Include="_embedded\LeadMePython.exe">
-          <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-      </Content>
+      
     <None Remove="Assets\openvr_offline.ico" />
     <None Remove="Assets\openvr_online.ico" />
     <None Remove="AudioDeviceCmdlets.dll" />
@@ -160,6 +161,7 @@
     <Content Include="Assets\Icons\log_reset.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+    <None Remove="_embedded\LeadMePython.exe" />
   </ItemGroup>
 
   <ItemGroup>

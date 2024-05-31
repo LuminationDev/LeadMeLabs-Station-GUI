@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using LeadMeLabsLibrary;
 using LeadMeLabsLibrary.Station;
 using Newtonsoft.Json.Linq;
+using Sentry;
 using Station.Components._commandLine;
 using Station.Components._managers;
 using Station.Components._models;
@@ -206,34 +207,49 @@ public static class SteamScripts
 
     private static List<T> LoadAvailableGamesWithoutUsingInternetConnection<T>()
     {
-        List<T> installedGames = new List<T>();
+        List<T> collectedExperiences = new List<T>();
 
-        installedGames =
-            AddInstalledSteamApplicationsFromDirectoryToList<T>(installedGames, "S:\\SteamLibrary\\steamapps");
-        installedGames =
-            AddInstalledSteamApplicationsFromDirectoryToList<T>(installedGames, "C:\\Program Files (x86)\\Steam\\steamapps");
+        collectedExperiences =
+            AddInstalledSteamApplicationsFromDirectoryToList<T>(collectedExperiences, "S:\\SteamLibrary\\steamapps");
+        collectedExperiences =
+            AddInstalledSteamApplicationsFromDirectoryToList<T>(collectedExperiences, "C:\\Program Files (x86)\\Steam\\steamapps");
 
-        return installedGames;
+        return collectedExperiences;
     }
 
     private static List<T>? LoadAvailableGamesUsingInternetConnection<T>()
     {
         List<string> licenses = SteamConfig.GetAllLicenses();
+        bool containsConnectionTimeout = licenses.Any(s => s.Contains("Connection attempt timed out"));
         
         // this is a backup for when Steam Guard is still disabled on the account
-        if ((licenses.Count == 3 && (licenses[0].Equals("") || licenses[0].Equals("Enter email code: "))) || (licenses.Count == 1 && licenses[0].Equals("")))
+        if (containsConnectionTimeout || (licenses.Count == 3 && (licenses[0].Equals("") || licenses[0].Contains("Enter email code:"))) || (licenses.Count == 1 && licenses[0].Equals("")))
         {
-            LoadAvailableGamesUsingSteamCmd<T>();
-        }
-        else
-        {
-            installedGames = LoadAvailableGamesWithoutUsingInternetConnection<string>().ToList();
-            AvailableLicenses.AddRange(licenses);
+            Logger.WriteLog("LeadMePython.exe unable to connect, attempting SteamCMD backup collection.", Enums.LogLevel.Error);
+            try
+            {
+                SentrySdk.CaptureMessage("Could not collect licenses via python. containsConnectionTimeout: " +
+                                         containsConnectionTimeout + ", licenses[0]: " + licenses[0] + " at: " +
+                                         (Environment.GetEnvironmentVariable("LabLocation",
+                                             EnvironmentVariableTarget.Process) ?? "Unknown"));
+            }
+            catch (Exception e)
+            {
+                SentrySdk.CaptureException(e);
+            }
+            return LoadAvailableGamesUsingSteamCmd<T>();
         }
 
+        installedGames = LoadAvailableGamesWithoutUsingInternetConnection<string>().ToList();
+        AvailableLicenses.AddRange(licenses);
         return FilterAvailableExperiences<T>();
     }
     
+    /// <summary>
+    /// Legacy - use SteamCMD to collect the currently installed experiences and their associated licenses.
+    /// </summary>
+    /// <typeparam name="T">The type of applications to collect.</typeparam>
+    /// <returns>A list of experiences</returns>
     private static List<T>? LoadAvailableGamesUsingSteamCmd<T>()
     {
         //Check if SteamCMD has been initialised
