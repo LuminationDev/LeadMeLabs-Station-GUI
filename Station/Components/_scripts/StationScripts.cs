@@ -163,7 +163,12 @@ public static class StationScripts
         tokenSource = new CancellationTokenSource();
         var timer = new System.Timers.Timer(cancelTime);
 
-        void timerElapsed(object? obj, ElapsedEventArgs args)
+        timer.Elapsed += TimerElapsed;
+        timer.Enabled = true;
+        timer.AutoReset = false;
+        return;
+
+        void TimerElapsed(object? obj, ElapsedEventArgs args)
         {
             if (tokenSource is null) return;
             if (tokenSource.IsCancellationRequested) return;
@@ -190,10 +195,6 @@ public static class StationScripts
                 StateController.UpdateStatusBunch(stateValues);
             }
         }
-
-        timer.Elapsed += timerElapsed;
-        timer.Enabled = true;
-        timer.AutoReset = false;
     }
 
     /// <summary>
