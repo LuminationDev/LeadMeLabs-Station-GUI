@@ -4,10 +4,12 @@ using System.Threading.Tasks;
 using LeadMeLabsLibrary;
 using Newtonsoft.Json.Linq;
 using Station.Components._commandLine;
+using Station.Components._legacy;
 using Station.Components._managers;
 using Station.Components._notification;
 using Station.Components._overlay;
 using Station.Components._profiles;
+using Station.Components._version;
 using Station.MVC.Controller;
 
 namespace Station.Components._utils;
@@ -112,7 +114,14 @@ public static class ModeTracker
         
         //Update the status
         SessionController.CurrentState = "Idle Mode";
-        MessageController.SendResponse("Android", "Station", "SetValue:status:Idle");
+        if (VersionHandler.NucVersion < LeadMeVersion.StateHandler)
+        {
+            LegacySetValue.SimpleSetValue("status", "Idle");
+        }
+        else
+        {
+            StateController.UpdateStateValue("status", "Idle");
+        }
         
         // TODO - Enable this when we start using idle mode
         // MessageController.SendResponse("NUC", "Analytics", "EnterIdleMode");
@@ -132,7 +141,14 @@ public static class ModeTracker
         
         //Update the status
         SessionController.CurrentState = "Exiting Idle Mode";
-        MessageController.SendResponse("Android", "Station", "SetValue:status:On");
+        if (VersionHandler.NucVersion < LeadMeVersion.StateHandler)
+        {
+            LegacySetValue.SimpleSetValue("status", "on");
+        }
+        else
+        {
+            StateController.UpdateStateValue("status", "On");
+        }
 
         if (Helper.GetStationMode().Equals(Helper.STATION_MODE_VR))
         {

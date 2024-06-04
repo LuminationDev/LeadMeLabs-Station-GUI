@@ -9,6 +9,7 @@ using Station.Components._models;
 using Station.Components._notification;
 using Station.Components._profiles;
 using Station.Components._utils;
+using Station.Components._version;
 using Station.MVC.Controller;
 using Station.QA;
 
@@ -52,6 +53,11 @@ public class ScriptThread
 
         switch (_actionNamespace)
         {
+            case "Version":
+                //Update the MainController's version
+                VersionHandler.SetVersion(_additionalData);
+                break;
+            
             case "MessageType":
                 if (_additionalData.Contains("Json"))
                 {
@@ -94,18 +100,35 @@ public class ScriptThread
         if (additionalData == null) return;
         if (!additionalData.Contains("Connect")) return;
         
+        //Send the version number before anything else so the NUC knows how to handle the Station
+        VersionHandler.Connect();
+        
+        if (VersionHandler.NucVersion < LeadMeVersion.StateHandler)
+        {
+            LegacySetValue.HandleConnection(_source);
+            return;
+        }
+        
+        // Update the state all at once
+        Dictionary<string, object> stateValues = new()
+        {
+            { "status", "On" },
+            { "state", SessionController.CurrentState },
+            { "gameName", "" },
+            { "gameId", "" }
+        };
+        
         // Only send the headset if is a vr profile Station
         // Safe cast for potential vr profile
         VrProfile? vrProfile = Profile.CastToType<VrProfile>(SessionController.StationProfile);
         if (vrProfile?.VrHeadset != null)
         {
-            MessageController.SendResponse(_source, "Station", $"SetValue:headsetType:{Environment.GetEnvironmentVariable("HeadsetType", EnvironmentVariableTarget.Process)}");
+            stateValues.Add("headsetType", Environment.GetEnvironmentVariable("HeadsetType", EnvironmentVariableTarget.Process) ?? "Unknown");
         }
-            
-        MessageController.SendResponse(_source, "Station", "SetValue:status:On");
-        MessageController.SendResponse(_source, "Station", $"SetValue:state:{SessionController.CurrentState}");
-        MessageController.SendResponse(_source, "Station", "SetValue:gameName:");
-        MessageController.SendResponse("Android", "Station", "SetValue:gameId:");
+
+        // Update all the values at once
+        StateController.UpdateStatusBunch(stateValues);
+        
         AudioManager.Initialise();
         VideoManager.Initialise();
     }

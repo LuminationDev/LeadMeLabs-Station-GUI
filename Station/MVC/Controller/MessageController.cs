@@ -1,11 +1,14 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Net;
 using System.Threading;
 using LeadMeLabsLibrary;
+using Station.Components._legacy;
 using Station.Components._network;
 using Station.Components._profiles;
 using Station.Components._scripts;
 using Station.Components._utils;
+using Station.Components._version;
 
 namespace Station.MVC.Controller;
 
@@ -16,17 +19,30 @@ public static class MessageController
     /// </summary>
     public static void InitialStartUp()
     {
+        if (VersionHandler.NucVersion < LeadMeVersion.StateHandler)
+        {
+            Console.WriteLine("Legacy connection method");
+            LegacySetValue.InitialStartUp();
+            return;
+        }
+        
+        Dictionary<string, object> stateValues = new()
+        {
+            { "status", "On" },
+            { "gameName", "" },
+            { "gameId", "" }
+        };
+        
         // Only send the headset if is a vr profile Station
         // Safe cast for potential vr profile
         VrProfile? vrProfile = Profile.CastToType<VrProfile>(SessionController.StationProfile);
         if (vrProfile?.VrHeadset != null)
         {
-            SendResponse("NUC", "Station", $"SetValue:headsetType:{Environment.GetEnvironmentVariable("HeadsetType", EnvironmentVariableTarget.Process)}");
+            stateValues.Add("headsetType", Environment.GetEnvironmentVariable("HeadsetType", EnvironmentVariableTarget.Process) ?? "Unknown");
         }
         
-        SendResponse("NUC", "Station", "SetValue:status:On");
-        SendResponse("NUC", "Station", "SetValue:gameName:");
-        SendResponse("Android", "Station", "SetValue:gameId:");
+        // Update all the values at once
+        StateController.UpdateStatusBunch(stateValues);
     }
     
     /// <summary>

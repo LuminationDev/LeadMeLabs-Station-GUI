@@ -5,10 +5,12 @@ using LeadMeLabsLibrary;
 using Newtonsoft.Json.Linq;
 using Station.Components._commandLine;
 using Station.Components._interfaces;
+using Station.Components._legacy;
 using Station.Components._managers;
 using Station.Components._models;
 using Station.Components._notification;
 using Station.Components._utils;
+using Station.Components._version;
 using Station.MVC.Controller;
 using Station.QA;
 
@@ -125,16 +127,76 @@ public class Statuses
     /// <summary>
     /// Event handler method called when the value changes.
     /// </summary>
-    /// <typeparam name="T">The type of the value that changed.</typeparam>
     /// <param name="sender">The object that triggered the event.</param>
     /// <param name="e">Event arguments containing information about the value change.</param>
     public void HandleValueChanged(object? sender, GenericEventArgs<string> e)
     {
         // Code to execute when the value changes.
-        MessageController.SendResponse("Android", "Station", $"SetValue:deviceStatus:{e.Data}");
-        
-        //Backwards compat
-        MessageController.SendResponse("Android", "Station", $"DeviceStatus:{e.Data}");
+        if (VersionHandler.NucVersion < LeadMeVersion.StateHandler)
+        {
+            LegacySetValue.SimpleSetValue("deviceStatus", e.Data);
+        }
+        else
+        {
+            Console.WriteLine(e.Data);
+            //TODO check that the following works
+            
+            string[] keyValue = e.Data.Split(":", 4);
+            switch (keyValue[0])
+            {
+                case "Headset":
+                    if (keyValue[2].Equals("tracking"))
+                    {
+                        StateController.UpdateStateValue(
+                            keyValue[1].Equals("OpenVR") ? "openVRHeadsetTracking" : "thirdPartyHeadsetTracking",
+                            keyValue[3]);
+                    }
+                    break;
+            
+                case "Controller":
+                    switch (keyValue[2])
+                    {
+                        case "tracking":
+                            switch (keyValue[1])
+                            {
+                                case "Left":
+                                    StateController.UpdateStateValue("leftControllerTracking", keyValue[3]);
+                                    break;
+                                case "Right":
+                                    StateController.UpdateStateValue("rightControllerTracking", keyValue[3]);
+                                    break;
+                            }
+
+                            break;
+                        case "battery":
+                        {
+                            int batteryLevel = int.Parse(keyValue[3]);
+                            switch (keyValue[1])
+                            {
+                                case "Left":
+                                    StateController.UpdateStateValue("leftControllerBattery", keyValue[3]);
+                                    break;
+                                case "Right":
+                                    StateController.UpdateStateValue("rightControllerBattery", keyValue[3]);
+                                    break;
+                            }
+
+                            break;
+                        }
+                    }
+                    break;
+            
+                case "BaseStation":
+                    Dictionary<string, object> stateValues = new()
+                    {
+                        { "baseStationsActive", int.Parse(keyValue[1]) },
+                        { "baseStationsTotal", int.Parse(keyValue[2]) }
+                    };
+                    
+                    StateController.UpdateStatusBunch(stateValues);
+                    break;
+            }
+        }
     }
 
     private bool _headsetFirmwareStatus = false;
@@ -331,39 +393,68 @@ public class Statuses
     /// </summary>
     public void QueryStatuses()
     {
-        //Headset
-        MessageController.SendResponse("Android", "Station", $"SetValue:deviceStatus:Headset:OpenVR:tracking:{OpenVRStatus.ToString()}");
-        MessageController.SendResponse("Android", "Station", $"SetValue:deviceStatus:Headset:Vive:tracking:{SoftwareStatus.ToString()}");
-        
-        //Backwards compat
-        MessageController.SendResponse("Android", "Station", $"DeviceStatus:Headset:OpenVR:tracking:{OpenVRStatus.ToString()}");
-        MessageController.SendResponse("Android", "Station", $"DeviceStatus:Headset:Vive:tracking:{SoftwareStatus.ToString()}");
-
-        //Controllers
-        foreach (var vrController in Controllers)
+        // Code to execute when the value changes.
+        if (VersionHandler.NucVersion < LeadMeVersion.StateHandler)
         {
-            //Update the tablet
-            MessageController.SendResponse("Android", "Station", $"SetValue:deviceStatus:Controller:{vrController.Value.Role.ToString()}:tracking:{vrController.Value.Tracking.ToString()}");
-            MessageController.SendResponse("Android", "Station", $"SetValue:deviceStatus:Controller:{vrController.Value.Role.ToString()}:battery:{vrController.Value.Battery}");
-            
-            //Backwards compat
-            MessageController.SendResponse("Android", "Station", $"DeviceStatus:Controller:{vrController.Value.Role.ToString()}:tracking:{vrController.Value.Tracking.ToString()}");
-            MessageController.SendResponse("Android", "Station", $"DeviceStatus:Controller:{vrController.Value.Role.ToString()}:battery:{vrController.Value.Battery}");
-        }
+            //Headset
+            LegacySetValue.SimpleSetValue("deviceStatus", $"Headset:OpenVR:tracking:{OpenVRStatus.ToString()}");
+            LegacySetValue.SimpleSetValue("deviceStatus", $"Headset:Vive:tracking:{SoftwareStatus.ToString()}");
 
-        //Base stations
-        int active = 0;
-        foreach (var vrBaseStation in baseStations)
-        {
-            if (vrBaseStation.Value.Tracking == DeviceStatus.Connected)
+            //Controllers
+            foreach (var vrController in Controllers)
             {
-                active++;
+                //Update the tablet
+                LegacySetValue.SimpleSetValue("deviceStatus", $"Controller:{vrController.Value.Role.ToString()}:tracking:{vrController.Value.Tracking.ToString()}");
+                LegacySetValue.SimpleSetValue("deviceStatus", $"Controller:{vrController.Value.Role.ToString()}:battery:{vrController.Value.Battery}");
             }
+
+            //Base stations
+            int active = 0;
+            foreach (var vrBaseStation in baseStations)
+            {
+                if (vrBaseStation.Value.Tracking == DeviceStatus.Connected)
+                {
+                    active++;
+                }
+            }
+            LegacySetValue.SimpleSetValue("deviceStatus", $"BaseStation:{active}:{baseStations.Count}");
         }
-        MessageController.SendResponse("Android", "Station", $"SetValue:deviceStatus:BaseStation:{active}:{baseStations.Count}");
-        
-        //Backwards compat
-        MessageController.SendResponse("Android", "Station", $"DeviceStatus:BaseStation:{active}:{baseStations.Count}");
+        else
+        {
+            Dictionary<string, object> stateValues = new()
+            {
+                {"openVRHeadsetTracking", OpenVRStatus.ToString()},
+                {"thirdPartyHeadsetTracking", SoftwareStatus.ToString()},
+            };
+
+            foreach (var vrController in Controllers)
+            {
+                switch (vrController.Value.Role.ToString())
+                {
+                    case "left":
+                        stateValues.Add("leftControllerBattery", vrController.Value.Battery);
+                        stateValues.Add("leftControllerTracking", vrController.Value.Tracking.ToString());
+                        break;
+                    case "right":
+                        stateValues.Add("rightControllerBattery", vrController.Value.Battery);
+                        stateValues.Add("rightControllerTracking", vrController.Value.Tracking.ToString());
+                        break;
+                }
+            }
+            
+            int active = 0;
+            foreach (var vrBaseStation in baseStations)
+            {
+                if (vrBaseStation.Value.Tracking == DeviceStatus.Connected)
+                {
+                    active++;
+                }
+            }
+            stateValues.Add("baseStationsActive", active);
+            stateValues.Add("baseStationsTotal", baseStations.Count);
+
+            StateController.UpdateStatusBunch(stateValues);
+        }
     }
 
     public JObject GetStatusesJson()

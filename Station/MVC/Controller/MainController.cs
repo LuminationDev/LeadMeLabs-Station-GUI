@@ -14,6 +14,7 @@ using Station.Components._openvr;
 using Station.Components._profiles;
 using Station.Components._utils;
 using Station.Components._utils._steamConfig;
+using Station.Components._version;
 using Station.Components._wrapper.steam;
 using Station.QA;
 
@@ -69,7 +70,8 @@ public static class MainController
     public static string? macAddress;
     private static string? versionNumber;
     private static Timer? variableCheck;
-
+    
+    //TODO remove the following as they are no longer required?
     public static bool isNucUtf8 = true;
     public static bool isNucJsonEnabled = false;
 
@@ -142,6 +144,8 @@ public static class MainController
             }
 
             //Cannot be any higher - encryption key does not exist before the DotEnv.Load()
+            VersionHandler.Connect();
+            
             JObject message = new JObject
             {
                 { "action", "SoftwareState" },

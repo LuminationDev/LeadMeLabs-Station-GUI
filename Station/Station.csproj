@@ -137,10 +137,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Components\" />
-  </ItemGroup>
-
-  <ItemGroup>
     <Page Update="Components\_overlay\Overlay.xaml">
       <Generator>MSBuild:Compile</Generator>
     </Page>

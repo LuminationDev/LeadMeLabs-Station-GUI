@@ -1,14 +1,17 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using LeadMeLabsLibrary;
 using Newtonsoft.Json.Linq;
 using Station.Components._interfaces;
+using Station.Components._legacy;
 using Station.Components._managers;
 using Station.Components._notification;
 using Station.Components._profiles;
 using Station.Components._scripts;
 using Station.Components._utils;
+using Station.Components._version;
 using Station.Components._wrapper.vive;
 
 namespace Station.MVC.Controller;
@@ -41,7 +44,14 @@ public static class SessionController
         set
         {
             currentState = value;
-            MessageController.SendResponse("Android", "Station", $"SetValue:state:{value}");
+            if (VersionHandler.NucVersion < LeadMeVersion.StateHandler)
+            {
+                LegacySetValue.SimpleSetValue("state", value);
+            }
+            else
+            {
+                StateController.UpdateStateValue("state", value);
+            }
         }
     }
 
@@ -211,17 +221,40 @@ public static class SessionController
                     string? appId = (string?)info.GetValue("appId");
                     string? wrapper = (string?)info.GetValue("wrapper");
                     
-                    MessageController.SendResponse("Android", "Station", $"SetValue:gameName:{name}");
-
-                    if (appId != null && wrapper != null)
+                    if (VersionHandler.NucVersion < LeadMeVersion.StateHandler)
                     {
-                        MessageController.SendResponse("Android", "Station", $"SetValue:gameId:{appId}");
-                        MessageController.SendResponse("Android", "Station", $"SetValue:gameType:{wrapper}");
+                        LegacySetValue.SimpleSetValue("gameName", name);
+
+                        if (appId != null && wrapper != null)
+                        {
+                            LegacySetValue.SimpleSetValue("gameId", appId);
+                            LegacySetValue.SimpleSetValue("gameType", wrapper);
+                        }
+                        else
+                        {
+                            LegacySetValue.SimpleSetValue("gameId", "");
+                            LegacySetValue.SimpleSetValue("gameType", "");
+                        }
                     }
                     else
                     {
-                        MessageController.SendResponse("Android", "Station", "SetValue:gameId:");
-                        MessageController.SendResponse("Android", "Station", "SetValue:gameType:");
+                        Dictionary<string, object> stateValues = new()
+                        {
+                            { "gameName", name ?? "" }
+                        };
+                        
+                        if (appId != null && wrapper != null)
+                        {
+                            stateValues.Add("gameId", appId);
+                            stateValues.Add("gameType", wrapper);
+                        }
+                        else
+                        {
+                            stateValues.Add("gameId", "");
+                            stateValues.Add("gameType", "");
+                        }
+                        
+                        StateController.UpdateStatusBunch(stateValues);
                     }
                     break;
 
@@ -231,9 +264,20 @@ public static class SessionController
                     break;
 
                 case "ApplicationClosed":
-                    MessageController.SendResponse("Android", "Station", "SetValue:gameName:");
-                    MessageController.SendResponse("Android", "Station", "SetValue:gameId:");
-                    MessageController.SendResponse("Android", "Station", "SetValue:gameType:");
+                    if (VersionHandler.NucVersion < LeadMeVersion.StateHandler)
+                    {
+                        LegacySetValue.ApplicationClosed();
+                    }
+                    else
+                    {
+                        Dictionary<string, object> stateValues = new()
+                        {
+                            { "gameName", "" },
+                            { "gameId", "" },
+                            { "gameType", "" }
+                        };
+                        StateController.UpdateStatusBunch(stateValues);
+                    }
                     break;
 
                 case "StationError":

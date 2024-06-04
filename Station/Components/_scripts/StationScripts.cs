@@ -1,10 +1,13 @@
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Timers;
 using LeadMeLabsLibrary;
 using Station.Components._commandLine;
+using Station.Components._legacy;
 using Station.Components._overlay;
 using Station.Components._utils;
+using Station.Components._version;
 using Station.MVC.Controller;
 
 namespace Station.Components._scripts;
@@ -45,8 +48,21 @@ public static class StationScripts
                 if (isValidUrl)
                 {
                     CommandLine.ExecuteBrowserCommand(url);
-                    MessageController.SendResponse(source, "Station", "SetValue:gameName:" + url);
-                    MessageController.SendResponse("Android", "Station", "SetValue:gameId:");
+                    
+                    if (VersionHandler.NucVersion < LeadMeVersion.StateHandler)
+                    {
+                        LegacySetValue.SimpleSetValue("gameName", url);
+                        LegacySetValue.SimpleSetValue("gameId", "");
+                    }
+                    else
+                    {
+                        Dictionary<string, object> stateValues = new()
+                        {
+                            { "gameName", url },
+                            { "gameId", "" }
+                        };
+                        StateController.UpdateStatusBunch(stateValues);
+                    }
                 }
             }
         }
@@ -95,11 +111,25 @@ public static class StationScripts
     /// <returns></returns>
     public static void RestartVRSession()
     {
-        MessageController.SendResponse("Android", "Station", "SetValue:status:On");
+        if (VersionHandler.NucVersion < LeadMeVersion.StateHandler)
+        {
+            LegacySetValue.SimpleSetValue("status", "On");
+        }
+        else
+        {
+            StateController.UpdateStateValue("status", "On");
+        }
         if (!processing)
         {
             processing = true;
-            MessageController.SendResponse("Android", "Station", "SetValue:status:On");
+            if (VersionHandler.NucVersion < LeadMeVersion.StateHandler)
+            {
+                LegacySetValue.SimpleSetValue("status", "On");
+            }
+            else
+            {
+                StateController.UpdateStateValue("status", "On");
+            }
             MainController.wrapperManager?.ActionHandler("Session", "Restart");
         }
         else
@@ -142,10 +172,23 @@ public static class StationScripts
 
             //Shut down the server first, so the NUC cannot send off any more Pings
             MainController.StopServer();
-            MessageController.SendResponse(source, "Station", "SetValue:status:Off");
-            MessageController.SendResponse(source, "Station", "SetValue:state:");
-            MessageController.SendResponse(source, "Station", "SetValue:gameName:");
-            MessageController.SendResponse(source, "Station", "SetValue:gameId:");
+            
+            if (VersionHandler.NucVersion < LeadMeVersion.StateHandler)
+            {
+                LegacySetValue.StationOff("");
+            }
+            else
+            {
+                Dictionary<string, object> stateValues = new()
+                {
+                    { "status", "Off" },
+                    { "state", "" },
+                    { "gameName", "" },
+                    { "gameId", "" }
+                };
+                
+                StateController.UpdateStatusBunch(stateValues);
+            }
         }
 
         timer.Elapsed += timerElapsed;
@@ -158,8 +201,18 @@ public static class StationScripts
     /// </summary>
     public static void EndVRSession()
     {
-        MessageController.SendResponse("Android", "Station", "SetValue:status:On");
         MainController.wrapperManager?.ActionHandler("Session", "Stop");
+        //Old set value method as this goes directly to the tablet through the NUC - nothing is saved temporarily
         MessageController.SendResponse("Android", "Station", "SetValue:session:Ended");
+        
+        if (VersionHandler.NucVersion < LeadMeVersion.StateHandler)
+        {
+            LegacySetValue.SimpleSetValue("status", "On");
+            
+        }
+        else
+        {
+            StateController.UpdateStateValue("status", "On");
+        }
     }
 }

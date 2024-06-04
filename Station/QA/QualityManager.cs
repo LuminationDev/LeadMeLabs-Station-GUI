@@ -19,6 +19,7 @@ using Station.Components._utils;
 using Station.Components._utils._steamConfig;
 using Station.MVC.Controller;
 using Station.QA.checks;
+using Version = System.Version;
 
 namespace Station.QA;
 

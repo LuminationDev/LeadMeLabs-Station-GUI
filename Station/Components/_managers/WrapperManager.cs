@@ -10,6 +10,7 @@ using Newtonsoft.Json.Linq;
 using Sentry;
 using Station.Components._commandLine;
 using Station.Components._interfaces;
+using Station.Components._legacy;
 using Station.Components._models;
 using Station.Components._monitoring;
 using Station.Components._notification;
@@ -17,6 +18,7 @@ using Station.Components._overlay;
 using Station.Components._profiles;
 using Station.Components._utils;
 using Station.Components._utils._steamConfig;
+using Station.Components._version;
 using Station.Components._wrapper.custom;
 using Station.Components._wrapper.embedded;
 using Station.Components._wrapper.@internal;
@@ -142,6 +144,7 @@ public class WrapperManager
         switch (tokens[0])
         {
             case "details":
+                //Old set value method as this goes directly to the tablet through the NUC - nothing is saved temporarily 
                 MessageController.SendResponse("Android", "Station", $"SetValue:details:{CheckExperienceName(tokens[1])}");
                 break;
             
@@ -299,19 +302,25 @@ public class WrapperManager
 
         // Send the JSON message here as the PassStationMessage method splits the supplied message by ','
         if (!messageType.Equals("ApplicationJson")) return;
-        MessageController.SendResponse("Android", "Station",
-            $"SetValue:installedJsonApplications:{convertedApplications}");
-
-        if (SteamScripts.blockedByFamilyMode.Count == 0 && SteamScripts.noLicenses.Count == 0) return;
-
+        
         JObject blockedApplications = new JObject
         {
             { "noLicense", JsonConvert.SerializeObject(SteamScripts.noLicenses) },
             { "blockedFamilyMode", JsonConvert.SerializeObject(SteamScripts.blockedByFamilyMode) }
         };
+        
+        if (VersionHandler.NucVersion < LeadMeVersion.StateHandler)
+        {
+            LegacySetValue.SimpleSetValue("installedJsonApplications", convertedApplications.ToString());
+            LegacySetValue.SimpleSetValue("blockedApplications", blockedApplications.ToString());
+        }
 
-        MessageController.SendResponse("Android", "Station",
-            $"SetValue:blockedApplications:{blockedApplications}");
+        Dictionary<string, object> stateValues = new()
+        {
+            { "installedJsonApplications", convertedApplications },
+            { "blockedApplications", blockedApplications },
+        };
+        StateController.UpdateListBunch(stateValues);
     }
     
     /// <summary>

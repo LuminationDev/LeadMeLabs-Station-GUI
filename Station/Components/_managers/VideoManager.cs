@@ -14,9 +14,11 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Sentry;
 using Station.Components._commandLine;
+using Station.Components._legacy;
 using Station.Components._models;
 using Station.Components._network;
 using Station.Components._notification;
+using Station.Components._version;
 using Station.Converters;
 using Station.MVC.Controller;
 using InternalLogger = Station.Components._utils.Logger;
@@ -62,8 +64,14 @@ public static class VideoManager
             videoPlayerDetails = value;
             
             // Send a message to the tablet
-            string additionalData = $"SetValue:videoPlayerDetails:{videoPlayerDetails}";
-            MessageController.SendResponse("Android", "Station", additionalData);
+            if (VersionHandler.NucVersion < LeadMeVersion.StateHandler)
+            {
+                LegacySetValue.SimpleSetValue("videoPlayerDetails", videoPlayerDetails?.ToString() ?? "");
+            }
+            else
+            {
+                StateController.UpdateListsValue("videoPlayerDetails", videoPlayerDetails);
+            }
         }
         get => videoPlayerDetails;
     }
@@ -93,8 +101,14 @@ public static class VideoManager
             playbackTime = value;
             
             // Send a message to the tablet
-            string additionalData = $"SetValue:activeVideoPlaybackTime:{playbackTime}";
-            MessageController.SendResponse("Android", "Station", additionalData);
+            if (VersionHandler.NucVersion < LeadMeVersion.StateHandler)
+            {
+                LegacySetValue.SimpleSetValue("activeVideoPlaybackTime", playbackTime.ToString());
+            }
+            else
+            {
+                StateController.UpdateStateValue("activeVideoPlaybackTime", playbackTime);
+            }
         }
         get => playbackTime;
     }
@@ -124,22 +138,31 @@ public static class VideoManager
         {
             // Find the video in the VideoFiles dictionary
             Video? video = FindVideoBySource(value);
-            string additionalData;
             
             // Reset the video on the tablet
             if (video == null || activeVideo == video.id)
             {
                 activeVideo = "";
-                additionalData = $"SetValue:activeVideoFile:";
-                MessageController.SendResponse("NUC", "Station", additionalData);
+                if (VersionHandler.NucVersion < LeadMeVersion.StateHandler)
+                {
+                    LegacySetValue.SimpleSetValue("activeVideoFile", "");
+                }
+                else
+                {
+                    StateController.UpdateStateValue("activeVideoFile", "");
+                }
                 return;
             }
     
             activeVideo = video.id;
-            
-            // Send a message to the tablet
-            additionalData = $"SetValue:activeVideoFile:{activeVideo}";
-            MessageController.SendResponse("NUC", "Station", additionalData);
+            if (VersionHandler.NucVersion < LeadMeVersion.StateHandler)
+            {
+                LegacySetValue.SimpleSetValue("activeVideoFile", activeVideo);
+            }
+            else
+            {
+                StateController.UpdateStateValue("activeVideoFile", activeVideo);
+            }
         }
         get => activeVideo;
     }
@@ -170,8 +193,14 @@ public static class VideoManager
             };
             string json = JsonConvert.SerializeObject(videoArray, settings);
             JArray jsonObject = JArray.Parse(json);
-            string additionalData = $"SetValue:videoFiles:{jsonObject}";
-            MessageController.SendResponse("NUC", "Station", additionalData);
+            
+            if (VersionHandler.NucVersion < LeadMeVersion.StateHandler)
+            {
+                LegacySetValue.SimpleSetValue("videoFiles", jsonObject.ToString());
+            }
+
+            //Always update the list regardless of the version
+            StateController.UpdateListsValue("videoFiles", jsonObject);
         }
 
         new Thread(Collect).Start();
