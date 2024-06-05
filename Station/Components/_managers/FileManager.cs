@@ -48,8 +48,8 @@ public static class FileManager
             {
                 string json = JsonConvert.SerializeObject(LocalFiles, settings);
                 JObject jsonObject = JObject.Parse(json);
-                string additionalData = $"SetValue:localFiles:{jsonObject}";
-                MessageController.SendResponse("NUC", "Station", additionalData);
+                
+                StateController.UpdateListsValue("localFiles", jsonObject.ToString());
             }
         }
         
