@@ -20,6 +20,7 @@ using Station.Components._utils._steamConfig;
 using Station.Components._wrapper.steam;
 using Station.MVC.Controller;
 using Station.QA.checks;
+using Version = System.Version;
 
 namespace Station.QA;
 

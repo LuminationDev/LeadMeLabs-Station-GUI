@@ -33,8 +33,9 @@ public static class AudioManager
         set
         {
             if (ActiveAudioDevice == value) return;
-
+            
             activeAudioDevice = value;
+            StateController.UpdateStateValue("activeAudioDevice", activeAudioDevice);
             UpdateActiveDevice();
         }
         get => activeAudioDevice;
@@ -68,9 +69,8 @@ public static class AudioManager
             LocalAudioDevice[] audioArray = AudioDevices.Values.ToArray();
             string json = JsonConvert.SerializeObject(audioArray);
             JArray jsonObject = JArray.Parse(json);
-            string additionalData = $"SetValue:audioDevices:{jsonObject}";
-            MessageController.SendResponse("NUC", "Station", additionalData);
-
+            
+            StateController.UpdateListsValue("audioDevices", jsonObject.ToString());
             await GetCurrentAudioDevice();
         }
 
@@ -92,8 +92,7 @@ public static class AudioManager
             
             //Collect the currently active audio device and send to the NUC
             var result = obj.Properties["Name"]?.Value.ToString() ?? "";
-            string additionalData = $"SetValue:activeAudioDevice:{result}";
-            MessageController.SendResponse("NUC", "Station", additionalData);
+            StateController.UpdateStateValue("activeAudioDevice", result);
             UpdateActiveDevice();
         });
     }
@@ -105,11 +104,17 @@ public static class AudioManager
     {
         //Collect the current volume and send to the NUC
         string currentVolume = GetVolume().Result;
-        MessageController.SendResponse("NUC", "Station", "SetValue:volume:" + currentVolume);
 
         //Collect the current muted value and send to the NUC
         string isCurrentMuted = GetMuted().Result;
-        MessageController.SendResponse("NUC", "Station", "SetValue:muted:" + isCurrentMuted);
+        
+        Dictionary<string, object> stateValues = new()
+        {
+            { "volume", currentVolume },
+            { "muted", isCurrentMuted }
+        };
+        
+        StateController.UpdateStatusBunch(stateValues);
     }
 
     /// <summary>

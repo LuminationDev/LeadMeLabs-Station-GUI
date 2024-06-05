@@ -3,7 +3,6 @@ using System.Net;
 using System.Threading;
 using LeadMeLabsLibrary;
 using Station.Components._network;
-using Station.Components._profiles;
 using Station.Components._scripts;
 using Station.Components._utils;
 
@@ -11,24 +10,6 @@ namespace Station.MVC.Controller;
 
 public static class MessageController
 {
-    /// <summary>
-    /// On start up or Station address change send the status, steam list and the current volume to the NUC.
-    /// </summary>
-    public static void InitialStartUp()
-    {
-        // Only send the headset if is a vr profile Station
-        // Safe cast for potential vr profile
-        VrProfile? vrProfile = Profile.CastToType<VrProfile>(SessionController.StationProfile);
-        if (vrProfile?.VrHeadset != null)
-        {
-            SendResponse("NUC", "Station", $"SetValue:headsetType:{Environment.GetEnvironmentVariable("HeadsetType", EnvironmentVariableTarget.Process)}");
-        }
-        
-        SendResponse("NUC", "Station", "SetValue:status:On");
-        SendResponse("NUC", "Station", "SetValue:gameName:");
-        SendResponse("Android", "Station", "SetValue:gameId:");
-    }
-    
     /// <summary>
     /// Create a new script thread and start it, passing in the data collected from 
     /// the recently connected client.

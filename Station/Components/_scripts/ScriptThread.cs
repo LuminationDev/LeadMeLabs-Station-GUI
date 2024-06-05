@@ -7,8 +7,8 @@ using Station.Components._legacy;
 using Station.Components._managers;
 using Station.Components._models;
 using Station.Components._notification;
-using Station.Components._profiles;
 using Station.Components._utils;
+using Station.Components._version;
 using Station.MVC.Controller;
 using Station.QA;
 
@@ -52,6 +52,11 @@ public class ScriptThread
 
         switch (_actionNamespace)
         {
+            case "Version":
+                //Update the MainController's version
+                VersionHandler.SetVersion(_additionalData);
+                break;
+            
             case "MessageType":
                 if (_additionalData.Contains("Json"))
                 {
@@ -89,25 +94,19 @@ public class ScriptThread
         }
     }
 
+    /// <summary>
+    /// A NUC has sent the initial 'Connect' message, determine the NUCs version and initialise the audio and video
+    /// managers.
+    /// </summary>
+    /// <param name="additionalData">A string of the supplied message</param>
     private void HandleConnection(string? additionalData)
     {
         if (additionalData == null) return;
         if (!additionalData.Contains("Connect")) return;
         
-        // Only send the headset if is a vr profile Station
-        // Safe cast for potential vr profile
-        VrProfile? vrProfile = Profile.CastToType<VrProfile>(SessionController.StationProfile);
-        if (vrProfile?.VrHeadset != null)
-        {
-            MessageController.SendResponse(_source, "Station", $"SetValue:headsetType:{Environment.GetEnvironmentVariable("HeadsetType", EnvironmentVariableTarget.Process)}");
-        }
-            
-        MessageController.SendResponse(_source, "Station", "SetValue:status:On");
-        MessageController.SendResponse(_source, "Station", $"SetValue:state:{SessionController.CurrentState}");
-        MessageController.SendResponse(_source, "Station", "SetValue:gameName:");
-        MessageController.SendResponse("Android", "Station", "SetValue:gameId:");
-        AudioManager.Initialise();
-        VideoManager.Initialise();
+        //Send the version number before anything else so the NUC knows how to handle the Station
+        VersionHandler.Connect();
+        StateController.HandleConnection(_source);
     }
 
     private void HandleStation(string jObjectData)
