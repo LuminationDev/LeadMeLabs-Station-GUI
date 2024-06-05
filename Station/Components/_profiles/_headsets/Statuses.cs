@@ -170,7 +170,6 @@ public class Statuses
                             break;
                         case "battery":
                         {
-                            int batteryLevel = int.Parse(keyValue[3]);
                             switch (keyValue[1])
                             {
                                 case "Left":
