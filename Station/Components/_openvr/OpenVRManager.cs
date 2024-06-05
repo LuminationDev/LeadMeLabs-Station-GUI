@@ -6,6 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using LeadMeLabsLibrary;
 using Newtonsoft.Json.Linq;
+using Sentry;
 using Station.Components._commandLine;
 using Station.Components._interfaces;
 using Station.Components._managers;
@@ -362,46 +363,55 @@ public class OpenVrManager
                             $"manifests have been loaded", Enums.LogLevel.Normal);
             return false;
         }
-        
-        EVRApplicationError error = OpenVR.Applications.LaunchApplication(pchKey);
-        if (error == EVRApplicationError.None)
-        {
-            ScheduledTaskQueue.EnqueueTask(() =>
-            {
-                if (!(WrapperManager.currentWrapper?.LaunchFailedFromOpenVrTimeout() ?? false))
-                {
-                    WrapperManager.currentWrapper?.SetLaunchingExperience(false);
-                    return;
-                }
 
-                WrapperManager.currentWrapper.StopCurrentProcess();
-                UiUpdater.ResetUiDisplay();
-                
-                JObject message = new JObject
+        try
+        {
+            EVRApplicationError error = OpenVR.Applications.LaunchApplication(pchKey);
+            if (error == EVRApplicationError.None)
+            {
+                ScheduledTaskQueue.EnqueueTask(() =>
                 {
-                    { "action", "MessageToAndroid" },
-                    { "value", $"GameLaunchFailed:{WrapperManager.currentWrapper.GetLastExperience()?.Name}" }
-                };
-                SessionController.PassStationMessage(message);
-            
-                JObject response = new JObject { { "response", "ExperienceLaunchFailed" } };
-                JObject responseData = new JObject { { "experienceId", WrapperManager.currentWrapper.GetLastExperience()?.ID } };
-                response.Add("responseData", responseData);
+                    if (!(WrapperManager.currentWrapper?.LaunchFailedFromOpenVrTimeout() ?? false))
+                    {
+                        WrapperManager.currentWrapper?.SetLaunchingExperience(false);
+                        return;
+                    }
+
+                    WrapperManager.currentWrapper.StopCurrentProcess();
+                    UiUpdater.ResetUiDisplay();
                 
-                // close legacy mirror if open
-                if (CommandLine.GetProcessIdFromMainWindowTitle("Legacy Mirror") != null)
-                {
-                    CommandLine.ToggleSteamVrLegacyMirror();
-                }
-                WrapperManager.currentWrapper.SetLaunchingExperience(false);
+                    JObject message = new JObject
+                    {
+                        { "action", "MessageToAndroid" },
+                        { "value", $"GameLaunchFailed:{WrapperManager.currentWrapper.GetLastExperience()?.Name}" }
+                    };
+                    SessionController.PassStationMessage(message);
             
-                MessageController.SendResponse("NUC", "QA", response.ToString());
-            }, TimeSpan.FromSeconds(30));
+                    JObject response = new JObject { { "response", "ExperienceLaunchFailed" } };
+                    JObject responseData = new JObject { { "experienceId", WrapperManager.currentWrapper.GetLastExperience()?.ID } };
+                    response.Add("responseData", responseData);
+                
+                    // close legacy mirror if open
+                    if (CommandLine.GetProcessIdFromMainWindowTitle("Legacy Mirror") != null)
+                    {
+                        CommandLine.ToggleSteamVrLegacyMirror();
+                    }
+                    WrapperManager.currentWrapper.SetLaunchingExperience(false);
             
-            // Check if there are any confirmation windows associated with the experience
-            WrapperManager.PerformExperienceWindowConfirmations();
+                    MessageController.SendResponse("NUC", "QA", response.ToString());
+                }, TimeSpan.FromSeconds(30));
+            
+                // Check if there are any confirmation windows associated with the experience
+                WrapperManager.PerformExperienceWindowConfirmations();
+            }
+            return error == EVRApplicationError.None;
         }
-        return error == EVRApplicationError.None;
+        catch (Exception e)
+        {
+            SentrySdk.CaptureException(e);
+            Logger.WriteLog(e, Enums.LogLevel.Error);
+            return false;
+        }
     }
 
     /// <summary>

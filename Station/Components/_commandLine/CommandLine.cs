@@ -706,7 +706,7 @@ public static class CommandLine
 
     public static string? GetProcessIdFromMainWindowTitle(string mainWindowTitle)
     {
-        Logger.WriteLog("gps | where {$_.MainWindowTitle -Like \"*" + mainWindowTitle + "*\"} | select ID", Enums.LogLevel.Debug);
+        Logger.WriteLog("gps | where {$_.MainWindowTitle -Like \"*" + mainWindowTitle + "*\"} | select ID", Enums.LogLevel.Verbose);
 
         Process? cmd = SetupCommand(StationPowershell);
         if (cmd == null)
@@ -721,11 +721,11 @@ public static class CommandLine
 
         if (output == null)
         {
-            Logger.WriteLog($"No output recorded for {mainWindowTitle}", Enums.LogLevel.Debug);
+            Logger.WriteLog($"No output recorded for {mainWindowTitle}", Enums.LogLevel.Verbose);
             return null;
         }
 
-        Logger.WriteLog(output, Enums.LogLevel.Debug);
+        Logger.WriteLog(output, Enums.LogLevel.Verbose);
 
         string[] outputP = output.Split("\n");
 
@@ -733,7 +733,7 @@ public static class CommandLine
         int iterator = 0;
         while (iterator < outputP.Length)
         {
-            Logger.WriteLog($"Output line {iterator}: {outputP[iterator].Trim()}", Enums.LogLevel.Debug);
+            Logger.WriteLog($"Output line {iterator}: {outputP[iterator].Trim()}", Enums.LogLevel.Verbose);
 
             if (outputP[iterator].Trim().Equals("Id"))
             {
@@ -748,7 +748,7 @@ public static class CommandLine
             return null;
         }
 
-        Logger.WriteLog($"ID: {outputP[iterator + 2].Trim()}", Enums.LogLevel.Debug);
+        Logger.WriteLog($"ID: {outputP[iterator + 2].Trim()}", Enums.LogLevel.Verbose);
 
         return outputP[iterator + 2].Trim();
     }

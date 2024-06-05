@@ -302,11 +302,11 @@ public class WrapperManager
 
         // Send the JSON message here as the PassStationMessage method splits the supplied message by ','
         if (!messageType.Equals("ApplicationJson")) return;
-        
         JObject blockedApplications = new JObject
         {
             { "noLicense", JsonConvert.SerializeObject(SteamScripts.noLicenses) },
-            { "blockedFamilyMode", JsonConvert.SerializeObject(SteamScripts.blockedByFamilyMode) }
+            { "blockedFamilyMode", JsonConvert.SerializeObject(SteamScripts.blockedByFamilyMode) },
+            { "unacceptedEulas", JsonConvert.SerializeObject(SteamWrapper.installedExperiencesWithUnacceptedEulas) }
         };
         
         if (VersionHandler.NucVersion < LeadMeVersion.StateHandler)
@@ -496,6 +496,7 @@ public class WrapperManager
                 SessionController.StationProfile.MinimizeSoftware(1);
                 OverlayManager.ManualStop(90);
                 acceptingEulas = false;
+                WrapperManager.CollectAllApplications();
                 SessionController.StationProfile.StartSession();
             },
             TimeSpan.FromSeconds(((index + 2) * 1.5) + 3));
