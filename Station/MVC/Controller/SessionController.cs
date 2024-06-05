@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using LeadMeLabsLibrary;
@@ -42,7 +43,7 @@ public static class SessionController
         set
         {
             currentState = value;
-            MessageController.SendResponse("Android", "Station", $"SetValue:state:{value}");
+            StateController.UpdateStateValue("state", value);
             UiController.UpdateCurrentState(value); //Update the home page UI
         }
     }
@@ -204,7 +205,7 @@ public static class SessionController
                     if (value == null) return;
                     StationScripts.processing = bool.Parse(value);
                     break;
-                
+
                 case "ApplicationUpdate":
                     JObject? info = (JObject?)message.GetValue("info");
                     if (info == null) return;
@@ -213,19 +214,26 @@ public static class SessionController
                     string? appId = (string?)info.GetValue("appId");
                     string? wrapper = (string?)info.GetValue("wrapper");
                     
-                    MessageController.SendResponse("Android", "Station", $"SetValue:gameName:{name}");
+                    {
+                        Dictionary<string, object?> stateValues = new()
+                        {
+                            { "gameName", name ?? "" }
+                        };
+                        
+                        if (appId != null && wrapper != null)
+                        {
+                            stateValues.Add("gameId", appId);
+                            stateValues.Add("gameType", wrapper);
+                            //Update the ExperienceView UI
+                            MainViewModel.ViewModelManager.ExperiencesViewModel.UpdateExperience(appId, "status", "Running");
+                        }
+                        else
+                        {
+                            stateValues.Add("gameId", "");
+                            stateValues.Add("gameType", "");
+                        }
 
-                    if (appId != null && wrapper != null)
-                    {
-                        MessageController.SendResponse("Android", "Station", $"SetValue:gameId:{appId}");
-                        MessageController.SendResponse("Android", "Station", $"SetValue:gameType:{wrapper}");
-                        //Update the ExperienceView UI
-                        MainViewModel.ViewModelManager.ExperiencesViewModel.UpdateExperience(appId, "status", "Running");
-                    }
-                    else
-                    {
-                        MessageController.SendResponse("Android", "Station", "SetValue:gameId:");
-                        MessageController.SendResponse("Android", "Station", "SetValue:gameType:");
+                        StateController.UpdateStatusBunch(stateValues);
                     }
                     break;
 
@@ -235,12 +243,18 @@ public static class SessionController
                     break;
 
                 case "ApplicationClosed":
-                    MessageController.SendResponse("Android", "Station", "SetValue:gameName:");
-                    MessageController.SendResponse("Android", "Station", "SetValue:gameId:");
-                    MessageController.SendResponse("Android", "Station", "SetValue:gameType:");
-                    
-                    //Update the ExperienceView UI
-                    MainViewModel.ViewModelManager.ExperiencesViewModel.ExperienceStopped();
+                    {
+                        Dictionary<string, object?> stateValues = new()
+                        {
+                            { "gameName", "" },
+                            { "gameId", "" },
+                            { "gameType", "" }
+                        };
+                        StateController.UpdateStatusBunch(stateValues);
+                        
+                        //Update the ExperienceView UI
+                        MainViewModel.ViewModelManager.ExperiencesViewModel.ExperienceStopped();
+                    }
                     break;
 
                 case "StationError":

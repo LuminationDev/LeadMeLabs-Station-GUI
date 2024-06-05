@@ -1,11 +1,14 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Windows;
 using LeadMeLabsLibrary;
 using Sentry;
 using Station.Components._commandLine;
+using Station.Components._legacy;
 using Station.Components._managers;
 using Station.Components._utils;
 using Station.Components._utils._steamConfig;
+using Station.Components._version;
 using Station.MVC.Controller;
 using Station.MVC.View;
 
@@ -63,9 +66,16 @@ namespace Station
             Logger.WriteLog("UnhandledExceptionHandler caught: " + e.Message, Enums.LogLevel.Error);
             Logger.WriteLog($"Runtime terminating: {args.IsTerminating}", Enums.LogLevel.Error);
             Logger.WorkQueue();
-            MessageController.SendResponse("Android", "Station", "SetValue:status:Off");
-            MessageController.SendResponse("Android", "Station", "SetValue:gameName:Unexpected error occured, please restart station");
-            MessageController.SendResponse("Android", "Station", "SetValue:gameId:");
+            
+            Dictionary<string, object> stateValues = new()
+            {
+                { "status", "Off" },
+                { "state", "" },
+                { "gameName", "Unexpected error occured, please restart station" },
+                { "gameId", "" }
+            };
+            StateController.UpdateStatusBunch(stateValues);
+
             try
             {
                 SentrySdk.CaptureException(e);
@@ -80,9 +90,15 @@ namespace Station
         {
             Logger.WriteLog($"Process Exiting. Sender: {sender}, Event: {args}", Enums.LogLevel.Verbose);
             Logger.WorkQueue();
-            MessageController.SendResponse("Android", "Station", "SetValue:status:Off");
-            MessageController.SendResponse("Android", "Station", "SetValue:gameName:");
-            MessageController.SendResponse("Android", "Station", "SetValue:gameId:");
+            
+            Dictionary<string, object> stateValues = new()
+            {
+                { "status", "Off" },
+                { "state", "" },
+                { "gameName", "" },
+                { "gameId", "" }
+            };
+            StateController.UpdateStatusBunch(stateValues);
 
             //Shut down the pipe server if running
             WrapperManager.ClosePipeServer();
@@ -127,6 +143,8 @@ namespace Station
                     }
 
                     sentryEvent.ServerName = null; // Never send Server Name to Sentry
+                    sentryEvent.SetTag("lab_location", Environment.GetEnvironmentVariable("LabLocation",
+                        EnvironmentVariableTarget.Process) ?? "Unknown");
                     return sentryEvent;
                 });
             });

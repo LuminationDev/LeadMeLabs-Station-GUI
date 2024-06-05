@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Threading;
 using System.Timers;
 using LeadMeLabsLibrary;
@@ -67,11 +68,11 @@ public static class StationScripts
     /// <returns></returns>
     private static void RestartVrSession()
     {
-        MessageController.SendResponse("Android", "Station", "SetValue:status:On");
+        StateController.UpdateStateValue("status", "On");
         if (!processing)
         {
             processing = true;
-            MessageController.SendResponse("Android", "Station", "SetValue:status:On");
+            StateController.UpdateStateValue("status", "On");
             MainController.wrapperManager?.ActionHandler("Session", "Restart");
         }
         else
@@ -119,10 +120,16 @@ public static class StationScripts
 
             //Shut down the server first, so the NUC cannot send off any more Pings
             MainController.StopServer();
-            MessageController.SendResponse(source, "Station", "SetValue:status:Off");
-            MessageController.SendResponse(source, "Station", "SetValue:state:");
-            MessageController.SendResponse(source, "Station", "SetValue:gameName:");
-            MessageController.SendResponse(source, "Station", "SetValue:gameId:");
+            
+            Dictionary<string, object?> stateValues = new()
+            {
+                { "status", "Off" },
+                { "state", "" },
+                { "gameName", "" },
+                { "gameId", "" }
+            };
+            
+            StateController.UpdateStatusBunch(stateValues);
         }
     }
 
@@ -131,8 +138,9 @@ public static class StationScripts
     /// </summary>
     private static void EndVrSession()
     {
-        MessageController.SendResponse("Android", "Station", "SetValue:status:On");
         MainController.wrapperManager?.ActionHandler("Session", "Stop");
+        //Old set value method as this goes directly to the tablet through the NUC - nothing is saved temporarily
         MessageController.SendResponse("Android", "Station", "SetValue:session:Ended");
+        StateController.UpdateStateValue("status", "On");
     }
 }

@@ -144,6 +144,7 @@ public class WrapperManager
         switch (tokens[0])
         {
             case "details":
+                //Old set value method as this goes directly to the tablet through the NUC - nothing is saved temporarily 
                 MessageController.SendResponse("Android", "Station", $"SetValue:details:{CheckExperienceName(tokens[1])}");
                 break;
             
@@ -301,22 +302,23 @@ public class WrapperManager
 
         // Send the JSON message here as the PassStationMessage method splits the supplied message by ','
         if (!messageType.Equals("ApplicationJson")) return;
+        
         //Check for any missing thumbnails in the cache folder
         Task.Factory.StartNew(() => ThumbnailOrganiser.CheckCache<ExperienceDetails>(convertedApplications.ToString()));
-        
-        MessageController.SendResponse("Android", "Station",
-            $"SetValue:installedJsonApplications:{convertedApplications}");
-
-        if (SteamScripts.blockedByFamilyMode.Count == 0 && SteamScripts.noLicenses.Count == 0) return;
 
         JObject blockedApplications = new JObject
         {
             { "noLicense", JsonConvert.SerializeObject(SteamScripts.noLicenses) },
-            { "blockedFamilyMode", JsonConvert.SerializeObject(SteamScripts.blockedByFamilyMode) }
+            { "blockedFamilyMode", JsonConvert.SerializeObject(SteamScripts.blockedByFamilyMode) },
+            { "unacceptedEulas", JsonConvert.SerializeObject(SteamWrapper.installedExperiencesWithUnacceptedEulas) }
         };
 
-        MessageController.SendResponse("Android", "Station",
-            $"SetValue:blockedApplications:{blockedApplications}");
+        Dictionary<string, object> stateValues = new()
+        {
+            { "installedJsonApplications", convertedApplications },
+            { "blockedApplications", blockedApplications },
+        };
+        StateController.UpdateListBunch(stateValues);
     }
     
     /// <summary>
@@ -492,6 +494,7 @@ public class WrapperManager
                 SessionController.StationProfile.MinimizeSoftware(1);
                 OverlayManager.ManualStop(90);
                 acceptingEulas = false;
+                WrapperManager.CollectAllApplications();
                 SessionController.StationProfile.StartSession();
             },
             TimeSpan.FromSeconds(((index + 2) * 1.5) + 3));

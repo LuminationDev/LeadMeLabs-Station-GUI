@@ -15,6 +15,7 @@ using Station.Components._organisers;
 using Station.Components._profiles;
 using Station.Components._utils;
 using Station.Components._utils._steamConfig;
+using Station.Components._version;
 using Station.Components._wrapper.steam;
 using Station.QA;
 
@@ -72,7 +73,8 @@ public static class MainController
     public static string? macAddress;
     private static string? versionNumber;
     private static Timer? variableCheck;
-
+    
+    //TODO remove the following as they are no longer required?
     public static bool isNucUtf8 = true;
     public static bool isNucJsonEnabled = false;
 
@@ -136,6 +138,7 @@ public static class MainController
         
         //Cannot be any higher - encryption key does not exist before the DotEnv.Load()
         new Task(Initialisation).Start(); //Call as a new task to stop UI and server start up from hanging whilst reading the files
+        
         if (InternalDebugger.GetIdleModeActive())
         {
             ModeTracker.Initialise(); //Start tracking any idle time
@@ -192,6 +195,9 @@ public static class MainController
             SentrySdk.CaptureException(e);
         }
         
+        //Cannot be any higher - encryption key does not exist before the DotEnv.Load()
+        VersionHandler.Connect();
+        
         JObject launchMessage = new JObject
         {
             { "action", "SoftwareState" },
@@ -235,7 +241,7 @@ public static class MainController
         
         Logger.WriteLog($"Expected NUC address: {Environment.GetEnvironmentVariable("NucAddress", EnvironmentVariableTarget.Process)}", Enums.LogLevel.Normal);
         if (Helper.GetStationMode().Equals(Helper.STATION_MODE_APPLIANCE)) return;
-        MessageController.InitialStartUp();
+        StateController.InitialStartUp();
         
         // Safe cast for potential content profile
         ContentProfile? contentProfile = Profile.CastToType<ContentProfile>(SessionController.StationProfile);
@@ -256,7 +262,7 @@ public static class MainController
             IPAddress? ip = SystemInformation.GetIPAddress();
             if(ip == null || !ip.Address.Equals(localEndPoint.Address.Address))
             {
-                throw new Exception($"ReChecked IP address is not the same. Original: {localEndPoint.Address.Address}, ReChecked: {ip.Address}");
+                throw new Exception($"ReChecked IP address is not the same. Original: {localEndPoint.Address.Address}, ReChecked: {ip.Address} at site: " + (Environment.GetEnvironmentVariable("LabLocation", EnvironmentVariableTarget.Process) ?? "Unknown"));
             }
 
             Logger.WriteLog("Re-checking software details after 5 minutes of operation.", Enums.LogLevel.Normal);
