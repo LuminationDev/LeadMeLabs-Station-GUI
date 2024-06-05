@@ -49,9 +49,9 @@ public static class LegacySetValue
     
     public static void ApplicationClosed()
     {
-        MessageController.SendResponse("Android", "Station", "SetValue:status:Off");
         MessageController.SendResponse("Android", "Station", $"SetValue:gameName:");
         MessageController.SendResponse("Android", "Station", "SetValue:gameId:");
+        MessageController.SendResponse("Android", "Station", "SetValue:gameType:");
     }
     
     public static void StationOff(string message)
