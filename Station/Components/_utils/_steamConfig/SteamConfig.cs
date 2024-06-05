@@ -232,7 +232,7 @@ public class SteamConfig
                         string[] eulaDetails = lines[i].Trim('\t').Trim('\"').Split("\t");
                         string eulaName = eulaDetails[0].Trim('\"');
                         string appId = eulaName.Split('_')[0];
-                        string eulaVersion = eulaDetails[2].Trim('\"');
+                        string eulaVersion = eulaDetails.Length > 2 ? eulaDetails[2].Trim('\"') : "0";
                         acceptedEulas.Add($"{appId}:{eulaName}:{eulaVersion}");
                     }
                 }
