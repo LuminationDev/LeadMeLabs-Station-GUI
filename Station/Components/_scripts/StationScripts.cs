@@ -4,10 +4,8 @@ using System.Threading;
 using System.Timers;
 using LeadMeLabsLibrary;
 using Station.Components._commandLine;
-using Station.Components._legacy;
 using Station.Components._overlay;
 using Station.Components._utils;
-using Station.Components._version;
 using Station.MVC.Controller;
 
 namespace Station.Components._scripts;
@@ -37,34 +35,23 @@ public static class StationScripts
         if (additionalData.StartsWith("URL"))
         {
             string[] urlCommand = additionalData.Split(':', 2);
-            if (urlCommand.Length == 2)
+            if (urlCommand.Length != 2) return;
+            
+            string url = urlCommand[1];
+            if (!url.StartsWith("https://") && !url.StartsWith("http://"))
             {
-                string url = urlCommand[1];
-                if (!url.StartsWith("https://") && !url.StartsWith("http://"))
-                {
-                    url = "https://" + url;
-                }
-                bool isValidUrl = Uri.IsWellFormedUriString(url, UriKind.Absolute);
-                if (isValidUrl)
-                {
-                    CommandLine.ExecuteBrowserCommand(url);
-                    
-                    if (VersionHandler.NucVersion < LeadMeVersion.StateHandler)
-                    {
-                        LegacySetValue.SimpleSetValue("gameName", url);
-                        LegacySetValue.SimpleSetValue("gameId", "");
-                    }
-                    else
-                    {
-                        Dictionary<string, object> stateValues = new()
-                        {
-                            { "gameName", url },
-                            { "gameId", "" }
-                        };
-                        StateController.UpdateStatusBunch(stateValues);
-                    }
-                }
+                url = "https://" + url;
             }
+            bool isValidUrl = Uri.IsWellFormedUriString(url, UriKind.Absolute);
+            if (!isValidUrl) return;
+                
+            CommandLine.ExecuteBrowserCommand(url);
+            Dictionary<string, object> stateValues = new()
+            {
+                { "gameName", url },
+                { "gameId", "" }
+            };
+            StateController.UpdateStatusBunch(stateValues);
         }
         else if (additionalData.Equals("RestartVR"))
         {
@@ -111,25 +98,11 @@ public static class StationScripts
     /// <returns></returns>
     public static void RestartVRSession()
     {
-        if (VersionHandler.NucVersion < LeadMeVersion.StateHandler)
-        {
-            LegacySetValue.SimpleSetValue("status", "On");
-        }
-        else
-        {
-            StateController.UpdateStateValue("status", "On");
-        }
+        StateController.UpdateStateValue("status", "On");
         if (!processing)
         {
             processing = true;
-            if (VersionHandler.NucVersion < LeadMeVersion.StateHandler)
-            {
-                LegacySetValue.SimpleSetValue("status", "On");
-            }
-            else
-            {
-                StateController.UpdateStateValue("status", "On");
-            }
+            StateController.UpdateStateValue("status", "On");
             MainController.wrapperManager?.ActionHandler("Session", "Restart");
         }
         else
@@ -178,22 +151,15 @@ public static class StationScripts
             //Shut down the server first, so the NUC cannot send off any more Pings
             MainController.StopServer();
             
-            if (VersionHandler.NucVersion < LeadMeVersion.StateHandler)
+            Dictionary<string, object> stateValues = new()
             {
-                LegacySetValue.StationOff("");
-            }
-            else
-            {
-                Dictionary<string, object> stateValues = new()
-                {
-                    { "status", "Off" },
-                    { "state", "" },
-                    { "gameName", "" },
-                    { "gameId", "" }
-                };
-                
-                StateController.UpdateStatusBunch(stateValues);
-            }
+                { "status", "Off" },
+                { "state", "" },
+                { "gameName", "" },
+                { "gameId", "" }
+            };
+            
+            StateController.UpdateStatusBunch(stateValues);
         }
     }
 
@@ -205,15 +171,6 @@ public static class StationScripts
         MainController.wrapperManager?.ActionHandler("Session", "Stop");
         //Old set value method as this goes directly to the tablet through the NUC - nothing is saved temporarily
         MessageController.SendResponse("Android", "Station", "SetValue:session:Ended");
-        
-        if (VersionHandler.NucVersion < LeadMeVersion.StateHandler)
-        {
-            LegacySetValue.SimpleSetValue("status", "On");
-            
-        }
-        else
-        {
-            StateController.UpdateStateValue("status", "On");
-        }
+        StateController.UpdateStateValue("status", "On");
     }
 }

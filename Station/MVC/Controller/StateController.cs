@@ -3,7 +3,11 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using LeadMeLabsLibrary;
 using Newtonsoft.Json.Linq;
+using Station.Components._legacy;
+using Station.Components._managers;
+using Station.Components._profiles;
 using Station.Components._utils;
+using Station.Components._version;
 
 namespace Station.MVC.Controller;
 
@@ -53,11 +57,79 @@ public static class StateController
     // installedJsonApplications
     // blockedApplications
 
+    #region Setup
+    /// <summary>
+    /// On start up or Station address change send the Station state to the NUC.
+    /// </summary>
+    public static void InitialStartUp()
+    {
+        //Legacy messages if the NUC is not up to date
+        if (VersionHandler.NucVersion < LeadMeVersion.StateHandler)
+        {
+            LegacySetValue.InitialStartUp();
+        }
+        else
+        {
+            Dictionary<string, object?> stateValues = new()
+            {
+                { "status", "On" },
+                { "gameName", "" },
+                { "gameId", "" }
+            };
+        
+            // Only send the headset if is a vr profile Station
+            // Safe cast for potential vr profile
+            VrProfile? vrProfile = Profile.CastToType<VrProfile>(SessionController.StationProfile);
+            if (vrProfile?.VrHeadset != null)
+            {
+                stateValues.Add("headsetType", Environment.GetEnvironmentVariable("HeadsetType", EnvironmentVariableTarget.Process) ?? "Unknown");
+            }
+        
+            // Update all the values at once
+            UpdateStatusBunch(stateValues);
+        }
+    }
+    
+    public static void HandleConnection(string source)
+    {
+        //Legacy messages if the NUC is not up to date
+        if (VersionHandler.NucVersion < LeadMeVersion.StateHandler)
+        {
+            LegacySetValue.HandleConnection(source);
+        }
+        else
+        {
+            // Update the state all at once
+            Dictionary<string, object?> stateValues = new()
+            {
+                { "status", "On" },
+                { "state", SessionController.CurrentState },
+                { "gameName", "" },
+                { "gameId", "" }
+            };
+        
+            // Only send the headset if is a vr profile Station
+            // Safe cast for potential vr profile
+            VrProfile? vrProfile = Profile.CastToType<VrProfile>(SessionController.StationProfile);
+            if (vrProfile?.VrHeadset != null)
+            {
+                stateValues.Add("headsetType", Environment.GetEnvironmentVariable("HeadsetType", EnvironmentVariableTarget.Process) ?? "Unknown");
+            }
+
+            // Update all the values at once
+            UpdateStatusBunch(stateValues);
+        
+            AudioManager.Initialise();
+            VideoManager.Initialise();
+        }
+    }
+    #endregion
+    
     #region State Values
     /// <summary>
     /// Gets the dictionary that holds the current state off all values on the Station.
     /// </summary>
-    private static ConcurrentDictionary<string, object> StateValues { get; } = new();
+    private static ConcurrentDictionary<string, object?> StateValues { get; } = new();
 
     /// <summary>
     /// Adds a new key and value to the container.
@@ -65,17 +137,27 @@ public static class StateController
     /// <param name="key">The key to be added.</param>
     /// <param name="value">The value associated with the status.</param>
     /// <returns>True if the value was added successfully; otherwise, false.</returns>
-    private static bool AddStateValue(string key, object value)
+    private static void AddStateValue(string key, object? value)
     {
-        return StateValues.TryAdd(key, value);
+        StateValues.TryAdd(key, value);
     }
     
     /// <summary>
     /// Adds multiple keys and values to the container at once.
     /// </summary>
     /// <param name="values">A dictionary containing statuses and their corresponding values to be added.</param>
-    public static void UpdateStatusBunch(Dictionary<string, object> values)
+    public static void UpdateStatusBunch(Dictionary<string, object?> values)
     {
+        //Legacy messages if the NUC is not up to date
+        if (VersionHandler.NucVersion < LeadMeVersion.StateHandler)
+        {
+            foreach (var kvp in values)
+            {
+                LegacySetValue.SimpleSetValue(kvp.Key, kvp.Value?.ToString());
+            }
+            return;
+        }
+        
         foreach (var kvp in values)
         {
             if (!StateValues.ContainsKey(kvp.Key))
@@ -97,8 +179,15 @@ public static class StateController
     /// <param name="key">The key to be updated.</param>
     /// <param name="value">The new value for the status.</param>
     /// <returns>True if the status value was updated successfully; otherwise, false.</returns>
-    public static bool UpdateStateValue(string key, object value)
+    public static void UpdateStateValue(string key, object? value)
     {
+        //Legacy messages if the NUC is not up to date
+        if (VersionHandler.NucVersion < LeadMeVersion.StateHandler)
+        {
+            LegacySetValue.SimpleSetValue(key, value?.ToString());
+            return;
+        }
+        
         if (!StateValues.ContainsKey(key))
         {
             AddStateValue(key, value);
@@ -106,7 +195,6 @@ public static class StateController
         
         StateValues[key] = value;
         SendStateValues();
-        return true;
     }
 
     /// <summary>
@@ -114,7 +202,7 @@ public static class StateController
     /// </summary>
     /// <param name="key">The key whose value is to be retrieved.</param>
     /// <returns>The value associated with the specified status.</returns>
-    public static object GetStateValue(string key)
+    public static object? GetStateValue(string key)
     {
         if (!StateValues.TryGetValue(key, out object? value))
         {
@@ -159,7 +247,7 @@ public static class StateController
     #endregion
 
     #region File State
-    private static ConcurrentDictionary<string, object> ListValues { get; } = new();
+    private static ConcurrentDictionary<string, object?> ListValues { get; } = new();
     
     /// <summary>
     /// Adds a new key and value to the container.
@@ -167,17 +255,27 @@ public static class StateController
     /// <param name="key">The key to be added.</param>
     /// <param name="value">The value associated with the status.</param>
     /// <returns>True if the value was added successfully; otherwise, false.</returns>
-    private static bool AddListValue(string key, object value)
+    private static void AddListValue(string key, object? value)
     {
-        return ListValues.TryAdd(key, value);
+        ListValues.TryAdd(key, value);
     }
     
     /// <summary>
     /// Adds multiple keys and values to the container at once.
     /// </summary>
     /// <param name="values">A dictionary containing statuses and their corresponding values to be added.</param>
-    public static void UpdateListBunch(Dictionary<string, object> values)
+    public static void UpdateListBunch(Dictionary<string, object?> values)
     {
+        //Legacy messages if the NUC is not up to date
+        if (VersionHandler.NucVersion < LeadMeVersion.StateHandler)
+        {
+            foreach (var kvp in values)
+            {
+                LegacySetValue.SimpleSetValue(kvp.Key, kvp.Value?.ToString());
+            }
+            return;
+        }
+        
         foreach (var kvp in values)
         {
             if (!ListValues.ContainsKey(kvp.Key))
@@ -199,8 +297,15 @@ public static class StateController
     /// <param name="key">The key to be updated.</param>
     /// <param name="value">The new value for the status.</param>
     /// <returns>True if the status value was updated successfully; otherwise, false.</returns>
-    public static bool UpdateListsValue(string key, object value)
+    public static void UpdateListsValue(string key, object? value)
     {
+        //Legacy messages if the NUC is not up to date
+        if (VersionHandler.NucVersion < LeadMeVersion.StateHandler)
+        {
+            LegacySetValue.SimpleSetValue(key, value?.ToString());
+            return;
+        }
+        
         if (!ListValues.ContainsKey(key))
         {
             AddListValue(key, value);
@@ -208,7 +313,6 @@ public static class StateController
         
         ListValues[key] = value;
         SendListValues();
-        return true;
     }
     
     /// <summary>

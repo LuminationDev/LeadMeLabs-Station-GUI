@@ -10,10 +10,8 @@ using LeadMeLabsLibrary;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Sentry;
-using Station.Components._legacy;
 using Station.Components._models;
 using Station.Components._utils;
-using Station.Components._version;
 using Station.MVC.Controller;
 
 namespace Station.Components._managers;
@@ -72,12 +70,6 @@ public static class AudioManager
             string json = JsonConvert.SerializeObject(audioArray);
             JArray jsonObject = JArray.Parse(json);
             
-            if (VersionHandler.NucVersion < LeadMeVersion.StateHandler)
-            {
-                LegacySetValue.SimpleSetValue("audioDevices", jsonObject.ToString());
-            }
-
-            //Always update the list regardless of the version
             StateController.UpdateListsValue("audioDevices", jsonObject.ToString());
             await GetCurrentAudioDevice();
         }
@@ -100,14 +92,7 @@ public static class AudioManager
             
             //Collect the currently active audio device and send to the NUC
             var result = obj.Properties["Name"]?.Value.ToString() ?? "";
-            if (VersionHandler.NucVersion < LeadMeVersion.StateHandler)
-            {
-                LegacySetValue.SimpleSetValue("activeAudioDevice", result);
-            }
-            else
-            {
-                StateController.UpdateStateValue("activeAudioDevice", result);
-            }
+            StateController.UpdateStateValue("activeAudioDevice", result);
             UpdateActiveDevice();
         });
     }
@@ -123,21 +108,13 @@ public static class AudioManager
         //Collect the current muted value and send to the NUC
         string isCurrentMuted = GetMuted().Result;
         
-        if (VersionHandler.NucVersion < LeadMeVersion.StateHandler)
+        Dictionary<string, object> stateValues = new()
         {
-            LegacySetValue.SimpleSetValue("volume", currentVolume);
-            LegacySetValue.SimpleSetValue("muted", isCurrentMuted);
-        }
-        else
-        {
-            Dictionary<string, object> stateValues = new()
-            {
-                { "volume", currentVolume },
-                { "muted", isCurrentMuted }
-            };
-            
-            StateController.UpdateStatusBunch(stateValues);
-        }
+            { "volume", currentVolume },
+            { "muted", isCurrentMuted }
+        };
+        
+        StateController.UpdateStatusBunch(stateValues);
     }
 
     /// <summary>

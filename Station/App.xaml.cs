@@ -82,20 +82,14 @@ namespace Station
             Logger.WriteLog($"Runtime terminating: {args.IsTerminating}", Enums.LogLevel.Error);
             Logger.WorkQueue();
             
-            if (VersionHandler.NucVersion < LeadMeVersion.StateHandler)
+            Dictionary<string, object> stateValues = new()
             {
-                LegacySetValue.StationOff("Unexpected error occured, please restart station");
-            }
-            else
-            {
-                Dictionary<string, object> stateValues = new()
-                {
-                    { "status", "Off" },
-                    { "gameName", "Unexpected error occured, please restart station" },
-                    { "gameId", "" }
-                };
-                StateController.UpdateStatusBunch(stateValues);
-            }
+                { "status", "Off" },
+                { "state", "" },
+                { "gameName", "Unexpected error occured, please restart station" },
+                { "gameId", "" }
+            };
+            StateController.UpdateStatusBunch(stateValues);
 
             try
             {
@@ -112,20 +106,14 @@ namespace Station
             Logger.WriteLog($"Process Exiting. Sender: {sender}, Event: {args}", Enums.LogLevel.Verbose);
             Logger.WorkQueue();
             
-            if (VersionHandler.NucVersion < LeadMeVersion.StateHandler)
+            Dictionary<string, object> stateValues = new()
             {
-                LegacySetValue.StationOff("");
-            }
-            else
-            {
-                Dictionary<string, object> stateValues = new()
-                {
-                    { "status", "Off" },
-                    { "gameName", "" },
-                    { "gameId", "" }
-                };
-                StateController.UpdateStatusBunch(stateValues);
-            }
+                { "status", "Off" },
+                { "state", "" },
+                { "gameName", "" },
+                { "gameId", "" }
+            };
+            StateController.UpdateStatusBunch(stateValues);
 
             //Shut down the pipe server if running
             WrapperManager.ClosePipeServer();

@@ -7,7 +7,6 @@ using Station.Components._legacy;
 using Station.Components._managers;
 using Station.Components._models;
 using Station.Components._notification;
-using Station.Components._profiles;
 using Station.Components._utils;
 using Station.Components._version;
 using Station.MVC.Controller;
@@ -95,6 +94,11 @@ public class ScriptThread
         }
     }
 
+    /// <summary>
+    /// A NUC has sent the initial 'Connect' message, determine the NUCs version and initialise the audio and video
+    /// managers.
+    /// </summary>
+    /// <param name="additionalData">A string of the supplied message</param>
     private void HandleConnection(string? additionalData)
     {
         if (additionalData == null) return;
@@ -102,35 +106,7 @@ public class ScriptThread
         
         //Send the version number before anything else so the NUC knows how to handle the Station
         VersionHandler.Connect();
-        
-        if (VersionHandler.NucVersion < LeadMeVersion.StateHandler)
-        {
-            LegacySetValue.HandleConnection(_source);
-            return;
-        }
-        
-        // Update the state all at once
-        Dictionary<string, object> stateValues = new()
-        {
-            { "status", "On" },
-            { "state", SessionController.CurrentState },
-            { "gameName", "" },
-            { "gameId", "" }
-        };
-        
-        // Only send the headset if is a vr profile Station
-        // Safe cast for potential vr profile
-        VrProfile? vrProfile = Profile.CastToType<VrProfile>(SessionController.StationProfile);
-        if (vrProfile?.VrHeadset != null)
-        {
-            stateValues.Add("headsetType", Environment.GetEnvironmentVariable("HeadsetType", EnvironmentVariableTarget.Process) ?? "Unknown");
-        }
-
-        // Update all the values at once
-        StateController.UpdateStatusBunch(stateValues);
-        
-        AudioManager.Initialise();
-        VideoManager.Initialise();
+        StateController.HandleConnection(_source);
     }
 
     private void HandleStation(string jObjectData)

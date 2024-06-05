@@ -114,14 +114,7 @@ public static class ModeTracker
         
         //Update the status
         SessionController.CurrentState = "Idle Mode";
-        if (VersionHandler.NucVersion < LeadMeVersion.StateHandler)
-        {
-            LegacySetValue.SimpleSetValue("status", "Idle");
-        }
-        else
-        {
-            StateController.UpdateStateValue("status", "Idle");
-        }
+        StateController.UpdateStateValue("status", "Idle");
         
         // TODO - Enable this when we start using idle mode
         // MessageController.SendResponse("NUC", "Analytics", "EnterIdleMode");
@@ -141,14 +134,7 @@ public static class ModeTracker
         
         //Update the status
         SessionController.CurrentState = "Exiting Idle Mode";
-        if (VersionHandler.NucVersion < LeadMeVersion.StateHandler)
-        {
-            LegacySetValue.SimpleSetValue("status", "on");
-        }
-        else
-        {
-            StateController.UpdateStateValue("status", "On");
-        }
+        StateController.UpdateStateValue("status", "On");
 
         if (Helper.GetStationMode().Equals(Helper.STATION_MODE_VR))
         {

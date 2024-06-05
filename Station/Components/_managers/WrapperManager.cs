@@ -10,7 +10,6 @@ using Newtonsoft.Json.Linq;
 using Sentry;
 using Station.Components._commandLine;
 using Station.Components._interfaces;
-using Station.Components._legacy;
 using Station.Components._models;
 using Station.Components._monitoring;
 using Station.Components._notification;
@@ -18,7 +17,6 @@ using Station.Components._overlay;
 using Station.Components._profiles;
 using Station.Components._utils;
 using Station.Components._utils._steamConfig;
-using Station.Components._version;
 using Station.Components._wrapper.custom;
 using Station.Components._wrapper.embedded;
 using Station.Components._wrapper.@internal;
@@ -308,12 +306,6 @@ public class WrapperManager
             { "blockedFamilyMode", JsonConvert.SerializeObject(SteamScripts.blockedByFamilyMode) },
             { "unacceptedEulas", JsonConvert.SerializeObject(SteamWrapper.installedExperiencesWithUnacceptedEulas) }
         };
-        
-        if (VersionHandler.NucVersion < LeadMeVersion.StateHandler)
-        {
-            LegacySetValue.SimpleSetValue("installedJsonApplications", convertedApplications.ToString());
-            LegacySetValue.SimpleSetValue("blockedApplications", blockedApplications.ToString());
-        }
 
         Dictionary<string, object> stateValues = new()
         {

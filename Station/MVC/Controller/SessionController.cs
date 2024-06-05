@@ -5,13 +5,11 @@ using System.Threading.Tasks;
 using LeadMeLabsLibrary;
 using Newtonsoft.Json.Linq;
 using Station.Components._interfaces;
-using Station.Components._legacy;
 using Station.Components._managers;
 using Station.Components._notification;
 using Station.Components._profiles;
 using Station.Components._scripts;
 using Station.Components._utils;
-using Station.Components._version;
 using Station.Components._wrapper.vive;
 
 namespace Station.MVC.Controller;
@@ -44,14 +42,7 @@ public static class SessionController
         set
         {
             currentState = value;
-            if (VersionHandler.NucVersion < LeadMeVersion.StateHandler)
-            {
-                LegacySetValue.SimpleSetValue("state", value);
-            }
-            else
-            {
-                StateController.UpdateStateValue("state", value);
-            }
+            StateController.UpdateStateValue("state", value);
         }
     }
 
@@ -212,7 +203,7 @@ public static class SessionController
                     if (value == null) return;
                     StationScripts.processing = bool.Parse(value);
                     break;
-                
+
                 case "ApplicationUpdate":
                     JObject? info = (JObject?)message.GetValue("info");
                     if (info == null) return;
@@ -221,28 +212,12 @@ public static class SessionController
                     string? appId = (string?)info.GetValue("appId");
                     string? wrapper = (string?)info.GetValue("wrapper");
                     
-                    if (VersionHandler.NucVersion < LeadMeVersion.StateHandler)
-                    {
-                        LegacySetValue.SimpleSetValue("gameName", name);
-
-                        if (appId != null && wrapper != null)
-                        {
-                            LegacySetValue.SimpleSetValue("gameId", appId);
-                            LegacySetValue.SimpleSetValue("gameType", wrapper);
-                        }
-                        else
-                        {
-                            LegacySetValue.SimpleSetValue("gameId", "");
-                            LegacySetValue.SimpleSetValue("gameType", "");
-                        }
-                    }
-                    else
                     {
                         Dictionary<string, object> stateValues = new()
                         {
                             { "gameName", name ?? "" }
                         };
-                        
+
                         if (appId != null && wrapper != null)
                         {
                             stateValues.Add("gameId", appId);
@@ -253,7 +228,7 @@ public static class SessionController
                             stateValues.Add("gameId", "");
                             stateValues.Add("gameType", "");
                         }
-                        
+
                         StateController.UpdateStatusBunch(stateValues);
                     }
                     break;
@@ -264,11 +239,6 @@ public static class SessionController
                     break;
 
                 case "ApplicationClosed":
-                    if (VersionHandler.NucVersion < LeadMeVersion.StateHandler)
-                    {
-                        LegacySetValue.ApplicationClosed();
-                    }
-                    else
                     {
                         Dictionary<string, object> stateValues = new()
                         {

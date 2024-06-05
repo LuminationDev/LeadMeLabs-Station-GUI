@@ -210,7 +210,7 @@ public static class MainController
         
         Logger.WriteLog($"Expected NUC address: {Environment.GetEnvironmentVariable("NucAddress", EnvironmentVariableTarget.Process)}", Enums.LogLevel.Normal);
         if (Helper.GetStationMode().Equals(Helper.STATION_MODE_APPLIANCE)) return;
-        MessageController.InitialStartUp();
+        StateController.InitialStartUp();
         
         // Safe cast for potential content profile
         ContentProfile? contentProfile = Profile.CastToType<ContentProfile>(SessionController.StationProfile);

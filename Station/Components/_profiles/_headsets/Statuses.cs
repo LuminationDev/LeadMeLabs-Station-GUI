@@ -132,15 +132,13 @@ public class Statuses
     public void HandleValueChanged(object? sender, GenericEventArgs<string> e)
     {
         // Code to execute when the value changes.
+        // LegacySetValue required here as deviceStatus is handled differently going forward
         if (VersionHandler.NucVersion < LeadMeVersion.StateHandler)
         {
             LegacySetValue.SimpleSetValue("deviceStatus", e.Data);
         }
         else
         {
-            Console.WriteLine(e.Data);
-            //TODO check that the following works
-            
             string[] keyValue = e.Data.Split(":", 4);
             switch (keyValue[0])
             {
@@ -392,6 +390,7 @@ public class Statuses
     /// </summary>
     public void QueryStatuses()
     {
+        // LegacySetValue required here as deviceStatus is handled differently going forward
         // Code to execute when the value changes.
         if (VersionHandler.NucVersion < LeadMeVersion.StateHandler)
         {
