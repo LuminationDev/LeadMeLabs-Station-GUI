@@ -67,7 +67,7 @@ namespace Station
             Logger.WriteLog($"Runtime terminating: {args.IsTerminating}", Enums.LogLevel.Error);
             Logger.WorkQueue();
             
-            Dictionary<string, object> stateValues = new()
+            Dictionary<string, object?> stateValues = new()
             {
                 { "status", "Off" },
                 { "state", "" },
@@ -91,7 +91,7 @@ namespace Station
             Logger.WriteLog($"Process Exiting. Sender: {sender}, Event: {args}", Enums.LogLevel.Verbose);
             Logger.WorkQueue();
             
-            Dictionary<string, object> stateValues = new()
+            Dictionary<string, object?> stateValues = new()
             {
                 { "status", "Off" },
                 { "state", "" },

@@ -185,7 +185,7 @@ public class Statuses
                     break;
             
                 case "BaseStation":
-                    Dictionary<string, object> stateValues = new()
+                    Dictionary<string, object?> stateValues = new()
                     {
                         { "baseStationsActive", int.Parse(keyValue[1]) },
                         { "baseStationsTotal", int.Parse(keyValue[2]) }
@@ -428,7 +428,7 @@ public class Statuses
         }
         else
         {
-            Dictionary<string, object> stateValues = new()
+            Dictionary<string, object?> stateValues = new()
             {
                 {"openVRHeadsetTracking", OpenVRStatus.ToString()},
                 {"thirdPartyHeadsetTracking", SoftwareStatus.ToString()},

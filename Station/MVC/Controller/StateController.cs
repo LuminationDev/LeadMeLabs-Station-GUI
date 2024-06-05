@@ -121,6 +121,7 @@ public static class StateController
         
             AudioManager.Initialise();
             VideoManager.Initialise();
+            FileManager.Initialise();
         }
     }
     #endregion

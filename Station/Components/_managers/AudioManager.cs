@@ -108,7 +108,7 @@ public static class AudioManager
         //Collect the current muted value and send to the NUC
         string isCurrentMuted = GetMuted().Result;
         
-        Dictionary<string, object> stateValues = new()
+        Dictionary<string, object?> stateValues = new()
         {
             { "volume", currentVolume },
             { "muted", isCurrentMuted }
