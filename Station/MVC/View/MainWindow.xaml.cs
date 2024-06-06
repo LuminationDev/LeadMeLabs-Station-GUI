@@ -1,4 +1,5 @@
-﻿using System.Windows.Controls;
+﻿using System.Windows;
+using System.Windows.Controls;
 using LeadMeLabsLibrary;
 using Station.Components._notification;
 using Station.MVC.ViewModel;
@@ -38,6 +39,10 @@ public partial class MainWindow
     
     public static Label? baseStationActive;
     public static Label? baseStationAmount;
+    
+    public static Label? trackerActive;
+    public static Label? trackerAmount;
+    public static WrapPanel? trackerSection;
 
     public MainWindow()
     {
@@ -66,6 +71,11 @@ public partial class MainWindow
 
         baseStationActive = this.BaseStationActive;
         baseStationAmount = this.BaseStationAmount;
+        
+        trackerActive = this.TrackerActive;
+        trackerAmount = this.TrackerAmount;
+        this.TrackerSection.Visibility = Visibility.Collapsed;
+        trackerSection = this.TrackerSection;
         
         MockConsole.WriteLine("Program Started", Enums.LogLevel.Error);
     }

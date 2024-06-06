@@ -31,6 +31,7 @@ public class Statuses
     private static readonly Dictionary<string, VrController> Controllers = new();
     //Base Station models stored by serial number
     public static Dictionary<string, VrBaseStation> baseStations = new();
+    public static Dictionary<string, VrTracker> trackers = new();
 
     private static Boolean openVrHasAlreadyConnected = false;
 
@@ -298,6 +299,40 @@ public class Statuses
             temp.UpdateProperty(propertyName, value);
             baseStations.Add(serialNumber, temp);
             UiUpdater.UpdateOpenVrStatus("baseStationAmount", baseStations.Count.ToString());
+        }
+    }
+    
+    /// <summary>
+    /// Update a tracker.
+    /// </summary>
+    /// <param name="serialNumber"></param>
+    /// <param name="propertyName"></param>
+    /// <param name="value"></param>
+    public void UpdateTracker(string serialNumber, string propertyName, object value)
+    {
+        //Check if the entry exists
+        if (trackers.ContainsKey(serialNumber))
+        {
+            if (trackers.TryGetValue(serialNumber, out var temp) && temp != null)
+            {
+                temp.UpdateProperty(propertyName, value);
+            }
+            else
+            {
+                Logger.WriteLog($"VrStatus.Tracker - A tracker entry is invalid removing {serialNumber}",
+                    Enums.LogLevel.Error);
+
+                trackers.Remove(serialNumber);
+            }
+        }
+        else
+        {
+            //Add a new base station entry
+            MockConsole.WriteLine($"Found a new tracker: {serialNumber}", Enums.LogLevel.Normal);
+            VrTracker temp = new VrTracker(serialNumber);
+            temp.UpdateProperty(propertyName, value);
+            trackers.Add(serialNumber, temp);
+            UiUpdater.UpdateOpenVrStatus("trackerAmount", trackers.Count.ToString());
         }
     }
 

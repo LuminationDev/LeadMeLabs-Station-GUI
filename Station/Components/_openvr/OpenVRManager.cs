@@ -366,6 +366,10 @@ public class OpenVrManager
 
         try
         {
+            if (OpenVR.Applications == null)
+            {
+                return false;
+            }
             EVRApplicationError error = OpenVR.Applications.LaunchApplication(pchKey);
             if (error == EVRApplicationError.None)
             {
@@ -593,6 +597,9 @@ public class OpenVrManager
                 case ETrackedDeviceClass.TrackingReference:
                     GetBaseStationInfo(deviceIndex);
                     break;
+                case ETrackedDeviceClass.GenericTracker:
+                    GetBaseStationInfo(deviceIndex);
+                    break;
             }
         }
 
@@ -814,6 +821,26 @@ public class OpenVrManager
         var firmwareUpdateRequired = GetFirmwareUpdateRequired(baseStationIndex);
         vrProfile.VrHeadset?.GetStatusManager().UpdateBaseStation(serialNumber, "tracking", isConnected ? DeviceStatus.Connected : DeviceStatus.Lost);
         vrProfile.VrHeadset?.GetStatusManager().UpdateBaseStation(serialNumber, "firmware_update_required", firmwareUpdateRequired);
+    }
+    #endregion
+    
+    #region Tracker Information
+    private void GetTrackerInfo(uint trackerIndex)
+    {
+        // Safe cast and null checks
+        VrProfile? vrProfile = Profile.CastToType<VrProfile>(SessionController.StationProfile);
+        if (vrProfile?.VrHeadset == null) return;
+        
+        if (_ovrSystem == null)
+        {
+            return;
+        }
+
+        var serialNumber = GetSerialNumber(trackerIndex);
+        var isConnected = IsDeviceConnected(trackerIndex);
+        var firmwareUpdateRequired = GetFirmwareUpdateRequired(trackerIndex);
+        vrProfile.VrHeadset?.GetStatusManager().UpdateTracker(serialNumber, "tracking", isConnected ? DeviceStatus.Connected : DeviceStatus.Lost);
+        vrProfile.VrHeadset?.GetStatusManager().UpdateTracker(serialNumber, "firmware_update_required", firmwareUpdateRequired);
     }
     #endregion
     

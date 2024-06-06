@@ -148,8 +148,11 @@ public class SteamWrapper : IWrapper
 
 
     public void SetCurrentProcess(Process process)
-    {
-        currentProcess?.Kill(true);
+    { 
+        if (currentProcess != null && !currentProcess.HasExited)
+        {
+            currentProcess.Kill(true);
+        }
 
         _launchWillHaveFailedFromOpenVrTimeout = false;
         currentProcess = process;

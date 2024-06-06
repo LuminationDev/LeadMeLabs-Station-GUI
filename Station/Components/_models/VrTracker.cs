@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Linq;
 using LeadMeLabsLibrary;
 using Station.Components._interfaces;
@@ -9,11 +9,12 @@ using Station.MVC.Controller;
 
 namespace Station.Components._models;
 
-public class VrBaseStation
+public class VrTracker
 {
     private readonly string _serialNumber;
 
     private bool _firmwareUpdateRequired;
+    private bool _connected;
     
     public bool FirmwareUpdateRequired()
     {
@@ -28,7 +29,7 @@ public class VrBaseStation
         private set
         {
             if (_tracking == value) return;
-            MockConsole.WriteLine($"VrBaseStation {_serialNumber} tracking updated to {value} from {_tracking}", Enums.LogLevel.Verbose);
+            MockConsole.WriteLine($"VrTracker {_serialNumber} tracking updated to {value} from {_tracking}", Enums.LogLevel.Verbose);
             _tracking = value;
             
             OnTrackingChanged(value.ToString());
@@ -39,19 +40,19 @@ public class VrBaseStation
     public event EventHandler<GenericEventArgs<string>>? TrackingChanged;
     protected virtual void OnTrackingChanged(string newValue)
     {
-        //Get the current active base stations
+        //Get the current active trackers
         int active =
-            Statuses.baseStations.Count(vrBaseStation => vrBaseStation.Value.Tracking == DeviceStatus.Connected);
-        UiUpdater.UpdateOpenVrStatus("baseStationActive", active.ToString());
+            Statuses.trackers.Count(tracker => tracker.Value.Tracking == DeviceStatus.Connected);
+        UiUpdater.UpdateOpenVrStatus("trackerActive", active.ToString());
 
-        string message = $"BaseStation:{active}:{Statuses.baseStations.Count}";
+        string message = $"Tracker:{active}:{Statuses.trackers.Count}";
         MockConsole.WriteLine($"DeviceStatus:{message}", Enums.LogLevel.Debug);
 
         TrackingChanged?.Invoke(this, new GenericEventArgs<string>(message));
     }
     #endregion
 
-    public VrBaseStation(string serialNumber)
+    public VrTracker(string serialNumber)
     {
         this._serialNumber = serialNumber;
         
@@ -81,7 +82,7 @@ public class VrBaseStation
                 break;
 
             default:
-                MockConsole.WriteLine($"VrBaseStation.UpdateProperty - Invalid property name: {propertyName}",
+                MockConsole.WriteLine($"VrTracker.UpdateProperty - Invalid property name: {propertyName}",
                     Enums.LogLevel.Error);
                 break;
         }
@@ -102,7 +103,7 @@ public class VrBaseStation
         }
         else
         {
-            MockConsole.WriteLine($"VrBaseStation.UpdateProperty - {errorMsg}: {newValue}",
+            MockConsole.WriteLine($"VrTracker.UpdateProperty - {errorMsg}: {newValue}",
                 Enums.LogLevel.Info);
         }
     }
