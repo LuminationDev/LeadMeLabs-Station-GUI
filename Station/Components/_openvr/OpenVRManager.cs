@@ -598,7 +598,7 @@ public class OpenVrManager
                     GetBaseStationInfo(deviceIndex);
                     break;
                 case ETrackedDeviceClass.GenericTracker:
-                    GetBaseStationInfo(deviceIndex);
+                    GetTrackerInfo(deviceIndex);
                     break;
             }
         }

@@ -330,9 +330,12 @@ public class Statuses
             //Add a new base station entry
             MockConsole.WriteLine($"Found a new tracker: {serialNumber}", Enums.LogLevel.Normal);
             VrTracker temp = new VrTracker(serialNumber);
-            temp.UpdateProperty(propertyName, value);
             trackers.Add(serialNumber, temp);
             UiUpdater.UpdateOpenVrStatus("trackerAmount", trackers.Count.ToString());
+            if (trackers.TryGetValue(serialNumber, out var temp1) && temp != null)
+            {
+                temp1.UpdateProperty(propertyName, value);
+            }
         }
     }
 
