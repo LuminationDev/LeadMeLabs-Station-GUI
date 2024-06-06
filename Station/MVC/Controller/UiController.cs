@@ -4,7 +4,7 @@ using Station.MVC.ViewModel;
 
 namespace Station.MVC.Controller;
 
-public class UiController
+public static class UiController
 {
     /// <summary>
     /// Update the Id of the Station.
@@ -129,7 +129,6 @@ public class UiController
         }
     }
     
-    //TODO test the following with a connected headset
     /// <summary>
     /// Update the VR icons on the home page.
     /// </summary>

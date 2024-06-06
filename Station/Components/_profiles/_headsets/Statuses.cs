@@ -357,16 +357,17 @@ public class Statuses
             VrBaseStation temp = new VrBaseStation(serialNumber);
             temp.UpdateProperty(propertyName, value);
             baseStations.Add(serialNumber, temp);
-            
-            //TODO update for Vive Business Streaming headsets
-            string num = baseStations.Count switch
-            {
-                0 => "Off",
-                < 3 => "Lost",
-                _ => "Connected"
-            };
-            UiController.UpdateVrUi("baseStation", num);
         }
+        
+        //TODO update for Vive Business Streaming headsets
+        int count = baseStations.Values.Count(vr => vr.Tracking == DeviceStatus.Connected);
+        string num = count switch
+        {
+            0 => "Off",
+            < 3 => "Lost",
+            _ => "Connected"
+        };
+        UiController.UpdateVrUi("baseStation", num);
     }
 
     /// <summary>
