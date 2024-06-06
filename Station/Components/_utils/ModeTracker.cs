@@ -4,12 +4,10 @@ using System.Threading.Tasks;
 using LeadMeLabsLibrary;
 using Newtonsoft.Json.Linq;
 using Station.Components._commandLine;
-using Station.Components._legacy;
 using Station.Components._managers;
 using Station.Components._notification;
 using Station.Components._overlay;
 using Station.Components._profiles;
-using Station.Components._version;
 using Station.MVC.Controller;
 
 namespace Station.Components._utils;
@@ -27,8 +25,8 @@ public static class ModeTracker
         Normal,
         Idle
     }
-    
-    private static Mode CurrentMode { get; set; }
+
+    private static Mode CurrentMode { get; set; } = Mode.Normal;
     private static Timer? idleCheck;
     private static bool exitingIdleMode;
 
