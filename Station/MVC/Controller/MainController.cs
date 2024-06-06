@@ -126,6 +126,7 @@ public static class MainController
         // Collect audio devices and videos before starting the server
         AudioManager.Initialise();
         VideoManager.Initialise();
+        FileManager.Initialise();
         
         // Additional tasks - Start a new task as to now hold up the UI
         new Task(() =>

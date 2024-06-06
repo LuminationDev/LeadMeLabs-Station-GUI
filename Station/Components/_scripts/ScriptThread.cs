@@ -88,6 +88,10 @@ public class ScriptThread
                 HandleExperience(_additionalData);
                 break;
             
+            case "FileControl":
+                FileManager.HandleFileAction(_additionalData);
+                break;
+            
             case "QA":
                 QualityManager.HandleQualityAssurance(_additionalData);
                 break;

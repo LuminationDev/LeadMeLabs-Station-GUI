@@ -121,6 +121,7 @@ public static class StateController
         
             AudioManager.Initialise();
             VideoManager.Initialise();
+            FileManager.Initialise();
         }
     }
     #endregion
@@ -303,7 +304,6 @@ public static class StateController
         if (VersionHandler.NucVersion < LeadMeVersion.StateHandler)
         {
             LegacySetValue.SimpleSetValue(key, value?.ToString());
-            return;
         }
         
         if (!ListValues.ContainsKey(key))

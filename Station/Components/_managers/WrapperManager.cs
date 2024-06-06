@@ -145,6 +145,11 @@ public class WrapperManager
                 //Old set value method as this goes directly to the tablet through the NUC - nothing is saved temporarily 
                 MessageController.SendResponse("Android", "Station", $"SetValue:details:{CheckExperienceName(tokens[1])}");
                 break;
+            case "fileSaved":
+                //Wait for the file to be saved completely
+                Task.Delay(2000).Wait();
+                FileManager.Initialise();
+                break;
             
             // Let the video manager handle video associated messages
             case "videoTime":

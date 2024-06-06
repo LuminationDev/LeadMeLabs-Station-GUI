@@ -39,6 +39,7 @@ public static class LegacySetValue
         
         AudioManager.Initialise();
         VideoManager.Initialise();
+        FileManager.Initialise();
     }
 
     public static void SimpleSetValue(string key, string? value)
