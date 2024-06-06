@@ -147,6 +147,9 @@ public class WrapperManager
                 //Old set value method as this goes directly to the tablet through the NUC - nothing is saved temporarily 
                 MessageController.SendResponse("Android", "Station", $"SetValue:details:{CheckExperienceName(tokens[1])}");
                 break;
+            case "fileSaved":
+                FileManager.Initialise();
+                break;
             
             // Let the video manager handle video associated messages
             case "videoTime":
@@ -313,7 +316,7 @@ public class WrapperManager
             { "unacceptedEulas", JsonConvert.SerializeObject(SteamWrapper.installedExperiencesWithUnacceptedEulas) }
         };
 
-        Dictionary<string, object> stateValues = new()
+        Dictionary<string, object?> stateValues = new()
         {
             { "installedJsonApplications", convertedApplications },
             { "blockedApplications", blockedApplications },
@@ -474,7 +477,7 @@ public class WrapperManager
         acceptingEulas = true;
 
         int index = 1;
-        App.windowEventTracker.SetMinimisingEnabled(false);
+        App.windowEventTracker?.SetMinimisingEnabled(false);
         
         foreach (string installedExperienceWithUnacceptedEula in SteamWrapper.installedExperiencesWithUnacceptedEulas)
         {
@@ -490,7 +493,7 @@ public class WrapperManager
         ScheduledTaskQueue.EnqueueTask(() =>
             {
                 CommandLine.EnterAltF4(Int32.Parse(handle));
-                App.windowEventTracker.SetMinimisingEnabled(true);
+                App.windowEventTracker?.SetMinimisingEnabled(true);
                 SessionController.StationProfile.MinimizeSoftware(1);
                 OverlayManager.ManualStop(90);
                 acceptingEulas = false;
