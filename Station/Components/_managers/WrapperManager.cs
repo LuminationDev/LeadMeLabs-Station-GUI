@@ -287,7 +287,7 @@ public class WrapperManager
         if (Helper.GetStationMode().Equals(Helper.STATION_MODE_VR) ||
             (contentProfile != null && contentProfile.DoesProfileHaveAccount("Steam")))
         {
-            List<T>? steamApplications = silently ? SteamScripts.FilterAvailableExperiences<T>() : SteamWrapper.CollectApplications<T>();
+            List<T>? steamApplications = silently ? SteamScripts.FilterAvailableExperiences<T>(SteamScripts.InstalledApplications, true) : SteamWrapper.CollectApplications<T>();
             if (steamApplications != null)
             {
                 applications.AddRange(steamApplications);
