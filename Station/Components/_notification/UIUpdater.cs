@@ -102,6 +102,16 @@ public static class UiUpdater
                     if (MainWindow.baseStationAmount == null) return;
                     MainWindow.baseStationAmount.Content = status;
                     break;
+                case "trackerActive":
+                    if (MainWindow.trackerActive == null || MainWindow.trackerSection == null) return;
+                    MainWindow.trackerActive.Content = status;
+                    MainWindow.trackerSection.Visibility =
+                        (Int32.Parse(status) > 0 ? Visibility.Visible : Visibility.Collapsed);
+                    break;
+                case "trackerAmount":
+                    if (MainWindow.trackerAmount == null) return;
+                    MainWindow.trackerAmount.Content = status;
+                    break;
             }
         });
     }

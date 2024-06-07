@@ -28,11 +28,9 @@ public static class SteamScripts
         Environment.GetEnvironmentVariable("SteamUserName", EnvironmentVariableTarget.Process) + " " + 
         Environment.GetEnvironmentVariable("SteamPassword", EnvironmentVariableTarget.Process);
 
-    private const string LoginAnonymous = $"+login anonymous";
     private static readonly string LoginUser = $"+login {LoginDetails}";
 
     //Important to keep the initial space in all commands after the login
-    private const string Installed = " +apps_installed";
     private const string Licenses = " +licenses_print ";
     private const string Quit = " +quit";
     
@@ -42,15 +40,12 @@ public static class SteamScripts
     private static int restartAttempts = 0; //Track how many times SteamVR has failed in a Station session
     
     //Experience constants and lists
-    private static List<string> steamCmdInstalledGames = new();
-    private static List<string> installedGames = new();
     private static readonly List<string> BlacklistedGames = new() {"1635730"}; // vive console
-    private static readonly List<string> AvailableLicenses = new();
-    private static List<string> approvedGames = new();
     
     //Track experiences with no licenses or blocked by family mode
     public static List<string> noLicenses = new();
     public static List<string> blockedByFamilyMode = new();
+    public static List<ExperienceDetails> InstalledApplications = new();
 
     private static ManifestReader.ManifestApplicationList steamManifestApplicationList = new (SteamManifest);
     public static void RefreshVrManifest()
@@ -155,71 +150,25 @@ public static class SteamScripts
     /// <returns>A list of available experiences of type T, or null if no experiences are available.</returns>
     public static List<T>? LoadAvailableExperiences<T>()
     {
-        //Close Steam if it is open
-        CommandLine.QueryProcesses(WrapperMonitoringThread.SteamProcesses, true);
-        CommandLine.QueryProcesses(WrapperMonitoringThread.SteamVrProcesses, true);
+        InstalledApplications = new List<ExperienceDetails>();
 
-        return !Network.CheckIfConnectedToInternet() ? LoadAvailableGamesWithoutUsingInternetConnection<T>() : LoadAvailableGamesUsingInternetConnection<T>();
+        InstalledApplications =
+            AddInstalledSteamApplicationsFromDirectoryToList(InstalledApplications, "S:\\SteamLibrary\\steamapps");
+        InstalledApplications =
+            AddInstalledSteamApplicationsFromDirectoryToList(InstalledApplications, "C:\\Program Files (x86)\\Steam\\steamapps");
+
+        return FilterAvailableExperiences<T>(InstalledApplications, false);
     }
 
-    private static List<T> AddInstalledSteamApplicationsFromDirectoryToList<T>(List<T> list, string directoryPath)
+    private static List<string> GetLicences(bool silently)
     {
-        approvedGames = GetParentalApprovedGames();
-        
-        Logger.WriteLog("Approved games length: " + approvedGames.Count, Enums.LogLevel.Debug);
-        if (!Directory.Exists(directoryPath)) return list;
-        
-        DirectoryInfo directoryInfo = new DirectoryInfo(directoryPath);
-        foreach (var file in directoryInfo.GetFiles("appmanifest_*.acf"))
+        List<string> licenses = new List<string>();
+        if (!Network.CheckIfConnectedToInternet())
         {
-            AcfReader acfReader = new AcfReader(file.FullName, true);
-            acfReader.ACFFileToStruct();
-            if (string.IsNullOrEmpty(acfReader.gameName) || acfReader.appId == null) continue;
-                
-            if (BlacklistedGames.Contains(acfReader.appId))
-            {
-                continue;
-            }
-
-            if (approvedGames.Count != 0 && !approvedGames.Contains(acfReader.appId)) continue;
-                    
-            bool isVr =
-                steamManifestApplicationList.IsApplicationInstalledAndVrCompatible("steam.app." + acfReader.appId);
-            WrapperManager.StoreApplication(SteamWrapper.WrapperType, acfReader.appId, acfReader.gameName, isVr); // todo, I don't like this line here as it's a side-effect to the function
-            if (!Helper.GetStationMode().Equals(Helper.STATION_MODE_VR) && isVr) continue;
-                        
-            // Basic application requirements
-            if (typeof(T) == typeof(ExperienceDetails))
-            {
-                ExperienceDetails experience = new ExperienceDetails(SteamWrapper.WrapperType, acfReader.gameName, acfReader.appId, isVr);
-                list.Add((T)(object)experience);
-            }
-            else if (typeof(T) == typeof(string))
-            {
-                string application =
-                    $"{SteamWrapper.WrapperType}|{acfReader.appId}|{acfReader.gameName}";
-                list.Add((T)(object)application);
-            }
+            return licenses;
         }
-
-        return list;
-    }
-
-    private static List<T> LoadAvailableGamesWithoutUsingInternetConnection<T>()
-    {
-        List<T> collectedExperiences = new List<T>();
-
-        collectedExperiences =
-            AddInstalledSteamApplicationsFromDirectoryToList<T>(collectedExperiences, "S:\\SteamLibrary\\steamapps");
-        collectedExperiences =
-            AddInstalledSteamApplicationsFromDirectoryToList<T>(collectedExperiences, "C:\\Program Files (x86)\\Steam\\steamapps");
-
-        return collectedExperiences;
-    }
-
-    private static List<T>? LoadAvailableGamesUsingInternetConnection<T>()
-    {
-        List<string> licenses = SteamConfig.GetAllLicenses();
+        
+        licenses = SteamConfig.GetAllLicenses();
         bool containsConnectionTimeout = licenses.Any(s => s.Contains("Connection attempt timed out"));
         
         // this is a backup for when Steam Guard is still disabled on the account
@@ -237,21 +186,23 @@ public static class SteamScripts
             {
                 SentrySdk.CaptureException(e);
             }
-            return LoadAvailableGamesUsingSteamCmd<T>();
-        }
 
-        installedGames = LoadAvailableGamesWithoutUsingInternetConnection<string>().ToList();
-        AvailableLicenses.AddRange(licenses);
-        return FilterAvailableExperiences<T>();
+            licenses = new List<string>(); // just to reset it - not necessary but makes me feel more at ease
+            if (silently) // if we're going silently, we can't open SteamCMD, so return the empty list
+            {
+                return licenses;
+            }
+            licenses = GetLicencesFromSteamCmd();
+        }
+        return licenses;
     }
-    
-    /// <summary>
-    /// Legacy - use SteamCMD to collect the currently installed experiences and their associated licenses.
-    /// </summary>
-    /// <typeparam name="T">The type of applications to collect.</typeparam>
-    /// <returns>A list of experiences</returns>
-    private static List<T>? LoadAvailableGamesUsingSteamCmd<T>()
+
+    private static List<string> GetLicencesFromSteamCmd()
     {
+        //Close Steam if it is open
+        CommandLine.QueryProcesses(WrapperMonitoringThread.SteamProcesses, true);
+        CommandLine.QueryProcesses(WrapperMonitoringThread.SteamVrProcesses, true);
+        
         //Check if SteamCMD has been initialised
         string filePath = CommandLine.StationLocation + @"\external\steamcmd\steamerrorreporter.exe";
         
@@ -267,43 +218,53 @@ public static class SteamScripts
             string command = $"{LoginDetails} {Quit}";
             CommandLine.ExecuteSteamCommand(command);
             
-            return null;
+            return new List<string>();
         }
-
-        string? steamResponse = CommandLine.ExecuteSteamCommand(LoginAnonymous + Installed + Quit);
-        if(steamResponse == null)
-        {
-            return null;
-        }
-
-        steamCmdInstalledGames = steamResponse.Split('\n').ToList();
-
-        if (Directory.Exists("S:\\SteamLibrary\\steamapps"))
-        {
-            string? additionalSteamResponse = CommandLine.ExecuteSteamCommandSDrive(LoginAnonymous + Installed + Quit);
-            if (additionalSteamResponse == null)
-            {
-                return null;
-            }
-            List<string> additionalInstalledGames = additionalSteamResponse.Split('\n').ToList();
-            steamCmdInstalledGames.AddRange(additionalInstalledGames);
-        }
-
+        
         List<string>? licenseList = CommandLine.ExecuteSteamCommand(LoginUser + Licenses + Quit)?.Split('\n').ToList();
+        List<string> licenses = new List<string>();
         if (licenseList == null)
         {
-            return null;
+            return licenses;
         }
         
         foreach (var line in licenseList)
         {
             if (line.StartsWith(" - Apps"))
             {
-                AvailableLicenses.Add(line.Substring(10).Split(',')[0]);
+                licenses.Add(line.Substring(10).Split(',')[0]);
             }
         }
 
-        return FilterAvailableExperiences<T>();
+        return licenses;
+    }
+
+    private static List<ExperienceDetails> AddInstalledSteamApplicationsFromDirectoryToList(List<ExperienceDetails> list, string directoryPath)
+    {
+        if (!Directory.Exists(directoryPath)) return list;
+        
+        DirectoryInfo directoryInfo = new DirectoryInfo(directoryPath);
+        foreach (var file in directoryInfo.GetFiles("appmanifest_*.acf"))
+        {
+            AcfReader acfReader = new AcfReader(file.FullName, true);
+            acfReader.ACFFileToStruct();
+            if (string.IsNullOrEmpty(acfReader.gameName) || acfReader.appId == null) continue;
+                
+            if (BlacklistedGames.Contains(acfReader.appId))
+            {
+                continue;
+            }
+                    
+            bool isVr =
+                steamManifestApplicationList.IsApplicationInstalledAndVrCompatible("steam.app." + acfReader.appId);
+            WrapperManager.StoreApplication(SteamWrapper.WrapperType, acfReader.appId, acfReader.gameName, isVr); // todo, I don't like this line here as it's a side-effect to the function
+            if (!Helper.GetStationMode().Equals(Helper.STATION_MODE_VR) && isVr) continue;
+                        
+            ExperienceDetails experience = new ExperienceDetails(SteamWrapper.WrapperType, acfReader.gameName, acfReader.appId, isVr);
+            list.Add(experience);
+        }
+
+        return list;
     }
 
     /// <summary>
@@ -314,44 +275,28 @@ public static class SteamScripts
     /// collecting them without having to re-open steamCMD and disconnect Steam.
     /// Overwrite the stored applications and send the new list.
     /// </summary>
-    public static List<T> FilterAvailableExperiences<T>()
+    public static List<T> FilterAvailableExperiences<T>(List<ExperienceDetails> installedExperiences, bool silently)
     {
-        //Reset the lists as to not double up each refresh //TODO SEND THESE LISTS TO THE NUC?? OR JUST QA??
+        //Reset the lists as to not double up each refresh
         noLicenses = new List<string>();
         blockedByFamilyMode = new List<string>();
-        
-         List<T> apps = new List<T>();
-        approvedGames = GetParentalApprovedGames();
+
+        List<T> apps = new List<T>();
+        List<string> approvedGames = GetParentalApprovedGames();
         Logger.WriteLog("Approved games length: " + approvedGames.Count, Enums.LogLevel.Debug);
+        List<string> licenses = GetLicences(silently);
+        Logger.WriteLog("Licenses length: " + licenses.Count, Enums.LogLevel.Debug);
 
         Logger.WriteLog("Within loadAvailableGames", Enums.LogLevel.Debug);
 
-        // support for stations without Steam Guard disabled
-        installedGames.AddRange(
-            steamCmdInstalledGames
-                .Where(line => line.StartsWith("AppID"))
-                .ToList()
-                .ConvertAll(line =>
-                {
-                    List<string> split = line.Split(":").ToList();
-                    string id = split[0].Replace("AppID", "").Trim();
-                    split.RemoveAt(0); // remove AppID prefix
-                    split.RemoveAt(split.Count - 1); // remove file location
-                    split.RemoveAt(split.Count - 1); // remove drive name
-                    string name = string.Join(":", split.ToArray()).Replace("\\", "").Trim();
-                    name = name.Replace("\"", "").Trim();
-                    return $"Steam|{id}|{name}";
-                })
-            );
-
-        foreach (var line in installedGames)
+        foreach (var experienceDetails in installedExperiences)
         {
-            Logger.WriteLog(line, Enums.LogLevel.Debug);
+            Logger.WriteLog(experienceDetails, Enums.LogLevel.Debug);
 
-            List<string> filter = line.Split("|").ToList();
-            string id = filter[1];
+            string id = experienceDetails.Id;
+            string name = experienceDetails.Name;
 
-            if (!AvailableLicenses.Contains(id))
+            if (licenses.Count > 0 && !licenses.Contains(id))
             {
                 Logger.WriteLog($"SteamScripts - FilterAvailableExperiences: Experience does not have available license: {id}", Enums.LogLevel.Info);
                 noLicenses.Add(id);
@@ -368,8 +313,6 @@ public static class SteamScripts
                 blockedByFamilyMode.Add(id);
                 continue; // if count is zero then all games are approved
             }
-
-            string name = filter[2];
             
             // support for stations without Steam Guard disabled
             if (name.Contains("appid_")) // as a backup if steamcmd doesn't load the game name, we get it from the acf file
@@ -384,6 +327,7 @@ public static class SteamScripts
                     Logger.WriteLog($"SteamScripts - FilterAvailableExperiences: Experience name from acf file: {name}", Enums.LogLevel.Info);
                 }
             }
+
             //Determine if it is a VR experience
             bool isVr = steamManifestApplicationList.IsApplicationInstalledAndVrCompatible("steam.app." + id);
             if (!Helper.GetStationMode().Equals(Helper.STATION_MODE_VR) && isVr) continue;
@@ -433,11 +377,6 @@ public static class SteamScripts
             if (current.Contains("No custom list"))
             {
                 Logger.WriteLog("No custom list of steam applications", Enums.LogLevel.Info);
-                break;
-            }
-            if (current.Contains("Custom list"))
-            {
-                Logger.WriteLog("Reached end of parental approved list", Enums.LogLevel.Info);
                 break;
             }
             if (current.Contains("Custom list"))

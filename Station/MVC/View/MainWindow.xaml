@@ -455,6 +455,28 @@
                         Foreground="#a8a8a8"/>
                 </WrapPanel>
                 
+                <WrapPanel 
+                    x:Name="TrackerSection"
+                    Height="25" 
+                    Margin="5,0,10,0">
+                    <Label 
+                        x:Name="TrackerActive"
+                        FontFamily="Fonts/#Poppins-Medium"
+                        Content="0"
+                        Foreground="#a8a8a8"/>
+                    
+                    <Label
+                        FontFamily="Fonts/#Poppins-Medium"
+                        Content="/"
+                        Foreground="#a8a8a8"/>
+                    
+                    <Label 
+                        x:Name="TrackerAmount"
+                        FontFamily="Fonts/#Poppins-Medium"
+                        Content="0"
+                        Foreground="#a8a8a8"/>
+                </WrapPanel>
+                
                 <Border BorderBrush="Gray" 
                         BorderThickness="0,1,0,0" 
                         Margin="0,7,0,3">
