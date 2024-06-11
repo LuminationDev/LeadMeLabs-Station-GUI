@@ -778,17 +778,17 @@ public class WrapperManager
         if (currentWrapper == null)
         {
             MockConsole.WriteLine("No process wrapper present, checking internal.", Enums.LogLevel.Normal);
-
+        
             if (InternalWrapper.GetCurrentExperienceName() != null)
             {
                 Task.Factory.StartNew(() => InternalWrapper.PassMessageToProcess(message));
                 return;
             }
-
+        
             MockConsole.WriteLine("No internal wrapper present.", Enums.LogLevel.Normal);
             return;
         }
-
+        
         Task.Factory.StartNew(() => currentWrapper.PassMessageToProcess(message));
     }
 

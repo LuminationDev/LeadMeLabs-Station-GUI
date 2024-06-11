@@ -126,6 +126,89 @@ public static class StateController
     }
     #endregion
     
+    #region Video Values
+    /// <summary>
+    /// Gets the dictionary that holds the current video state off all values on the Station.
+    /// </summary>
+    private static ConcurrentDictionary<string, object?> VideoValues { get; } = new();
+    
+    /// <summary>
+    /// Adds a new key and value to the container.
+    /// </summary>
+    /// <param name="key">The key to be added.</param>
+    /// <param name="value">The value associated with the status.</param>
+    /// <returns>True if the value was added successfully; otherwise, false.</returns>
+    private static void AddVideoValue(string key, object? value)
+    {
+        VideoValues.TryAdd(key, value);
+    }
+    
+    /// <summary>
+    /// Updates the value of an existing status in the container.
+    /// </summary>
+    /// <param name="key">The key to be updated.</param>
+    /// <param name="value">The new value for the status.</param>
+    /// <returns>True if the status value was updated successfully; otherwise, false.</returns>
+    public static void UpdateVideoValue(string key, object? value)
+    {
+        if (!VideoValues.ContainsKey(key))
+        {
+            AddVideoValue(key, value);
+        }
+        
+        VideoValues[key] = value;
+        SendVideoValues();
+    }
+    
+    /// <summary>
+    /// Retrieves the value associated with a given status.
+    /// </summary>
+    /// <param name="key">The key whose value is to be retrieved.</param>
+    /// <returns>The value associated with the specified status.</returns>
+    public static object? GetVideoValue(string key)
+    {
+        if (!VideoValues.TryGetValue(key, out object? value))
+        {
+            Logger.WriteLog("GetVideoValue - The status does not exist in the container.", Enums.LogLevel.Error);
+            return false;
+        }
+        
+        return value;
+    }
+
+    /// <summary>
+    /// Removes a status and its value from the container.
+    /// </summary>
+    /// <param name="key">The key to be removed.</param>
+    /// <returns>True if the value was removed successfully; otherwise, false.</returns>
+    public static bool RemoveVideoValue(string key)
+    {
+        if (!VideoValues.TryRemove(key, out _))
+        {
+            Logger.WriteLog("RemoveVideoValue - The status does not exist in the container.", Enums.LogLevel.Error);
+        }
+        SendVideoValues();
+        return true;
+    }
+
+    /// <summary>
+    /// Clears all statuses and their values from the container.
+    /// </summary>
+    public static void ClearVideoValues()
+    {
+        VideoValues.Clear();
+    }
+    
+    /// <summary>
+    /// Logs the current status values as a JObject.
+    /// </summary>
+    private static void SendVideoValues()
+    {
+        JObject videoValuesJson = ToJObject(VideoValues);
+        MessageController.SendResponse("NUC", "Station", $"CurrentVideoState:{videoValuesJson}");
+    }
+    #endregion
+    
     #region State Values
     /// <summary>
     /// Gets the dictionary that holds the current state off all values on the Station.
