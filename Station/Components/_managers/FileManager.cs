@@ -142,6 +142,10 @@ public static class FileManager
                 DeleteFile(data);
                 break;
             
+            case "refresh":
+                Initialise();
+                break;
+            
             default:
                 return;
         }
