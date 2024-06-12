@@ -136,44 +136,16 @@ public static class ModeTracker
 
         if (Helper.GetStationMode().Equals(Helper.STATION_MODE_VR))
         {
-            // Safe cast for potential vr profile
-            VrProfile? vrProfile = Profile.CastToType<VrProfile>(SessionController.StationProfile);
-            if (vrProfile?.VrHeadset == null) return false;
-            
-            // This must be checked before the VR processes are restarted
-            RoomSetup.CompareRoomSetup(); 
-
-            //Reset the VR device statuses
-            vrProfile.VrHeadset.GetStatusManager().ResetStatuses();
-            
+            return await WaitForVr();
+        }
+        
+        // Check if there are steam details as the Station may be non-VR with a Steam account
+        ContentProfile? contentProfile = Profile.CastToType<ContentProfile>(SessionController.StationProfile);
+        if (contentProfile != null && contentProfile.DoesProfileHaveAccount("Steam"))
+        {
             SessionController.StationProfile?.StartSession();
-
-            // Check if there are steam details as the Station may be non-VR without a Steam account
-            WrapperManager.WaitForVrProcesses();
-            
             OverlayManager.SetText("Launching software");
-        
-            //Wait for OpenVR to be available
-            bool headsetSoftware = await Helper.MonitorLoop(() => ProcessManager.GetProcessesByName(vrProfile.VrHeadset.GetHeadsetManagementProcessName()).Length == 0, 20);
-            if (!headsetSoftware)
-            {
-                JObject message = new JObject
-                {
-                    { "action", "SoftwareState" },
-                    { "value", "SteamVR Error" }
-                };
-                ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage(message), TimeSpan.FromSeconds(1));
-                ScheduledTaskQueue.EnqueueTask(() => MessageController.SendResponse("NUC", "Analytics", "SteamVRError"), TimeSpan.FromSeconds(1));
-            }
-        
-            await Task.Delay(6000);
-            
-            OverlayManager.SetText("Ready for use");
-            await Task.Delay(2500);
-        
-            OverlayManager.ManualStop();
-            exitingIdleMode = false;
-            return headsetSoftware;
+            WrapperManager.WaitForSteamProcess();
         }
 
         await Task.Delay(2500);
@@ -184,6 +156,52 @@ public static class ModeTracker
         OverlayManager.ManualStop();
         exitingIdleMode = false;
         return true;
+    }
+
+    /// <summary>
+    /// Wait for the VR processes to start up again, this includes the headset management software and the steam client.
+    /// </summary>
+    /// <returns></returns>
+    private static async Task<bool> WaitForVr()
+    {
+        // Safe cast for potential vr profile
+        VrProfile? vrProfile = Profile.CastToType<VrProfile>(SessionController.StationProfile);
+        if (vrProfile?.VrHeadset == null) return false;
+            
+        // This must be checked before the VR processes are restarted
+        RoomSetup.CompareRoomSetup(); 
+
+        //Reset the VR device statuses
+        vrProfile.VrHeadset.GetStatusManager().ResetStatuses();
+            
+        SessionController.StationProfile?.StartSession();
+
+        // Check if there are steam details as the Station may be non-VR without a Steam account
+        WrapperManager.WaitForVrProcesses();
+            
+        OverlayManager.SetText("Launching software");
+        
+        //Wait for OpenVR to be available
+        bool headsetSoftware = await Helper.MonitorLoop(() => ProcessManager.GetProcessesByName(vrProfile.VrHeadset.GetHeadsetManagementProcessName()).Length == 0, 20);
+        if (!headsetSoftware)
+        {
+            JObject message = new JObject
+            {
+                { "action", "SoftwareState" },
+                { "value", "SteamVR Error" }
+            };
+            ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage(message), TimeSpan.FromSeconds(1));
+            ScheduledTaskQueue.EnqueueTask(() => MessageController.SendResponse("NUC", "Analytics", "SteamVRError"), TimeSpan.FromSeconds(1));
+        }
+        
+        await Task.Delay(6000);
+            
+        OverlayManager.SetText("Ready for use");
+        await Task.Delay(2500);
+        
+        OverlayManager.ManualStop();
+        exitingIdleMode = false;
+        return headsetSoftware;
     }
     
     /// <summary>
