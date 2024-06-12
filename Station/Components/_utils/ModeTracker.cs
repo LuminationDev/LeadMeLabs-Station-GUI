@@ -4,12 +4,11 @@ using System.Threading.Tasks;
 using LeadMeLabsLibrary;
 using Newtonsoft.Json.Linq;
 using Station.Components._commandLine;
-using Station.Components._legacy;
 using Station.Components._managers;
 using Station.Components._notification;
 using Station.Components._overlay;
 using Station.Components._profiles;
-using Station.Components._version;
+using Station.Components._utils._steamConfig;
 using Station.MVC.Controller;
 
 namespace Station.Components._utils;
@@ -27,8 +26,8 @@ public static class ModeTracker
         Normal,
         Idle
     }
-    
-    private static Mode CurrentMode { get; set; }
+
+    private static Mode CurrentMode { get; set; } = Mode.Normal;
     private static Timer? idleCheck;
     private static bool exitingIdleMode;
 
@@ -107,7 +106,7 @@ public static class ModeTracker
     /// The Station has not had any interaction for x amount of time. Close any VR applications and update the Status
     /// for the NUC & Tablet. On exit of Idle mode the VR applications are started again.
     /// </summary>
-    private static void EnableIdleMode()
+    private static async void EnableIdleMode()
     {
         Logger.WriteLog("Station is entering Idle mode.", Enums.LogLevel.Normal);
         CurrentMode = Mode.Idle;
@@ -119,8 +118,7 @@ public static class ModeTracker
         // TODO - Enable this when we start using idle mode
         // MessageController.SendResponse("NUC", "Analytics", "EnterIdleMode");
         
-        //Exit VR applications
-        WrapperManager.StopCommonProcesses();
+        await WrapperManager.StopCommonProcesses();
     }
 
     /// <summary>
@@ -142,9 +140,17 @@ public static class ModeTracker
             VrProfile? vrProfile = Profile.CastToType<VrProfile>(SessionController.StationProfile);
             if (vrProfile?.VrHeadset == null) return false;
             
-            //Start VR applications
-            await WrapperManager.RestartVrProcesses();
-        
+            // This must be checked before the VR processes are restarted
+            RoomSetup.CompareRoomSetup(); 
+
+            //Reset the VR device statuses
+            vrProfile.VrHeadset.GetStatusManager().ResetStatuses();
+            
+            SessionController.StationProfile?.StartSession();
+
+            // Check if there are steam details as the Station may be non-VR without a Steam account
+            WrapperManager.WaitForVrProcesses();
+            
             OverlayManager.SetText("Launching software");
         
             //Wait for OpenVR to be available
@@ -160,7 +166,7 @@ public static class ModeTracker
                 ScheduledTaskQueue.EnqueueTask(() => MessageController.SendResponse("NUC", "Analytics", "SteamVRError"), TimeSpan.FromSeconds(1));
             }
         
-            await Task.Delay(4000);
+            await Task.Delay(6000);
             
             OverlayManager.SetText("Ready for use");
             await Task.Delay(2500);
