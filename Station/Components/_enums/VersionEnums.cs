@@ -1,6 +1,5 @@
-using System;
 
-namespace Station.Components._version;
+namespace Station.Components._enums;
 
 /// <summary>
 /// Represents a NUC update version, specifying the capabilities and format it supports.
@@ -16,26 +15,4 @@ public enum LeadMeVersion
     [Description("Use JObject instead of strings for set value.")]
     [Value("1.2.4")]
     StateHandler
-}
-
-[AttributeUsage(AttributeTargets.Field, Inherited = false, AllowMultiple = false)]
-sealed class DescriptionAttribute : Attribute
-{
-    public string Description { get; }
-
-    public DescriptionAttribute(string description)
-    {
-        Description = description;
-    }
-}
-    
-[AttributeUsage(AttributeTargets.Field, Inherited = false, AllowMultiple = false)]
-sealed class ValueAttribute : Attribute
-{
-    public string Value { get; }
-
-    public ValueAttribute(string value)
-    {
-        Value = value;
-    }
 }

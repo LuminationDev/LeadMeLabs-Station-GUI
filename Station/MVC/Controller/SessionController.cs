@@ -4,6 +4,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using LeadMeLabsLibrary;
 using Newtonsoft.Json.Linq;
+using Station.Components._enums;
 using Station.Components._interfaces;
 using Station.Components._managers;
 using Station.Components._notification;
@@ -35,16 +36,16 @@ public static class SessionController
     /// <summary>
     /// Track the current state of the Station software.
     /// </summary>
-    private static string currentState = "";
+    private static State currentState = State.Base;
 
-    public static string CurrentState
+    public static State CurrentState
     {
         get => currentState;
         set
         {
             currentState = value;
-            StateController.UpdateStateValue("state", value);
-            UiController.UpdateCurrentState(value); //Update the home page UI
+            StateController.UpdateStateValue("state", Attributes.GetEnumValue(currentState));
+            UiController.UpdateCurrentState(Attributes.GetEnumValue(currentState)); //Update the home page UI
         }
     }
 
@@ -106,12 +107,7 @@ public static class SessionController
             ModeTracker.ResetMode();
         }
         
-        JObject message = new JObject
-        {
-            { "action", "SoftwareState" },
-            { "value", "Shutting down VR processes" }
-        };
-        ScheduledTaskQueue.EnqueueTask(() => PassStationMessage(message), TimeSpan.FromSeconds(1));
+        ScheduledTaskQueue.EnqueueTask(() => UpdateState(State.StopVrProcess), TimeSpan.FromSeconds(1));
         _ = WrapperManager.RestartVrProcesses();
 
         if (ExperienceType == null)
@@ -182,6 +178,15 @@ public static class SessionController
     }
 
     /// <summary>
+    /// Update the current state enum of the Station.
+    /// </summary>
+    /// <param name="state"></param>
+    public static void UpdateState(State state)
+    {
+        CurrentState = state;
+    }
+
+    /// <summary>
     /// Take an action message from the wrapper and pass the response onto the NUC or handle it internally.
     /// </summary>
     /// <param name="message">A string representing the message, different actions are separated by a ','</param>
@@ -235,11 +240,6 @@ public static class SessionController
 
                         StateController.UpdateStatusBunch(stateValues);
                     }
-                    break;
-
-                case "SoftwareState":
-                    if (value == null) return;
-                    CurrentState = value;
                     break;
 
                 case "ApplicationClosed":

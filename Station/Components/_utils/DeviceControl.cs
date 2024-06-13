@@ -3,8 +3,8 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
 using LeadMeLabsLibrary;
-using Newtonsoft.Json.Linq;
 using Station.Components._commandLine;
+using Station.Components._enums;
 using Station.MVC.Controller;
 
 namespace Station.Components._utils;
@@ -81,13 +81,7 @@ public static class DeviceControl
         const string updateMinute = "45";
 
         if (isUpdating || !TimeCheck(time, updateHour, updateMinute)) return;
-        
-        JObject stateMessage = new JObject
-        {
-            { "action", "SoftwareState" },
-            { "value", "Updating..." }
-        };
-        ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage(stateMessage), TimeSpan.FromSeconds(1));
+        ScheduledTaskQueue.EnqueueTask(() => SessionController.UpdateState(State.Updating), TimeSpan.FromSeconds(1));
         
         isUpdating = true;
         WindowsUpdates.Update(Logger.WriteLog);

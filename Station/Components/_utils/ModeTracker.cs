@@ -2,8 +2,8 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using LeadMeLabsLibrary;
-using Newtonsoft.Json.Linq;
 using Station.Components._commandLine;
+using Station.Components._enums;
 using Station.Components._managers;
 using Station.Components._notification;
 using Station.Components._overlay;
@@ -112,7 +112,7 @@ public static class ModeTracker
         CurrentMode = Mode.Idle;
         
         //Update the status
-        SessionController.CurrentState = "Idle Mode";
+        SessionController.CurrentState = State.Idle;
         StateController.UpdateStateValue("status", "Idle");
         
         // TODO - Enable this when we start using idle mode
@@ -131,7 +131,7 @@ public static class ModeTracker
         Logger.WriteLog("Station is exiting Idle mode.", Enums.LogLevel.Normal);
         
         //Update the status
-        SessionController.CurrentState = "Exiting Idle Mode";
+        SessionController.CurrentState = State.ExitIdle;
         StateController.UpdateStateValue("status", "On");
 
         if (Helper.GetStationMode().Equals(Helper.STATION_MODE_VR))
@@ -185,12 +185,7 @@ public static class ModeTracker
         bool headsetSoftware = await Helper.MonitorLoop(() => ProcessManager.GetProcessesByName(vrProfile.VrHeadset.GetHeadsetManagementProcessName()).Length == 0, 20);
         if (!headsetSoftware)
         {
-            JObject message = new JObject
-            {
-                { "action", "SoftwareState" },
-                { "value", "SteamVR Error" }
-            };
-            ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage(message), TimeSpan.FromSeconds(1));
+            ScheduledTaskQueue.EnqueueTask(() => SessionController.UpdateState(State.ErrorSteamVr), TimeSpan.FromSeconds(1));
             ScheduledTaskQueue.EnqueueTask(() => MessageController.SendResponse("NUC", "Analytics", "SteamVRError"), TimeSpan.FromSeconds(1));
         }
         
