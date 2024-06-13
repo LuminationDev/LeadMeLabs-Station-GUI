@@ -10,6 +10,7 @@ using LeadMeLabsLibrary;
 using Newtonsoft.Json.Linq;
 using Sentry;
 using Station.Components._commandLine;
+using Station.Components._enums;
 using Station.Components._interfaces;
 using Station.Components._managers;
 using Station.Components._models;
@@ -211,16 +212,9 @@ public class SteamWrapper : IWrapper
         //Wait for Steam to be signed in
         if (!Profile.WaitForSteamLogin())
         {
-            string error = "Error: Steam could not open";
-            
-            JObject message = new JObject
-            {
-                { "action", "SoftwareState" },
-                { "value", error }
-            };
-            ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage(message),
+            ScheduledTaskQueue.EnqueueTask(() => SessionController.UpdateState(State.ErrorSteam),
                 TimeSpan.FromSeconds(1)); //Wait for steam/other accounts to login
-            return "Error: Steam could not open";
+            return Attributes.GetEnumValue(State.ErrorSteam) ?? "";
         }
         
         if (InternalDebugger.GetHeadsetRequired() && experience.IsVr)

@@ -2,6 +2,7 @@
 using System.Threading.Tasks;
 using LeadMeLabsLibrary;
 using Newtonsoft.Json.Linq;
+using Station.Components._enums;
 using Station.Components._interfaces;
 using Station.Components._managers;
 using Station.Components._notification;
@@ -47,12 +48,7 @@ public static class ViveScripts
         
         if (!InternalDebugger.GetAutoStart())
         {
-            JObject message = new JObject
-            {
-                { "action", "SoftwareState" },
-                { "value", "Debug Mode" }
-            };
-            ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage(message), TimeSpan.FromSeconds(0));
+            ScheduledTaskQueue.EnqueueTask(() => SessionController.UpdateState(State.Debug), TimeSpan.FromSeconds(0));
             return false;
         }
 
@@ -105,13 +101,8 @@ public static class ViveScripts
             if (vrProfile.VrHeadset.GetHeadsetManagementSoftwareStatus() == DeviceStatus.Off)
             {
                 SessionController.StartSession(type);
+                ScheduledTaskQueue.EnqueueTask(() => SessionController.UpdateState(State.StartVrProcess), TimeSpan.FromSeconds(1));
                 
-                JObject message = new JObject
-                {
-                    { "action", "SoftwareState" },
-                    { "value", "Starting VR Session" }
-                };
-                ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage(message), TimeSpan.FromSeconds(1));
                 if (count == 10) // (10 * 5000ms) this loop + 2000ms initial loop 
                 {
                     terminateMonitoring = true;
@@ -122,13 +113,7 @@ public static class ViveScripts
                         { "value", "HeadsetTimeout" }
                     };
                     SessionController.PassStationMessage(androidMessage);
-                    
-                    JObject stateMessage = new JObject
-                    {
-                        { "action", "SoftwareState" },
-                        { "value", "Awaiting headset connection..." }
-                    };
-                    ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage(stateMessage), TimeSpan.FromSeconds(1));
+                    ScheduledTaskQueue.EnqueueTask(() => SessionController.UpdateState(State.Awaiting), TimeSpan.FromSeconds(1));
                 }
                 else
                 {
@@ -139,12 +124,7 @@ public static class ViveScripts
             else if (!sent)
             {
                 sent = true;
-                JObject message = new JObject
-                {
-                    { "action", "SoftwareState" },
-                    { "value", "Awaiting headset connection..." }
-                };
-                ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage(message), TimeSpan.FromSeconds(1));
+                ScheduledTaskQueue.EnqueueTask(() => SessionController.UpdateState(State.Awaiting), TimeSpan.FromSeconds(1));
                 
                 JObject androidMessage = new JObject
                 {

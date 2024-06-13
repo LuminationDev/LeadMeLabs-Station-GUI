@@ -1,6 +1,6 @@
 using System;
-using System.Reflection;
 using System.Threading.Tasks;
+using Station.Components._enums;
 using Station.Components._utils;
 using Station.MVC.Controller;
 using Version = Station.Components._models.Version;
@@ -45,7 +45,7 @@ public static class VersionHandler
 
         foreach (LeadMeVersion enumValue in Enum.GetValues(typeof(LeadMeVersion)))
         {
-            string? value = GetEnumValue(enumValue);
+            string? value = Attributes.GetEnumValue(enumValue);
             if (value == null) continue;
             
             Version enumParsedVersion = new Version(value);
@@ -55,33 +55,5 @@ public static class VersionHandler
         }
 
         return nearestVersion;
-    }
-    
-    /// <summary>
-    /// Retrieves the value attribute of an enum value.
-    /// If the value attribute is not found, returns the enum value as a string.
-    /// </summary>
-    /// <param name="value">The enum value to retrieve the value for.</param>
-    /// <returns>The value attribute of the enum value, or the enum value as a string if no value is found.</returns>
-    private static string? GetEnumValue(Enum value)
-    {
-        FieldInfo? field = value.GetType().GetField(value.ToString());
-        if (field == null) return value.ToString();
-        ValueAttribute? attribute = (ValueAttribute?)Attribute.GetCustomAttribute(field, typeof(ValueAttribute));
-        return attribute?.Value;
-    }
-        
-    /// <summary>
-    /// Retrieves the description attribute of an enum value.
-    /// If the description attribute is not found, returns the enum value as a string.
-    /// </summary>
-    /// <param name="value">The enum value to retrieve the description for.</param>
-    /// <returns>The description attribute of the enum value, or the enum value as a string if no description is found.</returns>
-    public static string? GetEnumDescription(Enum value)
-    {
-        FieldInfo? field = value.GetType().GetField(value.ToString());
-        if (field == null) return value.ToString();
-        DescriptionAttribute? attribute = (DescriptionAttribute?)Attribute.GetCustomAttribute(field, typeof(DescriptionAttribute));
-        return attribute?.Description;
     }
 }
