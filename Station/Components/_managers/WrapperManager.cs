@@ -504,7 +504,7 @@ public class WrapperManager
                 SessionController.StationProfile.MinimizeSoftware(1);
                 OverlayManager.ManualStop(90);
                 acceptingEulas = false;
-                WrapperManager.CollectAllApplications();
+                CollectAllApplications();
                 SessionController.StationProfile.StartSession();
             },
             TimeSpan.FromSeconds(((index + 2) * 1.5) + 3));
