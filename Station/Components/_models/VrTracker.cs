@@ -43,7 +43,9 @@ public class VrTracker
         //Get the current active trackers
         int active =
             Statuses.trackers.Count(tracker => tracker.Value.Tracking == DeviceStatus.Connected);
-        UiUpdater.UpdateOpenVrStatus("trackerActive", active.ToString());
+        
+        //TODO add this to the UI
+        //UiUpdater.UpdateOpenVrStatus("trackerActive", active.ToString());
 
         string message = $"Tracker:{active}:{Statuses.trackers.Count}";
         MockConsole.WriteLine($"DeviceStatus:{message}", Enums.LogLevel.Debug);

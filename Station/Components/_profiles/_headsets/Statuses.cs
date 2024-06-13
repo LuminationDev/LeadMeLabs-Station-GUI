@@ -400,7 +400,9 @@ public class Statuses
             MockConsole.WriteLine($"Found a new tracker: {serialNumber}", Enums.LogLevel.Normal);
             VrTracker temp = new VrTracker(serialNumber);
             trackers.Add(serialNumber, temp);
-            UiUpdater.UpdateOpenVrStatus("trackerAmount", trackers.Count.ToString());
+            
+            //TODO add this to the UI
+            //UiUpdater.UpdateOpenVrStatus("trackerAmount", trackers.Count.ToString());
             if (trackers.TryGetValue(serialNumber, out var temp1) && temp != null)
             {
                 temp1.UpdateProperty(propertyName, value);
