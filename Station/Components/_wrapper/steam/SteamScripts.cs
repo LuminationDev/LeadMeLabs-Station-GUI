@@ -384,6 +384,11 @@ public static class SteamScripts
                 
                 // check for if family mode is not enabled
                 enumerator.MoveNext();
+                if (enumerator.Current.Contains("Allow all games"))
+                {
+                    Logger.WriteLog("Reached end of parental approved list, but enabled is false, returning empty list", Enums.LogLevel.Info);
+                    return new List<string>(); // return an empty list, as this indicates all approved
+                }
                 enumerator.MoveNext();
                 if (enumerator.Current.Contains("Enabled: false"))
                 {
