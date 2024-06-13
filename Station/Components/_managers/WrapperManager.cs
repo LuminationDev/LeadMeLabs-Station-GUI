@@ -145,6 +145,11 @@ public class WrapperManager
                 //Old set value method as this goes directly to the tablet through the NUC - nothing is saved temporarily 
                 MessageController.SendResponse("Android", "Station", $"SetValue:details:{CheckExperienceName(tokens[1])}");
                 break;
+            case "fileSaved":
+                //Wait for the file to be saved completely
+                Task.Delay(2000).Wait();
+                FileManager.Initialise();
+                break;
             
             // Let the video manager handle video associated messages
             case "videoTime":
@@ -318,8 +323,19 @@ public class WrapperManager
     /// <summary>
     /// Stop any and all processes associated with the VR headset type.
     /// </summary>
-    public static void StopCommonProcesses()
+    public static async Task StopCommonProcesses()
     {
+        if (ProcessManager.GetProcessesByName("vrmonitor").Length != 0)
+        {
+            //Gracefully exit SteamVR (use the Steam client to do so)
+            CommandLine.StartProgram(SessionController.Steam, $" +app_stop {SteamScripts.SteamVrId}");
+
+            //Wait for SteamVR to exit then close all other processes
+            //(if SteamVR does not exit gracefully below hard kills it as a backup)
+            await Helper.MonitorLoop(() => ProcessManager.GetProcessesByName("vrmonitor").Length == 0, 10);
+            Task.Delay(1000).Wait();
+        }
+        
         List<string> combinedProcesses = new List<string>();
         combinedProcesses.AddRange(WrapperMonitoringThread.SteamProcesses);
         combinedProcesses.AddRange(WrapperMonitoringThread.SteamVrProcesses);
@@ -341,7 +357,7 @@ public class WrapperManager
             RoomSetup.CompareRoomSetup();
         }
 
-        StopCommonProcesses();
+        await StopCommonProcesses();
         if (SessionController.StationProfile == null)
         {
             MockConsole.WriteLine("No profile type specified.", Enums.LogLevel.Normal);
@@ -440,7 +456,7 @@ public class WrapperManager
         }
     }
 
-    public static void AcceptUnacceptedEulas()
+    public static async Task AcceptUnacceptedEulas()
     {
         if (SessionController.StationProfile == null)
         {
@@ -448,7 +464,7 @@ public class WrapperManager
         }
 
         OverlayManager.OverlayThreadManual("Auto-accepting EULAs", 90);
-        StopCommonProcesses();
+        await StopCommonProcesses();
         SessionController.StationProfile.StartDevToolsSession();
         Profile.WaitForSteamLogin();
 
@@ -497,7 +513,7 @@ public class WrapperManager
     /// <summary>
     /// Wait for Steam processes to launch and sign in, bail out after 3 minutes. Send the outcome to the tablet.
     /// </summary>
-    private static void WaitForSteamProcess()
+    public static void WaitForSteamProcess()
     {
         string error = "Error: Steam could not open";
         string state = Profile.WaitForSteamLogin() ? "Ready to go" : error;
@@ -522,7 +538,7 @@ public class WrapperManager
     /// Wait for SteamVR and the External headset software to be open, bail out after 3 minutes. Send the outcome 
     /// to the tablet.
     /// </summary>
-    private static void WaitForVrProcesses()
+    public static void WaitForVrProcesses()
     {
         // Safe cast and null checks
         VrProfile? vrProfile = Profile.CastToType<VrProfile>(SessionController.StationProfile);
@@ -773,17 +789,17 @@ public class WrapperManager
         if (currentWrapper == null)
         {
             MockConsole.WriteLine("No process wrapper present, checking internal.", Enums.LogLevel.Normal);
-
+        
             if (InternalWrapper.GetCurrentExperienceName() != null)
             {
                 Task.Factory.StartNew(() => InternalWrapper.PassMessageToProcess(message));
                 return;
             }
-
+        
             MockConsole.WriteLine("No internal wrapper present.", Enums.LogLevel.Normal);
             return;
         }
-
+        
         Task.Factory.StartNew(() => currentWrapper.PassMessageToProcess(message));
     }
 

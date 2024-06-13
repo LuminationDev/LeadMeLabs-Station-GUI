@@ -7,6 +7,7 @@ using LeadMeLabsLibrary.Station;
 using Station.Components._commandLine;
 using Station.Components._interfaces;
 using Station.Components._utils._steamConfig;
+using Station.Components._wrapper.steam;
 using Station.MVC.Controller;
 
 namespace Station.Components._profiles._headsets;
@@ -62,7 +63,7 @@ public class ViveBusinessStreaming : Profile, IVrHeadset
         SteamConfig.VerifySteamConfig();
         CommandLine.StartProgram(SessionController.Steam, (openDevTools ? " -opendevtools" : "") + " -login " + 
                                                           Environment.GetEnvironmentVariable("SteamUserName", EnvironmentVariableTarget.Process) + " " + 
-                                                          Environment.GetEnvironmentVariable("SteamPassword", EnvironmentVariableTarget.Process) + (openDevTools ? "" : " steam://rungameid/250820")); //Open up steam and run steamVR
+                                                          Environment.GetEnvironmentVariable("SteamPassword", EnvironmentVariableTarget.Process) + (openDevTools ? "" : $" steam://rungameid/{SteamScripts.SteamVrId}")); //Open up steam and run steamVR
         if (!openDevTools)
         {
             CommandLine.StartProgram(Vive); //Start Vive business streaming

@@ -47,6 +47,9 @@ public static class SteamScripts
     public static List<string> blockedByFamilyMode = new();
     public static List<ExperienceDetails> InstalledApplications = new();
 
+    //Globally known variables
+    public const int SteamVrId = 250820;
+
     private static ManifestReader.ManifestApplicationList steamManifestApplicationList = new (SteamManifest);
     public static void RefreshVrManifest()
     {

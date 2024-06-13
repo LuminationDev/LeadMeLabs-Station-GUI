@@ -553,7 +553,7 @@ public class SteamWrapper : IWrapper
         
         currentProcess = new Process();
         currentProcess.StartInfo.FileName = SessionController.Steam;
-        currentProcess.StartInfo.Arguments = LaunchParams + 250820;
+        currentProcess.StartInfo.Arguments = LaunchParams + SteamScripts.SteamVrId;
         currentProcess.Start();
     }
 }

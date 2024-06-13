@@ -79,7 +79,7 @@ public static class LegacyMessage
         
         if (additionalData.StartsWith("AcceptEulas"))
         {
-            WrapperManager.AcceptUnacceptedEulas();
+            await WrapperManager.AcceptUnacceptedEulas();
         }
     }
     
