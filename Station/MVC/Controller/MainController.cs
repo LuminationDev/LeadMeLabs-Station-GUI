@@ -3,9 +3,9 @@ using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
 using LeadMeLabsLibrary;
-using Newtonsoft.Json.Linq;
 using Sentry;
 using Station._config;
+using Station.Components._enums;
 using Station.Components._managers;
 using Station.Components._monitoring;
 using Station.Components._network;
@@ -147,14 +147,7 @@ public static class MainController
             //Cannot be any higher - encryption key does not exist before the DotEnv.Load()
             VersionHandler.Connect();
             
-            JObject message = new JObject
-            {
-                { "action", "SoftwareState" },
-                { "value", "Launching Software" }
-            };
-            ScheduledTaskQueue.EnqueueTask(
-                () => SessionController.PassStationMessage(message),
-                TimeSpan.FromSeconds(0));
+            ScheduledTaskQueue.EnqueueTask(() => SessionController.UpdateState(State.Launching), TimeSpan.FromSeconds(0));
 
             App.SetWindowTitle(
                 $"Station({Environment.GetEnvironmentVariable("StationId", EnvironmentVariableTarget.Process)}) -- {localEndPoint.Address} -- {macAddress} -- {versionNumber}");
@@ -175,12 +168,7 @@ public static class MainController
     /// </summary>
     private static void Initialisation()
     {
-        JObject message = new JObject
-        {
-            { "action", "SoftwareState" },
-            { "value", "Initialising configuration" }
-        };
-        ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage(message), TimeSpan.FromSeconds(2));
+        ScheduledTaskQueue.EnqueueTask(() => SessionController.UpdateState(State.Initialising), TimeSpan.FromSeconds(2));
 
         // Schedule the function to run after a 5-minute delay (300,000 milliseconds)
         variableCheck = new Timer(OnTimerCallback, null, 300000, Timeout.Infinite);

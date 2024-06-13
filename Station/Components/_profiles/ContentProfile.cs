@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using Newtonsoft.Json.Linq;
 using Station.Components._commandLine;
+using Station.Components._enums;
 using Station.Components._interfaces;
 using Station.Components._utils;
 using Station.Components._utils._steamConfig;
@@ -93,24 +93,14 @@ public class ContentProfile: Profile, IProfile
             return;
         }
 
-        JObject message = new JObject
-        {
-            { "action", "SoftwareState" },
-            { "value", "Starting processes" }
-        };
-        ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage(message), TimeSpan.FromSeconds(0));
+        ScheduledTaskQueue.EnqueueTask(() => SessionController.UpdateState(State.StartProcess), TimeSpan.FromSeconds(0));
         _startupFunctions.ExecuteStartupFunctions();
         MinimizeSoftware();
     }
     
     public void StartDevToolsSession()
     {
-        JObject message = new JObject
-        {
-            { "action", "SoftwareState" },
-            { "value", "Restarting Processes" }
-        };
-        ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage(message), TimeSpan.FromSeconds(0));
+        ScheduledTaskQueue.EnqueueTask(() => SessionController.UpdateState(State.RestartProcess), TimeSpan.FromSeconds(0));
         StartSteam(true);
     }
 

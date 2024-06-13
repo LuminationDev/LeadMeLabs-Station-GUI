@@ -9,6 +9,7 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Sentry;
 using Station.Components._commandLine;
+using Station.Components._enums;
 using Station.Components._interfaces;
 using Station.Components._models;
 using Station.Components._monitoring;
@@ -58,13 +59,7 @@ public class WrapperManager
         ValidateManifestFiles();
         StartPipeServer();
         SessionController.SetupStationProfile(Helper.GetStationMode());
-        
-        JObject message = new JObject
-        {
-            { "action", "SoftwareState" },
-            { "value", $"Loading experiences" }
-        };
-        ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage(message), TimeSpan.FromSeconds(2));
+        ScheduledTaskQueue.EnqueueTask(() => SessionController.UpdateState(State.Experiences), TimeSpan.FromSeconds(2));
         Task.Factory.StartNew(CollectAllApplications);
     }
 
@@ -423,12 +418,7 @@ public class WrapperManager
 
         if (!InternalDebugger.GetAutoStart())
         {
-            JObject message = new JObject
-            {
-                { "action", "SoftwareState" },
-                { "value", "Debug Mode" }
-            };
-            ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage(message), TimeSpan.FromSeconds(0));
+            ScheduledTaskQueue.EnqueueTask(() => SessionController.UpdateState(State.Debug), TimeSpan.FromSeconds(0));
             return;
         }
 
@@ -446,12 +436,7 @@ public class WrapperManager
         }
         else
         {
-            JObject message = new JObject
-            {
-                { "action", "SoftwareState" },
-                { "value", "Ready to go" }
-            };
-            ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage(message),
+            ScheduledTaskQueue.EnqueueTask(() => SessionController.UpdateState(State.Ready),
                 TimeSpan.FromSeconds(1));
         }
     }
@@ -484,7 +469,7 @@ public class WrapperManager
         acceptingEulas = true;
 
         int index = 1;
-        App.windowEventTracker.SetMinimisingEnabled(false);
+        App.windowEventTracker?.SetMinimisingEnabled(false);
         
         foreach (string installedExperienceWithUnacceptedEula in SteamWrapper.installedExperiencesWithUnacceptedEulas)
         {
@@ -500,11 +485,11 @@ public class WrapperManager
         ScheduledTaskQueue.EnqueueTask(() =>
             {
                 CommandLine.EnterAltF4(Int32.Parse(handle));
-                App.windowEventTracker.SetMinimisingEnabled(true);
+                App.windowEventTracker?.SetMinimisingEnabled(true);
                 SessionController.StationProfile.MinimizeSoftware(1);
                 OverlayManager.ManualStop(90);
                 acceptingEulas = false;
-                WrapperManager.CollectAllApplications();
+                CollectAllApplications();
                 SessionController.StationProfile.StartSession();
             },
             TimeSpan.FromSeconds(((index + 2) * 1.5) + 3));
@@ -515,15 +500,8 @@ public class WrapperManager
     /// </summary>
     public static void WaitForSteamProcess()
     {
-        string error = "Error: Steam could not open";
-        string state = Profile.WaitForSteamLogin() ? "Ready to go" : error;
-
-        JObject message = new JObject
-        {
-            { "action", "SoftwareState" },
-            { "value", state }
-        };
-        ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage(message),
+        State state = Profile.WaitForSteamLogin() ? State.Ready : State.ErrorSteam;
+        ScheduledTaskQueue.EnqueueTask(() => SessionController.UpdateState(state),
             TimeSpan.FromSeconds(1)); //Wait for steam/other accounts to login
         
         JObject androidMessage = new JObject
@@ -551,10 +529,10 @@ public class WrapperManager
             count++;
         } while ((ProcessManager.GetProcessesByName(vrProfile.VrHeadset?.GetHeadsetManagementProcessName()).Length == 0) && count <= 60);
 
-        string error = "";
+        State error = State.Base;
         if (ProcessManager.GetProcessesByName(vrProfile.VrHeadset?.GetHeadsetManagementProcessName()).Length == 0)
         {
-            error = "Error: Vive could not open";
+            error = State.ErrorVive;
         }
         else
         {
@@ -565,18 +543,13 @@ public class WrapperManager
             }
         }
 
-        string state = count <= 60 ? "Awaiting headset connection..." : error;
+        State state = count <= 60 ? State.Awaiting : error;
 
         //Only send the message if the headset is not yet connected
         if (vrProfile.VrHeadset?.GetStatusManager().SoftwareStatus == DeviceStatus.Connected &&
             vrProfile.VrHeadset?.GetStatusManager().OpenVRStatus == DeviceStatus.Connected) return;
-        
-        JObject message = new JObject
-        {
-            { "action", "SoftwareState" },
-            { "value", state }
-        };
-        ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage(message),
+
+        ScheduledTaskQueue.EnqueueTask(() => SessionController.UpdateState(state),
             TimeSpan.FromSeconds(1));
             
         JObject androidMessage = new JObject
@@ -830,6 +803,14 @@ public class WrapperManager
         //Stop looking for Vive headset regardless
         ViveScripts.StopMonitoring();
 
+        //A session has ended revert the lost headset message back to awaiting headset connection if it is present
+        if (SessionController.CurrentState == State.Lost)
+        {
+            ScheduledTaskQueue.EnqueueTask(
+                () => SessionController.UpdateState(State.Awaiting),
+                TimeSpan.FromSeconds(0));
+        }
+        
         if (currentWrapper == null)
         {
             MockConsole.WriteLine("No process wrapper present.", Enums.LogLevel.Normal);

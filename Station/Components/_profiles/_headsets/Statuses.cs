@@ -4,6 +4,7 @@ using System.Linq;
 using LeadMeLabsLibrary;
 using Newtonsoft.Json.Linq;
 using Station.Components._commandLine;
+using Station.Components._enums;
 using Station.Components._interfaces;
 using Station.Components._legacy;
 using Station.Components._managers;
@@ -238,14 +239,9 @@ public class Statuses
     private void SendReadyMessage()
     {
         //If the headset is connected and no experience is currently running tell the tablet the Station is ready to go
-        if (SoftwareStatus == DeviceStatus.Connected && OpenVRStatus == DeviceStatus.Connected && !SessionController.CurrentState.Equals("Ready to go"))
+        if (SoftwareStatus == DeviceStatus.Connected && OpenVRStatus == DeviceStatus.Connected && SessionController.CurrentState != State.Ready)
         {
-            JObject message = new JObject
-            {
-                { "action", "SoftwareState" },
-                { "value", "Ready to go" }
-            };
-            ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage(message), TimeSpan.FromSeconds(0));
+            ScheduledTaskQueue.EnqueueTask(() => SessionController.UpdateState(State.Ready), TimeSpan.FromSeconds(0));
         }
     }
     
@@ -257,17 +253,8 @@ public class Statuses
     {
         if (!oldConnectionStatus || newConnectionStatus is not (DeviceStatus.Lost or DeviceStatus.Off)) return;
         
-        string state = WrapperManager.currentWrapper?.GetCurrentExperienceName() == null ? 
-            "Awaiting headset connection..." : "Lost headset connection";
-            
-        JObject message = new JObject
-        {
-            { "action", "SoftwareState" },
-            { "value", state }
-        };
-        ScheduledTaskQueue.EnqueueTask(
-            () => SessionController.PassStationMessage(message),
-            TimeSpan.FromSeconds(0));
+        State state = WrapperManager.currentWrapper?.GetCurrentExperienceName() == null ? State.Awaiting : State.Lost;
+        ScheduledTaskQueue.EnqueueTask(() => SessionController.UpdateState(state), TimeSpan.FromSeconds(0));
     }
 
     /// <summary>

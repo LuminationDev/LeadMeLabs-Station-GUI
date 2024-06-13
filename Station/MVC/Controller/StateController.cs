@@ -3,6 +3,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using LeadMeLabsLibrary;
 using Newtonsoft.Json.Linq;
+using Station.Components._enums;
 using Station.Components._legacy;
 using Station.Components._managers;
 using Station.Components._profiles;
@@ -103,7 +104,7 @@ public static class StateController
             Dictionary<string, object?> stateValues = new()
             {
                 { "status", "On" },
-                { "state", SessionController.CurrentState },
+                { "state", Attributes.GetEnumValue(SessionController.CurrentState) },
                 { "gameName", "" },
                 { "gameId", "" }
             };

@@ -1,4 +1,5 @@
 using System;
+using Station.Components._enums;
 using Station.Components._managers;
 using Station.Components._profiles;
 using Station.MVC.Controller;
@@ -33,7 +34,7 @@ public static class LegacySetValue
         }
         
         MessageController.SendResponse(source, "Station", "SetValue:status:On");
-        MessageController.SendResponse(source, "Station", $"SetValue:state:{SessionController.CurrentState}");
+        MessageController.SendResponse(source, "Station", $"SetValue:state:{Attributes.GetEnumValue(SessionController.CurrentState)}");
         MessageController.SendResponse(source, "Station", "SetValue:gameName:");
         MessageController.SendResponse("Android", "Station", "SetValue:gameId:");
         
