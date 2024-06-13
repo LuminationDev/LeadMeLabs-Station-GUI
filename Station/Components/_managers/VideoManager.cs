@@ -62,7 +62,7 @@ public static class VideoManager
             videoPlayerDetails = value;
             
             // Send a message to the tablet
-            StateController.UpdateListsValue("videoPlayerDetails", videoPlayerDetails);
+            StateController.UpdateVideoValue("videoPlayerDetails", videoPlayerDetails);
         }
         get => videoPlayerDetails;
     }
@@ -90,9 +90,7 @@ public static class VideoManager
             if (playbackTime == value) return;
 
             playbackTime = value;
-            
-            // Send a message to the tablet
-            StateController.UpdateStateValue("activeVideoPlaybackTime", playbackTime);
+            StateController.UpdateVideoValue("activeVideoPlaybackTime", playbackTime);
         }
         get => playbackTime;
     }
@@ -127,12 +125,12 @@ public static class VideoManager
             if (video == null || activeVideo == video.id)
             {
                 activeVideo = "";
-                StateController.UpdateStateValue("activeVideoFile", "");
+                StateController.UpdateVideoValue("activeVideoFile", "");
                 return;
             }
     
             activeVideo = video.id;
-            StateController.UpdateStateValue("activeVideoFile", activeVideo);
+            StateController.UpdateVideoValue("activeVideoFile", activeVideo);
         }
         get => activeVideo;
     }

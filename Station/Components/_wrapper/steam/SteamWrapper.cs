@@ -148,8 +148,11 @@ public class SteamWrapper : IWrapper
 
 
     public void SetCurrentProcess(Process process)
-    {
-        currentProcess?.Kill(true);
+    { 
+        if (currentProcess != null && !currentProcess.HasExited)
+        {
+            currentProcess.Kill(true);
+        }
 
         _launchWillHaveFailedFromOpenVrTimeout = false;
         currentProcess = process;
@@ -551,7 +554,7 @@ public class SteamWrapper : IWrapper
         
         currentProcess = new Process();
         currentProcess.StartInfo.FileName = SessionController.Steam;
-        currentProcess.StartInfo.Arguments = LaunchParams + 250820;
+        currentProcess.StartInfo.Arguments = LaunchParams + SteamScripts.SteamVrId;
         currentProcess.Start();
     }
 }

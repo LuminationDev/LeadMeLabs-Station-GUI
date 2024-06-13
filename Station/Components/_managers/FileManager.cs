@@ -10,6 +10,7 @@ using Station.Components._models;
 using Station.Components._utils;
 using Station.Converters;
 using Station.MVC.Controller;
+using Task = System.Threading.Tasks.Task;
 
 namespace Station.Components._managers;
 
@@ -36,6 +37,11 @@ public static class FileManager
     {
         void Collect()
         {
+            lock (LocalFilesLock)
+            {
+                LocalFiles.Clear();
+            }
+            
             LoadLocalFiles(OpenBrushFolderPath, FileType.OpenBrush);
             
             // Use the custom settings to convert any enums to strings
@@ -97,7 +103,7 @@ public static class FileManager
                 {
                     string fileCategory = fileType.ToString();
                     LocalFile localFile = new(fileType, fileName, filePath);
-                    
+
                     if (LocalFiles.TryGetValue(fileCategory, out List<LocalFile>? fileList))
                     {
                         // Key exists, add to the existing list
@@ -135,6 +141,10 @@ public static class FileManager
         {
             case "delete":
                 DeleteFile(data);
+                break;
+            
+            case "refresh":
+                Initialise();
                 break;
             
             default:
@@ -185,6 +195,9 @@ public static class FileManager
         {
             Logger.WriteLog($"An error occurred: {e.Message}", Enums.LogLevel.Error);
         }
+
+        //Wait for the file to be removed completely
+        Task.Delay(2000).Wait();
         
         //Refresh the file list
         Initialise();

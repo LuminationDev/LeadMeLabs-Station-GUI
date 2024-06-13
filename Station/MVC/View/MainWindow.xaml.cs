@@ -11,9 +11,10 @@ public partial class MainWindow
     {
         InitializeComponent();
     }
-
+    
     private void Window_MouseLeftButtonDown(object sender, RoutedEventArgs e)
     {
         DragMove();
+
     }
 }
