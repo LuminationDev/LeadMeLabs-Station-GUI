@@ -488,7 +488,7 @@ public static class CommandLine
     }
 
     [DllImport("user32.dll")]
-    private static extern int SetForegroundWindow(int hwnd);
+    public static extern int SetForegroundWindow(int hwnd);
 
     [DllImport("user32.dll")]
     private static extern bool ShowWindow(int handle, int state);
@@ -610,7 +610,7 @@ public static class CommandLine
         Outcome(cmd);
     }
 
-    private static void SendKeysToActiveWindow(string keys)
+    public static void SendKeysToActiveWindow(string keys)
     {
         Process? cmd = SetupCommand(StationPowershell);
         if (cmd == null)
