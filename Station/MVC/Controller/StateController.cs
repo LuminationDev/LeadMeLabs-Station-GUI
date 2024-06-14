@@ -208,7 +208,7 @@ public static class StateController
     private static void SendVideoValues()
     {
         JObject videoValuesJson = ToJObject(VideoValues);
-        MessageController.SendResponse("NUC", "Station", $"CurrentVideoState:{videoValuesJson}");
+        MessageController.SendResponse("NUC", "CurrentVideoState", $"{videoValuesJson}");
     }
     #endregion
     
@@ -329,7 +329,7 @@ public static class StateController
     private static void SendStateValues()
     {
         JObject stateValuesJson = ToJObject(StateValues);
-        MessageController.SendResponse("NUC", "Station", $"CurrentState:{stateValuesJson}");
+        MessageController.SendResponse("NUC", "CurrentState", $"{stateValuesJson}");
     }
     #endregion
 
@@ -407,7 +407,7 @@ public static class StateController
     private static void SendListValues()
     {
         JObject listsValuesJson = ToJObject(ListValues);
-        MessageController.SendResponse("NUC", "Station", $"CurrentLists:{listsValuesJson}");
+        MessageController.SendResponse("NUC", "CurrentLists", $"{listsValuesJson}");
     }
     #endregion
     

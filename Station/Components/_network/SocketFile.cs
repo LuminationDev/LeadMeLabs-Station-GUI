@@ -192,7 +192,7 @@ public class SocketFile
 
             if (this._type.Equals("file"))
             {
-                MessageController.SendResponse("NUC", "Station", "LogRequest:TransferFailed");
+                MessageController.SendResponse("NUC", "LogRequest", "TransferFailed");
             }
         }
     }

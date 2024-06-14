@@ -107,7 +107,7 @@ public static class Logger
 
         if(logs.Count == 0)
         {
-            MessageController.SendResponse("NUC", "Station", "LogRequest:NoLogsFound");
+            MessageController.SendResponse("NUC", "LogRequest", "NoLogsFound");
             return;
         }
 
