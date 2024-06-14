@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using LeadMeLabsLibrary;
 using Newtonsoft.Json.Linq;
+using Station._config;
 using Station.Components._legacy;
 using Station.Components._managers;
 using Station.Components._models;
@@ -52,9 +53,8 @@ public class ScriptThread
 
         switch (_actionNamespace)
         {
-            case "Version":
-                //Update the MainController's version
-                VersionHandler.SetVersion(_additionalData);
+            case "Environment":
+                HandleEnvironment(_additionalData);
                 break;
             
             case "MessageType":
@@ -109,8 +109,26 @@ public class ScriptThread
         if (!additionalData.Contains("Connect")) return;
         
         //Send the version number before anything else so the NUC knows how to handle the Station
-        VersionHandler.Connect();
+        MainController.InitialConnection();
         StateController.HandleConnection(_source);
+    }
+
+    private void HandleEnvironment(string additionalData)
+    {
+        JObject requestData = JObject.Parse(additionalData);
+        
+        var version = requestData.GetValue("Version")?.ToString();
+        if (version != null)
+        {
+            //Update the MainController's version
+            VersionHandler.SetVersion(version);
+        }
+        
+        var location = requestData.GetValue("LabLocation")?.ToString();
+        if (location != null)
+        {
+            DotEnv.Update("LabLocation", location);
+        }
     }
 
     private void HandleStation(string jObjectData)

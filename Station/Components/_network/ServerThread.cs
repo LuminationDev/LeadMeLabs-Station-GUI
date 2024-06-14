@@ -174,8 +174,10 @@ public class ServerThread
         if (!connectionMessage)
         {
             connectionMessage = true;
+            //TODO these can be removed in the next update
             MessageController.SendResponse("NUC", "MessageType", "Station:Unicode");
             MessageController.SendResponse("NUC", "MessageType", "Station:Json");
+            //TODO
         }
         
         try
