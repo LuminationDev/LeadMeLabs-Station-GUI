@@ -3,6 +3,7 @@ using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
 using LeadMeLabsLibrary;
+using Newtonsoft.Json.Linq;
 using Sentry;
 using Station._config;
 using Station.Components._enums;
@@ -15,7 +16,6 @@ using Station.Components._organisers;
 using Station.Components._profiles;
 using Station.Components._utils;
 using Station.Components._utils._steamConfig;
-using Station.Components._version;
 using Station.Components._wrapper.steam;
 using Station.QA;
 
@@ -74,9 +74,10 @@ public static class MainController
     private static string? versionNumber;
     private static Timer? variableCheck;
     
-    //TODO remove the following as they are no longer required?
-    public static bool isNucUtf8 = true;
-    public static bool isNucJsonEnabled = false;
+    //TODO these can be removed in the next update
+    public static bool isNucUtf8 = false;
+    public static bool isNucJsonEnabled = true;
+    //TODO
 
     /// <summary>
     /// Starts the server running on the local machine
@@ -196,7 +197,7 @@ public static class MainController
         }
         
         //Cannot be any higher - encryption key does not exist before the DotEnv.Load()
-        VersionHandler.Connect();
+        InitialConnection();
         
         ScheduledTaskQueue.EnqueueTask(() => SessionController.UpdateState(State.Launching), TimeSpan.FromSeconds(0));
         ScheduledTaskQueue.EnqueueTask(() => SessionController.UpdateState(State.Initialising), TimeSpan.FromSeconds(2));
@@ -239,6 +240,22 @@ public static class MainController
         {
             new Thread(() => SteamConfig.VerifySteamConfig(true)).Start();
         }
+    }
+    
+    /// <summary>
+    /// Send off the version and lab location, plus any other details at the start of the communication with the NUC.
+    /// </summary>
+    public static void InitialConnection()
+    {
+        JObject message = new JObject
+        {
+            { "Version", Updater.GetVersionNumber() },
+            { "LabLocation", Environment.GetEnvironmentVariable("LabLocation",
+                EnvironmentVariableTarget.Process) }
+        };
+
+        MessageController.SendResponse("NUC", "Environment", message.ToString());
+        Task.Delay(2000).Wait(); //Forced delay while waiting for the NUC response
     }
 
     /// <summary>
