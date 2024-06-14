@@ -186,13 +186,23 @@ public class Statuses
                     break;
             
                 case "BaseStation":
-                    Dictionary<string, object> stateValues = new()
+                    Dictionary<string, object> baseStationValues = new()
                     {
                         { "baseStationsActive", int.Parse(keyValue[1]) },
                         { "baseStationsTotal", int.Parse(keyValue[2]) }
                     };
                     
-                    StateController.UpdateStatusBunch(stateValues);
+                    StateController.UpdateStatusBunch(baseStationValues);
+                    break;
+                
+                case "Tracker":
+                    Dictionary<string, object> trackerValues = new()
+                    {
+                        { "trackersActive", int.Parse(keyValue[1]) },
+                        { "trackersTotal", int.Parse(keyValue[2]) }
+                    };
+                    
+                    StateController.UpdateStatusBunch(trackerValues);
                     break;
             }
         }

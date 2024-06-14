@@ -17,9 +17,10 @@ namespace Station.MVC.Controller;
 /// </summary>
 public static class StateController
 {
+    #region States Maintained
     //STATES NOT MAINTAINED
     // details - sent directly to the tablet (no temp data on NUC)
-    // steamCMD - 
+    // steamCMD - legacy/sent directly to the tablet (no temp data on NUC)
     
     //STATES TO MAINTAIN
     //VALUES
@@ -47,16 +48,17 @@ public static class StateController
     // volume
     // muted
     
-    //Video stuff
-    // activeVideoPlaybackTime
-    // activeVideoFile
-    
     //LISTS
     // audioDevices
     // videoFiles
-    // videoPlayerDetails
     // installedJsonApplications
     // blockedApplications
+    
+    //VIDEO
+    // videoPlayerDetails
+    // activeVideoPlaybackTime
+    // activeVideoFile
+    #endregion
 
     #region Setup
     /// <summary>
