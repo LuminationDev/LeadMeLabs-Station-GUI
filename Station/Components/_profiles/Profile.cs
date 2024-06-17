@@ -101,7 +101,9 @@ public class Profile
         {
             Task.Delay(3000).Wait();
             count++;
-        } while (!ProcessManager.GetProcessMainWindowTitle("steamwebhelper").Contains("Steam") && count <= 60);
+        } while (ProcessManager.GetProcessMainWindowTitle("steamwebhelper")
+                     .Where(s => s.Contains("Sign in"))
+                     .ToList().Any() && count <= 60);
         
         return ProcessManager.GetProcessesByName("steam").Length != 0 || count > 60;
     }

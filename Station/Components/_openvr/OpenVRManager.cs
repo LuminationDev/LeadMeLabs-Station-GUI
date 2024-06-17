@@ -225,7 +225,8 @@ public class OpenVrManager
 
         while (!_quiting)
         {
-            if (_ovrSystem == null || !_ovrSystem.PollNextEvent(ref vrEvent,
+            if (_ovrSystem == null) continue; 
+            if (!_ovrSystem.PollNextEvent(ref vrEvent,
                     (uint)System.Runtime.InteropServices.Marshal.SizeOf(typeof(VREvent_t)))) continue;
             
             //TODO work out what to do if the program (SteamVR) has quit.
