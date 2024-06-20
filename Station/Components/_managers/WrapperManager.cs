@@ -209,8 +209,10 @@ public class WrapperManager
         alreadyCollecting = true;
         CollectApplications<ExperienceDetails>(experiences => new JArray(experiences.Select(experience => experience.ToJObject())), "ApplicationJson");
         alreadyCollecting = false;
-
-        _ = RestartVrProcesses();
+        
+        //Check if LeadMePython exists
+        string filePath = CommandLine.StationLocation + @"\_embedded\LeadMePython.exe";
+        _ = File.Exists(filePath) ? StartVrProcesses() : RestartVrProcesses();
     }
     
     /// <summary>
@@ -346,6 +348,54 @@ public class WrapperManager
         CommandLine.QueryProcesses(combinedProcesses, true);
     }
 
+    /// <summary>
+    /// Start up the VR processes from scratch, close any existing software in order to perform a clean start up.
+    /// </summary>
+    private static async Task StartVrProcesses()
+    {
+        if (Helper.GetStationMode().Equals(Helper.STATION_MODE_VR))
+        {
+            //Exit Steam only if it is on the login window
+            bool signIn = ProcessManager.GetProcessMainWindowTitle("steamwebhelper")
+                .Where(s => s.Contains("Sign in"))
+                .ToList().Any();
+            if (signIn) await StopCommonProcesses();
+
+            // Safe cast for potential vr profile
+            VrProfile? vrProfile = Profile.CastToType<VrProfile>(SessionController.StationProfile);
+            if (vrProfile?.VrHeadset == null) return;
+            
+            // This must be checked before the VR processes are restarted
+            RoomSetup.CompareRoomSetup(); 
+
+            //Reset the VR device statuses
+            vrProfile.VrHeadset.GetStatusManager().ResetStatuses();
+            
+            SessionController.StationProfile?.StartSession();
+
+            // Check if there are steam details as the Station may be non-VR without a Steam account
+            WaitForVrProcesses();
+        
+            //Wait for OpenVR to be available
+            bool headsetSoftware = await Helper.MonitorLoop(() => ProcessManager.GetProcessesByName(vrProfile.VrHeadset.GetHeadsetManagementProcessName()).Length == 0, 20);
+            if (!headsetSoftware)
+            {
+                ScheduledTaskQueue.EnqueueTask(() => SessionController.UpdateState(State.ErrorSteamVr), TimeSpan.FromSeconds(1));
+                ScheduledTaskQueue.EnqueueTask(() => MessageController.SendResponse("NUC", "Analytics", "SteamVRError"), TimeSpan.FromSeconds(1));
+            }
+        }
+        else
+        {
+            // Check if there are steam details as the Station may be non-VR with a Steam account
+            ContentProfile? contentProfile = Profile.CastToType<ContentProfile>(SessionController.StationProfile);
+            if (contentProfile != null && contentProfile.DoesProfileHaveAccount("Steam"))
+            {
+                SessionController.StationProfile?.StartSession();
+                WaitForSteamProcess();
+            } 
+        }
+    }
+    
     /// <summary>
     /// Start or restart the VR session associated with the VR headset type
     /// </summary>
