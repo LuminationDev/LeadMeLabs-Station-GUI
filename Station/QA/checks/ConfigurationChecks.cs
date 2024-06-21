@@ -108,13 +108,13 @@ public class ConfigurationChecks
     private QaCheck IsShellStartupNotPresent()
     {
         QaCheck qaCheck = new QaCheck("shell_startup_not_existing");
+        String filePath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\Microsoft\\Windows\\Start Menu\\Programs\\Startup\\Station.exe.lnk";
         bool shellStartupExists =
-            File.Exists("C:\\Users\\Lumination\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\Startup\\Station.exe.lnk");
+            File.Exists(filePath);
 
         if (shellStartupExists)
         {
-            qaCheck.SetFailed(
-                "C:\\Users\\Lumination\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\Startup\\Station.exe.lnk");
+            qaCheck.SetFailed(filePath);
             return qaCheck;
         }
 
