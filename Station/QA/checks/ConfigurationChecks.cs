@@ -109,8 +109,7 @@ public class ConfigurationChecks
     {
         QaCheck qaCheck = new QaCheck("shell_startup_not_existing");
         String filePath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\Microsoft\\Windows\\Start Menu\\Programs\\Startup\\Station.exe.lnk";
-        bool shellStartupExists =
-            File.Exists(filePath);
+        bool shellStartupExists = File.Exists(filePath);
 
         if (shellStartupExists)
         {
