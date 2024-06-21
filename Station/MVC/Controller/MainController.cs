@@ -74,10 +74,10 @@ public static class MainController
     private static string? versionNumber;
     private static Timer? variableCheck;
     
-    //TODO these can be removed in the next update
-    public static bool isNucUtf8 = false;
-    public static bool isNucJsonEnabled = true;
-    //TODO
+    // //TODO these can be removed in the next update
+    // public static bool isNucUtf8 = false;
+    // public static bool isNucJsonEnabled = true;
+    // //TODO
 
     /// <summary>
     /// Starts the server running on the local machine

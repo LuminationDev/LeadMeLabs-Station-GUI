@@ -121,14 +121,14 @@ public class SocketFile
                 // Construct and send the header
                 string headerMessageType = this._type;
                 byte[] headerMessageTypeBytes;
-                if (MainController.isNucUtf8)
-                {
-                    headerMessageTypeBytes = System.Text.Encoding.UTF8.GetBytes(headerMessageType);
-                }
-                else
-                {
+                // if (MainController.isNucUtf8)
+                // {
+                //     headerMessageTypeBytes = System.Text.Encoding.UTF8.GetBytes(headerMessageType);
+                // }
+                // else
+                // {
                     headerMessageTypeBytes = System.Text.Encoding.Unicode.GetBytes(headerMessageType);
-                }
+                // }
 
                 // Convert the header to network byte order
                 int headerLength = IPAddress.HostToNetworkOrder(headerMessageTypeBytes.Length);
@@ -140,16 +140,16 @@ public class SocketFile
                 string fileName = _name;
                 byte[] fileNameBytes;
                 
-                if (MainController.isNucUtf8)
-                {
-                    fileNameBytes = System.Text.Encoding.UTF8.GetBytes(fileName);
-                    stream.Write(BitConverter.GetBytes(fileNameBytes.Length), 0, 4);
-                }
-                else
-                {
+                // if (MainController.isNucUtf8)
+                // {
+                //     fileNameBytes = System.Text.Encoding.UTF8.GetBytes(fileName);
+                //     stream.Write(BitConverter.GetBytes(fileNameBytes.Length), 0, 4);
+                // }
+                // else
+                // {
                     fileNameBytes = System.Text.Encoding.Unicode.GetBytes(fileName);
                     stream.Write(BitConverter.GetBytes(fileNameBytes.Length));
-                }
+                // }
                 
                 stream.Write(fileNameBytes, 0, fileNameBytes.Length);
 

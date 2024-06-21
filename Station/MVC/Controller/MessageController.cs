@@ -53,14 +53,14 @@ public static class MessageController
         }
 
         string encryptedText;
-        if (MainController.isNucUtf8)
-        {
-            encryptedText = EncryptionHelper.Encrypt(response, key);
-        }
-        else
-        {
+        // if (MainController.isNucUtf8)
+        // {
+        //     encryptedText = EncryptionHelper.Encrypt(response, key);
+        // }
+        // else
+        // {
             encryptedText = EncryptionHelper.UnicodeEncrypt(response, key);
-        }
+        // }
         
         SocketClient client = new(encryptedText);
         if (address != null && port != null)

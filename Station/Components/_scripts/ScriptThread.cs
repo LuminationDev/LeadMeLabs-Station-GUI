@@ -57,12 +57,12 @@ public class ScriptThread
                 HandleEnvironment(_additionalData);
                 break;
             
-            case "MessageType":
-                if (_additionalData.Contains("Json"))
-                {
-                    MainController.isNucJsonEnabled = true;
-                }
-                break;
+            // case "MessageType":
+            //     if (_additionalData.Contains("Json"))
+            //     {
+            //         MainController.isNucJsonEnabled = true;
+            //     }
+            //     break;
             
             case "CommandLine":
                 StationScripts.Execute(_source, _additionalData);
@@ -205,11 +205,11 @@ public class ScriptThread
     /// <param name="jObjectData">A JObject in string form</param>
     private async void HandleExperience(string jObjectData)
     {
-        if (!MainController.isNucJsonEnabled)
-        {
-            LegacyMessage.HandleExperienceString(jObjectData);
-            return;
-        }
+        // if (!MainController.isNucJsonEnabled)
+        // {
+        //     LegacyMessage.HandleExperienceString(jObjectData);
+        //     return;
+        // }
 
         // Handle a Json message
         JObject? experienceData;
