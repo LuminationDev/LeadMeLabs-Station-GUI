@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using Station.Components._commandLine;
 using Station.Components._utils;
 
@@ -13,7 +14,8 @@ public class ConfigurationChecks
         _qaChecks = new List<QaCheck>
         {
             IsTaskSchedulerCreated(),
-            IsOldTaskSchedulerNotPresent()
+            IsOldTaskSchedulerNotPresent(),
+            IsShellStartupNotPresent()
         };
         _qaChecks.AddRange(CheckEnvironmentVariables());
 
@@ -96,6 +98,26 @@ public class ConfigurationChecks
                 }
             }
         }
+        qaCheck.SetPassed(null);
+        return qaCheck;
+    }
+    
+    /// <summary>
+    /// Check if shortcut to NUC is not present in shell:startup
+    /// </summary>
+    private QaCheck IsShellStartupNotPresent()
+    {
+        QaCheck qaCheck = new QaCheck("shell_startup_not_existing");
+        bool shellStartupExists =
+            File.Exists("C:\\Users\\Lumination\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\Startup\\Station.exe.lnk");
+
+        if (shellStartupExists)
+        {
+            qaCheck.SetFailed(
+                "C:\\Users\\Lumination\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\Startup\\Station.exe.lnk");
+            return qaCheck;
+        }
+
         qaCheck.SetPassed(null);
         return qaCheck;
     }
