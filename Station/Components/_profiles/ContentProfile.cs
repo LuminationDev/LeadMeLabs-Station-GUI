@@ -95,7 +95,7 @@ public class ContentProfile: Profile, IProfile
 
         ScheduledTaskQueue.EnqueueTask(() => SessionController.UpdateState(State.StartProcess), TimeSpan.FromSeconds(0));
         _startupFunctions.ExecuteStartupFunctions();
-        MinimizeSoftware();
+        MinimizeSoftware(2);
     }
     
     public void StartDevToolsSession()

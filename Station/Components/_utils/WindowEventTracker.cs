@@ -143,7 +143,7 @@ public class WindowEventTracker
             {
                 if ((DateTime.Now < lastInteraction.AddSeconds(1) ||  DateTime.Now > lastInteraction.AddSeconds(10)) && InternalDebugger.GetMinimisePrograms())
                 {
-                    WindowManager.MinimizeProcess(Process.GetProcessById(Convert.ToInt32(m_processId)));
+                    WindowManager.MinimizeProcessNoActivate(Process.GetProcessById(Convert.ToInt32(m_processId)));
                     lastInteraction = DateTime.Now;
                 }
             }
