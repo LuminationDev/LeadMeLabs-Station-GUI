@@ -100,7 +100,7 @@ public class ContentProfile: Profile, IProfile
         };
         ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage(message), TimeSpan.FromSeconds(0));
         _startupFunctions.ExecuteStartupFunctions();
-        MinimizeSoftware();
+        MinimizeSoftware(2);
     }
     
     public void StartDevToolsSession()

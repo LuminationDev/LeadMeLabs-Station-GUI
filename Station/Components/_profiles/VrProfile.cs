@@ -107,7 +107,7 @@ public class VrProfile: Profile, IProfile
         ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage(message), TimeSpan.FromSeconds(0));
 
         VrHeadset?.StartVrSession(false);
-        MinimizeSoftware();
+        MinimizeSoftware(2);
     }
     
     public void StartDevToolsSession()
