@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Timers;
 using LeadMeLabsLibrary;
@@ -34,21 +35,23 @@ public static class StationScripts
         if (additionalData.StartsWith("URL"))
         {
             string[] urlCommand = additionalData.Split(':', 2);
-            if (urlCommand.Length == 2)
+            if (urlCommand.Length != 2) return;
+            
+            string url = urlCommand[1];
+            if (!url.StartsWith("https://") && !url.StartsWith("http://"))
             {
-                string url = urlCommand[1];
-                if (!url.StartsWith("https://") && !url.StartsWith("http://"))
-                {
-                    url = "https://" + url;
-                }
-                bool isValidUrl = Uri.IsWellFormedUriString(url, UriKind.Absolute);
-                if (isValidUrl)
-                {
-                    CommandLine.ExecuteBrowserCommand(url);
-                    MessageController.SendResponse(source, "Station", "SetValue:gameName:" + url);
-                    MessageController.SendResponse("Android", "Station", "SetValue:gameId:");
-                }
+                url = "https://" + url;
             }
+            bool isValidUrl = Uri.IsWellFormedUriString(url, UriKind.Absolute);
+            if (!isValidUrl) return;
+                
+            CommandLine.ExecuteBrowserCommand(url);
+            Dictionary<string, object> stateValues = new()
+            {
+                { "gameName", url },
+                { "gameId", "" }
+            };
+            StateController.UpdateStatusBunch(stateValues);
         }
         else if (additionalData.Equals("RestartVR"))
         {
@@ -95,11 +98,11 @@ public static class StationScripts
     /// <returns></returns>
     public static void RestartVRSession()
     {
-        MessageController.SendResponse("Android", "Station", "SetValue:status:On");
+        StateController.UpdateStateValue("status", "On");
         if (!processing)
         {
             processing = true;
-            MessageController.SendResponse("Android", "Station", "SetValue:status:On");
+            StateController.UpdateStateValue("status", "On");
             MainController.wrapperManager?.ActionHandler("Session", "Restart");
         }
         else
@@ -133,7 +136,12 @@ public static class StationScripts
         tokenSource = new CancellationTokenSource();
         var timer = new System.Timers.Timer(cancelTime);
 
-        void timerElapsed(object? obj, ElapsedEventArgs args)
+        timer.Elapsed += TimerElapsed;
+        timer.Enabled = true;
+        timer.AutoReset = false;
+        return;
+
+        void TimerElapsed(object? obj, ElapsedEventArgs args)
         {
             if (tokenSource is null) return;
             if (tokenSource.IsCancellationRequested) return;
@@ -142,15 +150,17 @@ public static class StationScripts
 
             //Shut down the server first, so the NUC cannot send off any more Pings
             MainController.StopServer();
-            MessageController.SendResponse(source, "Station", "SetValue:status:Off");
-            MessageController.SendResponse(source, "Station", "SetValue:state:");
-            MessageController.SendResponse(source, "Station", "SetValue:gameName:");
-            MessageController.SendResponse(source, "Station", "SetValue:gameId:");
+            
+            Dictionary<string, object> stateValues = new()
+            {
+                { "status", "Off" },
+                { "state", "" },
+                { "gameName", "" },
+                { "gameId", "" }
+            };
+            
+            StateController.UpdateStatusBunch(stateValues);
         }
-
-        timer.Elapsed += timerElapsed;
-        timer.Enabled = true;
-        timer.AutoReset = false;
     }
 
     /// <summary>
@@ -158,8 +168,9 @@ public static class StationScripts
     /// </summary>
     public static void EndVRSession()
     {
-        MessageController.SendResponse("Android", "Station", "SetValue:status:On");
         MainController.wrapperManager?.ActionHandler("Session", "Stop");
+        //Old set value method as this goes directly to the tablet through the NUC - nothing is saved temporarily
         MessageController.SendResponse("Android", "Station", "SetValue:session:Ended");
+        StateController.UpdateStateValue("status", "On");
     }
 }

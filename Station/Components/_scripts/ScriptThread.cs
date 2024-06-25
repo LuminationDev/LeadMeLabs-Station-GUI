@@ -3,12 +3,13 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using LeadMeLabsLibrary;
 using Newtonsoft.Json.Linq;
+using Station._config;
 using Station.Components._legacy;
 using Station.Components._managers;
 using Station.Components._models;
 using Station.Components._notification;
-using Station.Components._profiles;
 using Station.Components._utils;
+using Station.Components._version;
 using Station.MVC.Controller;
 using Station.QA;
 
@@ -52,6 +53,10 @@ public class ScriptThread
 
         switch (_actionNamespace)
         {
+            case "Environment":
+                HandleEnvironment(_additionalData);
+                break;
+            
             case "MessageType":
                 if (_additionalData.Contains("Json"))
                 {
@@ -83,31 +88,47 @@ public class ScriptThread
                 HandleExperience(_additionalData);
                 break;
             
+            case "FileControl":
+                FileManager.HandleFileAction(_additionalData);
+                break;
+            
             case "QA":
                 QualityManager.HandleQualityAssurance(_additionalData);
                 break;
         }
     }
 
+    /// <summary>
+    /// A NUC has sent the initial 'Connect' message, determine the NUCs version and initialise the audio and video
+    /// managers.
+    /// </summary>
+    /// <param name="additionalData">A string of the supplied message</param>
     private void HandleConnection(string? additionalData)
     {
         if (additionalData == null) return;
         if (!additionalData.Contains("Connect")) return;
         
-        // Only send the headset if is a vr profile Station
-        // Safe cast for potential vr profile
-        VrProfile? vrProfile = Profile.CastToType<VrProfile>(SessionController.StationProfile);
-        if (vrProfile?.VrHeadset != null)
+        //Send the version number before anything else so the NUC knows how to handle the Station
+        MainController.InitialConnection();
+        StateController.HandleConnection(_source);
+    }
+
+    private void HandleEnvironment(string additionalData)
+    {
+        JObject requestData = JObject.Parse(additionalData);
+        
+        var version = requestData.GetValue("Version")?.ToString();
+        if (version != null)
         {
-            MessageController.SendResponse(_source, "Station", $"SetValue:headsetType:{Environment.GetEnvironmentVariable("HeadsetType", EnvironmentVariableTarget.Process)}");
+            //Update the MainController's version
+            VersionHandler.SetVersion(version);
         }
-            
-        MessageController.SendResponse(_source, "Station", "SetValue:status:On");
-        MessageController.SendResponse(_source, "Station", $"SetValue:state:{SessionController.CurrentState}");
-        MessageController.SendResponse(_source, "Station", "SetValue:gameName:");
-        MessageController.SendResponse("Android", "Station", "SetValue:gameId:");
-        AudioManager.Initialise();
-        VideoManager.Initialise();
+        
+        var location = requestData.GetValue("LabLocation")?.ToString();
+        if (location != null)
+        {
+            DotEnv.Update("LabLocation", location);
+        }
     }
 
     private void HandleStation(string jObjectData)

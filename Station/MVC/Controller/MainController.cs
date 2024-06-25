@@ -6,6 +6,7 @@ using LeadMeLabsLibrary;
 using Newtonsoft.Json.Linq;
 using Sentry;
 using Station._config;
+using Station.Components._enums;
 using Station.Components._managers;
 using Station.Components._monitoring;
 using Station.Components._network;
@@ -69,9 +70,11 @@ public static class MainController
     public static string? macAddress;
     private static string? versionNumber;
     private static Timer? variableCheck;
-
-    public static bool isNucUtf8 = true;
-    public static bool isNucJsonEnabled = false;
+    
+    //TODO these can be removed in the next update
+    public static bool isNucUtf8 = false;
+    public static bool isNucJsonEnabled = true;
+    //TODO
 
     /// <summary>
     /// Starts the server running on the local machine
@@ -124,6 +127,7 @@ public static class MainController
         // Collect audio devices and videos before starting the server
         AudioManager.Initialise();
         VideoManager.Initialise();
+        FileManager.Initialise();
         
         // Additional tasks - Start a new task as to now hold up the UI
         new Task(() =>
@@ -142,14 +146,9 @@ public static class MainController
             }
 
             //Cannot be any higher - encryption key does not exist before the DotEnv.Load()
-            JObject message = new JObject
-            {
-                { "action", "SoftwareState" },
-                { "value", "Launching Software" }
-            };
-            ScheduledTaskQueue.EnqueueTask(
-                () => SessionController.PassStationMessage(message),
-                TimeSpan.FromSeconds(0));
+            InitialConnection();
+            
+            ScheduledTaskQueue.EnqueueTask(() => SessionController.UpdateState(State.Launching), TimeSpan.FromSeconds(0));
 
             App.SetWindowTitle(
                 $"Station({Environment.GetEnvironmentVariable("StationId", EnvironmentVariableTarget.Process)}) -- {localEndPoint.Address} -- {macAddress} -- {versionNumber}");
@@ -166,16 +165,27 @@ public static class MainController
     }
 
     /// <summary>
+    /// Send off the version and lab location, plus any other details at the start of the communication with the NUC.
+    /// </summary>
+    public static void InitialConnection()
+    {
+        JObject message = new JObject
+        {
+            { "Version", Updater.GetVersionNumber() },
+            { "LabLocation", Environment.GetEnvironmentVariable("LabLocation",
+                EnvironmentVariableTarget.Process) }
+        };
+
+        MessageController.SendResponse("NUC", "Environment", message.ToString());
+        Task.Delay(2000).Wait(); //Forced delay while waiting for the NUC response
+    }
+
+    /// <summary>
     /// Initialise the necessary classes for the software to run.
     /// </summary>
     private static void Initialisation()
     {
-        JObject message = new JObject
-        {
-            { "action", "SoftwareState" },
-            { "value", "Initialising configuration" }
-        };
-        ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage(message), TimeSpan.FromSeconds(2));
+        ScheduledTaskQueue.EnqueueTask(() => SessionController.UpdateState(State.Initialising), TimeSpan.FromSeconds(2));
 
         // Schedule the function to run after a 5-minute delay (300,000 milliseconds)
         variableCheck = new Timer(OnTimerCallback, null, 300000, Timeout.Infinite);
@@ -206,7 +216,7 @@ public static class MainController
         
         Logger.WriteLog($"Expected NUC address: {Environment.GetEnvironmentVariable("NucAddress", EnvironmentVariableTarget.Process)}", Enums.LogLevel.Normal);
         if (Helper.GetStationMode().Equals(Helper.STATION_MODE_APPLIANCE)) return;
-        MessageController.InitialStartUp();
+        StateController.InitialStartUp();
         
         // Safe cast for potential content profile
         ContentProfile? contentProfile = Profile.CastToType<ContentProfile>(SessionController.StationProfile);

@@ -11,15 +11,16 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Sentry;
 using Station.Components._commandLine;
+using Station.Components._enums;
 using Station.Components._managers;
 using Station.Components._models;
 using Station.Components._notification;
 using Station.Components._profiles;
 using Station.Components._utils;
-using Station.Components._utils._steamConfig;
 using Station.Components._wrapper.steam;
 using Station.MVC.Controller;
 using Station.QA.checks;
+using Version = System.Version;
 
 namespace Station.QA;
 
@@ -227,22 +228,12 @@ public static class QualityManager
         string location = Environment.GetEnvironmentVariable("LabLocation", EnvironmentVariableTarget.Process) ?? "Unknown";
         
         // Check if there is a network connection (or if it is Adelaide/Australian Science and Mathematics School)
-        JObject message = new JObject
-        {
-            { "action", "SoftwareState" },
-            { "value", "Checking network" }
-        };
-        ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage(message), TimeSpan.FromSeconds(0));
+        ScheduledTaskQueue.EnqueueTask(() => SessionController.UpdateState(State.Network), TimeSpan.FromSeconds(0));
         if (location.ToLower().Contains("science and mathematics school") || !Network.CheckIfConnectedToInternet(true)) return;
         
         // Check if the QA has already been uploaded
         if (HasUploadAlreadyBeenCompleted()) return;
-        JObject qaMessage = new JObject
-        {
-            { "action", "SoftwareState" },
-            { "value", "Running QA" }
-        };
-        ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage(qaMessage), TimeSpan.FromSeconds(0));
+        ScheduledTaskQueue.EnqueueTask(() => SessionController.UpdateState(State.Qa), TimeSpan.FromSeconds(0));
         
         Dictionary<string, Dictionary<string, QaCheck>> qaCheckDictionary = new();
         

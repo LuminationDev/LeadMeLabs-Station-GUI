@@ -47,6 +47,9 @@ public static class SteamScripts
     public static List<string> blockedByFamilyMode = new();
     public static List<ExperienceDetails> InstalledApplications = new();
 
+    //Globally known variables
+    public const int SteamVrId = 250820;
+
     private static ManifestReader.ManifestApplicationList steamManifestApplicationList = new (SteamManifest);
     public static void RefreshVrManifest()
     {
@@ -209,6 +212,7 @@ public static class SteamScripts
         if(!File.Exists(filePath))
         {
             Logger.WriteLog($"SteamCMD not initialised yet. Initialising now.", Enums.LogLevel.Info);
+            //Old set value method as this goes directly to the tablet through the NUC - nothing is saved temporarily
             MessageController.SendResponse("Android", "Station", "SetValue:steamCMD:required");
             
             steamCmdConfigured = "Missing";

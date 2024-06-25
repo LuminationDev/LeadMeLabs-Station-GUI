@@ -42,7 +42,7 @@ public class VivePro2 : Profile, IVrHeadset
         switch (type)
         {
             case ProcessListType.Query:
-                return new List<string> { "vrmonitor", "steam", "HtcConnectionUtility", "steamwebhelper" };
+                return new List<string> { "vrmonitor", "steam", "LhStatusMonitor", "steamwebhelper" };
             case ProcessListType.Minimize:
                 return new List<string> { "vrmonitor", "steam", "LhStatusMonitor", "WaveConsole", "steamwebhelper" };
             default:

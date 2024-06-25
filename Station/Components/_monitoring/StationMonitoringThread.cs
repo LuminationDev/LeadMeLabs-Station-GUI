@@ -126,12 +126,25 @@ public static class StationMonitoringThread
             Enums.LogLevel.Debug);
     }
 
-    private static void NewSteamProcessesCheck()
+    private static async void NewSteamProcessesCheck()
     {
         Process[] steamProcesses = ProcessManager.GetProcessesByName("steamwebhelper");
         foreach (var process in steamProcesses)
         {
             if (string.IsNullOrEmpty(process.MainWindowTitle)) continue;
+            if (process.MainWindowTitle.Equals("Valve Hardware Survey"))
+            {
+                try
+                {
+                    CommandLine.SetForegroundWindow(process.MainWindowHandle.ToInt32());
+                    await Task.Delay(10);
+                    CommandLine.SendKeysToActiveWindow("{Tab}{Tab}{Enter");
+                }
+                catch (Exception e)
+                {
+                    SentrySdk.CaptureException(e);
+                }
+            }
             if (!process.MainWindowTitle.Equals("Steam")) continue;
 
             if (App.steamProcessId == process.Id) continue;

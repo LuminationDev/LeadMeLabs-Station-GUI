@@ -9,6 +9,7 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Sentry;
 using Station.Components._commandLine;
+using Station.Components._enums;
 using Station.Components._interfaces;
 using Station.Components._models;
 using Station.Components._monitoring;
@@ -58,13 +59,7 @@ public class WrapperManager
         ValidateManifestFiles();
         StartPipeServer();
         SessionController.SetupStationProfile(Helper.GetStationMode());
-        
-        JObject message = new JObject
-        {
-            { "action", "SoftwareState" },
-            { "value", $"Loading experiences" }
-        };
-        ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage(message), TimeSpan.FromSeconds(2));
+        ScheduledTaskQueue.EnqueueTask(() => SessionController.UpdateState(State.Experiences), TimeSpan.FromSeconds(2));
         Task.Factory.StartNew(CollectAllApplications);
     }
 
@@ -142,7 +137,13 @@ public class WrapperManager
         switch (tokens[0])
         {
             case "details":
+                //Old set value method as this goes directly to the tablet through the NUC - nothing is saved temporarily 
                 MessageController.SendResponse("Android", "Station", $"SetValue:details:{CheckExperienceName(tokens[1])}");
+                break;
+            case "fileSaved":
+                //Wait for the file to be saved completely
+                Task.Delay(2000).Wait();
+                FileManager.Initialise();
                 break;
             
             // Let the video manager handle video associated messages
@@ -206,8 +207,10 @@ public class WrapperManager
         alreadyCollecting = true;
         CollectApplications<ExperienceDetails>(experiences => new JArray(experiences.Select(experience => experience.ToJObject())), "ApplicationJson");
         alreadyCollecting = false;
-
-        _ = RestartVrProcesses();
+        
+        //Check if LeadMePython exists
+        string filePath = CommandLine.StationLocation + @"\_embedded\LeadMePython.exe";
+        _ = File.Exists(filePath) ? StartVrProcesses() : RestartVrProcesses();
     }
     
     /// <summary>
@@ -299,9 +302,6 @@ public class WrapperManager
 
         // Send the JSON message here as the PassStationMessage method splits the supplied message by ','
         if (!messageType.Equals("ApplicationJson")) return;
-        MessageController.SendResponse("Android", "Station",
-            $"SetValue:installedJsonApplications:{convertedApplications}");
-
         JObject blockedApplications = new JObject
         {
             { "noLicense", JsonConvert.SerializeObject(SteamScripts.noLicenses) },
@@ -309,15 +309,30 @@ public class WrapperManager
             { "unacceptedEulas", JsonConvert.SerializeObject(SteamWrapper.installedExperiencesWithUnacceptedEulas) }
         };
 
-        MessageController.SendResponse("Android", "Station",
-            $"SetValue:blockedApplications:{blockedApplications}");
+        Dictionary<string, object> stateValues = new()
+        {
+            { "installedJsonApplications", convertedApplications },
+            { "blockedApplications", blockedApplications },
+        };
+        StateController.UpdateListBunch(stateValues);
     }
     
     /// <summary>
     /// Stop any and all processes associated with the VR headset type.
     /// </summary>
-    public static void StopCommonProcesses()
+    public static async Task StopCommonProcesses()
     {
+        if (ProcessManager.GetProcessesByName("vrmonitor").Length != 0)
+        {
+            //Gracefully exit SteamVR (use the Steam client to do so)
+            CommandLine.StartProgram(SessionController.Steam, $" +app_stop {SteamScripts.SteamVrId}");
+
+            //Wait for SteamVR to exit then close all other processes
+            //(if SteamVR does not exit gracefully below hard kills it as a backup)
+            await Helper.MonitorLoop(() => ProcessManager.GetProcessesByName("vrmonitor").Length == 0, 10);
+            Task.Delay(1000).Wait();
+        }
+        
         List<string> combinedProcesses = new List<string>();
         combinedProcesses.AddRange(WrapperMonitoringThread.SteamProcesses);
         combinedProcesses.AddRange(WrapperMonitoringThread.SteamVrProcesses);
@@ -327,6 +342,54 @@ public class WrapperManager
         CommandLine.QueryProcesses(combinedProcesses, true);
     }
 
+    /// <summary>
+    /// Start up the VR processes from scratch, close any existing software in order to perform a clean start up.
+    /// </summary>
+    private static async Task StartVrProcesses()
+    {
+        if (Helper.GetStationMode().Equals(Helper.STATION_MODE_VR))
+        {
+            //Exit Steam only if it is on the login window
+            bool signIn = ProcessManager.GetProcessMainWindowTitle("steamwebhelper")
+                .Where(s => s.Contains("Sign in"))
+                .ToList().Any();
+            if (signIn) await StopCommonProcesses();
+
+            // Safe cast for potential vr profile
+            VrProfile? vrProfile = Profile.CastToType<VrProfile>(SessionController.StationProfile);
+            if (vrProfile?.VrHeadset == null) return;
+            
+            // This must be checked before the VR processes are restarted
+            RoomSetup.CompareRoomSetup(); 
+
+            //Reset the VR device statuses
+            vrProfile.VrHeadset.GetStatusManager().ResetStatuses();
+            
+            SessionController.StationProfile?.StartSession();
+
+            // Check if there are steam details as the Station may be non-VR without a Steam account
+            WaitForVrProcesses();
+        
+            //Wait for OpenVR to be available
+            bool headsetSoftware = await Helper.MonitorLoop(() => ProcessManager.GetProcessesByName(vrProfile.VrHeadset.GetHeadsetManagementProcessName()).Length == 0, 20);
+            if (!headsetSoftware)
+            {
+                ScheduledTaskQueue.EnqueueTask(() => SessionController.UpdateState(State.ErrorSteamVr), TimeSpan.FromSeconds(1));
+                ScheduledTaskQueue.EnqueueTask(() => MessageController.SendResponse("NUC", "Analytics", "SteamVRError"), TimeSpan.FromSeconds(1));
+            }
+        }
+        else
+        {
+            // Check if there are steam details as the Station may be non-VR with a Steam account
+            ContentProfile? contentProfile = Profile.CastToType<ContentProfile>(SessionController.StationProfile);
+            if (contentProfile != null && contentProfile.DoesProfileHaveAccount("Steam"))
+            {
+                SessionController.StationProfile?.StartSession();
+                WaitForSteamProcess();
+            } 
+        }
+    }
+    
     /// <summary>
     /// Start or restart the VR session associated with the VR headset type
     /// </summary>
@@ -339,7 +402,7 @@ public class WrapperManager
             RoomSetup.CompareRoomSetup();
         }
 
-        StopCommonProcesses();
+        await StopCommonProcesses();
         if (SessionController.StationProfile == null)
         {
             MockConsole.WriteLine("No profile type specified.", Enums.LogLevel.Normal);
@@ -405,12 +468,7 @@ public class WrapperManager
 
         if (!InternalDebugger.GetAutoStart())
         {
-            JObject message = new JObject
-            {
-                { "action", "SoftwareState" },
-                { "value", "Debug Mode" }
-            };
-            ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage(message), TimeSpan.FromSeconds(0));
+            ScheduledTaskQueue.EnqueueTask(() => SessionController.UpdateState(State.Debug), TimeSpan.FromSeconds(0));
             return;
         }
 
@@ -428,17 +486,12 @@ public class WrapperManager
         }
         else
         {
-            JObject message = new JObject
-            {
-                { "action", "SoftwareState" },
-                { "value", "Ready to go" }
-            };
-            ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage(message),
+            ScheduledTaskQueue.EnqueueTask(() => SessionController.UpdateState(State.Ready),
                 TimeSpan.FromSeconds(1));
         }
     }
 
-    public static void AcceptUnacceptedEulas()
+    public static async Task AcceptUnacceptedEulas()
     {
         if (SessionController.StationProfile == null)
         {
@@ -446,7 +499,7 @@ public class WrapperManager
         }
 
         OverlayManager.OverlayThreadManual("Auto-accepting EULAs", 90);
-        StopCommonProcesses();
+        await StopCommonProcesses();
         SessionController.StationProfile.StartDevToolsSession();
         Profile.WaitForSteamLogin();
 
@@ -466,7 +519,7 @@ public class WrapperManager
         acceptingEulas = true;
 
         int index = 1;
-        App.windowEventTracker.SetMinimisingEnabled(false);
+        App.windowEventTracker?.SetMinimisingEnabled(false);
         
         foreach (string installedExperienceWithUnacceptedEula in SteamWrapper.installedExperiencesWithUnacceptedEulas)
         {
@@ -482,11 +535,11 @@ public class WrapperManager
         ScheduledTaskQueue.EnqueueTask(() =>
             {
                 CommandLine.EnterAltF4(Int32.Parse(handle));
-                App.windowEventTracker.SetMinimisingEnabled(true);
+                App.windowEventTracker?.SetMinimisingEnabled(true);
                 SessionController.StationProfile.MinimizeSoftware(1);
                 OverlayManager.ManualStop(90);
                 acceptingEulas = false;
-                WrapperManager.CollectAllApplications();
+                CollectAllApplications();
                 SessionController.StationProfile.StartSession();
             },
             TimeSpan.FromSeconds(((index + 2) * 1.5) + 3));
@@ -495,17 +548,10 @@ public class WrapperManager
     /// <summary>
     /// Wait for Steam processes to launch and sign in, bail out after 3 minutes. Send the outcome to the tablet.
     /// </summary>
-    private static void WaitForSteamProcess()
+    public static void WaitForSteamProcess()
     {
-        string error = "Error: Steam could not open";
-        string state = Profile.WaitForSteamLogin() ? "Ready to go" : error;
-
-        JObject message = new JObject
-        {
-            { "action", "SoftwareState" },
-            { "value", state }
-        };
-        ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage(message),
+        State state = Profile.WaitForSteamLogin() ? State.Ready : State.ErrorSteam;
+        ScheduledTaskQueue.EnqueueTask(() => SessionController.UpdateState(state),
             TimeSpan.FromSeconds(1)); //Wait for steam/other accounts to login
         
         JObject androidMessage = new JObject
@@ -520,7 +566,7 @@ public class WrapperManager
     /// Wait for SteamVR and the External headset software to be open, bail out after 3 minutes. Send the outcome 
     /// to the tablet.
     /// </summary>
-    private static void WaitForVrProcesses()
+    public static void WaitForVrProcesses()
     {
         // Safe cast and null checks
         VrProfile? vrProfile = Profile.CastToType<VrProfile>(SessionController.StationProfile);
@@ -533,10 +579,10 @@ public class WrapperManager
             count++;
         } while ((ProcessManager.GetProcessesByName(vrProfile.VrHeadset?.GetHeadsetManagementProcessName()).Length == 0) && count <= 60);
 
-        string error = "";
+        State error = State.Base;
         if (ProcessManager.GetProcessesByName(vrProfile.VrHeadset?.GetHeadsetManagementProcessName()).Length == 0)
         {
-            error = "Error: Vive could not open";
+            error = State.ErrorVive;
         }
         else
         {
@@ -547,18 +593,13 @@ public class WrapperManager
             }
         }
 
-        string state = count <= 60 ? "Awaiting headset connection..." : error;
+        State state = count <= 60 ? State.Awaiting : error;
 
         //Only send the message if the headset is not yet connected
         if (vrProfile.VrHeadset?.GetStatusManager().SoftwareStatus == DeviceStatus.Connected &&
             vrProfile.VrHeadset?.GetStatusManager().OpenVRStatus == DeviceStatus.Connected) return;
-        
-        JObject message = new JObject
-        {
-            { "action", "SoftwareState" },
-            { "value", state }
-        };
-        ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage(message),
+
+        ScheduledTaskQueue.EnqueueTask(() => SessionController.UpdateState(state),
             TimeSpan.FromSeconds(1));
             
         JObject androidMessage = new JObject
@@ -771,17 +812,17 @@ public class WrapperManager
         if (currentWrapper == null)
         {
             MockConsole.WriteLine("No process wrapper present, checking internal.", Enums.LogLevel.Normal);
-
+        
             if (InternalWrapper.GetCurrentExperienceName() != null)
             {
                 Task.Factory.StartNew(() => InternalWrapper.PassMessageToProcess(message));
                 return;
             }
-
+        
             MockConsole.WriteLine("No internal wrapper present.", Enums.LogLevel.Normal);
             return;
         }
-
+        
         Task.Factory.StartNew(() => currentWrapper.PassMessageToProcess(message));
     }
 
@@ -812,6 +853,14 @@ public class WrapperManager
         //Stop looking for Vive headset regardless
         ViveScripts.StopMonitoring();
 
+        //A session has ended revert the lost headset message back to awaiting headset connection if it is present
+        if (SessionController.CurrentState == State.Lost)
+        {
+            ScheduledTaskQueue.EnqueueTask(
+                () => SessionController.UpdateState(State.Awaiting),
+                TimeSpan.FromSeconds(0));
+        }
+        
         if (currentWrapper == null)
         {
             MockConsole.WriteLine("No process wrapper present.", Enums.LogLevel.Normal);

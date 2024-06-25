@@ -62,8 +62,7 @@ public static class VideoManager
             videoPlayerDetails = value;
             
             // Send a message to the tablet
-            string additionalData = $"SetValue:videoPlayerDetails:{videoPlayerDetails}";
-            MessageController.SendResponse("Android", "Station", additionalData);
+            StateController.UpdateVideoValue("videoPlayerDetails", videoPlayerDetails);
         }
         get => videoPlayerDetails;
     }
@@ -91,10 +90,7 @@ public static class VideoManager
             if (playbackTime == value) return;
 
             playbackTime = value;
-            
-            // Send a message to the tablet
-            string additionalData = $"SetValue:activeVideoPlaybackTime:{playbackTime}";
-            MessageController.SendResponse("Android", "Station", additionalData);
+            StateController.UpdateVideoValue("activeVideoPlaybackTime", playbackTime);
         }
         get => playbackTime;
     }
@@ -124,22 +120,17 @@ public static class VideoManager
         {
             // Find the video in the VideoFiles dictionary
             Video? video = FindVideoBySource(value);
-            string additionalData;
             
             // Reset the video on the tablet
             if (video == null || activeVideo == video.id)
             {
                 activeVideo = "";
-                additionalData = $"SetValue:activeVideoFile:";
-                MessageController.SendResponse("NUC", "Station", additionalData);
+                StateController.UpdateVideoValue("activeVideoFile", "");
                 return;
             }
     
             activeVideo = video.id;
-            
-            // Send a message to the tablet
-            additionalData = $"SetValue:activeVideoFile:{activeVideo}";
-            MessageController.SendResponse("NUC", "Station", additionalData);
+            StateController.UpdateVideoValue("activeVideoFile", activeVideo);
         }
         get => activeVideo;
     }
@@ -170,8 +161,7 @@ public static class VideoManager
             };
             string json = JsonConvert.SerializeObject(videoArray, settings);
             JArray jsonObject = JArray.Parse(json);
-            string additionalData = $"SetValue:videoFiles:{jsonObject}";
-            MessageController.SendResponse("NUC", "Station", additionalData);
+            StateController.UpdateListsValue("videoFiles", jsonObject);
         }
 
         new Thread(Collect).Start();

@@ -237,6 +237,7 @@ public static class CommandLine
         if (output == null)
         {
             Logger.WriteLog("Unable to read output", Enums.LogLevel.Normal);
+            //Old set value method as this goes directly to the tablet through the NUC - nothing is saved temporarily
             MessageController.SendResponse("Android", "Station", "SetValue:steamCMD:error");
             configuringSteam = false;
             return;
@@ -247,12 +248,14 @@ public static class CommandLine
         if (output.Contains("FAILED (Invalid Login Auth Code)"))
         {
             Logger.WriteLog("AUTH FAILED", Enums.LogLevel.Normal);
+            //Old set value method as this goes directly to the tablet through the NUC - nothing is saved temporarily
             MessageController.SendResponse("Android", "Station", "SetValue:steamCMD:failure");
             configuringSteam = false;
         }
         else if (output.Contains("OK"))
         {
             Logger.WriteLog("AUTH SUCCESS, restarting VR system", Enums.LogLevel.Normal);
+            //Old set value method as this goes directly to the tablet through the NUC - nothing is saved temporarily
             MessageController.SendResponse("Android", "Station", "SetValue:steamCMD:configured");
 
             //Recollect the installed experiences
@@ -311,6 +314,7 @@ public static class CommandLine
 
         if (output.Contains("Steam Guard code:"))
         {
+            //Old set value method as this goes directly to the tablet through the NUC - nothing is saved temporarily
             MessageController.SendResponse("Android", "Station", "SetValue:steamCMD:required");
             MockConsole.WriteLine("Steam Guard is not enabled for this account.");
             SteamScripts.steamCmdConfigured = "Missing";
@@ -320,6 +324,7 @@ public static class CommandLine
             return null;
         }
 
+        //Old set value method as this goes directly to the tablet through the NUC - nothing is saved temporarily
         MessageController.SendResponse("Android", "Station", "SetValue:steamCMD:configured");
         SteamScripts.steamCmdConfigured = "Configured";
         
@@ -483,7 +488,7 @@ public static class CommandLine
     }
 
     [DllImport("user32.dll")]
-    private static extern int SetForegroundWindow(int hwnd);
+    public static extern int SetForegroundWindow(int hwnd);
 
     [DllImport("user32.dll")]
     private static extern bool ShowWindow(int handle, int state);
@@ -605,7 +610,7 @@ public static class CommandLine
         Outcome(cmd);
     }
 
-    private static void SendKeysToActiveWindow(string keys)
+    public static void SendKeysToActiveWindow(string keys)
     {
         Process? cmd = SetupCommand(StationPowershell);
         if (cmd == null)

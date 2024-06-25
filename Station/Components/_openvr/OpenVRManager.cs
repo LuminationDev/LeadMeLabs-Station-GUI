@@ -8,6 +8,7 @@ using LeadMeLabsLibrary;
 using Newtonsoft.Json.Linq;
 using Sentry;
 using Station.Components._commandLine;
+using Station.Components._enums;
 using Station.Components._interfaces;
 using Station.Components._managers;
 using Station.Components._models;
@@ -166,12 +167,7 @@ public class OpenVrManager
                 $"OpenVR connection not established - restarting SteamVR", Enums.LogLevel.Normal);
 
             //Send message to the tablet (Updating what is happening)
-            JObject message = new JObject
-            {
-                { "action", "SoftwareState" },
-                { "value", "Restarting SteamVR" }
-            };
-            ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage(message), TimeSpan.FromSeconds(1));
+            ScheduledTaskQueue.EnqueueTask(() => SessionController.UpdateState(State.RestartSteamVr), TimeSpan.FromSeconds(1));
 
             //Kill SteamVR
             CommandLine.QueryProcesses(new List<string> { "vrmonitor" }, true);
@@ -198,22 +194,12 @@ public class OpenVrManager
                 $"SteamVR restarted successfully", Enums.LogLevel.Normal);
 
             //Send message to the tablet (Updating what is happening)
-            JObject stateMessage = new JObject
-            {
-                { "action", "SoftwareState" },
-                { "value", "Connecting SteamVR" }
-            };
-            ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage(stateMessage), TimeSpan.FromSeconds(1));
+            ScheduledTaskQueue.EnqueueTask(() => SessionController.UpdateState(State.ConnectSteamVr), TimeSpan.FromSeconds(1));
 
             bool openvr = await Helper.MonitorLoop(() => !MainController.openVrManager?.InitialiseOpenVr() ?? true, 10);
             if (!openvr)
             {
-                JObject errorMessage = new JObject
-                {
-                    { "action", "SoftwareState" },
-                    { "value", "SteamVR Error" }
-                };
-                ScheduledTaskQueue.EnqueueTask(() => SessionController.PassStationMessage(errorMessage), TimeSpan.FromSeconds(1));
+                ScheduledTaskQueue.EnqueueTask(() => SessionController.UpdateState(State.ErrorSteamVr), TimeSpan.FromSeconds(1));
                 ScheduledTaskQueue.EnqueueTask(() => MessageController.SendResponse("NUC", "Analytics", "SteamVRError"), TimeSpan.FromSeconds(1));
                 return false;
             }
@@ -239,7 +225,8 @@ public class OpenVrManager
 
         while (!_quiting)
         {
-            if (_ovrSystem == null || !_ovrSystem.PollNextEvent(ref vrEvent,
+            if (_ovrSystem == null) continue; 
+            if (!_ovrSystem.PollNextEvent(ref vrEvent,
                     (uint)System.Runtime.InteropServices.Marshal.SizeOf(typeof(VREvent_t)))) continue;
             
             //TODO work out what to do if the program (SteamVR) has quit.
@@ -598,7 +585,7 @@ public class OpenVrManager
                     GetBaseStationInfo(deviceIndex);
                     break;
                 case ETrackedDeviceClass.GenericTracker:
-                    GetBaseStationInfo(deviceIndex);
+                    GetTrackerInfo(deviceIndex);
                     break;
             }
         }

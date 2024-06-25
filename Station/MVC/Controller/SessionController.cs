@@ -1,8 +1,10 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using LeadMeLabsLibrary;
 using Newtonsoft.Json.Linq;
+using Station.Components._enums;
 using Station.Components._interfaces;
 using Station.Components._managers;
 using Station.Components._notification;
@@ -33,15 +35,15 @@ public static class SessionController
     /// <summary>
     /// Track the current state of the Station software.
     /// </summary>
-    private static string currentState = "";
+    private static State currentState = State.Base;
 
-    public static string CurrentState
+    public static State CurrentState
     {
         get => currentState;
         set
         {
             currentState = value;
-            MessageController.SendResponse("Android", "Station", $"SetValue:state:{value}");
+            StateController.UpdateStateValue("state", Attributes.GetEnumValue(currentState));
         }
     }
 
@@ -103,12 +105,7 @@ public static class SessionController
             ModeTracker.ResetMode();
         }
         
-        JObject message = new JObject
-        {
-            { "action", "SoftwareState" },
-            { "value", "Shutting down VR processes" }
-        };
-        ScheduledTaskQueue.EnqueueTask(() => PassStationMessage(message), TimeSpan.FromSeconds(1));
+        ScheduledTaskQueue.EnqueueTask(() => UpdateState(State.StopVrProcess), TimeSpan.FromSeconds(1));
         _ = WrapperManager.RestartVrProcesses();
 
         if (ExperienceType == null)
@@ -179,6 +176,15 @@ public static class SessionController
     }
 
     /// <summary>
+    /// Update the current state enum of the Station.
+    /// </summary>
+    /// <param name="state"></param>
+    public static void UpdateState(State state)
+    {
+        CurrentState = state;
+    }
+
+    /// <summary>
     /// Take an action message from the wrapper and pass the response onto the NUC or handle it internally.
     /// </summary>
     /// <param name="message">A string representing the message, different actions are separated by a ','</param>
@@ -202,7 +208,7 @@ public static class SessionController
                     if (value == null) return;
                     StationScripts.processing = bool.Parse(value);
                     break;
-                
+
                 case "ApplicationUpdate":
                     JObject? info = (JObject?)message.GetValue("info");
                     if (info == null) return;
@@ -211,29 +217,37 @@ public static class SessionController
                     string? appId = (string?)info.GetValue("appId");
                     string? wrapper = (string?)info.GetValue("wrapper");
                     
-                    MessageController.SendResponse("Android", "Station", $"SetValue:gameName:{name}");
-
-                    if (appId != null && wrapper != null)
                     {
-                        MessageController.SendResponse("Android", "Station", $"SetValue:gameId:{appId}");
-                        MessageController.SendResponse("Android", "Station", $"SetValue:gameType:{wrapper}");
-                    }
-                    else
-                    {
-                        MessageController.SendResponse("Android", "Station", "SetValue:gameId:");
-                        MessageController.SendResponse("Android", "Station", "SetValue:gameType:");
-                    }
-                    break;
+                        Dictionary<string, object> stateValues = new()
+                        {
+                            { "gameName", name ?? "" }
+                        };
 
-                case "SoftwareState":
-                    if (value == null) return;
-                    CurrentState = value;
+                        if (appId != null && wrapper != null)
+                        {
+                            stateValues.Add("gameId", appId);
+                            stateValues.Add("gameType", wrapper);
+                        }
+                        else
+                        {
+                            stateValues.Add("gameId", "");
+                            stateValues.Add("gameType", "");
+                        }
+
+                        StateController.UpdateStatusBunch(stateValues);
+                    }
                     break;
 
                 case "ApplicationClosed":
-                    MessageController.SendResponse("Android", "Station", "SetValue:gameName:");
-                    MessageController.SendResponse("Android", "Station", "SetValue:gameId:");
-                    MessageController.SendResponse("Android", "Station", "SetValue:gameType:");
+                    {
+                        Dictionary<string, object> stateValues = new()
+                        {
+                            { "gameName", "" },
+                            { "gameId", "" },
+                            { "gameType", "" }
+                        };
+                        StateController.UpdateStatusBunch(stateValues);
+                    }
                     break;
 
                 case "StationError":
