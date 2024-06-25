@@ -475,7 +475,7 @@ public class SteamConfig
         if (steamId.Length == 0)
         {
             Logger.WriteLog(
-                "Could not find steamId: " +
+                "Steam Stats: Could not find steamId: " +
                 location, Enums.LogLevel.Error);
             return;
         }
@@ -491,6 +491,7 @@ public class SteamConfig
         
         if (!Network.CheckIfConnectedToInternet())
         {
+            Logger.WriteLog("Steam stats: Network error.", Enums.LogLevel.Error);
             return;
         }
 
@@ -569,6 +570,8 @@ public class SteamConfig
                         Logger.WriteLog($"VerifySteamLoginUserConfig - Sentry Message: {msg}", Enums.LogLevel.Error);
                         SentrySdk.CaptureMessage(msg);
                     }
+                } else {
+                    Logger.WriteLog("No steam stats", Enums.LogLevel.Error);
                 }
             });
         }
