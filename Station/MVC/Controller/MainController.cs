@@ -96,6 +96,9 @@ public static class MainController
         {
             Logger.WriteLog($"DotEnv Error: {ex}", Enums.LogLevel.Error);
         }
+        
+        // Initialise Segment
+        Components._segment.Segment.Initialise();
 
         //Even if DotEnv fails, still load up the server details to show the details to the user.
         Logger.WriteLog("Setting up server.", Enums.LogLevel.Normal);

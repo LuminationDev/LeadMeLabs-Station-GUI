@@ -16,6 +16,8 @@ using Station.Components._monitoring;
 using Station.Components._notification;
 using Station.Components._overlay;
 using Station.Components._profiles;
+using Station.Components._segment;
+using Station.Components._segment._classes;
 using Station.Components._utils;
 using Station.Components._utils._steamConfig;
 using Station.Components._wrapper.custom;
@@ -375,7 +377,13 @@ public class WrapperManager
             if (!headsetSoftware)
             {
                 ScheduledTaskQueue.EnqueueTask(() => SessionController.UpdateState(State.ErrorSteamVr), TimeSpan.FromSeconds(1));
-                ScheduledTaskQueue.EnqueueTask(() => MessageController.SendResponse("NUC", "Analytics", "SteamVRError"), TimeSpan.FromSeconds(1));
+                ScheduledTaskQueue.EnqueueTask(() =>
+                {
+                    SegmentEvent segmentEvent = new SegmentStationEvent(
+                        SegmentConstants.EventSteamVRError
+                    );
+                    Station.Components._segment.Segment.TrackAction(segmentEvent);
+                }, TimeSpan.FromSeconds(1));
             }
         }
         else
