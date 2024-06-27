@@ -174,7 +174,7 @@ public class SoftwareChecks
         foreach (var item in array)
         {
             //Launcher entry is only there if a user has changed it away from production, otherwise it defaults to production
-            if (item.type.Equals("LeadMe") && item.name.Equals("Station"))
+            if (item.type == "LeadMe" && item.name == "Station")
             {
                 bool autostart = (bool)item.autostart;
                 if (autostart)
