@@ -75,7 +75,7 @@ internal class CustomWrapper : IWrapper
             string? experienceName = experience.Name;
             string? altPath = experience.AltPath;
 
-            if (CommandLine.StationLocation == null)
+            if (StationCommandLine.StationLocation == null)
             {
                 MockConsole.WriteLine($"Station working directory not found while searching for header file", Enums.LogLevel.Error);
                 
@@ -98,7 +98,7 @@ internal class CustomWrapper : IWrapper
                 filePath = parentFolder + @"\header.jpg";
             } else
             {
-                filePath = Path.GetFullPath(Path.Combine(CommandLine.StationLocation, @"..\..", $"leadme_apps\\{experienceName}\\header.jpg"));
+                filePath = Path.GetFullPath(Path.Combine(StationCommandLine.StationLocation, @"..\..", $"leadme_apps\\{experienceName}\\header.jpg"));
             }
 
             if (!File.Exists(filePath))
@@ -153,7 +153,7 @@ internal class CustomWrapper : IWrapper
         VrProfile? vrProfile = Profile.CastToType<VrProfile>(SessionController.StationProfile);
         
         _launchWillHaveFailedFromOpenVrTimeout = false;
-        if(CommandLine.StationLocation == null)
+        if(StationCommandLine.StationLocation == null)
         {
             Logger.WriteLog("CustomWrapper - WrapProcess: Cannot find working directory", Enums.LogLevel.Error);
             return "Cannot find working directory";
@@ -244,7 +244,7 @@ internal class CustomWrapper : IWrapper
     /// <param name="experience">The experience object representing the application to launch.</param>
     private void AlternateLaunchProcess(Experience experience)
     {
-        if (CommandLine.StationLocation == null)
+        if (StationCommandLine.StationLocation == null)
         {
             Logger.WriteLog("CustomWrapper - WrapProcess: Cannot find working directory", Enums.LogLevel.Error);
             return;
@@ -259,7 +259,7 @@ internal class CustomWrapper : IWrapper
         }
         else
         {
-            filePath = Path.GetFullPath(Path.Combine(CommandLine.StationLocation, @"..\..", $"leadme_apps\\{experience.Name}\\{experience.Name}.exe"));
+            filePath = Path.GetFullPath(Path.Combine(StationCommandLine.StationLocation, @"..\..", $"leadme_apps\\{experience.Name}\\{experience.Name}.exe"));
         }
 
         if (!File.Exists(filePath))
@@ -372,7 +372,7 @@ internal class CustomWrapper : IWrapper
             return null;
         }
         
-        string? id = CommandLine.GetProcessIdFromDir(altPathWithoutExe);
+        string? id = StationCommandLine.GetProcessIdFromDir(altPathWithoutExe);
         if (string.IsNullOrEmpty(id))
         {
             return null;

@@ -170,7 +170,7 @@ public class OpenVrManager
             ScheduledTaskQueue.EnqueueTask(() => SessionController.UpdateState(State.RestartSteamVr), TimeSpan.FromSeconds(1));
 
             //Kill SteamVR
-            CommandLine.QueryProcesses(new List<string> { "vrmonitor" }, true);
+            StationCommandLine.QueryProcesses(new List<string> { "vrmonitor" }, true);
             await Task.Delay(5000);
 
             //Launch SteamVR
@@ -383,9 +383,9 @@ public class OpenVrManager
                     response.Add("responseData", responseData);
                 
                     // close legacy mirror if open
-                    if (CommandLine.GetProcessIdFromMainWindowTitle("Legacy Mirror") != null)
+                    if (StationCommandLine.GetProcessIdFromMainWindowTitle("Legacy Mirror") != null)
                     {
-                        CommandLine.ToggleSteamVrLegacyMirror();
+                        StationCommandLine.ToggleSteamVrLegacyMirror();
                     }
                     WrapperManager.currentWrapper.SetLaunchingExperience(false);
             
@@ -494,9 +494,9 @@ public class OpenVrManager
             experienceId = "0";
 
             // close legacy mirror if open
-            if (CommandLine.GetProcessIdFromMainWindowTitle("Legacy Mirror") != null)
+            if (StationCommandLine.GetProcessIdFromMainWindowTitle("Legacy Mirror") != null)
             {
-                CommandLine.ToggleSteamVrLegacyMirror();
+                StationCommandLine.ToggleSteamVrLegacyMirror();
             }
         }
             

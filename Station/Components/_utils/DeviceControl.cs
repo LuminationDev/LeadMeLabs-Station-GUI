@@ -2,7 +2,9 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
+using System.Threading.Tasks;
 using LeadMeLabsLibrary;
+using Sentry;
 using Station.Components._commandLine;
 using Station.Components._enums;
 using Station.MVC.Controller;
@@ -13,6 +15,7 @@ public static class DeviceControl
 {
     private static bool restarting;
     private static bool isUpdating;
+    private static bool dotnetUpToDate; //track if dotnet is updated - limits it to one call required per day
     
     /// <summary>
     /// Track if the Station is updating as to not turn off the Station while it is updating.
@@ -64,10 +67,19 @@ public static class DeviceControl
             new Thread(() => PerformWindowsUpdates(time)).Start();
         }
         
-        // Only perform overnight updates on Tuesdays and Wednesdays (Steam)
-        if (IsWednesdayOrTuesday()) return false;
+        //TODO enable when we are ready to start dotnet roll out
+        // // Check if there is a new dotnet version available on Vultr
+        // if (IsFriday() && !isUpdating && !_dotnetUpToDate)
+        // {
+        //     _ = UpdateDotnet(time);
+        // }
         
-        PerformOvernightUpdates(time);
+        // Only perform overnight updates on Tuesdays and Wednesdays (Steam)
+        if (IsWednesdayOrTuesday())
+        {
+           PerformOvernightUpdates(time); 
+        }
+        
         return false;
     }
     
@@ -109,6 +121,52 @@ public static class DeviceControl
     }
     
     /// <summary>
+    /// Check if there is a dotnet update available, if so download and install it before restarting the computer.
+    /// </summary>
+    private static async Task UpdateDotnet(string[] time)
+    {
+        const string updateHour = "03"; //24-hour time
+        const string updateMinute = "45";
+
+        if (isUpdating || !TimeCheck(time, updateHour, updateMinute)) return;
+        
+        string filePath = await DotNet.CheckForDotNetUpdate(Logger.WriteLog);
+        if (string.IsNullOrEmpty(filePath))
+        {
+            dotnetUpToDate = true;
+            return;
+        }
+        
+        //run command line operation
+        isUpdating = true;
+        string command = $"{filePath}";
+        string args = "/install /quiet";
+        StationCommandLine.RunProgramWithOutput(command, args);
+        isUpdating = false;
+        
+        //Log out that the computer has update dotnet versions - if still 6.0 then an error has occurred and manual update may be required
+        string version = DotNet.GetMostRecentRuntimeVersion();
+        string message = $"{Environment.GetEnvironmentVariable("LabLocation", EnvironmentVariableTarget.Process) ?? "Unknown"} - " +
+                                 $"Station {Environment.GetEnvironmentVariable("StationId", EnvironmentVariableTarget.Process) ?? "Unknown"} - " +
+                                 $"Updated to dotnet version: {version}";
+        
+        Logger.WriteLog(message, Enums.LogLevel.Update);
+        SentrySdk.CaptureMessage(message);
+        
+        RestartComputer();
+    }
+    
+    /// <summary>
+    /// Restart the entire computer.
+    /// </summary>
+    private static void RestartComputer()
+    {
+        string command = "shutdown";
+        string args = "/r /t 0";
+        StationCommandLine.RunProgramWithOutput(command, args);
+    }
+    
+    /// <summary>
     /// Kill off the launcher program if the time is between a set amount. The Software_Checker scheduler task will automatically restart the
     /// application within the next five minutes, updating the Launcher and Station software.
     /// </summary>
@@ -146,6 +204,19 @@ public static class DeviceControl
 
         // Check if the current day of the week is a Tuesday or Wednesday
         return currentDate.DayOfWeek is DayOfWeek.Wednesday or DayOfWeek.Tuesday;
+    }
+    
+    /// <summary>
+    /// Check the current day, if it is a Friday perform the overnight updates.
+    /// </summary>
+    /// <returns>A bool, true if it is a Friday, false if any other day.</returns>
+    private static bool IsFriday()
+    {
+        // Get the current date and time
+        DateTime currentDate = DateTime.Now;
+
+        // Check if the current day of the week is a Friday
+        return currentDate.DayOfWeek is DayOfWeek.Friday;
     }
     
     /// <summary>

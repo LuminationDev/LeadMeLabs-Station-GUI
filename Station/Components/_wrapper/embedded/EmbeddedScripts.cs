@@ -159,7 +159,7 @@ public static class EmbeddedScripts
     {
         RegenerateEmbeddedManifests();
         
-        if (CommandLine.StationLocation == null)
+        if (StationCommandLine.StationLocation == null)
         {
             Logger.WriteLog("EmbeddedScripts - LoadAvailableExperiences: Cannot find working directory for embedded experiences", Enums.LogLevel.Error);
             return null;

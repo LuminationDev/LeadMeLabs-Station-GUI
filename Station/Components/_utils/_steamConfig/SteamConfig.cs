@@ -255,7 +255,7 @@ public class SteamConfig
 
     public static List<string> GetAllEulas()
     {
-        string filePath = CommandLine.StationLocation + @"\_embedded\LeadMePython.exe";
+        string filePath = StationCommandLine.StationLocation + @"\_embedded\LeadMePython.exe";
         if (!File.Exists(filePath))
         {
             SentrySdk.CaptureMessage("LeadMePython missing at " +
@@ -264,7 +264,7 @@ public class SteamConfig
             return new List<string>();
         }
 
-        string output = CommandLine.RunProgramWithOutput(filePath, "all_eulas");
+        string output = StationCommandLine.RunProgramWithOutput(filePath, "all_eulas");
         List<string> eulas = new List<string>();
         eulas.AddRange(output.Split("\n"));
         return eulas;
@@ -272,7 +272,7 @@ public class SteamConfig
     
     public static List<string> GetAllLicenses()
     {
-        string filePath = CommandLine.StationLocation + @"\_embedded\LeadMePython.exe";
+        string filePath = StationCommandLine.StationLocation + @"\_embedded\LeadMePython.exe";
         if (!File.Exists(filePath))
         {
             SentrySdk.CaptureMessage("LeadMePython missing at " +
@@ -281,7 +281,7 @@ public class SteamConfig
             return new List<string>() {""};
         }
 
-        string output = CommandLine.RunProgramWithOutput(filePath, $"licenses {Environment.GetEnvironmentVariable("SteamUserName", EnvironmentVariableTarget.Process)} {Environment.GetEnvironmentVariable("SteamPassword", EnvironmentVariableTarget.Process)}");
+        string output = StationCommandLine.RunProgramWithOutput(filePath, $"licenses {Environment.GetEnvironmentVariable("SteamUserName", EnvironmentVariableTarget.Process)} {Environment.GetEnvironmentVariable("SteamPassword", EnvironmentVariableTarget.Process)}");
         List<string> licensedAppIds = new List<string>();
         licensedAppIds.AddRange(output.Split("\n"));
         return licensedAppIds;

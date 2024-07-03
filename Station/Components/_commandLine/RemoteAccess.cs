@@ -13,7 +13,7 @@ namespace Station.Components._commandLine;
 public static class RemoteAccess
 {
     private static readonly string remoteConfigFilePath =
-        $"{CommandLine.StationLocation}\\_config\\remote-config.env";
+        $"{StationCommandLine.StationLocation}\\_config\\remote-config.env";
 
     private static string remoteRefreshToken = "";
     private static string remoteAccessToken = "";

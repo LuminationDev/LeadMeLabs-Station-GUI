@@ -125,7 +125,7 @@ public class SteamConfigChecks
         QaCheck qaCheck = new QaCheck("steam_install_location");
         const string powershellCommand = "Get-ItemProperty -Path HKCU:\\SOFTWARE\\Valve\\Steam -Name SteamPath | grep SteamPath";
 
-        string? output = CommandLine.RunProgramWithOutput("powershell.exe", $"-NoProfile -ExecutionPolicy unrestricted -Command \"{powershellCommand}\"");
+        string? output = StationCommandLine.RunProgramWithOutput("powershell.exe", $"-NoProfile -ExecutionPolicy unrestricted -Command \"{powershellCommand}\"");
 
         if (string.IsNullOrWhiteSpace(output))
         {

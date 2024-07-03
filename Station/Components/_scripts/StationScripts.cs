@@ -45,7 +45,7 @@ public static class StationScripts
             bool isValidUrl = Uri.IsWellFormedUriString(url, UriKind.Absolute);
             if (!isValidUrl) return;
                 
-            CommandLine.ExecuteBrowserCommand(url);
+            StationCommandLine.ExecuteBrowserCommand(url);
             Dictionary<string, object> stateValues = new()
             {
                 { "gameName", url },
@@ -71,7 +71,7 @@ public static class StationScripts
         }
         else if (additionalData.Equals("CancelShutdown"))
         {
-            CommandLine.CancelShutdown();
+            StationCommandLine.CancelShutdown();
             tokenSource?.Cancel();
         }
         else if (additionalData.Equals("StopGame"))
@@ -83,7 +83,7 @@ public static class StationScripts
             OverlayManager.OverlayThread();
         } else if (additionalData.StartsWith("UploadLogFile"))
         {
-            CommandLine.UploadLogFile();
+            StationCommandLine.UploadLogFile();
         }
         else
         {
@@ -126,11 +126,11 @@ public static class StationScripts
 
         if(type.Equals("shutdown"))
         {
-            CommandLine.ShutdownStation(actualCancelTime);
+            StationCommandLine.ShutdownStation(actualCancelTime);
         }
         else if (type.Equals("restart"))
         {
-            CommandLine.RestartStation(actualCancelTime);
+            StationCommandLine.RestartStation(actualCancelTime);
         }
 
         tokenSource = new CancellationTokenSource();

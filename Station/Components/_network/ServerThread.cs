@@ -335,7 +335,7 @@ public class ServerThread
         switch (ext)
         {
             case ".jpg":
-                folderPath = $@"{CommandLine.StationLocation}\_cache";
+                folderPath = $@"{StationCommandLine.StationLocation}\_cache";
                 Directory.CreateDirectory(folderPath); // Create the directory if required
                 break;
             case ".zip":

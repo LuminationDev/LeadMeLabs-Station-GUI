@@ -303,11 +303,11 @@ public static class QualityManager
         }
         
         // Achieve that the upload has either succeed or failed
-        if (CommandLine.StationLocation == null) return;
+        if (StationCommandLine.StationLocation == null) return;
 
         string version = Updater.GetVersionNumber();
         string details = $"{version}\n{result.IsSuccessStatusCode}";
-        WriteFile(CommandLine.StationLocation, details);
+        WriteFile(StationCommandLine.StationLocation, details);
     }
 
     /// <summary>
@@ -321,10 +321,10 @@ public static class QualityManager
     {
         string version = Updater.GetVersionNumber();
 
-        if (CommandLine.StationLocation == null || version.Equals("Unknown")) return false;
+        if (StationCommandLine.StationLocation == null || version.Equals("Unknown")) return false;
 
         // Path to the saved file
-        string filePath = $"{CommandLine.StationLocation}\\_logs\\uploaded.txt";
+        string filePath = $"{StationCommandLine.StationLocation}\\_logs\\uploaded.txt";
 
         // Check if the file exists
         if (!File.Exists(filePath))

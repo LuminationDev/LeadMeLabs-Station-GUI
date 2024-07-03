@@ -23,7 +23,7 @@ namespace Station.Components._commandLine;
 /// A static class to call command prompt actions from anywhere that is needed. Has
 /// two different commands, the standard command prompt and the steamCMD command.
 /// </summary>
-public static class CommandLine
+public static class StationCommandLine
 {
     /// <summary>
     /// The location of the executing assembly. This is used to find the relative path for externally used applications.
