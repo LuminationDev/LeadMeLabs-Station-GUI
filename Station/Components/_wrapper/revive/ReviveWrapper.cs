@@ -253,7 +253,7 @@ public class ReviveWrapper : IWrapper
             }
         }
 
-        CommandLine.StartProgram(SessionController.Steam, " +app_stop " + lastExperience.ID);
+        StationCommandLine.StartProgram(SessionController.Steam, " +app_stop " + lastExperience.ID);
         SetLaunchingExperience(false);
 
         experienceName = null; //Reset for correct headset state

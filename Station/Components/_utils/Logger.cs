@@ -14,7 +14,7 @@ namespace Station.Components._utils;
 
 public static class Logger
 {
-    private static readonly string FilePath = CommandLine.StationLocation + @"\_logs\";
+    private static readonly string FilePath = StationCommandLine.StationLocation + @"\_logs\";
     public static readonly Queue<string> LogQueue = new();
 
     /// <summary>
@@ -94,7 +94,7 @@ public static class Logger
     /// <param name="days">The number of days for which to collect the log files.</param>
     public static void LogRequest(int days)
     {
-        if (CommandLine.StationLocation == null)
+        if (StationCommandLine.StationLocation == null)
         {
             WriteLog("Station location not found: LogRequest", Enums.LogLevel.Error);
             return;
@@ -134,7 +134,7 @@ public static class Logger
     /// <returns>A list of the x most recent log file paths.</returns>
     private static List<string> CollectRecentLogs(int days)
     {
-        string logDirectory = @$"{CommandLine.StationLocation}\_logs";
+        string logDirectory = @$"{StationCommandLine.StationLocation}\_logs";
         string logFileFormat = "yyyy_MM_dd";
 
         // Get all log files in the directory

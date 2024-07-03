@@ -104,9 +104,9 @@ public class Statuses
         {
             openVrHasAlreadyConnected = true;
             // close legacy mirror if open
-            if (CommandLine.GetProcessIdFromMainWindowTitle("Legacy Mirror") != null)
+            if (StationCommandLine.GetProcessIdFromMainWindowTitle("Legacy Mirror") != null)
             {
-                CommandLine.ToggleSteamVrLegacyMirror();
+                StationCommandLine.ToggleSteamVrLegacyMirror();
             }
         }
     }

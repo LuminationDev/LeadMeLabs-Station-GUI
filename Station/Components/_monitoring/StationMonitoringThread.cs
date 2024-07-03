@@ -136,9 +136,9 @@ public static class StationMonitoringThread
             {
                 try
                 {
-                    CommandLine.SetForegroundWindow(process.MainWindowHandle.ToInt32());
+                    StationCommandLine.SetForegroundWindow(process.MainWindowHandle.ToInt32());
                     await Task.Delay(10);
-                    CommandLine.SendKeysToActiveWindow("{Tab}{Tab}{Enter");
+                    StationCommandLine.SendKeysToActiveWindow("{Tab}{Tab}{Enter");
                 }
                 catch (Exception e)
                 {

@@ -17,6 +17,8 @@ using Station.Components._notification;
 using Station.Components._organisers;
 using Station.Components._overlay;
 using Station.Components._profiles;
+using Station.Components._segment;
+using Station.Components._segment._classes;
 using Station.Components._utils;
 using Station.Components._utils._steamConfig;
 using Station.Components._wrapper.custom;
@@ -211,7 +213,7 @@ public class WrapperManager
         alreadyCollecting = false;
         
         //Check if LeadMePython exists
-        string filePath = CommandLine.StationLocation + @"\_embedded\LeadMePython.exe";
+        string filePath = StationCommandLine.StationLocation + @"\_embedded\LeadMePython.exe";
         _ = File.Exists(filePath) ? StartVrProcesses() : RestartVrProcesses();
     }
     
@@ -331,7 +333,7 @@ public class WrapperManager
         if (ProcessManager.GetProcessesByName("vrmonitor").Length != 0)
         {
             //Gracefully exit SteamVR (use the Steam client to do so)
-            CommandLine.StartProgram(SessionController.Steam, $" +app_stop {SteamScripts.SteamVrId}");
+            StationCommandLine.StartProgram(SessionController.Steam, $" +app_stop {SteamScripts.SteamVrId}");
 
             //Wait for SteamVR to exit then close all other processes
             //(if SteamVR does not exit gracefully below hard kills it as a backup)
@@ -345,7 +347,7 @@ public class WrapperManager
         combinedProcesses.AddRange(WrapperMonitoringThread.ViveProcesses);
         combinedProcesses.AddRange(WrapperMonitoringThread.ReviveProcesses);
 
-        CommandLine.QueryProcesses(combinedProcesses, true);
+        StationCommandLine.QueryProcesses(combinedProcesses, true);
     }
 
     /// <summary>
@@ -381,7 +383,13 @@ public class WrapperManager
             if (!headsetSoftware)
             {
                 ScheduledTaskQueue.EnqueueTask(() => SessionController.UpdateState(State.ErrorSteamVr), TimeSpan.FromSeconds(1));
-                ScheduledTaskQueue.EnqueueTask(() => MessageController.SendResponse("NUC", "Analytics", "SteamVRError"), TimeSpan.FromSeconds(1));
+                ScheduledTaskQueue.EnqueueTask(() =>
+                {
+                    SegmentEvent segmentEvent = new SegmentStationEvent(
+                        SegmentConstants.EventSteamVRError
+                    );
+                    Station.Components._segment.Segment.TrackAction(segmentEvent);
+                }, TimeSpan.FromSeconds(1));
             }
         }
         else
@@ -427,7 +435,7 @@ public class WrapperManager
         // Check that the processes have all stopped
         int attempts = 0;
         List<string> processesToQuery = SessionController.StationProfile.GetProcessesToQuery();
-        while (CommandLine.QueryProcesses(processesToQuery))
+        while (StationCommandLine.QueryProcesses(processesToQuery))
         {
             await SessionController.PutTaskDelay(1000);
             if (attempts > 20)
@@ -509,7 +517,7 @@ public class WrapperManager
         SessionController.StationProfile.StartDevToolsSession();
         Profile.WaitForSteamLogin();
 
-        string handle = CommandLine.PowershellGetDevToolsChildProcessWindowHandle();
+        string handle = StationCommandLine.PowershellGetDevToolsChildProcessWindowHandle();
         if (handle.Equals(""))
         {
             return;
@@ -518,7 +526,7 @@ public class WrapperManager
 
         if (SteamWrapper.installedExperiencesWithUnacceptedEulas.Count == 0)
         {
-            CommandLine.EnterAltF4(Int32.Parse(handle));
+            StationCommandLine.EnterAltF4(Int32.Parse(handle));
             return;
         }
 
@@ -534,13 +542,13 @@ public class WrapperManager
             {
                 continue;
             }
-            ScheduledTaskQueue.EnqueueTask(() => CommandLine.EnterAcceptEula(Int32.Parse(handle), eulaDetails[0], eulaDetails[1], eulaDetails[2]),
+            ScheduledTaskQueue.EnqueueTask(() => StationCommandLine.EnterAcceptEula(Int32.Parse(handle), eulaDetails[0], eulaDetails[1], eulaDetails[2]),
                 TimeSpan.FromSeconds((index * 1.5) + 3));
             index++;
         }
         ScheduledTaskQueue.EnqueueTask(() =>
             {
-                CommandLine.EnterAltF4(Int32.Parse(handle));
+                StationCommandLine.EnterAltF4(Int32.Parse(handle));
                 App.windowEventTracker?.SetMinimisingEnabled(true);
                 SessionController.StationProfile.MinimizeSoftware(1);
                 OverlayManager.ManualStop(90);
@@ -593,9 +601,9 @@ public class WrapperManager
         else
         {
             // close legacy mirror if open
-            if (CommandLine.GetProcessIdFromMainWindowTitle("Legacy Mirror") != null)
+            if (StationCommandLine.GetProcessIdFromMainWindowTitle("Legacy Mirror") != null)
             {
-                CommandLine.ToggleSteamVrLegacyMirror();
+                StationCommandLine.ToggleSteamVrLegacyMirror();
             }
         }
 
@@ -1035,7 +1043,7 @@ public class WrapperManager
             if (windowTitle == null) return;
             
             // this is because Journey to the Centre of the Cell has a pre-game popup that we need to bypass
-            _ = CommandLine.BypassExperienceConfirmationWindow(windowTitle);
+            _ = StationCommandLine.BypassExperienceConfirmationWindow(windowTitle);
         }
         catch (Exception e)
         {

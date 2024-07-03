@@ -7,8 +7,21 @@ namespace Station.Components._utils;
 
 public static class WindowManager
 {
+    private const int SW_HIDE = 0;
     private const int SW_SHOWMINIMIZED = 2;
     private const int SW_SHOWMAXIMIZED = 3;
+    private const int SW_SHOWMINNOACTIVE = 7;
+    
+    public static void HideProcess(Process process)
+    {
+        if (process != null)
+        {
+            ShowWindow(process.MainWindowHandle, SW_HIDE);
+        } else
+        {
+            Logger.WriteLog("A process was null when trying to hide", Enums.LogLevel.Normal);
+        }
+    }
 
     public static void MinimizeProcess(Process process)
     {
@@ -18,6 +31,17 @@ public static class WindowManager
         } else
         {
             Logger.WriteLog("A process was null when trying to minimise", Enums.LogLevel.Normal);
+        }
+    }
+    
+    public static void MinimizeProcessNoActivate(Process process)
+    {
+        if (process != null)
+        {
+            ShowWindow(process.MainWindowHandle, SW_SHOWMINNOACTIVE);
+        } else
+        {
+            Logger.WriteLog("A process was null when trying to minimise no activate", Enums.LogLevel.Normal);
         }
     }
 

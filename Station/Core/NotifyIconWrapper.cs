@@ -132,9 +132,14 @@ public class NotifyIconWrapper : FrameworkElement, IDisposable
     /// </summary>
     private void LogItemOnClick(object? sender, EventArgs eventArgs)
     {
-        if (CommandLine.StationLocation == null) return;
-        string path = Path.GetFullPath(Path.Combine(CommandLine.StationLocation, "_logs"));
-    
+        string? location = StationCommandLine.StationLocation;
+        if (location == null)
+        {
+            Logger.WriteLog("NotifyIconWrapper - GoToLogsOnClick: Station location not found.", Enums.LogLevel.Error);
+            return;
+        }
+        
+        string path = Path.GetFullPath(Path.Combine(location, "_logs"));
         try
         {
             Process.Start("explorer.exe", path);
@@ -191,8 +196,8 @@ public class NotifyIconWrapper : FrameworkElement, IDisposable
                 _iconPath = @"\Assets\Icons\tray_neutral.ico";
                 break;
         }
-
-        _notifyIcon.Icon = Icon.ExtractAssociatedIcon(_softwareLocation + _iconPath);
+        
+        _notifyIcon.Icon = Icon.ExtractAssociatedIcon(StationCommandLine.StationLocation + _iconPath);
         _notifyIcon.Text = $"Station - {status}";
     }
         

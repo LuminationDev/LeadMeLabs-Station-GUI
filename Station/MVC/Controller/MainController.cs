@@ -109,6 +109,9 @@ public static class MainController
             return;
         }
         
+        // Initialise Segment
+        Components._segment.Segment.Initialise();
+        
         //Do not continue if the NUC address is not supplied
         bool collectedIpAddress = SetRemoteEndPoint();
         if (!collectedIpAddress)

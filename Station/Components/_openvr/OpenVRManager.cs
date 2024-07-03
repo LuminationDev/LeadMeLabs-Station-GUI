@@ -14,6 +14,8 @@ using Station.Components._managers;
 using Station.Components._models;
 using Station.Components._notification;
 using Station.Components._profiles;
+using Station.Components._segment;
+using Station.Components._segment._classes;
 using Station.Components._utils;
 using Station.Components._wrapper.custom;
 using Station.Components._wrapper.embedded;
@@ -170,7 +172,7 @@ public class OpenVrManager
             ScheduledTaskQueue.EnqueueTask(() => SessionController.UpdateState(State.RestartSteamVr), TimeSpan.FromSeconds(1));
 
             //Kill SteamVR
-            CommandLine.QueryProcesses(new List<string> { "vrmonitor" }, true);
+            StationCommandLine.QueryProcesses(new List<string> { "vrmonitor" }, true);
             await Task.Delay(5000);
 
             //Launch SteamVR
@@ -200,7 +202,13 @@ public class OpenVrManager
             if (!openvr)
             {
                 ScheduledTaskQueue.EnqueueTask(() => SessionController.UpdateState(State.ErrorSteamVr), TimeSpan.FromSeconds(1));
-                ScheduledTaskQueue.EnqueueTask(() => MessageController.SendResponse("NUC", "Analytics", "SteamVRError"), TimeSpan.FromSeconds(1));
+                ScheduledTaskQueue.EnqueueTask(() =>
+                {
+                    SegmentEvent segmentEvent = new SegmentStationEvent(
+                        SegmentConstants.EventSteamVRError
+                    );
+                    Station.Components._segment.Segment.TrackAction(segmentEvent);
+                }, TimeSpan.FromSeconds(1));
                 return false;
             }
 
@@ -383,9 +391,9 @@ public class OpenVrManager
                     response.Add("responseData", responseData);
                 
                     // close legacy mirror if open
-                    if (CommandLine.GetProcessIdFromMainWindowTitle("Legacy Mirror") != null)
+                    if (StationCommandLine.GetProcessIdFromMainWindowTitle("Legacy Mirror") != null)
                     {
-                        CommandLine.ToggleSteamVrLegacyMirror();
+                        StationCommandLine.ToggleSteamVrLegacyMirror();
                     }
                     WrapperManager.currentWrapper.SetLaunchingExperience(false);
             
@@ -494,9 +502,9 @@ public class OpenVrManager
             experienceId = "0";
 
             // close legacy mirror if open
-            if (CommandLine.GetProcessIdFromMainWindowTitle("Legacy Mirror") != null)
+            if (StationCommandLine.GetProcessIdFromMainWindowTitle("Legacy Mirror") != null)
             {
-                CommandLine.ToggleSteamVrLegacyMirror();
+                StationCommandLine.ToggleSteamVrLegacyMirror();
             }
         }
             

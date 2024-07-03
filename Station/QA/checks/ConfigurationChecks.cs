@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using Station.Components._commandLine;
 using Station.Components._utils;
 
@@ -13,7 +14,8 @@ public class ConfigurationChecks
         _qaChecks = new List<QaCheck>
         {
             IsTaskSchedulerCreated(),
-            IsOldTaskSchedulerNotPresent()
+            IsOldTaskSchedulerNotPresent(),
+            IsShellStartupNotPresent()
         };
         _qaChecks.AddRange(CheckEnvironmentVariables());
 
@@ -30,7 +32,7 @@ public class ConfigurationChecks
         const string taskFolder = "LeadMe\\Software_Checker";
         const string command = $"SCHTASKS /QUERY /TN \"{taskFolder}\" /fo LIST";
 
-        string? stdout = CommandLine.RunProgramWithOutput("cmd.exe", $"/C {command}");
+        string? stdout = StationCommandLine.RunProgramWithOutput("cmd.exe", $"/C {command}");
         if (string.IsNullOrWhiteSpace(stdout))
         {
             qaCheck.SetFailed("Could not find LeadMe\\Software_Checker");
@@ -71,7 +73,7 @@ public class ConfigurationChecks
         const string taskFolder = "Station\\Station_Checker";
         const string command = $"SCHTASKS /QUERY /TN \"{taskFolder}\" /fo LIST";
 
-        string? stdout = CommandLine.RunProgramWithOutput("cmd.exe", $"/C {command}");
+        string? stdout = StationCommandLine.RunProgramWithOutput("cmd.exe", $"/C {command}");
         if (string.IsNullOrWhiteSpace(stdout))
         {
             qaCheck.SetPassed("Could not find Station\\Station_Checker");
@@ -96,6 +98,25 @@ public class ConfigurationChecks
                 }
             }
         }
+        qaCheck.SetPassed(null);
+        return qaCheck;
+    }
+    
+    /// <summary>
+    /// Check if shortcut to NUC is not present in shell:startup
+    /// </summary>
+    private QaCheck IsShellStartupNotPresent()
+    {
+        QaCheck qaCheck = new QaCheck("shell_startup_not_existing");
+        String filePath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\Microsoft\\Windows\\Start Menu\\Programs\\Startup\\Station.exe.lnk";
+        bool shellStartupExists = File.Exists(filePath);
+
+        if (shellStartupExists)
+        {
+            qaCheck.SetFailed(filePath);
+            return qaCheck;
+        }
+
         qaCheck.SetPassed(null);
         return qaCheck;
     }

@@ -3,6 +3,8 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using LeadMeLabsLibrary;
+using Station.Components._segment;
+using Station.Components._segment._classes;
 using Station.Components._utils;
 using Station.MVC.Controller;
 
@@ -143,7 +145,7 @@ public class WindowEventTracker
             {
                 if ((DateTime.Now < lastInteraction.AddSeconds(1) ||  DateTime.Now > lastInteraction.AddSeconds(10)) && InternalDebugger.GetMinimisePrograms())
                 {
-                    WindowManager.MinimizeProcess(Process.GetProcessById(Convert.ToInt32(m_processId)));
+                    WindowManager.MinimizeProcessNoActivate(Process.GetProcessById(Convert.ToInt32(m_processId)));
                     lastInteraction = DateTime.Now;
                 }
             }
@@ -159,7 +161,10 @@ public class WindowEventTracker
         if (nextReportTime > DateTime.Now)
         {
             nextReportTime = DateTime.Now.AddMinutes(10);
-            MessageController.SendResponse("NUC", "Analytics", "KeyboardInteraction");
+            SegmentEvent segmentEvent = new SegmentStationEvent(
+                SegmentConstants.EventKeyboardInteraction
+            );
+            Station.Components._segment.Segment.TrackAction(segmentEvent);
         }
     }
 

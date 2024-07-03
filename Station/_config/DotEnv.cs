@@ -11,7 +11,7 @@ namespace Station._config;
 
 public static class DotEnv
 {
-    private static readonly string FilePath = $"{CommandLine.StationLocation}\\_config\\config.env";
+    private static readonly string FilePath = $"{StationCommandLine.StationLocation}\\_config\\config.env";
 
     /// <summary>
     /// Load the variables within the config.env into the local environment for the running
@@ -54,6 +54,8 @@ public static class DotEnv
                         break;
                 }
             }
+            
+            Environment.SetEnvironmentVariable("nucAddress", "192.168.1.136");
         } 
         catch (Exception ex)
         {

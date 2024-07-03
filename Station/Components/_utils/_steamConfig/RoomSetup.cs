@@ -9,7 +9,7 @@ namespace Station.Components._utils._steamConfig;
 
 public static class RoomSetup
 {
-    private static readonly string DefaultFilePath = CommandLine.StationLocation + @"\_config\chaperone_info.vrchap";
+    private static readonly string DefaultFilePath = StationCommandLine.StationLocation + @"\_config\chaperone_info.vrchap";
     private const string SteamVrFilePath = @"C:\Program Files (x86)\Steam\config\chaperone_info.vrchap";
     private const string HtcFilePath = @"C:\Program Files (x86)\Steam\config\htc_business_streaming\chaperone_info.vrchap";
     private static string? currentFilePath;

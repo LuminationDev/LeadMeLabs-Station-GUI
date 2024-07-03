@@ -67,6 +67,10 @@ public class ScriptThread
             case "CommandLine":
                 StationScripts.Execute(_source, _additionalData);
                 break;
+            
+            case "Segment":
+                _segment.Segment.HandleRequest(_additionalData);
+                break;
 
             case "Station":
                 HandleStation(_additionalData);

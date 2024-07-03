@@ -10,6 +10,8 @@ using Station.Components._managers;
 using Station.Components._notification;
 using Station.Components._profiles;
 using Station.Components._scripts;
+using Station.Components._segment;
+using Station.Components._segment._classes;
 using Station.Components._utils;
 using Station.Components._wrapper.vive;
 using Station.MVC.ViewModel;
@@ -48,6 +50,11 @@ public static class SessionController
             UiController.UpdateCurrentState(Attributes.GetEnumValue(currentState)); //Update the home page UI
         }
     }
+    
+    private static DateTime gameLaunchTime = DateTime.Now;
+    private static String gameName = "";
+    private static String gameId = "";
+    private static String gameType = "";
 
     /// <summary>
     /// Setup the Station profiles using the supplied .config information. The profile determines what processes are
@@ -240,6 +247,11 @@ public static class SessionController
 
                         StateController.UpdateStatusBunch(stateValues);
                     }
+                    
+                    gameLaunchTime = DateTime.Now;
+                    gameName = name ?? "";
+                    gameId = appId ?? "";
+                    gameType = wrapper ?? "";
                     break;
 
                 case "ApplicationClosed":
@@ -254,6 +266,21 @@ public static class SessionController
                         
                         //Update the ExperienceView UI
                         MainViewModel.ViewModelManager.ExperiencesViewModel.ExperienceStopped();
+
+                        // segment tracking
+                        TimeSpan difference = DateTime.Now - gameLaunchTime;
+                        int timeInMinutes = Convert.ToInt32(difference.TotalMinutes);
+                        
+                        if (timeInMinutes < 0) break;
+        
+                        SegmentExperienceEvent experienceEvent = new SegmentExperienceEvent(
+                            SegmentConstants.EventExperienceDuration,
+                            gameName,
+                            gameId,
+                            gameType
+                        );
+                        experienceEvent.SetRuntime(timeInMinutes);
+                        Components._segment.Segment.TrackAction(experienceEvent);
                     }
                     break;
 

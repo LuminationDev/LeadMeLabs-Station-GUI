@@ -415,14 +415,14 @@ public class SteamWrapper : IWrapper
         if (installDir == null) return null;
         string? activeProcessId = null;
         string steamPath = "C:\\Program Files (x86)\\Steam\\steamapps\\common\\" + installDir;
-        string? processId = CommandLine.GetProcessIdFromDir(steamPath);
+        string? processId = StationCommandLine.GetProcessIdFromDir(steamPath);
         if (processId != null)
         {
             activeProcessId = processId;
         }
 
         steamPath = "S:\\SteamLibrary\\steamapps\\common\\" + installDir;
-        processId = CommandLine.GetProcessIdFromDir(steamPath);
+        processId = StationCommandLine.GetProcessIdFromDir(steamPath);
         if (processId != null)
         {
             Logger.WriteLog("A proccess ID was found: " + processId, Enums.LogLevel.Normal);
@@ -481,7 +481,7 @@ public class SteamWrapper : IWrapper
                 Logger.WriteLog($"StopCurrentProcess - ERROR: {e}", Enums.LogLevel.Error);
             }
         }
-        CommandLine.StartProgram(SessionController.Steam, " +app_stop " + lastExperience.ID);
+        StationCommandLine.StartProgram(SessionController.Steam, " +app_stop " + lastExperience.ID);
         SetLaunchingExperience(false);
 
         experienceName = null; //Reset for correct headset state
@@ -527,7 +527,7 @@ public class SteamWrapper : IWrapper
                         steamSignInWindow = process;
                         timer.Stop();
                         MockConsole.WriteLine($"Time for powershell command", Enums.LogLevel.Debug);
-                        CommandLine.PowershellCommand(steamSignInWindow);
+                        StationCommandLine.PowershellCommand(steamSignInWindow);
                     }
                 }
 

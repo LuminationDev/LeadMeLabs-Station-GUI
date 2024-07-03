@@ -24,6 +24,7 @@ public class SoftwareChecks
             _qaChecks.Add(await IsLatestSoftwareVersion());
         }
         _qaChecks.Add(IsSetToProductionMode(labType));
+        _qaChecks.Add(IsSetToAutoStart());
         _qaChecks.Add(IsLauncherInCorrectLocation());
         _qaChecks.Add(IsSetVolPresent());
         _qaChecks.Add(IsSteamCmdPresent());
@@ -147,6 +148,50 @@ public class SoftwareChecks
         return qaCheck;
     }
     
+    private QaCheck IsSetToAutoStart()
+    {
+        QaCheck qaCheck = new QaCheck("auto_start");
+        
+        //Load the local appData/Roaming folder path
+        string manifestPath = Path.GetFullPath(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "leadme_apps", "manifest.json"));
+
+        if(!File.Exists(manifestPath))
+        {
+            qaCheck.SetFailed("Could not find manifestPath at location: " + manifestPath);
+            return qaCheck;
+        }
+        
+        //Read the manifest
+        string? decryptedText = EncryptionHelper.DetectFileEncryption(manifestPath);
+
+        dynamic? array = JsonConvert.DeserializeObject(decryptedText);
+        if (array == null)
+        {
+            qaCheck.SetFailed("Failed to DeserializeObject in file: " + manifestPath);
+            return qaCheck;;
+        }
+
+        foreach (var item in array)
+        {
+            //Launcher entry is only there if a user has changed it away from production, otherwise it defaults to production
+            if (item.type == "LeadMe" && item.name == "Station")
+            {
+                bool autostart = (bool)item.autostart;
+                if (autostart)
+                {
+                    qaCheck.SetPassed(null);
+                }
+                else
+                {
+                    qaCheck.SetFailed("Station is not set to auto-start");
+                }
+
+                return qaCheck;
+            };
+        }
+        return qaCheck;
+    }
+    
     private QaCheck IsLauncherInCorrectLocation()
     {
         QaCheck qaCheck = new QaCheck("launcher_install_location");
@@ -179,7 +224,7 @@ public class SoftwareChecks
     private QaCheck IsSetVolPresent()
     {
         QaCheck qaCheck = new QaCheck("setvol_installed");
-        string filePath = CommandLine.StationLocation + @"\external\SetVol\SetVol.exe";
+        string filePath = StationCommandLine.StationLocation + @"\external\SetVol\SetVol.exe";
         if (File.Exists(filePath))
         {
             qaCheck.SetPassed(null);
@@ -198,7 +243,7 @@ public class SoftwareChecks
     private QaCheck IsSteamCmdPresent()
     {
         QaCheck qaCheck = new QaCheck("steamcmd_installed");
-        string filePath = CommandLine.StationLocation + @"\external\steamcmd\steamcmd.exe";
+        string filePath = StationCommandLine.StationLocation + @"\external\steamcmd\steamcmd.exe";
         if (File.Exists(filePath))
         {
             qaCheck.SetPassed(null);
@@ -217,7 +262,7 @@ public class SoftwareChecks
     private QaCheck IsSteamCmdInitialised()
     {
         QaCheck qaCheck = new QaCheck("steamcmd_initialised");
-        string filePath = CommandLine.StationLocation + @"\external\steamcmd\steamerrorreporter.exe";
+        string filePath = StationCommandLine.StationLocation + @"\external\steamcmd\steamerrorreporter.exe";
             
         if(!File.Exists(filePath))
         {
@@ -242,7 +287,7 @@ public class SoftwareChecks
         string loginUser = $"+login {loginDetails}";
         string quit = " +quit";
         
-        string fullPath = CommandLine.StationLocation + CommandLine.steamCmd;
+        string fullPath = StationCommandLine.StationLocation + StationCommandLine.steamCmd;
         string? output = "";
         string? error = "";
         
@@ -307,7 +352,7 @@ public class SoftwareChecks
         string loginUser = $"+login {loginDetails}";
         string quit = " +quit";
         
-        string fullPath = CommandLine.StationLocation + CommandLine.steamCmdFolder;
+        string fullPath = StationCommandLine.StationLocation + StationCommandLine.steamCmdFolder;
         string? output = "";
         string? error = "";
 

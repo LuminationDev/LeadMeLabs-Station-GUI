@@ -59,14 +59,14 @@ public class ViveBusinessStreaming : Profile, IVrHeadset
 
     public void StartVrSession(bool openDevTools = false)
     {
-        CommandLine.KillSteamSigninWindow();
+        StationCommandLine.KillSteamSigninWindow();
         SteamConfig.VerifySteamConfig();
-        CommandLine.StartProgram(SessionController.Steam, (openDevTools ? " -opendevtools" : "") + " -login " + 
+        StationCommandLine.StartProgram(SessionController.Steam, (openDevTools ? " -opendevtools" : "") + " -login " + 
                                                           Environment.GetEnvironmentVariable("SteamUserName", EnvironmentVariableTarget.Process) + " " + 
                                                           Environment.GetEnvironmentVariable("SteamPassword", EnvironmentVariableTarget.Process) + (openDevTools ? "" : $" steam://rungameid/{SteamScripts.SteamVrId}")); //Open up steam and run steamVR
         if (!openDevTools)
         {
-            CommandLine.StartProgram(Vive); //Start Vive business streaming
+            StationCommandLine.StartProgram(Vive); //Start Vive business streaming
         }
     }
 

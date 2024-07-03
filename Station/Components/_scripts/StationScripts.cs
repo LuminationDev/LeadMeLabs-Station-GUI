@@ -43,7 +43,7 @@ public static class StationScripts
                 ShutdownOrRestartCommand(source, "shutdown");
                 break;
             case "CancelShutdown":
-                CommandLine.CancelShutdown();
+                StationCommandLine.CancelShutdown();
                 tokenSource?.Cancel();
                 break;
             case "StopGame":
@@ -53,7 +53,7 @@ public static class StationScripts
                 OverlayManager.OverlayThread();
                 break;
             case "UploadLogFile":
-                _ = CommandLine.UploadLogFile();
+                _ = StationCommandLine.UploadLogFile();
                 break;
             default:
                 Logger.WriteLog("Unidentified command", Enums.LogLevel.Info);
@@ -96,11 +96,11 @@ public static class StationScripts
 
         if(type.Equals("shutdown"))
         {
-            CommandLine.ShutdownStation(actualCancelTime);
+            StationCommandLine.ShutdownStation(actualCancelTime);
         }
         else if (type.Equals("restart"))
         {
-            CommandLine.RestartStation(actualCancelTime);
+            StationCommandLine.RestartStation(actualCancelTime);
         }
 
         tokenSource = new CancellationTokenSource();

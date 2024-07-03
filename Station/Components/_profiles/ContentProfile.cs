@@ -95,7 +95,7 @@ public class ContentProfile: Profile, IProfile
 
         ScheduledTaskQueue.EnqueueTask(() => SessionController.UpdateState(State.StartProcess), TimeSpan.FromSeconds(0));
         _startupFunctions.ExecuteStartupFunctions();
-        MinimizeSoftware();
+        MinimizeSoftware(2);
     }
     
     public void StartDevToolsSession()
@@ -109,9 +109,9 @@ public class ContentProfile: Profile, IProfile
     /// </summary>
     private void StartSteam(bool devTools = false)
     {
-        CommandLine.KillSteamSigninWindow();
+        StationCommandLine.KillSteamSigninWindow();
         SteamConfig.VerifySteamConfig();
-        CommandLine.StartProgram(SessionController.Steam, (devTools ? "-opendevtools " : "") + "-noreactlogin -login " +
+        StationCommandLine.StartProgram(SessionController.Steam, (devTools ? "-opendevtools " : "") + "-noreactlogin -login " +
                                                           Environment.GetEnvironmentVariable("SteamUserName", EnvironmentVariableTarget.Process) + " " +
                                                           Environment.GetEnvironmentVariable("SteamPassword", EnvironmentVariableTarget.Process));
     }
