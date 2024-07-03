@@ -74,7 +74,7 @@ internal class EmbeddedWrapper : IWrapper
             WrapperManager.ApplicationList.TryGetValue(experienceId, out var experience);
             string? experienceName = experience.Name;
 
-            if (CommandLine.StationLocation == null)
+            if (StationCommandLine.StationLocation == null)
             {
                 MockConsole.WriteLine($"Station working directory not found while searching for header file", Enums.LogLevel.Error);
                 JObject message = new JObject
@@ -153,7 +153,7 @@ internal class EmbeddedWrapper : IWrapper
         StopNwJsOrphans();
         
         _launchWillHaveFailedFromOpenVrTimeout = false;
-        if(CommandLine.StationLocation == null)
+        if(StationCommandLine.StationLocation == null)
         {
             JObject message = new JObject
             {
@@ -260,7 +260,7 @@ internal class EmbeddedWrapper : IWrapper
     /// <param name="experience">The experience object representing the application to launch.</param>
     private void AlternateLaunchProcess(Experience experience)
     {
-        if (CommandLine.StationLocation == null)
+        if (StationCommandLine.StationLocation == null)
         {
             JObject message = new JObject
             {
@@ -379,7 +379,7 @@ internal class EmbeddedWrapper : IWrapper
             return null;
         }
         
-        string? id = CommandLine.GetProcessIdFromDir(altPathWithoutExe);
+        string? id = StationCommandLine.GetProcessIdFromDir(altPathWithoutExe);
         if (string.IsNullOrEmpty(id))
         {
             return null;
@@ -425,9 +425,9 @@ internal class EmbeddedWrapper : IWrapper
             }
             
             // close legacy mirror if open
-            if (CommandLine.GetProcessIdFromMainWindowTitle("Legacy Mirror") != null)
+            if (StationCommandLine.GetProcessIdFromMainWindowTitle("Legacy Mirror") != null)
             {
-                CommandLine.ToggleSteamVrLegacyMirror();
+                StationCommandLine.ToggleSteamVrLegacyMirror();
             }
 
             JObject message = new JObject
@@ -453,9 +453,9 @@ internal class EmbeddedWrapper : IWrapper
     public void StopCurrentProcess()
     {
         // close legacy mirror if open
-        if (CommandLine.GetProcessIdFromMainWindowTitle("Legacy Mirror") != null)
+        if (StationCommandLine.GetProcessIdFromMainWindowTitle("Legacy Mirror") != null)
         {
-            CommandLine.ToggleSteamVrLegacyMirror();
+            StationCommandLine.ToggleSteamVrLegacyMirror();
         }
         
         if (currentProcess != null)

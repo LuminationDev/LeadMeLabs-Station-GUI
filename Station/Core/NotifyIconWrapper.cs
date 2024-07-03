@@ -139,7 +139,7 @@ public class NotifyIconWrapper : FrameworkElement, IDisposable
 
     private void GoToLogsOnClick(object? sender, EventArgs eventArgs)
     {
-        string? location = CommandLine.StationLocation;
+        string? location = StationCommandLine.StationLocation;
 
         if (location == null)
         {
@@ -203,7 +203,7 @@ public class NotifyIconWrapper : FrameworkElement, IDisposable
                 break;
         }
 
-        _notifyIcon.Icon = Icon.ExtractAssociatedIcon(CommandLine.StationLocation + _iconPath);
+        _notifyIcon.Icon = Icon.ExtractAssociatedIcon(StationCommandLine.StationLocation + _iconPath);
         _notifyIcon.Text = $"Station - {status}";
     }
 }

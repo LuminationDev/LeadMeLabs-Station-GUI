@@ -50,7 +50,7 @@ namespace Station
         /// </summary>
         private static void CheckStorage()
         {
-            int? freeStorage = CommandLine.GetFreeStorage();
+            int? freeStorage = StationCommandLine.GetFreeStorage();
             if (freeStorage is < 10)
             {
                 string msg =

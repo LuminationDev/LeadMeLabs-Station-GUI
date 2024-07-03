@@ -376,7 +376,7 @@ public static class VideoManager
     /// <param name="id">The unique ID of the video.</param>
     private static void CollectVideoThumbnail(string id)
     {
-        string folderPath = $@"{CommandLine.StationLocation}\_cache";
+        string folderPath = $@"{StationCommandLine.StationLocation}\_cache";
         Directory.CreateDirectory(folderPath); // Create the directory if required
     
         // Collect the file path based on the id

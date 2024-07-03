@@ -107,7 +107,7 @@ public static class SteamScripts
                     Logger.WriteLog("CheckForSteamLogError - SteamVR Error: restarting SteamVR", Enums.LogLevel.Normal);
 
                     //Kill SteamVR
-                    CommandLine.QueryProcesses(new List<string> { "vrmonitor" }, true);
+                    StationCommandLine.QueryProcesses(new List<string> { "vrmonitor" }, true);
 
                     Task.Delay(5000).Wait();
 
@@ -137,7 +137,7 @@ public static class SteamScripts
     /// </summary>
     public static void QuerySteamConfig()
     {
-        CommandLine.ExecuteSteamCommand(LoginUser + Licenses + Quit);
+        StationCommandLine.ExecuteSteamCommand(LoginUser + Licenses + Quit);
         _ = WrapperManager.RestartVrProcesses();
     }
 
@@ -150,7 +150,7 @@ public static class SteamScripts
     {
         string command = "\"+force_install_dir \\\"C:/Program Files (x86)/Steam\\\"\" ";
         command += $"{LoginUser} {guardKey} {Quit}";
-        CommandLine.MonitorSteamConfiguration(command);
+        StationCommandLine.MonitorSteamConfiguration(command);
     }
 
     /// <summary>
@@ -211,11 +211,11 @@ public static class SteamScripts
     private static List<string> GetLicencesFromSteamCmd()
     {
         //Close Steam if it is open
-        CommandLine.QueryProcesses(WrapperMonitoringThread.SteamProcesses, true);
-        CommandLine.QueryProcesses(WrapperMonitoringThread.SteamVrProcesses, true);
+        StationCommandLine.QueryProcesses(WrapperMonitoringThread.SteamProcesses, true);
+        StationCommandLine.QueryProcesses(WrapperMonitoringThread.SteamVrProcesses, true);
         
         //Check if SteamCMD has been initialised
-        string filePath = CommandLine.StationLocation + @"\external\steamcmd\steamerrorreporter.exe";
+        string filePath = StationCommandLine.StationLocation + @"\external\steamcmd\steamerrorreporter.exe";
         
         if(!File.Exists(filePath))
         {
@@ -227,12 +227,12 @@ public static class SteamScripts
 
             //Login to initialise/update SteamCMD and get the Steam Guard email sent off
             string command = $"{LoginDetails} {Quit}";
-            CommandLine.ExecuteSteamCommand(command);
+            StationCommandLine.ExecuteSteamCommand(command);
             
             return new List<string>();
         }
         
-        List<string>? licenseList = CommandLine.ExecuteSteamCommand(LoginUser + Licenses + Quit)?.Split('\n').ToList();
+        List<string>? licenseList = StationCommandLine.ExecuteSteamCommand(LoginUser + Licenses + Quit)?.Split('\n').ToList();
         List<string> licenses = new List<string>();
         if (licenseList == null)
         {
@@ -430,7 +430,7 @@ public static class SteamScripts
     public static void CheckSteamVrHomeImage()
     {
         // Define the path to the local lumination_home.png image
-        string luminationHome = CommandLine.StationLocation + @"\Assets\Images\lumination_home.png";
+        string luminationHome = StationCommandLine.StationLocation + @"\Assets\Images\lumination_home.png";
 
         // If the local file does not exist, exit the function
         if (!File.Exists(luminationHome))

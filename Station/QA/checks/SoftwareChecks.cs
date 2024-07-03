@@ -224,7 +224,7 @@ public class SoftwareChecks
     private QaCheck IsSetVolPresent()
     {
         QaCheck qaCheck = new QaCheck("setvol_installed");
-        string filePath = CommandLine.StationLocation + @"\external\SetVol\SetVol.exe";
+        string filePath = StationCommandLine.StationLocation + @"\external\SetVol\SetVol.exe";
         if (File.Exists(filePath))
         {
             qaCheck.SetPassed(null);
@@ -243,7 +243,7 @@ public class SoftwareChecks
     private QaCheck IsSteamCmdPresent()
     {
         QaCheck qaCheck = new QaCheck("steamcmd_installed");
-        string filePath = CommandLine.StationLocation + @"\external\steamcmd\steamcmd.exe";
+        string filePath = StationCommandLine.StationLocation + @"\external\steamcmd\steamcmd.exe";
         if (File.Exists(filePath))
         {
             qaCheck.SetPassed(null);
@@ -262,7 +262,7 @@ public class SoftwareChecks
     private QaCheck IsSteamCmdInitialised()
     {
         QaCheck qaCheck = new QaCheck("steamcmd_initialised");
-        string filePath = CommandLine.StationLocation + @"\external\steamcmd\steamerrorreporter.exe";
+        string filePath = StationCommandLine.StationLocation + @"\external\steamcmd\steamerrorreporter.exe";
             
         if(!File.Exists(filePath))
         {
@@ -287,7 +287,7 @@ public class SoftwareChecks
         string loginUser = $"+login {loginDetails}";
         string quit = " +quit";
         
-        string fullPath = CommandLine.StationLocation + CommandLine.steamCmd;
+        string fullPath = StationCommandLine.StationLocation + StationCommandLine.steamCmd;
         string? output = "";
         string? error = "";
         
@@ -352,7 +352,7 @@ public class SoftwareChecks
         string loginUser = $"+login {loginDetails}";
         string quit = " +quit";
         
-        string fullPath = CommandLine.StationLocation + CommandLine.steamCmdFolder;
+        string fullPath = StationCommandLine.StationLocation + StationCommandLine.steamCmdFolder;
         string? output = "";
         string? error = "";
 

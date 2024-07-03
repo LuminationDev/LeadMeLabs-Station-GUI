@@ -28,7 +28,7 @@ public class UpdaterTests
 
         // Assert
         Assert.True(result);
-        string actualVersion = File.ReadAllText($"{CommandLine.StationLocation}\\_logs\\version.txt");
+        string actualVersion = File.ReadAllText($"{StationCommandLine.StationLocation}\\_logs\\version.txt");
         Assert.Equal(expectedVersion, actualVersion);
     }
 }

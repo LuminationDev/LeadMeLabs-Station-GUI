@@ -32,7 +32,7 @@ public class ConfigurationChecks
         const string taskFolder = "LeadMe\\Software_Checker";
         const string command = $"SCHTASKS /QUERY /TN \"{taskFolder}\" /fo LIST";
 
-        string? stdout = CommandLine.RunProgramWithOutput("cmd.exe", $"/C {command}");
+        string? stdout = StationCommandLine.RunProgramWithOutput("cmd.exe", $"/C {command}");
         if (string.IsNullOrWhiteSpace(stdout))
         {
             qaCheck.SetFailed("Could not find LeadMe\\Software_Checker");
@@ -73,7 +73,7 @@ public class ConfigurationChecks
         const string taskFolder = "Station\\Station_Checker";
         const string command = $"SCHTASKS /QUERY /TN \"{taskFolder}\" /fo LIST";
 
-        string? stdout = CommandLine.RunProgramWithOutput("cmd.exe", $"/C {command}");
+        string? stdout = StationCommandLine.RunProgramWithOutput("cmd.exe", $"/C {command}");
         if (string.IsNullOrWhiteSpace(stdout))
         {
             qaCheck.SetPassed("Could not find Station\\Station_Checker");
