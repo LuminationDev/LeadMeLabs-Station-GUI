@@ -36,18 +36,18 @@ public static class ThumbnailOrganiser
     {
         Logger.WriteLog("Loading thumbnail cache.", Enums.LogLevel.Error);
 
-        if (CommandLine.StationLocation == null)
+        if (StationCommandLine.StationLocation == null)
         {
             Logger.WriteLog("Station location not found: LoadCache", Enums.LogLevel.Error);
             return;
         }
 
-        if (!Directory.Exists(@$"{CommandLine.StationLocation}\_cache"))
+        if (!Directory.Exists(@$"{StationCommandLine.StationLocation}\_cache"))
         {
-            Directory.CreateDirectory(@$"{CommandLine.StationLocation}\_cache");
+            Directory.CreateDirectory(@$"{StationCommandLine.StationLocation}\_cache");
         }
 
-        string[] filePaths = Directory.GetFiles(@$"{CommandLine.StationLocation}\_cache", "*.jpg", SearchOption.TopDirectoryOnly);
+        string[] filePaths = Directory.GetFiles(@$"{StationCommandLine.StationLocation}\_cache", "*.jpg", SearchOption.TopDirectoryOnly);
 
         foreach (string file in filePaths)
         {
@@ -65,13 +65,13 @@ public static class ThumbnailOrganiser
     {
         string header = $"{name.Replace(":", "")}_header.jpg";
         
-        if (CommandLine.StationLocation == null)
+        if (StationCommandLine.StationLocation == null)
         {
             Logger.WriteLog("Station location not found: GetEntry", Enums.LogLevel.Error);
             return null;
         }
         
-        return LocalImages.Contains(header) ? @$"{CommandLine.StationLocation}\_cache\{header}" : null;
+        return LocalImages.Contains(header) ? @$"{StationCommandLine.StationLocation}\_cache\{header}" : null;
     }
 
     /// <summary>
@@ -311,7 +311,7 @@ public static class ThumbnailOrganiser
     private static async Task DownloadAndSaveImageAsync(string appId, string appName, HttpClient client)
     {
         string imageUrl = @$"https://cdn.cloudflare.steamstatic.com/steam/apps/{appId}/header.jpg";
-        string saveDirectory = $@"{CommandLine.StationLocation}\_cache\{appName.Replace(":", "")}_header.jpg";
+        string saveDirectory = $@"{StationCommandLine.StationLocation}\_cache\{appName.Replace(":", "")}_header.jpg";
 
         try
         {

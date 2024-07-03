@@ -25,8 +25,8 @@ public partial class LogsView
     /// <param name="e">The event arguments.</param>
     private void OpenLogs_Click(object sender, RoutedEventArgs e)
     {
-        if (CommandLine.StationLocation == null) return;
-        string path = Path.GetFullPath(Path.Combine(CommandLine.StationLocation, "_logs"));
+        if (StationCommandLine.StationLocation == null) return;
+        string path = Path.GetFullPath(Path.Combine(StationCommandLine.StationLocation, "_logs"));
     
         try
         {

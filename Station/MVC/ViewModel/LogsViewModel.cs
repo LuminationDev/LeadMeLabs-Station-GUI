@@ -124,8 +124,8 @@ public class LogsViewModel : ObservableObject
     /// <returns>The path of the latest log file, or null if no log files are found.</returns>
     private string? GetLatestLogFile()
     {
-        if (CommandLine.StationLocation == null) return null;
-        string logDirectory = Path.GetFullPath(Path.Combine(CommandLine.StationLocation, "_logs"));
+        if (StationCommandLine.StationLocation == null) return null;
+        string logDirectory = Path.GetFullPath(Path.Combine(StationCommandLine.StationLocation, "_logs"));
         string todayFileNamePattern = $"{DateTime.Today:yyyy_MM_dd}_log";
 
         // Check if today's log file exists
@@ -167,8 +167,8 @@ public class LogsViewModel : ObservableObject
     /// </summary>
     private void LoadFileContentsAsync()
     {
-        if (CommandLine.StationLocation == null) return;
-        string logDirectory = Path.GetFullPath(Path.Combine(CommandLine.StationLocation, "_logs"));
+        if (StationCommandLine.StationLocation == null) return;
+        string logDirectory = Path.GetFullPath(Path.Combine(StationCommandLine.StationLocation, "_logs"));
         
         OpenFileDialog openFileDialog = new OpenFileDialog
         {
