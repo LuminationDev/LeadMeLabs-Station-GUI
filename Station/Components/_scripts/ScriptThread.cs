@@ -67,6 +67,10 @@ public class ScriptThread
             case "CommandLine":
                 StationScripts.Execute(_source, _additionalData);
                 break;
+            
+            case "Keyboard":
+                HandleKeyboardCommand(_additionalData);
+                break;
 
             case "Station":
                 HandleStation(_additionalData);
@@ -129,6 +133,15 @@ public class ScriptThread
         {
             DotEnv.Update("LabLocation", location);
         }
+    }
+
+    /// <summary>
+    /// Handle a keyboard or mouse command send from the tablet to the Station.
+    /// </summary>
+    /// <param name="jObjectData"></param>
+    private void HandleKeyboardCommand(string jObjectData)
+    {
+        Keyboard.DetermineAction(jObjectData);
     }
 
     private void HandleStation(string jObjectData)
