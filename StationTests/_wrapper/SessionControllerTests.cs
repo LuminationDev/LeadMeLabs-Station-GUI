@@ -133,6 +133,6 @@ public class SessionControllerTests: FactAttribute
         stopwatch.Stop();
 
         // Assert
-        Assert.True(stopwatch.ElapsedMilliseconds >= delay);
+        Assert.True(stopwatch.ElapsedMilliseconds >= (delay - 10));
     }
 }

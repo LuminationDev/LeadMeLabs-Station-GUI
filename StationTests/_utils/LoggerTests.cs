@@ -54,7 +54,7 @@ public class LoggerTests
 
         string[] logLines = File.ReadAllLines(logFilePath);
         Assert.StartsWith($"[E][{DateTime.Now.ToString("yyyy-MM-dd")}", logLines[logLines.Length - 1]);
-        Assert.EndsWith(": Test message", logLines[0]);
+        Assert.EndsWith(": Test message", logLines[logLines.Length - 1]);
 
         // Cleanup
         File.Delete(logFilePath);
