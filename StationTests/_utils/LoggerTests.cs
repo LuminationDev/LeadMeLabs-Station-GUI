@@ -17,6 +17,7 @@ public class LoggerTests
         {
             File.WriteAllText(logFilePath, null);
         }
+        Logger.LogQueue.Clear();
     }
     
     
