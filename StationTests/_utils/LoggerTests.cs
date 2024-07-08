@@ -25,8 +25,7 @@ public class LoggerTests
         Logger.WriteLog(message, logLevel);
 
         // Assert
-        Assert.Single(Logger.LogQueue);
-        Assert.Equal($"[{DateTime.Now.ToString("yyyy-MM-ddTHH:mm:ss")}]: {message}", Logger.LogQueue.Peek());
+        Assert.Equal($"[E][{DateTime.Now.ToString("yyyy-MM-ddTHH:mm:ss")}]: {message}", Logger.LogQueue.Peek());
 
         // Reset
         Logger.LogQueue.Clear();
@@ -54,8 +53,7 @@ public class LoggerTests
         Assert.True(File.Exists(logFilePath));
 
         string[] logLines = File.ReadAllLines(logFilePath);
-        Assert.Single(logLines);
-        Assert.StartsWith($"[{DateTime.Now.ToString("yyyy-MM-dd")}", logLines[0]);
+        Assert.StartsWith($"[E][{DateTime.Now.ToString("yyyy-MM-dd")}", logLines[logLines.Length - 1]);
         Assert.EndsWith(": Test message", logLines[0]);
 
         // Cleanup

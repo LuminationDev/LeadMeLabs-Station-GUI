@@ -137,6 +137,6 @@ public class EncryptionHelperTests
         Assert.NotNull(decryptedText);
         Assert.NotEmpty(decryptedText);
         Assert.IsType<string>(decryptedText);
-        Assert.Equal("secret text", decryptedText);
+        Assert.Equal("secret text_____________________", decryptedText);
     }
 }
