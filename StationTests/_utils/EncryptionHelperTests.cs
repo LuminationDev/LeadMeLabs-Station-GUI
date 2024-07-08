@@ -4,7 +4,7 @@ using LeadMeLabsLibrary;
 
 namespace StationTests._utils;
 
-public class EncrpytionHelperTests
+public class EncryptionHelperTests
 {
     /// <summary>
     /// Checks whether the Encrypt method returns a non-null, non-empty string of 
