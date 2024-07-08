@@ -84,6 +84,9 @@ commands:
           name: "dotnet restore"
           command: cd ~/circleci-working/<<pipeline.id>>; dotnet.exe restore
       - run:
+          name: "dotnet test"
+          command: cd ~/circleci-working/<<pipeline.id>>; dotnet.exe test
+      - run:
           name: "Build dotnet <<parameters.buildType>>"
           command: cd ~/circleci-working/<<pipeline.id>>; msbuild.exe -v:normal .\Station\Station.csproj -p:Configuration=<<parameters.buildType>>
       - run:

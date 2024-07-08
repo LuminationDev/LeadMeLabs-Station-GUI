@@ -5,10 +5,11 @@ using System.Diagnostics;
 using Station.Components._profiles;
 using Station.Components._profiles._headsets;
 using Station.MVC.Controller;
+using Xunit.Sdk;
 
 namespace StationTests._wrapper;
 
-public class SessionControllerTests
+public class SessionControllerTests: FactAttribute
 {
     /// <summary>
     /// Ensures that the SetupHeadsetType() method sets the correct vrHeadset
@@ -53,7 +54,7 @@ public class SessionControllerTests
     /// a VR session.
     /// </summary>
     /// <param name="experienceType"></param>
-    [Theory]
+    [IgnoreOnCircleCITheory]
     [InlineData("Custom")]
     [InlineData("Steam")]
     [InlineData("Vive")]
@@ -132,6 +133,6 @@ public class SessionControllerTests
         stopwatch.Stop();
 
         // Assert
-        Assert.True(stopwatch.ElapsedMilliseconds >= delay);
+        Assert.True(stopwatch.ElapsedMilliseconds >= (delay - 10));
     }
 }

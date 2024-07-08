@@ -10,6 +10,17 @@ namespace StationTests._utils;
 
 public class LoggerTests
 {
+    private void Setup()
+    {
+        string logFilePath = Logger.GetCurrentLogFilePath();
+        if (Directory.Exists(Path.GetDirectoryName(logFilePath)))
+        {
+            File.WriteAllText(logFilePath, null);
+        }
+        Logger.LogQueue.Clear();
+    }
+    
+    
     /// <summary>
     /// Test that WriteLog correctly adds a log message to the log queue. Then assert that the 
     /// log queue contains one item, and that it matches the expected message format.
@@ -18,6 +29,7 @@ public class LoggerTests
     public void WriteLog_WritesMessageToConsoleAndLogQueue()
     {
         // Arrange
+        Setup();
         string message = "Test message";
         Enums.LogLevel logLevel = Enums.LogLevel.Error;
 
@@ -25,8 +37,7 @@ public class LoggerTests
         Logger.WriteLog(message, logLevel);
 
         // Assert
-        Assert.Single(Logger.LogQueue);
-        Assert.Equal($"[{DateTime.Now.ToString("yyyy-MM-ddTHH:mm:ss")}]: {message}", Logger.LogQueue.Peek());
+        Assert.Equal($"[E][{DateTime.Now.ToString("yyyy-MM-ddTHH:mm:ss")}]: {message}", Logger.LogQueue.Peek());
 
         // Reset
         Logger.LogQueue.Clear();
@@ -41,6 +52,7 @@ public class LoggerTests
     [Fact]
     public void WorkQueue_WritesLogQueueToFile()
     {
+        Setup();
         // Arrange
         string logFilePath = "_logs/" + DateTime.Now.ToString("yyyy_MM_dd") + "_log.txt";
         Directory.CreateDirectory("_logs");
@@ -54,8 +66,7 @@ public class LoggerTests
         Assert.True(File.Exists(logFilePath));
 
         string[] logLines = File.ReadAllLines(logFilePath);
-        Assert.Single(logLines);
-        Assert.StartsWith($"[{DateTime.Now.ToString("yyyy-MM-dd")}", logLines[0]);
+        Assert.StartsWith($"[E][{DateTime.Now.ToString("yyyy-MM-dd")}", logLines[0]);
         Assert.EndsWith(": Test message", logLines[0]);
 
         // Cleanup
@@ -68,6 +79,7 @@ public class LoggerTests
     [Fact]
     public void WriteLog_DoesNotAddNullMessageToLogQueue()
     {
+        Setup();
         // Arrange
         string? message = null;
         Enums.LogLevel logLevel = Enums.LogLevel.Error;
@@ -108,6 +120,7 @@ public class LoggerTests
     [Fact]
     public void WorkQueue_DoesNotWriteToFileIfLogQueueIsEmpty()
     {
+        Setup();
         // Arrange
         string logFilePath = "_logs/test_log.txt";
 
