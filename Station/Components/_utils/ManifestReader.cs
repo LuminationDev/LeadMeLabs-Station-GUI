@@ -37,6 +37,13 @@ public static class ManifestReader
         
             return !String.IsNullOrEmpty(specificEntry?["strings"]?["en_us"]?["name"]?.ToString());
         }
+
+        public JToken? GetApplication(string appKey)
+        {
+            var specificEntry = _applications.FirstOrDefault(app => (((string)app["app_key"])!).Contains(appKey));
+
+            return specificEntry;
+        }
     }
     
     /// <summary>
@@ -284,6 +291,11 @@ public static class ManifestReader
             {
                 existingEntry["arguments"] = details.GetValue("parameters");
             }
+            
+            if (details.GetValue("image_path") != null)
+            {
+                existingEntry["image_path"] = details.GetValue("image_path");
+            }
 
             JObject language = new JObject { { "name", details.GetValue("name") } };
             JObject strings = new JObject { { "en_us", language } };
@@ -303,6 +315,11 @@ public static class ManifestReader
             if (details.GetValue("parameters") != null)
             {
                 temp.Add("arguments", details.GetValue("parameters"));
+            }
+            
+            if (details.GetValue("image_path") != null)
+            {
+                temp.Add("image_path", details.GetValue("image_path"));
             }
         
             JObject language = new JObject { { "name", details.GetValue("name") } };

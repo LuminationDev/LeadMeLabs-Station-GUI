@@ -28,18 +28,6 @@
     <None Remove="_logs\placeholder.txt" />
   </ItemGroup>
 
-	<ItemGroup>
-	  <COMReference Include="NetFwTypeLib">
-	    <WrapperTool>tlbimp</WrapperTool>
-	    <VersionMinor>0</VersionMinor>
-	    <VersionMajor>1</VersionMajor>
-	    <Guid>58fbcf7c-e7a9-467c-80b3-fc65e8fcca08</Guid>
-	    <Lcid>0</Lcid>
-	    <Isolated>false</Isolated>
-	    <EmbedInteropTypes>true</EmbedInteropTypes>
-	  </COMReference>
-	</ItemGroup>
-
   <ItemGroup>
     <Content Include="Assets\Icons\offline.ico">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
@@ -113,7 +101,7 @@
   <ItemGroup>
 	<PackageReference Include="Analytics" Version="3.8.1" />
 	<PackageReference Include="CommunityToolkit.Mvvm" Version="8.2.0" />
-	<PackageReference Include="LeadMeLabsLibrary" Version="1.0.23" />
+	<PackageReference Include="LeadMeLabsLibrary" Version="1.0.31" />
 	<PackageReference Include="leadme_api" Version="1.0.2" />
 	<PackageReference Include="MediaInfo.Wrapper.Core" Version="21.9.3" />
 	<PackageReference Include="Microsoft.Build.Framework" Version="17.6.3" />
