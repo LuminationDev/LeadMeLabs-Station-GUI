@@ -128,7 +128,7 @@ public static class ThumbnailOrganiser
         JObject body = new JObject();
         body.Add("names", names);
         StringContent objData = new StringContent(body.ToString(), Encoding.UTF8, "application/json");
-        var response = httpClient.PostAsync("http://127.0.0.1:5001/leadme-labs/us-central1/checkForCachedImages", objData).GetAwaiter().GetResult();
+        var response = httpClient.PostAsync("https://us-central1-leadme-labs.cloudfunctions.net/checkForCachedImages", objData).GetAwaiter().GetResult();
         if (!response.IsSuccessStatusCode)
         {
             return;
@@ -146,7 +146,7 @@ public static class ThumbnailOrganiser
             httpClient.DefaultRequestHeaders.Remove("filename");
             httpClient.DefaultRequestHeaders.Add("filename", name);
 
-            HttpResponseMessage imageResponse = httpClient.PostAsync("http://127.0.0.1:5001/leadme-labs/us-central1/uploadApplicationImage", byteArrayContent).GetAwaiter().GetResult();
+            HttpResponseMessage imageResponse = httpClient.PostAsync("https://us-central1-leadme-labs.cloudfunctions.net/uploadApplicationImage", byteArrayContent).GetAwaiter().GetResult();
             
             if (!imageResponse.IsSuccessStatusCode)
             {
