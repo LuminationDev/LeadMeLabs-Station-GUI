@@ -3,10 +3,13 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Runtime.CompilerServices;
+using System.Text;
 using System.Threading.Tasks;
 using LeadMeLabsLibrary;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using Station.Components._commandLine;
 using Station.Components._models;
 using Station.Components._notification;
@@ -115,6 +118,41 @@ public static class ThumbnailOrganiser
         LocalThumbnail(localExperiences);
         EmbeddedThumbnail(embeddedExperiences);
         SteamThumbnail(steamExperiences);
+        
+        // upload any missing images to cloud
+        using var httpClient = new HttpClient();
+        httpClient.Timeout = TimeSpan.FromSeconds(10);
+        httpClient.DefaultRequestHeaders.Add("site", Environment.GetEnvironmentVariable("LabLocation", EnvironmentVariableTarget.Process) ?? "Unknown");
+        httpClient.DefaultRequestHeaders.Add("device", "Station" + Environment.GetEnvironmentVariable("StationId", EnvironmentVariableTarget.Process) ?? "0");
+        JArray names = new JArray(LocalImages);
+        JObject body = new JObject();
+        body.Add("names", names);
+        StringContent objData = new StringContent(body.ToString(), Encoding.UTF8, "application/json");
+        var response = httpClient.PostAsync("http://127.0.0.1:5001/leadme-labs/us-central1/checkForCachedImages", objData).GetAwaiter().GetResult();
+        if (!response.IsSuccessStatusCode)
+        {
+            return;
+        }
+
+        var missingImages = JArray.Parse(response.Content.ReadAsStringAsync().GetAwaiter().GetResult());
+        foreach (JToken missingImage in missingImages)
+        {
+            var name = missingImage.ToString();
+            byte[] imageData = File.ReadAllBytes(@$"{StationCommandLine.StationLocation}\_cache\{name}");
+            var byteArrayContent = new ByteArrayContent(imageData);
+
+            byteArrayContent.Headers.ContentType = MediaTypeHeaderValue.Parse("image/jpeg");
+
+            httpClient.DefaultRequestHeaders.Remove("filename");
+            httpClient.DefaultRequestHeaders.Add("filename", name);
+
+            HttpResponseMessage imageResponse = httpClient.PostAsync("http://127.0.0.1:5001/leadme-labs/us-central1/uploadApplicationImage", byteArrayContent).GetAwaiter().GetResult();
+            
+            if (!imageResponse.IsSuccessStatusCode)
+            {
+                return;
+            }
+        }
     }
 
     /// <summary>
