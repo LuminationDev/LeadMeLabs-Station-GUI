@@ -103,6 +103,9 @@ public class NotifyIconWrapper : FrameworkElement, IDisposable
 
         var roomSetup = new ToolStripMenuItem("Save room setup");
         roomSetup.Click += SaveRoomSetupClick;
+        
+        var launcherFolder = new ToolStripMenuItem("Launcher folder");
+        launcherFolder.Click += GoToLauncherFolder;
 
         var goToLogs = new ToolStripMenuItem("Logs");
         goToLogs.Click += GoToLogsOnClick;
@@ -110,7 +113,7 @@ public class NotifyIconWrapper : FrameworkElement, IDisposable
         var exitItem = new ToolStripMenuItem("Exit");
         exitItem.Click += ExitItemOnClick;
 
-        var contextMenu = new ContextMenuStrip { Items = { openItem, openDetails, roomSetup, goToLogs, exitItem } };
+        var contextMenu = new ContextMenuStrip { Items = { openItem, openDetails, roomSetup, launcherFolder, goToLogs, exitItem } };
         return contextMenu;
     }
 
@@ -156,6 +159,20 @@ public class NotifyIconWrapper : FrameworkElement, IDisposable
         catch (Exception ex)
         {
             Logger.WriteLog("NotifyIconWrapper - GoToLogsOnClick: An error occurred: " + ex.Message, Enums.LogLevel.Error);
+        }
+    }
+    
+    private void GoToLauncherFolder(object? sender, EventArgs eventArgs)
+    {
+        string location = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + @"\Programs\LeadMe";
+
+        try
+        {
+            Process.Start("explorer.exe", location);
+        }
+        catch (Exception ex)
+        {
+            Logger.WriteLog("NotifyIconWrapper - GoToLauncherFolder: An error occurred: " + ex.Message, Enums.LogLevel.Error);
         }
     }
 

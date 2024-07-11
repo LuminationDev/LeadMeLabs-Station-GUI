@@ -5,6 +5,7 @@ using System.Windows;
 using System.Windows.Input;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Station.Components._commandLine;
 using Station.Components._enums;
 using Station.Components._managers;
 using Station.Components._notification;
@@ -31,6 +32,7 @@ public class MainWindowViewModel : ObservableRecipient
         ChangeLogLevelCommand = new RelayCommand(MockConsole.ChangeLogLevel);
         StopCurrentProcess = new RelayCommand(WrapperManager.StopAProcess);
         ResetSteamVrProcess = new RelayCommand(RestartVr);
+        RebootToBios = new RelayCommand(RebootToBiosCommand);
 
         NotifyIconOpenCommand = new RelayCommand(() => { WindowState = WindowState.Normal; });
         NotifyIconExitCommand = new RelayCommand(() => { Application.Current.Shutdown(); });
@@ -55,6 +57,7 @@ public class MainWindowViewModel : ObservableRecipient
     public ICommand ChangeLogLevelCommand { get; }
     public ICommand StopCurrentProcess { get; }
     public ICommand ResetSteamVrProcess { get; }
+    public ICommand RebootToBios { get; }
     
     // Debug bindings
     public ICommand ChangeViewConsoleValue { get; }
@@ -92,6 +95,14 @@ public class MainWindowViewModel : ObservableRecipient
         {
             ScheduledTaskQueue.EnqueueTask(() => SessionController.UpdateState(State.StopVrProcess), TimeSpan.FromSeconds(1));
             _ = WrapperManager.RestartVrProcesses();
+        }).Start();
+    }
+    
+    private void RebootToBiosCommand()
+    {
+        new Task(() =>
+        {
+            ScheduledTaskQueue.EnqueueTask(() => StationCommandLine.RebootToBios(5), TimeSpan.FromMilliseconds(100));
         }).Start();
     }
 
