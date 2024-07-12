@@ -15,6 +15,5 @@ public partial class MainWindow
     private void Window_MouseLeftButtonDown(object sender, RoutedEventArgs e)
     {
         DragMove();
-
     }
 }

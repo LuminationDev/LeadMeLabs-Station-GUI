@@ -150,6 +150,30 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <None Remove="_embedded\LeadMePython.exe" />
+    <None Remove="Assets\Icons\action_maximise.png" />
+    <Content Include="Assets\Icons\action_maximise.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <None Remove="Assets\Icons\action_close.png" />
+    <Content Include="Assets\Icons\action_close.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <None Remove="Assets\Icons\action_close_hovered.png" />
+    <Content Include="Assets\Icons\action_close_hovered.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <None Remove="Assets\Icons\action_maximise_hovered.png" />
+    <Content Include="Assets\Icons\action_maximise_hovered.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <None Remove="Assets\Icons\action_normal.png" />
+    <Content Include="Assets\Icons\action_normal.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <None Remove="Assets\Icons\action_normal_hovered.png" />
+    <Content Include="Assets\Icons\action_normal_hovered.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
 
   <ItemGroup>

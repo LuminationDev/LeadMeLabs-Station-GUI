@@ -6,8 +6,10 @@
         xmlns:bh="http://schemas.microsoft.com/xaml/behaviors"
         xmlns:core="clr-namespace:Station.Core"
         xmlns:viewModel="clr-namespace:Station.MVC.ViewModel"
+        xmlns:extensions="clr-namespace:Station.Extensions"
         mc:Ignorable="d"
-        Height="600" Width="900"
+        Width="{Binding WindowWidth, Mode=TwoWay}"
+        Height="{Binding WindowHeight, Mode=TwoWay}"
         ShowInTaskbar="{Binding ShowInTaskbar}"
         WindowState="{Binding WindowState}"
         WindowStyle="None"
@@ -21,12 +23,12 @@
     </Window.DataContext>
     
     <Border Background="#2d3436"
-            CornerRadius="10">
+            CornerRadius="{Binding WindowRadius}">
         
         <Grid>
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="200"/>
-                <ColumnDefinition/>
+                <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>
             
             <Grid.RowDefinitions>
@@ -47,33 +49,73 @@
             </core:NotifyIconWrapper>
             
             <!--Window Action Panel-->
-            <Border Grid.Row="0" Grid.Column="1" 
-                    Background="#2d3436" CornerRadius="10">
-                <Border.Clip>
-                    <RectangleGeometry RadiusX="10" RadiusY="10" Rect="-10,0,710,60"/>
-                </Border.Clip>
+            <Border Grid.Row="0" Grid.Column="1"
+                    Background="#2d3436" 
+                    CornerRadius="{Binding WindowRadius, Mode=TwoWay}"
+                    HorizontalAlignment="Stretch" 
+                    VerticalAlignment="Stretch">
+                
+                <Border.Style>
+                    <Style TargetType="Border">
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding WindowState}" Value="Maximized">
+                                <Setter Property="Clip" Value="{x:Null}"/>
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding WindowState}" Value="Normal">
+                                <Setter Property="Clip">
+                                    <Setter.Value>
+                                        <RectangleGeometry RadiusX="10" RadiusY="10" Rect="-10,0,710,60"/>
+                                    </Setter.Value>
+                                </Setter>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Border.Style>
             
-                <DockPanel>
+                <DockPanel HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
                     <DockPanel.Background>
                         <SolidColorBrush Color="#576574" Opacity="0.2"/>
                     </DockPanel.Background>
                     
-                    <StackPanel HorizontalAlignment="Right">
-                        <Button Content="x" 
-                                Width="{Binding RelativeSource={x:Static RelativeSource.Self}, Path=ActualHeight}"
-                                FontSize="22"
-                                Margin="0, 0, 5, 0"
-                                Style="{StaticResource CloseButtonTheme}"
-                                Command="{Binding ClosingCommand}"/>
-                    </StackPanel>
+                    <WrapPanel HorizontalAlignment="Right">
+                        <extensions:ImageButton 
+                            Width="30"
+                           Margin="0, 5, 15, 0"
+                           Style="{StaticResource ActionButtonTheme}"
+                           ImageSource="pack://application:,,,/Assets/Icons/action_maximise.png"
+                           HoverImageSource="pack://application:,,,/Assets/Icons/action_maximise_hovered.png"
+                           Command="{Binding ResizeCommand}"/>
+                        
+                        <extensions:ImageButton
+                            Width="30"
+                            FontSize="22"
+                            Margin="0, 5, 10, 0"
+                            Style="{StaticResource ActionButtonTheme}"
+                            ImageSource="pack://application:,,,/Assets/Icons/action_close.png"
+                            HoverImageSource="pack://application:,,,/Assets/Icons/action_close_hovered.png"
+                            Command="{Binding ClosingCommand}"/>
+                    </WrapPanel>
                 </DockPanel>
             </Border>
             
             <!--Logo-->
             <Border Grid.Row="0" Grid.RowSpan="2" Grid.Column="0" Background="#2d3436" CornerRadius="10">
-                <Border.Clip>
-                    <RectangleGeometry RadiusX="10" RadiusY="10" Rect="0,0,210,175"/>
-                </Border.Clip>
+                <Border.Style>
+                    <Style TargetType="Border">
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding WindowState}" Value="Maximized">
+                                <Setter Property="Clip" Value="{x:Null}"/>
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding WindowState}" Value="Normal">
+                                <Setter Property="Clip">
+                                    <Setter.Value>
+                                        <RectangleGeometry RadiusX="10" RadiusY="10" Rect="0,0,210,175"/>
+                                    </Setter.Value>
+                                </Setter>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Border.Style>
                 
                 <DockPanel>
                     <DockPanel.Background>
@@ -93,9 +135,23 @@
             <!--Menu Panel-->
             <Border Grid.Row="2" Grid.Column="0" 
                     Background="#2d3436" CornerRadius="10">
-                <Border.Clip>
-                    <RectangleGeometry RadiusX="10" RadiusY="10" Rect="0,-10,210,495"/>
-                </Border.Clip>
+                
+                <Border.Style>
+                    <Style TargetType="Border">
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding WindowState}" Value="Maximized">
+                                <Setter Property="Clip" Value="{x:Null}"/>
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding WindowState}" Value="Normal">
+                                <Setter Property="Clip">
+                                    <Setter.Value>
+                                        <RectangleGeometry RadiusX="10" RadiusY="10" Rect="0,-10,210,495"/>
+                                    </Setter.Value>
+                                </Setter>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Border.Style>
                 
                 <DockPanel LastChildFill="False">
                     

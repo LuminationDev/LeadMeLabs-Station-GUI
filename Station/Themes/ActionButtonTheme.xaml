@@ -2,17 +2,21 @@
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
     <Style BasedOn="{StaticResource {x:Type Button}}"
            TargetType="{x:Type Button}"
-           x:Key="CloseButtonTheme">
+           x:Key="ActionButtonTheme">
         
         <Style.Setters>
             <Setter Property="OverridesDefaultStyle" Value="True"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
-                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        <Image x:Name="ButtonImage"
+                               Source="{Binding RelativeSource={RelativeSource TemplatedParent}, Path=ImageSource}"
+                               Stretch="Uniform"
+                               VerticalAlignment="Center"
+                               HorizontalAlignment="Center" />
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter Property="Foreground" Value="#636e72"/>
+                                <Setter TargetName="ButtonImage" Property="Source" Value="{Binding RelativeSource={RelativeSource TemplatedParent}, Path=HoverImageSource}"/>
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>

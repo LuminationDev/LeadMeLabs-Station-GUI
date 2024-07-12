@@ -55,6 +55,7 @@ public class MainViewModel : ObservableObject
     
     // Commands
     public RelayCommand LoadedCommand { get; }
+    public RelayCommand ResizeCommand { get; }
     public RelayCommand ClosingCommand { get; }
     public RelayCommand NotifyIconOpenCommand { get; }
     public RelayCommand NotifyIconExitCommand { get; }
@@ -62,6 +63,7 @@ public class MainViewModel : ObservableObject
     public MainViewModel()
     {
         LoadedCommand = new RelayCommand(_ => Loaded());
+        ResizeCommand = new RelayCommand(_ => MaximiseOrMinimise());
         ClosingCommand = new RelayCommand(_ => Closing());
         NotifyIconOpenCommand = new RelayCommand(_ => { WindowState = WindowState.Normal; });
         NotifyIconExitCommand = new RelayCommand(_ => { Application.Current.Shutdown(); });
@@ -143,7 +145,56 @@ public class MainViewModel : ObservableObject
     {
         WindowState = WindowState.Normal;
     }
+    
+    private int _windowRadius = 10;
+    public int WindowRadius
+    {
+        get => _windowRadius;
+        set
+        {
+            _windowRadius = value;
+            OnPropertyChanged();
+        }
+    }
 
+    private int _windowHeight = 600;
+    public int WindowHeight
+    {
+        get => _windowHeight;
+        set
+        {
+            _windowHeight = value;
+            OnPropertyChanged();
+        }
+    }
+    
+    private int _windowWidth = 900;
+    public int WindowWidth
+    {
+        get => _windowWidth;
+        set
+        {
+            _windowWidth = value;
+            OnPropertyChanged();
+        }
+    }
+    
+    private void MaximiseOrMinimise()
+    {
+        if (WindowState == WindowState.Maximized)
+        {
+            WindowState = WindowState.Normal;
+            WindowHeight = 600;
+            WindowWidth = 900;
+            WindowRadius = 10;
+        }
+        else
+        {
+            WindowState = WindowState.Maximized;
+            WindowRadius = 0;
+        }
+    }
+    
     private void Closing()
     {
         WindowState = WindowState.Minimized;
