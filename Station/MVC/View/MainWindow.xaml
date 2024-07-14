@@ -192,6 +192,18 @@
                         ToolTip="Toggle if the program should launch experiences regardless of if a headset is connected."/>
                 </WrapPanel>
                 <Separator HorizontalAlignment="Stretch" Margin="0,0,0,0" BorderBrush="Black" BorderThickness="0.5"/>
+                
+                <WrapPanel Margin="10">
+                    <Label Height="Auto" Width="140">Reboot to BIOS</Label>
+                    <Button
+                        Width="40"
+                        HorizontalAlignment="Right"
+                        Style="{StaticResource MainButton}"
+                        Content="Click"
+                        Command="{Binding RebootToBios}"
+                        ToolTip="Reboot to computer to BIOS"/>
+                </WrapPanel>
+                <Separator HorizontalAlignment="Stretch" Margin="0,0,0,0" BorderBrush="Black" BorderThickness="0.5"/>
             </StackPanel>
         </StackPanel>
         
