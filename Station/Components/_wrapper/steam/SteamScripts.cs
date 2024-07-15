@@ -190,8 +190,7 @@ public static class SteamScripts
             {
                 SentrySdk.CaptureMessage("Could not collect licenses via python. containsConnectionTimeout: " +
                                          containsConnectionTimeout + ", licenses[0]: " + licenses[0] + " at: " +
-                                         (Environment.GetEnvironmentVariable("LabLocation",
-                                             EnvironmentVariableTarget.Process) ?? "Unknown"));
+                                         Helper.GetLabLocationWithStationId());
             }
             catch (Exception e)
             {
