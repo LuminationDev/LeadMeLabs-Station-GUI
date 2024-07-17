@@ -35,6 +35,12 @@ public static class Helper
         return mode;
     }
     
+    public static string GetLabLocationWithStationId()
+    {
+        return (Environment.GetEnvironmentVariable("LabLocation", EnvironmentVariableTarget.Process) ?? "Unknown") +
+            (Environment.GetEnvironmentVariable("StationId", EnvironmentVariableTarget.Process) ?? "Unknown");
+    }
+    
     /// <summary>
     /// Monitors a specified condition using a loop that is delayed by 3 seconds each time the condition is not met, with
     /// optional timeout and attempt limits.

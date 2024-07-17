@@ -258,9 +258,7 @@ public class SteamConfig
         string filePath = StationCommandLine.StationLocation + @"\_embedded\LeadMePython.exe";
         if (!File.Exists(filePath))
         {
-            SentrySdk.CaptureMessage("LeadMePython missing at " +
-                                     (Environment.GetEnvironmentVariable("LabLocation",
-                                         EnvironmentVariableTarget.Process) ?? "Unknown"));
+            SentrySdk.CaptureMessage("LeadMePython missing at " + Helper.GetLabLocationWithStationId());
             return new List<string>();
         }
 
@@ -275,9 +273,7 @@ public class SteamConfig
         string filePath = StationCommandLine.StationLocation + @"\_embedded\LeadMePython.exe";
         if (!File.Exists(filePath))
         {
-            SentrySdk.CaptureMessage("LeadMePython missing at " +
-                                     (Environment.GetEnvironmentVariable("LabLocation",
-                                         EnvironmentVariableTarget.Process) ?? "Unknown"));
+            SentrySdk.CaptureMessage("LeadMePython missing at " + Helper.GetLabLocationWithStationId());
             return new List<string>() {""};
         }
 
