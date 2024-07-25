@@ -228,20 +228,23 @@ public class MainWindowViewModel : ObservableRecipient
         }
     }
     
-    private bool IdleModeActive
+    public bool IdleModeActive
     {
-        get => InternalDebugger.idleModeActive;
+        get => InternalDebugger.GetIdleModeActive();
         set
         {
-            InternalDebugger.SetIdleModeActive(value);
+            InternalDebugger.SetIdleModeActive(value, true);
             IdleModeActiveText = value ? "Yes" : "No";
         }
     }
-    
+
     private string _idleModeActiveText = "No";
     public string IdleModeActiveText
     {
-        get => _idleModeActiveText;
+        get
+        {
+            return InternalDebugger.GetIdleModeActive() ? "Yes" : "No";;
+        }
         private set
         {
             if (_idleModeActiveText == value) return;
