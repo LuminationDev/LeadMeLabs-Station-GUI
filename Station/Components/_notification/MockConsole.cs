@@ -9,7 +9,7 @@ namespace Station.Components._notification;
 
 public static class MockConsole
 {
-    private static MainWindowViewModel? viewModel;
+    public static MainWindowViewModel? viewModel;
 
     public static void SetViewModel(MainWindowViewModel newViewModel)
     {

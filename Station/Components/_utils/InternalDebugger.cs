@@ -1,3 +1,4 @@
+using System;
 using Station.Components._notification;
 
 namespace Station.Components._utils;
@@ -55,8 +56,8 @@ public static class InternalDebugger
     /// <summary>
     /// Used to control the Station should go into Idle mode after 60 minutes of no usage
     /// </summary>
-    public static bool idleModeActive = false;
-    public static void SetIdleModeActive(bool active)
+    public static bool? idleModeActive = null;
+    public static void SetIdleModeActive(bool active, bool preventRecursion = false)
     {
         idleModeActive = active;
 
@@ -68,15 +69,26 @@ public static class InternalDebugger
         {
             ModeTracker.DisableIdleMode();
         }
+
+        if (preventRecursion)
+        {
+            return;
+        }
+        MockConsole.viewModel.IdleModeActive = GetIdleModeActive();
     }
     
     public static bool GetIdleModeActive()
     {
-        if (!idleModeActive)
+        if (idleModeActive == null)
+        {
+            idleModeActive =
+                Environment.GetEnvironmentVariable("IdleMode", EnvironmentVariableTarget.User)?.Equals("On") ?? false;
+        }
+        if (!idleModeActive ?? false)
         {
             MockConsole.WriteLine("WARNING: Idle Mode is off, the Station will not go into Idle mode.");
         }
         
-        return idleModeActive;
+        return idleModeActive ?? false;
     }
 }

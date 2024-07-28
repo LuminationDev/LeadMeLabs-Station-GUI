@@ -161,6 +161,12 @@ public static class MainController
             new Thread(Initialisation).Start();
         }).Start();
 
+        if (Environment.GetEnvironmentVariable("IdleMode", EnvironmentVariableTarget.User) != null)
+        {
+            InternalDebugger.SetIdleModeActive(Environment
+                .GetEnvironmentVariable("IdleMode", EnvironmentVariableTarget.User).Equals("On"));
+        }
+        ;
         if (InternalDebugger.GetIdleModeActive())
         {
             ModeTracker.Initialise(); //Start tracking any idle time
