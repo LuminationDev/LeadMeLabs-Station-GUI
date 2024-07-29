@@ -48,7 +48,7 @@ public static class DotEnv
                 }
                     
                 #region override env vars here
-                Environment.SetEnvironmentVariable("AppKey", "testingDK");
+                // Environment.SetEnvironmentVariable("AppKey", "testingDK");
                 #endregion
             #endif
 
