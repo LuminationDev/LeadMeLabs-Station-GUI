@@ -189,11 +189,11 @@ workflows:
           context: LeadMeDeployers
           type: approval
       - build:
-          buildType: "Debug"
+          buildType: "Release"
           requires:
             - hold
       - sign:
-          buildType: "Debug"
+          buildType: "Release"
           requires:
             - build
       - commit-and-push:

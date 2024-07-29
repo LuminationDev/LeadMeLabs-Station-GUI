@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Net;
+using System.Net.Sockets;
 using System.Threading.Tasks;
 using LeadMeLabsLibrary;
 using Station.Components._commandLine;
@@ -35,6 +37,21 @@ public static class DotEnv
                 return Task.FromResult(false);
             }
 
+            #if DEBUG
+                var host = Dns.GetHostEntry(Dns.GetHostName());
+                foreach (var ip in host.AddressList)
+                {
+                    if (ip.AddressFamily == AddressFamily.InterNetwork)
+                    {
+                        Environment.SetEnvironmentVariable("nucAddress", ip.ToString());
+                    }
+                }
+                    
+                #region override env vars here
+                Environment.SetEnvironmentVariable("AppKey", "testingDK");
+                #endregion
+            #endif
+
             foreach (var line in decryptedText.Split('\n'))
             {
                 var parts = line.Split(
@@ -54,8 +71,6 @@ public static class DotEnv
                         break;
                 }
             }
-            
-            Environment.SetEnvironmentVariable("nucAddress", "192.168.1.136");
         } 
         catch (Exception ex)
         {
