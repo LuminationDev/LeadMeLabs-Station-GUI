@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Windows;
+using System.Windows.Forms;
 using Sentry;
 using Station.Components._commandLine;
 using Station.Components._managers;
@@ -31,6 +32,9 @@ namespace Station
 
             MainWindow mainWindow = new();
             mainWindow.Show();
+
+            SecondaryWindow secondaryWindow = new();
+            secondaryWindow.Show();
             
             windowEventTracker = new WindowEventTracker(); // must be done here on main thread
 

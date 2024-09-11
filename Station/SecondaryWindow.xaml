@@ -1,0 +1,23 @@
+﻿<Window x:Class="Station.SecondaryWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d"
+        ShowInTaskbar="{Binding ShowInTaskbar}"
+        WindowStartupLocation="Manual"
+        WindowStyle="None"
+        ResizeMode="NoResize"
+        MouseLeftButtonDown="Window_MouseLeftButtonDown"
+        Title="LeadMe Station">
+    
+    <MediaElement Name="VideoControl" 
+                  LoadedBehavior="Manual"
+                  HorizontalAlignment="Stretch" 
+                  VerticalAlignment="Stretch"
+                  Stretch="UniformToFill"
+                  MediaEnded="myMediaElement_MediaEnded"
+                  MediaFailed="myMediaElement_MediaFailed" 
+                  Source="C:\Users\Kiosk\Documents\net6.0-windows\assets\Videos\Wallpaper.mp4" >    
+    </MediaElement>
+</Window>

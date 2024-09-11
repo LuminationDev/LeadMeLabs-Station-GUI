@@ -28,6 +28,7 @@ public static class RoomSetup
                 currentFilePath = SteamVrFilePath;
                 break;
             case "ViveFocus3":
+            case "ViveBusinessStreaming":
                 currentFilePath = HtcFilePath;
                 break;
         }

@@ -9,6 +9,7 @@ using Station.Components._commandLine;
 using Station.Components._network;
 using Station.Components._notification;
 using Station.MVC.Controller;
+using CommandLine = Station.Components._commandLine.CommandLine;
 
 namespace Station.Components._utils;
 

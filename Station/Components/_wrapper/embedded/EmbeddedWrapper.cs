@@ -17,6 +17,7 @@ using Station.Components._openvr;
 using Station.Components._profiles;
 using Station.Components._utils;
 using Station.MVC.Controller;
+using CommandLine = Station.Components._commandLine.CommandLine;
 
 namespace Station.Components._wrapper.embedded;
 

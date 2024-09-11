@@ -58,6 +58,7 @@ public class VrProfile: Profile, IProfile
                 VrHeadset = new VivePro2();
                 break;
             case "ViveFocus3":
+            case "ViveBusinessStreaming":
                 VrHeadset = new ViveFocus3();
                 break;
             default:
@@ -111,6 +112,7 @@ public class VrProfile: Profile, IProfile
             case "VivePro1":
             case "VivePro2":
             case "ViveFocus3":
+            case "ViveBusinessStreaming":
                 return ViveScripts.WaitForVive(wrapperType).Result;
             default:
                 SessionController.PassStationMessage("WaitForConnection - No headset type specified.");

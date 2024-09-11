@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using LeadMeLabsLibrary;
 using Station.Components._commandLine;
 using Station.Components._notification;
+using CommandLine = Station.Components._commandLine.CommandLine;
 
 namespace Station._config;
 

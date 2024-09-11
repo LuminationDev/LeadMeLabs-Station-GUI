@@ -24,18 +24,6 @@
     <None Remove="_logs\placeholder.txt" />
   </ItemGroup>
 
-	<ItemGroup>
-	  <COMReference Include="NetFwTypeLib">
-	    <WrapperTool>tlbimp</WrapperTool>
-	    <VersionMinor>0</VersionMinor>
-	    <VersionMajor>1</VersionMajor>
-	    <Guid>58fbcf7c-e7a9-467c-80b3-fc65e8fcca08</Guid>
-	    <Lcid>0</Lcid>
-	    <Isolated>false</Isolated>
-	    <EmbedInteropTypes>true</EmbedInteropTypes>
-	  </COMReference>
-	</ItemGroup>
-
   <ItemGroup>
     <Content Include="openvr_api.dll">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
@@ -152,11 +140,15 @@
     <Content Include="_embedded\manifest.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+    <None Remove="Assets\Videos\Wallpaper.mp4" />
+    <Content Include="Assets\Videos\Wallpaper.mp4">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
 
   <ItemGroup>
 	<PackageReference Include="CommunityToolkit.Mvvm" Version="8.2.2" />
-	<PackageReference Include="LeadMeLabsLibrary" Version="1.0.19" />
+	<PackageReference Include="LeadMeLabsLibrary" Version="1.0.31" />
 	<PackageReference Include="leadme_api" Version="1.0.2" />
 	<PackageReference Include="MediaInfo.Wrapper.Core" Version="21.9.3" />
 	<PackageReference Include="Microsoft.Build.Framework" Version="17.8.3" />
@@ -188,5 +180,10 @@
     <Reference Include="AudioDeviceCmdlets">
       <HintPath>..\..\..\Experimental\AudioDeviceCmdlets\AudioDeviceCmdlets\bin\Release\AudioDeviceCmdlets.dll</HintPath>
     </Reference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Assets\Videos\" />
+    <Folder Include="Resources\raw\" />
   </ItemGroup>
 </Project>

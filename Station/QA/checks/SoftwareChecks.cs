@@ -10,6 +10,7 @@ using LeadMeLabsLibrary;
 using Newtonsoft.Json;
 using Station.Components._commandLine;
 using Station.Components._utils;
+using CommandLine = Station.Components._commandLine.CommandLine;
 
 namespace Station.QA.checks;
 
