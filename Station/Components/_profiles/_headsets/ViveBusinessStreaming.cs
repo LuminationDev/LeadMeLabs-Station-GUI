@@ -85,6 +85,10 @@ public class ViveBusinessStreaming : Profile, IVrHeadset
         {
             string? current = enumerator.Current;
             if (current == null) continue;
+            
+            //We have reached the top of the log file, and it has been rotated, use the previous known connection as 
+            //no other connection events have occurred since the rotation.
+            if (current.Contains("# Log rotate")) return;
             if (!current.Contains("OnHMDReady")) continue;
             containsOnHmdReady = true;
             
