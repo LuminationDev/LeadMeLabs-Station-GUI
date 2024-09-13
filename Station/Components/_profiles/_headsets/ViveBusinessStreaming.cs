@@ -3,9 +3,11 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using LeadMeLabsLibrary;
 using LeadMeLabsLibrary.Station;
 using Station.Components._commandLine;
 using Station.Components._interfaces;
+using Station.Components._utils;
 using Station.Components._utils._steamConfig;
 using Station.Components._wrapper.steam;
 using Station.MVC.Controller;
@@ -78,6 +80,14 @@ public class ViveBusinessStreaming : Profile, IVrHeadset
             .OrderByDescending(f => f.LastWriteTime)
             .First();
         
+        //Check if the file is empty (new or rotated log files)
+        FileInfo fileInfo = new FileInfo(file.FullName);
+        if (fileInfo.Length < 10)
+        {
+            Logger.WriteLog($"File is below 10 bytes: {file.FullName}, {fileInfo.Length}", Enums.LogLevel.Debug);
+            return;
+        }
+        
         bool containsOnHmdReady = false; // Flag to track if the string is found
         ReverseLineReader reverseLineReader = new ReverseLineReader(file.FullName, Encoding.Unicode);
         IEnumerator<string?> enumerator = reverseLineReader.GetEnumerator();
@@ -95,10 +105,12 @@ public class ViveBusinessStreaming : Profile, IVrHeadset
             switch (Statuses.SoftwareStatus)
             {
                 case DeviceStatus.Connected or DeviceStatus.Off when current.Contains("False"):
+                    Logger.WriteLog($"Device lost - Reading: {file.FullName}, {file.Length}", Enums.LogLevel.Debug);
                     Statuses.UpdateHeadset(VrManager.Software, DeviceStatus.Lost);
                     break;
                 
                 case DeviceStatus.Lost or DeviceStatus.Off when current.Contains("True"):
+                    Logger.WriteLog($"Device connected - Reading: {file.FullName}, {file.Length}", Enums.LogLevel.Debug);
                     Statuses.UpdateHeadset(VrManager.Software, DeviceStatus.Connected);
                     break;
             }
@@ -108,6 +120,7 @@ public class ViveBusinessStreaming : Profile, IVrHeadset
         //The software is running but no headset has connected yet.
         if (!containsOnHmdReady)
         {
+            Logger.WriteLog($"Attempted reading: {file.FullName}, {file.Length}", Enums.LogLevel.Debug);
             Statuses.UpdateHeadset(VrManager.Software, DeviceStatus.Lost);
         }
     }
