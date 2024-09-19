@@ -25,6 +25,7 @@ public static class RoomSetup
         {
             case "VivePro1":
             case "VivePro2":
+            case "SteamLink":
                 currentFilePath = SteamVrFilePath;
                 break;
             case "ViveFocus3": //Backwards compatability

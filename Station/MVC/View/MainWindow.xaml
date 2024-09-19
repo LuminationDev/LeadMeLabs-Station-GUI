@@ -4,7 +4,6 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:bh="http://schemas.microsoft.com/xaml/behaviors"
-        xmlns:local="clr-namespace:Station"
         xmlns:system="clr-namespace:System;assembly=System.Runtime"
         xmlns:core="clr-namespace:Station.Core"
         xmlns:viewModel="clr-namespace:Station.MVC.ViewModel"
@@ -345,7 +344,7 @@
                         x:Name="HeadsetConnection" 
                         ToolTip="OpenVR Offline" 
                         Margin="0,0,0,3" 
-                        Source="../Assets/Icons/openvr_offline.ico" 
+                        Source="../../Assets/Icons/openvr_offline.ico" 
                         Width="20"/>
                 </WrapPanel>
 
@@ -371,7 +370,7 @@
                         x:Name="LeftControllerConnection" 
                         ToolTip="Left Controller Lost" 
                         Margin="0,0,0,3" 
-                        Source="../Assets/Icons/openvr_offline.ico" 
+                        Source="../../Assets/Icons/openvr_offline.ico" 
                         Width="20"/>
                 </WrapPanel>
 
@@ -406,7 +405,7 @@
                         x:Name="RightControllerConnection" 
                         ToolTip="Right Controller Lost" 
                         Margin="0,0,0,3" 
-                        Source="../Assets/Icons/openvr_offline.ico" 
+                        Source="../../Assets/Icons/openvr_offline.ico" 
                         Width="20"/>
                 </WrapPanel>
 
@@ -496,7 +495,7 @@
                             x:Name="HeadsetVrConnection" 
                             ToolTip="HeadsetVR Offline" 
                             Margin="0,0,0,3" 
-                            Source="../Assets/Icons/openvr_offline.ico"
+                            Source="../../Assets/Icons/openvr_offline.ico"
                             Width="20"/>
                     </WrapPanel>
                 </Border>
@@ -515,7 +514,7 @@
                         x:Name="OpenVrConnection" 
                         ToolTip="OpenVR Offline" 
                         Margin="0,0,0,3" 
-                        Source="../Assets/Icons/openvr_offline.ico"
+                        Source="../../Assets/Icons/openvr_offline.ico"
                         Width="20"/>
                 </WrapPanel>
                 
