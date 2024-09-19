@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using LeadMeLabsLibrary;
 using LeadMeLabsLibrary.Station;
+using Microsoft.Win32;
 using Station.Components._commandLine;
 using Station.Components._interfaces;
 using Station.Components._utils;
@@ -74,54 +75,80 @@ public class ViveBusinessStreaming : Profile, IVrHeadset
 
     public void MonitorVrConnection()
     {
-        var directory = new DirectoryInfo(@"C:\ProgramData\HTC\ViveSoftware\ViveRR\Log");
-        var file = directory.GetFiles()
-            .Where(f => f.Name.Contains("RRConsole"))
-            .OrderByDescending(f => f.LastWriteTime)
-            .First();
-        
-        //Check if the file is empty (new or rotated log files)
-        FileInfo fileInfo = new FileInfo(file.FullName);
-        if (fileInfo.Length < 10)
+        var registryVal = Registry.GetValue("HKEY_CURRENT_USER\\SOFTWARE\\HTC\\VBS", "ServerState", -1);
+        if (registryVal == null || registryVal.Equals(-1))
         {
-            Logger.WriteLog($"File is below 10 bytes: {file.FullName}, {fileInfo.Length}", Enums.LogLevel.Debug);
-            return;
-        }
-        
-        bool containsOnHmdReady = false; // Flag to track if the string is found
-        ReverseLineReader reverseLineReader = new ReverseLineReader(file.FullName, Encoding.Unicode);
-        IEnumerator<string?> enumerator = reverseLineReader.GetEnumerator();
-        do
-        {
-            string? current = enumerator.Current;
-            if (current == null) continue;
+             var directory = new DirectoryInfo(@"C:\ProgramData\HTC\ViveSoftware\ViveRR\Log");
+             var file = directory.GetFiles()
+                .Where(f => f.Name.Contains("RRConsole"))
+                .OrderByDescending(f => f.LastWriteTime)
+                .First();
             
-            //We have reached the top of the log file, and it has been rotated, use the previous known connection as 
-            //no other connection events have occurred since the rotation.
-            if (current.Contains("# Log rotate")) return;
-            if (!current.Contains("OnHMDReady")) continue;
-            containsOnHmdReady = true;
-            
-            switch (Statuses.SoftwareStatus)
+            //Check if the file is empty (new or rotated log files)
+            FileInfo fileInfo = new FileInfo(file.FullName);
+            if (fileInfo.Length < 10)
             {
-                case DeviceStatus.Connected or DeviceStatus.Off when current.Contains("False"):
-                    Logger.WriteLog($"Device lost - Reading: {file.FullName}, {file.Length}", Enums.LogLevel.Debug);
-                    Statuses.UpdateHeadset(VrManager.Software, DeviceStatus.Lost);
-                    break;
-                
-                case DeviceStatus.Lost or DeviceStatus.Off when current.Contains("True"):
-                    Logger.WriteLog($"Device connected - Reading: {file.FullName}, {file.Length}", Enums.LogLevel.Debug);
-                    Statuses.UpdateHeadset(VrManager.Software, DeviceStatus.Connected);
-                    break;
+                Logger.WriteLog($"File is below 10 bytes: {file.FullName}, {fileInfo.Length}", Enums.LogLevel.Debug);
+                return;
             }
-            enumerator.Dispose();
-        } while (enumerator.MoveNext());
+            
+            bool containsOnHmdReady = false; // Flag to track if the string is found
+            try
+            {
+                ReverseLineReader reverseLineReader = new ReverseLineReader(file.FullName, Encoding.Unicode);
+                IEnumerator<string?> enumerator = reverseLineReader.GetEnumerator();
+                do
+                {
+                    string? current = enumerator.Current;
+                    if (current == null) continue;
+                
+                    //We have reached the top of the log file, and it has been rotated, use the previous known connection as 
+                    //no other connection events have occurred since the rotation.
+                    if (current.Contains("# Log rotate")) return;
+                    if (!current.Contains("OnHMDReady")) continue;
+                    containsOnHmdReady = true;
+                
+                    switch (Statuses.SoftwareStatus)
+                    {
+                        case DeviceStatus.Connected or DeviceStatus.Off when current.Contains("False"):
+                            Logger.WriteLog($"Device lost - Reading: {file.FullName}, {file.Length}", Enums.LogLevel.Debug);
+                            Statuses.UpdateHeadset(VrManager.Software, DeviceStatus.Lost);
+                            break;
+                    
+                        case DeviceStatus.Lost or DeviceStatus.Off when current.Contains("True"):
+                            Logger.WriteLog($"Device connected - Reading: {file.FullName}, {file.Length}", Enums.LogLevel.Debug);
+                            Statuses.UpdateHeadset(VrManager.Software, DeviceStatus.Connected);
+                            break;
+                    }
+                    enumerator.Dispose();
+                } while (enumerator.MoveNext());
 
-        //The software is running but no headset has connected yet.
-        if (!containsOnHmdReady)
+                //The software is running but no headset has connected yet.
+                if (!containsOnHmdReady)
+                {
+                    Logger.WriteLog($"Attempted reading: {file.FullName}, {file.Length}", Enums.LogLevel.Debug);
+                    Statuses.UpdateHeadset(VrManager.Software, DeviceStatus.Lost);
+                } 
+            }
+            catch (InvalidDataException e)
+            {
+                Logger.WriteLog($"Device lost - InvalidDataException", Enums.LogLevel.Debug);
+                Statuses.UpdateHeadset(VrManager.Software, DeviceStatus.Lost);
+                return;
+            }
+        }
+        else
         {
-            Logger.WriteLog($"Attempted reading: {file.FullName}, {file.Length}", Enums.LogLevel.Debug);
-            Statuses.UpdateHeadset(VrManager.Software, DeviceStatus.Lost);
+            if (registryVal.Equals(0))
+            {
+                Logger.WriteLog($"Device connected", Enums.LogLevel.Debug);
+                Statuses.UpdateHeadset(VrManager.Software, DeviceStatus.Connected);
+            }
+            else
+            {
+                Logger.WriteLog($"Device lost", Enums.LogLevel.Debug);
+                Statuses.UpdateHeadset(VrManager.Software, DeviceStatus.Lost);
+            }
         }
     }
 
