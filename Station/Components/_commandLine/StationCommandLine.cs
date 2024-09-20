@@ -487,20 +487,16 @@ public static class StationCommandLine
 
     public static async Task UploadLogFile()
     {
-        string accessToken = await RemoteAccess.GetAccessToken();
-        if (String.IsNullOrEmpty(accessToken))
-        {
-            return;
-        }
-
         var fileStream = File.OpenRead(Logger.GetCurrentLogFilePath());
 
         using var httpClient = new HttpClient();
-        httpClient.DefaultRequestHeaders.Add("Authorization", $"Bearer {accessToken}");
+        httpClient.DefaultRequestHeaders.Add("site", Environment.GetEnvironmentVariable("LabLocation", EnvironmentVariableTarget.Process) ?? "Unknown");
+        httpClient.DefaultRequestHeaders.Add("device", "Station" + (Environment.GetEnvironmentVariable("StationId", EnvironmentVariableTarget.Process) ?? "Unknown"));
+        httpClient.DefaultRequestHeaders.Add("fileName", DateTime.Now.ToString("yyyy_MM_dd") + "_log");
         var content = new StreamContent(fileStream);
         content.Headers.ContentType = new MediaTypeHeaderValue("text/plain");
         await httpClient.PostAsync(
-            "https://us-central1-leadme-labs.cloudfunctions.net/uploadFile",
+            "https://us-central1-leadme-labs.cloudfunctions.net/anonymousLogUpload",
             content
         );
     }
