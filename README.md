@@ -9,7 +9,6 @@ Production uses the working directory of the running executable, with SteamCMD a
 
 These variables are automatically switched depending on the build type selected.
 
-
 ### ENV Variable Overhaul
 Instead of relying on the System Environment variables, the software now uses an internal config.env file which upon start up is read into the local environment variables.
     - A base version is saved in the software that can be filled out for debug.

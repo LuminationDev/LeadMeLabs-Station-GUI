@@ -54,7 +54,7 @@ namespace Station
             if (freeStorage is < 10)
             {
                 string msg =
-                    $"Low memory detected ({freeStorage}) at: {(Environment.GetEnvironmentVariable("LabLocation", EnvironmentVariableTarget.Process) ?? "Unknown")}";
+                    $"Low memory detected ({freeStorage}) at: {Helper.GetLabLocationWithStationId()}";
                 Logger.WriteLog($"CheckStorage - Sentry Message: {msg}", Enums.LogLevel.Error);
                 SentrySdk.CaptureMessage(msg);
             }

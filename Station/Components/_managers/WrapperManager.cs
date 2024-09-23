@@ -401,6 +401,11 @@ public class WrapperManager
                 SessionController.StationProfile?.StartSession();
                 WaitForSteamProcess();
             } 
+            else
+            {
+                ScheduledTaskQueue.EnqueueTask(() => SessionController.UpdateState(State.Ready),
+                    TimeSpan.FromSeconds(1));
+            }
         }
     }
     

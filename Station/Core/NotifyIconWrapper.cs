@@ -103,10 +103,13 @@ public class NotifyIconWrapper : FrameworkElement, IDisposable
         var logItem = new ToolStripMenuItem("Logs");
         logItem.Click += LogItemOnClick;
 
+        var launcherFolder = new ToolStripMenuItem("Launcher folder");
+        launcherFolder.Click += GoToLauncherFolder;
+
         var exitItem = new ToolStripMenuItem("Exit");
         exitItem.Click += ExitItemOnClick;
-
-        var contextMenu = new ContextMenuStrip { Items = { openItem, roomSetup, logItem, exitItem } };
+        
+        var contextMenu = new ContextMenuStrip { Items = { openItem, roomSetup, launcherFolder, logItem, exitItem } };
         return contextMenu;
     }
 
@@ -147,6 +150,20 @@ public class NotifyIconWrapper : FrameworkElement, IDisposable
         catch (Exception ex)
         {
             Logger.WriteLog("An error occurred: " + ex.Message, Enums.LogLevel.Error);
+        }
+    }
+    
+    private void GoToLauncherFolder(object? sender, EventArgs eventArgs)
+    {
+        string location = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + @"\Programs\LeadMe";
+
+        try
+        {
+            Process.Start("explorer.exe", location);
+        }
+        catch (Exception ex)
+        {
+            Logger.WriteLog("NotifyIconWrapper - GoToLauncherFolder: An error occurred: " + ex.Message, Enums.LogLevel.Error);
         }
     }
 
@@ -200,6 +217,4 @@ public class NotifyIconWrapper : FrameworkElement, IDisposable
         _notifyIcon.Icon = Icon.ExtractAssociatedIcon(StationCommandLine.StationLocation + _iconPath);
         _notifyIcon.Text = $"Station - {status}";
     }
-        
-    private readonly string? _softwareLocation = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
 }

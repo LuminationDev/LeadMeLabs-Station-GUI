@@ -143,6 +143,11 @@ public static class MainController
         //Cannot be any higher - encryption key does not exist before the DotEnv.Load()
         new Task(Initialisation).Start(); //Call as a new task to stop UI and server start up from hanging whilst reading the files
         
+        if (Environment.GetEnvironmentVariable("IdleMode", EnvironmentVariableTarget.User) != null)
+        {
+            InternalDebugger.SetIdleModeActive(Environment.GetEnvironmentVariable("IdleMode", EnvironmentVariableTarget.User).Equals("On"));
+        }
+        
         if (InternalDebugger.GetIdleModeActive())
         {
             ModeTracker.Initialise(); //Start tracking any idle time
@@ -271,7 +276,7 @@ public static class MainController
             IPAddress? ip = SystemInformation.GetIPAddress();
             if(ip == null || !ip.Address.Equals(localEndPoint.Address.Address))
             {
-                throw new Exception($"ReChecked IP address is not the same. Original: {localEndPoint.Address.Address}, ReChecked: {ip.Address} at site: " + (Environment.GetEnvironmentVariable("LabLocation", EnvironmentVariableTarget.Process) ?? "Unknown"));
+                throw new Exception($"ReChecked IP address is not the same. Original: {localEndPoint.Address.Address}, ReChecked: {ip.Address} at site: " + Helper.GetLabLocationWithStationId());
             }
 
             Logger.WriteLog("Re-checking software details after 5 minutes of operation.", Enums.LogLevel.Normal);
@@ -357,6 +362,13 @@ public static class MainController
         {
             IPAddress? ip = AttemptIpAddressRetrieval();
             if (ip == null) throw new Exception("Manager class: Server IP Address could not be found");
+
+            string? ipAddressPreviousLaunch = Environment.GetEnvironmentVariable("previousIpAddress", EnvironmentVariableTarget.User);
+            if (ipAddressPreviousLaunch != null && (long)Convert.ToDouble(ipAddressPreviousLaunch) != ip.Address) 
+            {
+                SentrySdk.CaptureMessage($"Detected IP Address change at: {Helper.GetLabLocationWithStationId()}", SentryLevel.Fatal);
+            }
+            Environment.SetEnvironmentVariable("previousIpAddress", ip.Address.ToString(), EnvironmentVariableTarget.User);
 
             macAddress = SystemInformation.GetMACAddress();
             versionNumber = Updater.GetVersionNumber(); 
@@ -447,6 +459,6 @@ public static class MainController
         if (output.Item2.Equals("Install location already correct.")) return;
         
         Logger.WriteLog($"{output.Item2}", Enums.LogLevel.Error);
-        SentrySdk.CaptureMessage($"{output.Item2}. Location: {Environment.GetEnvironmentVariable("LabLocation", EnvironmentVariableTarget.Process) ?? "Unknown"}");
+        SentrySdk.CaptureMessage($"{output.Item2}. Location: {Helper.GetLabLocationWithStationId()}");
     }
 }

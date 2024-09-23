@@ -123,7 +123,7 @@ public class SteamWrapper : IWrapper
         // installedExperiencesWithUnacceptedEulas.Add("1514840:1514840_eula_0:0:All in One Sports VR");
         if (installedExperiencesWithUnacceptedEulas.Count > 0)
         {
-            SentrySdk.CaptureMessage($"{installedExperiencesWithUnacceptedEulas.Count} unaccepted EULAs at location: {(Environment.GetEnvironmentVariable("LabLocation", EnvironmentVariableTarget.Process) ?? "Unknown") + (Environment.GetEnvironmentVariable("StationId", EnvironmentVariableTarget.Process) ?? "Unknown")}. IDs: {string.Join(',', installedExperiencesWithUnacceptedEulas)}");
+            SentrySdk.CaptureMessage($"{installedExperiencesWithUnacceptedEulas.Count} unaccepted EULAs at location: {Helper.GetLabLocationWithStationId()}. IDs: {string.Join(',', installedExperiencesWithUnacceptedEulas)}");
             // todo - uncomment the below to enable EULA feature
             // ScheduledTaskQueue.EnqueueTask(() =>
             // {

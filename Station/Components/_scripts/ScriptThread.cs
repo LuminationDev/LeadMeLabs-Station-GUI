@@ -92,6 +92,26 @@ public class ScriptThread
                 HandleExperience(_additionalData);
                 break;
             
+            case "IdleMode":
+                if (_additionalData.Equals("On"))
+                {
+                    if (InternalDebugger.GetIdleModeActive())
+                    {
+                        break;
+                    }
+                    DotEnv.Update("IdleMode", _additionalData);
+                    InternalDebugger.SetIdleModeActive(true);
+                } else if (_additionalData.Equals("Off"))
+                {
+                    if (!InternalDebugger.GetIdleModeActive())
+                    {
+                        break;
+                    }
+                    DotEnv.Update("IdleMode", _additionalData);
+                    InternalDebugger.SetIdleModeActive(false);
+                }
+                break;
+            
             case "FileControl":
                 FileManager.HandleFileAction(_additionalData);
                 break;
@@ -132,6 +152,32 @@ public class ScriptThread
         if (location != null)
         {
             DotEnv.Update("LabLocation", location);
+        }
+        
+        var idleMode = requestData.GetValue("IdleMode")?.ToString();
+        if (idleMode != null)
+        {
+            
+            if (idleMode.Equals("On"))
+            {
+                if (!InternalDebugger.GetIdleModeActive())
+                {
+                    DotEnv.Update("IdleMode", idleMode);
+                    InternalDebugger.SetIdleModeActive(true);
+                }
+                
+            } else if (idleMode.Equals("Off"))
+            {
+                if (InternalDebugger.GetIdleModeActive())
+                {
+                    DotEnv.Update("IdleMode", idleMode);
+                    InternalDebugger.SetIdleModeActive(false);
+                }
+            }
+            
+            
+            DotEnv.Update("IdleMode", idleMode);
+            InternalDebugger.SetIdleModeActive(idleMode.Equals("On"));
         }
     }
 

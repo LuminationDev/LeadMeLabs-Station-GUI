@@ -185,10 +185,8 @@ public static class StationMonitoringThread
         if (temperature > 90)
         {
             MessageController.SendResponse("Android", "Station", "HighTemperature");
-            SentrySdk.CaptureMessage("High temperature detected (" + temperature + ") at: " +
-                (Environment.GetEnvironmentVariable("LabLocation", EnvironmentVariableTarget.Process) ?? "Unknown"));
-            Logger.WriteLog("High temperature detected (" + temperature + ") at: " +
-                (Environment.GetEnvironmentVariable("LabLocation", EnvironmentVariableTarget.Process) ?? "Unknown"), Enums.LogLevel.Error);
+            SentrySdk.CaptureMessage("High temperature detected (" + temperature + ") at: " + Helper.GetLabLocationWithStationId());
+            Logger.WriteLog("High temperature detected (" + temperature + ") at: " + Helper.GetLabLocationWithStationId(), Enums.LogLevel.Error);
             latestHighTemperatureWarning = DateTime.Now;
         }
     }

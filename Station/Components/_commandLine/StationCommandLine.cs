@@ -142,7 +142,7 @@ public static class StationCommandLine
     /// </summary>
     /// <param name="command">A string representing the command line to be executed</param>
     /// <returns>A string representing the result of the command</returns>
-    private static string? ExecuteStationCommand(string command)
+    private static string? ExecuteStationCommand(string command, bool runAsAdmin = false)
     {
         Process? cmd = SetupCommand(StationCmd);
         if (cmd == null)
@@ -150,6 +150,12 @@ public static class StationCommandLine
             Logger.WriteLog($"Cannot start: {StationCmd} and run '{command}', ExecuteStationCommand -> SetupCommand returned null value.", Enums.LogLevel.Error);
             return null;
         }
+
+        if (runAsAdmin)
+        {
+            cmd.StartInfo.Verb = "runas";
+        }
+
         cmd.Start();
         cmd.StandardInput.WriteLine(command);
 
@@ -184,6 +190,18 @@ public static class StationCommandLine
         }
         
         string? output = ExecuteStationCommand("shutdown /s /t " + time);
+        return output;
+    }
+    
+    public static string? RebootToBios(int time)
+    {
+        if (DeviceControl.GetIsUpdating())
+        {
+            Logger.WriteLog("ShutdownStation - Cannot shutdown, currently updating.", Enums.LogLevel.Info);
+            return "Updating";
+        }
+        
+        string? output = ExecuteStationCommand("shutdown /fw /r /t 0", true);
         return output;
     }
 
@@ -469,20 +487,16 @@ public static class StationCommandLine
 
     public static async Task UploadLogFile()
     {
-        string accessToken = await RemoteAccess.GetAccessToken();
-        if (String.IsNullOrEmpty(accessToken))
-        {
-            return;
-        }
-
         var fileStream = File.OpenRead(Logger.GetCurrentLogFilePath());
 
         using var httpClient = new HttpClient();
-        httpClient.DefaultRequestHeaders.Add("Authorization", $"Bearer {accessToken}");
+        httpClient.DefaultRequestHeaders.Add("site", Environment.GetEnvironmentVariable("LabLocation", EnvironmentVariableTarget.Process) ?? "Unknown");
+        httpClient.DefaultRequestHeaders.Add("device", "Station" + (Environment.GetEnvironmentVariable("StationId", EnvironmentVariableTarget.Process) ?? "Unknown"));
+        httpClient.DefaultRequestHeaders.Add("fileName", DateTime.Now.ToString("yyyy_MM_dd") + "_log");
         var content = new StreamContent(fileStream);
         content.Headers.ContentType = new MediaTypeHeaderValue("text/plain");
         await httpClient.PostAsync(
-            "https://us-central1-leadme-labs.cloudfunctions.net/uploadFile",
+            "https://us-central1-leadme-labs.cloudfunctions.net/anonymousLogUpload",
             content
         );
     }
