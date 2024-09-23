@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Net;
 using System.Threading.Tasks;
 using LeadMeLabsLibrary;
 using Station.Components._commandLine;
@@ -54,6 +55,10 @@ public static class DotEnv
                         break;
                 }
             }
+#if DEBUG
+            IPAddress? ip = SystemInformation.GetIPAddress();
+            Environment.SetEnvironmentVariable("nucAddress", ip?.ToString());   
+#endif
         } 
         catch (Exception ex)
         {

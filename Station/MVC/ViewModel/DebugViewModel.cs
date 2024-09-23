@@ -63,10 +63,10 @@ public class DebugViewModel : ObservableObject
     private bool _idleModeActive = false;
     public bool IdleModeActive
     {
-        get => InternalDebugger.idleModeActive;
+        get => InternalDebugger.idleModeActive ?? false;
         set
         {
-            InternalDebugger.SetIdleModeActive(value);
+            InternalDebugger.SetIdleModeActive(value, true);
             _idleModeActive = value;
             OnPropertyChanged();
         }

@@ -1,5 +1,7 @@
 using System;
+using System.Threading.Tasks;
 using Station.Components._notification;
+using Station.MVC.ViewModel;
 
 namespace Station.Components._utils;
 
@@ -73,11 +75,16 @@ public static class InternalDebugger
             ModeTracker.DisableIdleMode();
         }
 
+        new Task(() =>
+        {
+            Environment.SetEnvironmentVariable("IdleMode", active ? "On" : "Off", EnvironmentVariableTarget.User);
+        }).Start();
+
         if (preventRecursion)
         {
             return;
         }
-        MockConsole.viewModel.IdleModeActive = GetIdleModeActive();
+        MainViewModel.ViewModelManager.DebugViewModel.IdleModeActive = GetIdleModeActive();
     }
     
     public static bool GetIdleModeActive()

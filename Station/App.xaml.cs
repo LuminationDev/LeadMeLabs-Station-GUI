@@ -4,11 +4,9 @@ using System.Windows;
 using LeadMeLabsLibrary;
 using Sentry;
 using Station.Components._commandLine;
-using Station.Components._legacy;
 using Station.Components._managers;
 using Station.Components._utils;
 using Station.Components._utils._steamConfig;
-using Station.Components._version;
 using Station.MVC.Controller;
 using Station.MVC.View;
 
