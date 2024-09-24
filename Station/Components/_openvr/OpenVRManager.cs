@@ -218,6 +218,62 @@ public class OpenVrManager
 
         return true;
     }
+    
+    /// <summary>
+    /// Attempt to restart Steam VR or Launch it if it is not running. Gracefully try and exit the application and if
+    /// that does not work force kill it before attempting to launch it again.
+    /// </summary>
+    public static async Task RestartSteamVr()
+    {
+        // Safe cast and null checks
+        VrProfile? vrProfile = Profile.CastToType<VrProfile>(SessionController.StationProfile);
+        if (vrProfile?.VrHeadset == null) return;
+
+        //Send message to the tablet (Updating what is happening)
+        ScheduledTaskQueue.EnqueueTask(() => SessionController.UpdateState(State.RestartSteamVr), TimeSpan.FromSeconds(1));
+
+        if (ProcessManager.GetProcessesByName("vrmonitor").Length != 0)
+        {
+            //Send message to the tablet (Updating what is happening)
+            ScheduledTaskQueue.EnqueueTask(() => SessionController.UpdateState(State.RestartSteamVr), TimeSpan.FromSeconds(1));
+
+            //Gracefully exit SteamVR (use the Steam client to do so)
+            StationCommandLine.StartProgram(SessionController.Steam, $" +app_stop {SteamScripts.SteamVrId}");
+
+            //Wait for SteamVR to exit then close all other processes
+            //(if SteamVR does not exit gracefully below hard kills it as a backup)
+            await Helper.MonitorLoop(() => ProcessManager.GetProcessesByName("vrmonitor").Length == 0, 10);
+
+            if (ProcessManager.GetProcessesByName("vrmonitor").Length != 0)
+            {
+                //Forcefully kill SteamVR
+                StationCommandLine.QueryProcesses(new List<string> { "vrmonitor" }, true);
+                await Task.Delay(5000);
+            }
+            Task.Delay(1000).Wait();
+        }
+
+        //Launch SteamVR
+        SteamWrapper.LaunchSteamVR();
+        await Task.Delay(3000);
+
+        bool steamvr = await Helper.MonitorLoop(() => ProcessManager.GetProcessesByName("vrmonitor").Length == 0, 10);
+        if (!steamvr)
+        {
+            // Connection bailed out, send a failure message
+            JObject androidMessage = new JObject
+            {
+                { "action", "MessageToAndroid" },
+                { "value", "HeadsetTimeout" }
+            };
+            SessionController.PassStationMessage(androidMessage);
+            return;
+        }
+
+
+        Logger.WriteLog($"OpenVRManager.WaitForOpenVR - Headset status: {vrProfile.VrHeadset.GetHeadsetManagementSoftwareStatus()}, " +
+            $"SteamVR restarted successfully", Enums.LogLevel.Normal);
+    }
     #endregion
 
     #region OpenVR Events

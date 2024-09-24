@@ -63,6 +63,9 @@ public class VrProfile: Profile, IProfile
             case "ViveBusinessStreaming":
                 VrHeadset = new ViveBusinessStreaming();
                 break;
+            case "SteamLink":
+                VrHeadset = new SteamLink();
+                break;
             default:
                 Logger.WriteLog("No headset type specified.", Enums.LogLevel.Error);
                 break;
@@ -126,6 +129,8 @@ public class VrProfile: Profile, IProfile
             case "ViveFocus3": //Backwards compatability
             case "ViveBusinessStreaming":
                 return ViveScripts.WaitForVive(wrapperType).Result;
+            case "SteamLink":
+                return true; //No external software required
             default:
                 Logger.WriteLog("WaitForConnection - No headset type specified.", Enums.LogLevel.Error);
                 return false;
