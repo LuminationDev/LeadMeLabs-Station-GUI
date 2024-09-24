@@ -11,6 +11,7 @@
         Width="{Binding WindowWidth, Mode=TwoWay}"
         Height="{Binding WindowHeight, Mode=TwoWay}"
         ShowInTaskbar="{Binding ShowInTaskbar}"
+        WindowStartupLocation="Manual"
         WindowState="{Binding WindowState}"
         WindowStyle="None"
         ResizeMode="NoResize"

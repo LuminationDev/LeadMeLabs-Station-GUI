@@ -20,6 +20,10 @@
             <DataTemplate DataType="{x:Type viewModel:HomeViewModel}">
                 <view:HomeView/>
             </DataTemplate>
+            
+            <DataTemplate DataType="{x:Type viewModel:SecondaryViewModel}">
+                <view:SecondaryWindow/>
+            </DataTemplate>
              
             <DataTemplate DataType="{x:Type viewModel:ConsoleViewModel}">
                 <view:ConsoleView/>

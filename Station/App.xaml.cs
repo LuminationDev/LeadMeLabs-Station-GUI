@@ -32,6 +32,9 @@ namespace Station
             MainWindow mainWindow = new();
             mainWindow.Show();
             
+            SecondaryWindow secondaryWindow = new();
+            secondaryWindow.Show();
+            
             windowEventTracker = new WindowEventTracker(); // must be done here on main thread
 
             InitSentry();
