@@ -63,4 +63,24 @@ public static class Helper
 
         return true;
     }
+    
+    /// <summary>
+    /// Executes a task in the background (fire-and-forget) without awaiting its completion,
+    /// while ensuring any exceptions that occur during task execution are logged.
+    /// 
+    /// This is useful for non-critical operations like logging or UI updates where task failures
+    /// should not affect the main program flow, but exceptions still need to be observed and handled.
+    /// </summary>
+    /// <param name="task">The task to execute in the background.</param>
+    public static void FireAndForget(Task task)
+    {
+        task.ContinueWith(t =>
+        {
+            // Log the exception if the task fails
+            if (t.Exception != null)
+            {
+                Logger.WriteLog($"Exception in fire-and-forget task: {t.Exception}", Enums.LogLevel.Error);
+            }
+        }, TaskContinuationOptions.OnlyOnFaulted);
+    }
 }

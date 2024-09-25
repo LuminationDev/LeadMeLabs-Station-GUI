@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using System.Windows;
 using LeadMeLabsLibrary;
 using Sentry;
@@ -7,6 +8,7 @@ using Station.Components._commandLine;
 using Station.Components._managers;
 using Station.Components._utils;
 using Station.Components._utils._steamConfig;
+using Station.Components._windows;
 using Station.MVC.Controller;
 using Station.MVC.View;
 
@@ -19,7 +21,9 @@ namespace Station
     {
         public static int steamProcessId = 0;
         public static WindowEventTracker? windowEventTracker;
-        private void Application_Startup(object sender, StartupEventArgs e)
+        private WindowTracker? _windowTracker;
+        
+        private async void Application_Startup(object sender, StartupEventArgs e)
         {
             if (e.Args.Length > 0 && e.Args[0].Trim().ToLower() == "writeversion")
             {
@@ -27,25 +31,48 @@ namespace Station
                 Environment.Exit(1);
                 return;
             }
-            SteamConfig.VerifySteamConfig();
-
-            MainWindow mainWindow = new();
-            mainWindow.Show();
             
-            SecondaryWindow secondaryWindow = new();
-            secondaryWindow.Show();
-            
-            windowEventTracker = new WindowEventTracker(); // must be done here on main thread
-
-            InitSentry();
+            // Attach exit handlers first
             AppDomain currentDomain = AppDomain.CurrentDomain;
             currentDomain.UnhandledException += UnhandledExceptionHandler;
             currentDomain.ProcessExit += ProcessExitHandler;
-            CheckStorage();
+            
+            // Initialize the window tracking system
+            windowEventTracker = new WindowEventTracker();
+            
+            // Parallelize secondary tasks
+            var secondaryTasks = new List<Task>
+            {
+                Task.Run(() => SteamConfig.VerifySteamConfig()),
+                Task.Run(InitSentry),
+                Task.Run(CheckStorage)
+            };
+            
+            // Display the main window
+            MainWindow mainWindow = new();
+            mainWindow.Show();
+
+            // Load the secondary window asynchronously
+            var secondaryWindowTask = Task.Run(LoadSecondaryWindow);
+
+            // Wait for secondary tasks in parallel
+            await Task.WhenAll(secondaryTasks);
+
+            // Start secondary window after everything else
+            await secondaryWindowTask;
 
             MainController.StartProgram();
         }
 
+        private void LoadSecondaryWindow()
+        {
+            Dispatcher.Invoke(() =>
+            {
+                SecondaryWindow secondaryWindow = new();
+                secondaryWindow.Show();
+            });
+        }
+        
         /// <summary>
         /// Check the local storage, sending a sentry error message if there is less than 10GB of free space.
         /// </summary>
@@ -61,7 +88,7 @@ namespace Station
             }
         }
 
-        static void UnhandledExceptionHandler(object sender, UnhandledExceptionEventArgs args)
+        private void UnhandledExceptionHandler(object sender, UnhandledExceptionEventArgs args)
         {
             Exception e = (Exception)args.ExceptionObject;
             Logger.WriteLog("UnhandledExceptionHandler caught: " + e.Message, Enums.LogLevel.Error);
@@ -87,8 +114,9 @@ namespace Station
             }
         }
 
-        static void ProcessExitHandler(object? sender, EventArgs args)
+        private void ProcessExitHandler(object? sender, EventArgs args)
         {
+            _windowTracker?.StopTracking();
             Logger.WriteLog($"Process Exiting. Sender: {sender}, Event: {args}", Enums.LogLevel.Verbose);
             Logger.WorkQueue();
             
@@ -123,7 +151,7 @@ namespace Station
                 options.Debug = false;
                 options.TracesSampleRate = 0.1;
 
-                options.SetBeforeSend((SentryEvent sentryEvent) =>
+                options.SetBeforeSend(sentryEvent =>
                 {
                     if (sentryEvent.Exception != null
                         && sentryEvent.Exception.Message.Contains("Aggregate Exception")

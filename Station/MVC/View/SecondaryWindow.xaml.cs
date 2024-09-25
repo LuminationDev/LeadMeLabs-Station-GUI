@@ -12,7 +12,7 @@ public partial class SecondaryWindow
     {
         InitializeComponent();
 
-        Screen s = Screen.AllScreens[1];
+        Screen s = Screen.AllScreens[0];
         System.Drawing.Rectangle r  = s.WorkingArea;
         this.Top = r.Top;
         this.Left = r.Left;

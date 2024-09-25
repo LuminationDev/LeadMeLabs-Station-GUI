@@ -21,6 +21,7 @@ using Station.Components._overlay;
 using Station.Components._profiles;
 using Station.Components._utils;
 using Station.Components._utils._steamConfig;
+using Station.Components._windows;
 using Station.Components._wrapper.vive;
 using Station.MVC.Controller;
 using Timer = System.Timers.Timer;

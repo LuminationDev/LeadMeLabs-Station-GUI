@@ -6,7 +6,8 @@ using LeadMeLabsLibrary;
 using Station.Components._segment;
 using Station.Components._segment._classes;
 using Station.Components._utils;
-using Station.MVC.Controller;
+
+namespace Station.Components._windows;
 
 public class WindowEventTracker
 {
@@ -27,8 +28,8 @@ public class WindowEventTracker
     private bool _minimisingEnabled = true;
 
     /**
-     * Keeping this function here as it was quite tricky to write
-     */
+ * Keeping this function here as it was quite tricky to write
+ */
     private static bool EnumWindowsCallback(IntPtr hWnd, IntPtr lParam)
     {
         if (IsWindowVisible(hWnd))
@@ -59,11 +60,11 @@ public class WindowEventTracker
         
         // ReSharper disable once InvalidXmlDocComment
         /**
-         * IMPORTANT: This must be run on the main thread
-         * If not, it will not run
-         *
-         * We initializing here, and then altering the target, process id and thread id when needed
-         */
+     * IMPORTANT: This must be run on the main thread
+     * If not, it will not run
+     *
+     * We initializing here, and then altering the target, process id and thread id when needed
+     */
         m_winEventDelegateSteam = WhenWindowMoveStartsOrEnds;
         m_winEventDelegateMouse = MouseClick;
         m_hookSteam = SetWinEventHook(0, 100, m_target, m_winEventDelegateSteam, m_processId, m_threadId, 0);

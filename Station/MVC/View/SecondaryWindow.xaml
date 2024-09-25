@@ -11,7 +11,7 @@
         WindowStyle="None"
         ResizeMode="NoResize"
         MouseLeftButtonDown="Window_MouseLeftButtonDown"
-        Title="LeadMe Station">
+        Title="The Pod - Background">
     
     <Window.DataContext>
         <viewModel:SecondaryViewModel/>
@@ -21,8 +21,8 @@
         <!-- Placeholder: While the video is loading (black screen) -->
         <Image HorizontalAlignment="Center"
                VerticalAlignment="Center"
-               Height="130"
-               Width="341"
+               Height="385"
+               Width="1000"
                Panel.ZIndex="1">
             <Image.Source>
                 <BitmapImage UriSource="pack://siteoforigin:,,,/Assets/Images/LuminationLogo.png" />

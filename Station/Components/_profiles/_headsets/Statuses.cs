@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using LeadMeLabsLibrary;
 using Newtonsoft.Json.Linq;
 using Station.Components._commandLine;
@@ -54,7 +55,7 @@ public class Statuses
 
             OnSoftwareTrackingChanged(value.ToString());
             _softwareStatus = value;
-            UiController.UpdateVrConnection("thirdParty", Enum.GetName(typeof(DeviceStatus), value) ?? "Unknown");
+            Helper.FireAndForget(Task.Run(() => UiController.UpdateVrConnection("thirdParty", Enum.GetName(typeof(DeviceStatus), value) ?? "Unknown")));
             //Silently collect the applications again if the Steam manifest was corrupted
             if (value == DeviceStatus.Connected && WrapperManager.steamManifestCorrupted)
             {
@@ -67,7 +68,7 @@ public class Statuses
     public event EventHandler<GenericEventArgs<string>>? SoftwareTrackingChanged;
     protected virtual void OnSoftwareTrackingChanged(string newValue)
     {
-        MockConsole.WriteLine($"DeviceStatus:Headset:tracking:Vive:{newValue}", Enums.LogLevel.Debug);
+        Helper.FireAndForget(Task.Run(() => MockConsole.WriteLine($"DeviceStatus:Headset:tracking:Vive:{newValue}", Enums.LogLevel.Debug)));
         string message = $"Headset:Vive:tracking:{newValue}";
         SoftwareTrackingChanged?.Invoke(this, new GenericEventArgs<string>(message));
         
@@ -87,7 +88,7 @@ public class Statuses
 
             OnOpenVRTrackingChanged(value.ToString());
             _openVRStatus = value;
-            UiController.UpdateVrConnection("openVr", Enum.GetName(typeof(DeviceStatus), value) ?? "Unknown");
+            Helper.FireAndForget(Task.Run(() => UiController.UpdateVrConnection("openVr", Enum.GetName(typeof(DeviceStatus), value) ?? "Unknown")));
         }
         get => _openVRStatus;
     }
@@ -286,8 +287,8 @@ public class Statuses
             }
             else
             {
-                Logger.WriteLog($"VrStatus.UpdateController - A Controller entry is invalid removing {serialNumber}",
-                    Enums.LogLevel.Error);
+                Helper.FireAndForget(Task.Run(() => Logger.WriteLog($"VrStatus.UpdateController - A Controller entry is invalid removing {serialNumber}",
+                    Enums.LogLevel.Error)));
 
                 Controllers.Remove(serialNumber);
             }
@@ -305,7 +306,7 @@ public class Statuses
                     {
                         vrController.Value.UpdateProperty("battery", 0);
                         vrController.Value.UpdateProperty("tracking", DeviceStatus.Lost);
-                        MockConsole.WriteLine($"Duplicate controller - Role: {Enum.GetName(typeof(DeviceRole), role)}. Reseting dictionary.", Enums.LogLevel.Normal);
+                        Helper.FireAndForget(Task.Run(() => MockConsole.WriteLine($"Duplicate controller - Role: {Enum.GetName(typeof(DeviceRole), role)}. Reseting dictionary.", Enums.LogLevel.Normal)));
                     }
                 }
                 Controllers.Clear();
@@ -313,7 +314,7 @@ public class Statuses
             }
 
             //Add a new controller entry
-            MockConsole.WriteLine($"Found a new controller: {serialNumber} - Role: {Enum.GetName(typeof(DeviceRole), role)}", Enums.LogLevel.Normal);
+            Helper.FireAndForget(Task.Run(() => MockConsole.WriteLine($"Found a new controller: {serialNumber} - Role: {Enum.GetName(typeof(DeviceRole), role)}", Enums.LogLevel.Normal)));
             VrController temp = new VrController(serialNumber, (DeviceRole)role);
             temp.UpdateProperty(propertyName, value);
             Controllers.Add(serialNumber, temp);
@@ -321,7 +322,7 @@ public class Statuses
         else
         {
             //If there is no entry and no role then do not add the controller yet
-            MockConsole.WriteLine($"Found a new controller: {serialNumber} - Role invalid: {role}, not adding.", Enums.LogLevel.Normal);
+            Helper.FireAndForget(Task.Run(() => MockConsole.WriteLine($"Found a new controller: {serialNumber} - Role invalid: {role}, not adding.", Enums.LogLevel.Normal)));
         }
     }
 

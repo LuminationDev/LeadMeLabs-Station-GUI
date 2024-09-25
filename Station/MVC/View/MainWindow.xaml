@@ -17,6 +17,7 @@
         ResizeMode="NoResize"
         Background="Transparent"
         AllowsTransparency="True"
+        Title="{Binding ProgramTitle}"
         MouseLeftButtonDown="Window_MouseLeftButtonDown">
     
     <Window.DataContext>

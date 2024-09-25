@@ -94,7 +94,7 @@ public class SocketClient
                 // Get a client stream for reading and writing.
                 NetworkStream stream = _client.GetStream();
 
-                Logger.WriteLog($"Socket connected to {_client.Client.RemoteEndPoint}", Enums.LogLevel.Debug, writeToLog);
+                Helper.FireAndForget(Task.Run(() => Logger.WriteLog($"Socket connected to {_client.Client.RemoteEndPoint}", Enums.LogLevel.Debug, writeToLog), token));
 
                 // Translate the passed message into ASCII and store it as a Byte array.
                 byte[] data = System.Text.Encoding.ASCII.GetBytes(this._message);

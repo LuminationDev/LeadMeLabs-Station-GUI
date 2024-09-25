@@ -17,6 +17,7 @@ using Station.Components._profiles;
 using Station.Components._segment;
 using Station.Components._segment._classes;
 using Station.Components._utils;
+using Station.Components._windows;
 using Station.Components._wrapper.custom;
 using Station.Components._wrapper.embedded;
 using Station.Components._wrapper.revive;
@@ -583,13 +584,13 @@ public class OpenVrManager
         JObject responseData = new JObject { { "experienceId", experienceId } };
         response.Add("responseData", responseData);
         
-        Logger.WriteLog($"Application launching: {targetProcess.MainWindowTitle}/{experienceId}/{targetProcess.Id}", Enums.LogLevel.Normal);
+        Helper.FireAndForget(Task.Run(() => Logger.WriteLog($"Application launching: {targetProcess.MainWindowTitle}/{experienceId}/{targetProcess.Id}", Enums.LogLevel.Normal)));
             
         MessageController.SendResponse("NUC", "QA", response.ToString());
 
         // Update the home page UI
-        UiController.UpdateProcessMessages("processName", targetProcess.MainWindowTitle);
-        UiController.UpdateProcessMessages("processStatus", "Running");
+        Helper.FireAndForget(Task.Run(() => UiController.UpdateProcessMessages("processName", targetProcess.MainWindowTitle)));
+        Helper.FireAndForget(Task.Run(() => UiController.UpdateProcessMessages("processStatus", "Running")));
     }
     #endregion
 

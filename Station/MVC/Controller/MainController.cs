@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
@@ -25,7 +26,7 @@ namespace Station.MVC.Controller;
 
 /// <summary>
 /// A class to control the main aspects of the program and hold static values for
-/// use in other files. Primary function is to setup the localEndPoint (IPEndPoint) 
+/// use in other files. Primary function is to set up the localEndPoint (IPEndPoint) 
 /// and start a server on the specific port.
 /// </summary>
 public static class MainController
@@ -73,11 +74,6 @@ public static class MainController
     public static string? macAddress;
     private static string? versionNumber;
     private static Timer? variableCheck;
-    
-    // //TODO these can be removed in the next update
-    // public static bool isNucUtf8 = false;
-    // public static bool isNucJsonEnabled = true;
-    // //TODO
 
     /// <summary>
     /// Starts the server running on the local machine
@@ -85,7 +81,7 @@ public static class MainController
     public static async void StartProgram()
     {
         //Update the power settings
-        UiController.UpdateStationPowerStatus("On");
+        Helper.FireAndForget(Task.Run(() => UiController.UpdateStationPowerStatus("On")));
         
         // Set and log version information
         SetVersionInformation();
@@ -95,8 +91,7 @@ public static class MainController
         bool envVariablesLoaded = await LoadEnvironmentVariablesAsync();
         
         // Setup server details
-        bool serverSetupSuccessful = SetupServerDetails();
-
+        bool serverSetupSuccessful = await SetupServerDetailsAsync();
         if (!serverSetupSuccessful)
         {
             Logger.WriteLog("Server details were not collected.", Enums.LogLevel.Error);
@@ -110,7 +105,7 @@ public static class MainController
         }
         
         // Initialise Segment
-        Components._segment.Segment.Initialise();
+        Helper.FireAndForget(Task.Run(Components._segment.Segment.Initialise));
         
         //Do not continue if the NUC address is not supplied
         bool collectedIpAddress = SetRemoteEndPoint();
@@ -121,20 +116,26 @@ public static class MainController
         }
 
         // Update the Station mode (this controls the VR status view on the home page)
-        UiController.UpdateStationMode(Helper.GetStationMode().Equals(Helper.STATION_MODE_VR));
+        Helper.FireAndForget(Task.Run(() => UiController.UpdateStationMode(Helper.GetStationMode().Equals(Helper.STATION_MODE_VR))));
 
-        // Set the Id of the Station for UI binding
-        UiController.UpdateStationId(Environment.GetEnvironmentVariable("stationId", EnvironmentVariableTarget.Process) ?? "");
+        // Set the id of the Station for UI binding
+        Helper.FireAndForget(Task.Run(() => UiController.UpdateStationId(Environment.GetEnvironmentVariable("stationId", EnvironmentVariableTarget.Process) ?? "")));
 
         // Continue with additional tasks if environment variables are loaded successfully
-        MockConsole.WriteLine("ENV variables loaded", Enums.LogLevel.Error);
+        Helper.FireAndForget(Task.Run(() => MockConsole.WriteLine("ENV variables loaded", Enums.LogLevel.Error)));
         
-        ValidateInstall("Station");
+        // Validate the Station install location
+        Helper.FireAndForget(Task.Run(() => ValidateInstall("Station")));
         
         // Collect audio devices and videos before starting the server
-        AudioManager.Initialise();
-        VideoManager.Initialise();
-        FileManager.Initialise();
+        var initialiseTasks = new List<Task>
+        {
+            Task.Run(AudioManager.Initialise),
+            Task.Run(VideoManager.Initialise),
+            Task.Run(FileManager.Initialise),
+        };
+        // Wait for initialise tasks in parallel
+        await Task.WhenAll(initialiseTasks);
         
         // Additional tasks
         ThumbnailOrganiser.LoadCache();
@@ -147,7 +148,6 @@ public static class MainController
         {
             InternalDebugger.SetIdleModeActive(Environment.GetEnvironmentVariable("IdleMode", EnvironmentVariableTarget.User).Equals("On"));
         }
-        
         if (InternalDebugger.GetIdleModeActive())
         {
             ModeTracker.Initialise(); //Start tracking any idle time
@@ -160,14 +160,14 @@ public static class MainController
     /// </summary>
     private static void SetVersionInformation()
     {
-        string? currentVersion = Updater.GetVersionNumber();
-        string? currentName = "Ice Cream Sandwich";
+        string currentVersion = Updater.GetVersionNumber();
+        string currentName = "Ice Cream Sandwich";
         
-        UiController.UpdateSoftwareDetails("versionNumber", currentVersion);
-        UiController.UpdateSoftwareDetails("versionName", currentName);
+        Helper.FireAndForget(Task.Run(() => UiController.UpdateSoftwareDetails("versionNumber", currentVersion)));
+        Helper.FireAndForget(Task.Run(() => UiController.UpdateSoftwareDetails("versionName", currentName)));
         
-        Logger.WriteLog($"Version number: {currentVersion}, name: {currentName}", Enums.LogLevel.Error);
-        MockConsole.WriteLine("Loading ENV variables", Enums.LogLevel.Error);
+        Helper.FireAndForget(Task.Run(() => Logger.WriteLog($"Version number: {currentVersion}, name: {currentName}", Enums.LogLevel.Error)));
+        Helper.FireAndForget(Task.Run(() => MockConsole.WriteLine("Loading ENV variables", Enums.LogLevel.Error)));
     }
     
     /// <summary>
@@ -356,37 +356,55 @@ public static class MainController
     /// Collect the necessary system details for starting the service. Including the IP address, mac address
     /// and the current version number.
     /// </summary>
-    private static bool SetupServerDetails()
+    // private static bool SetupServerDetails()
+    private static async Task<bool> SetupServerDetailsAsync()
     {
         try
         {
-            IPAddress? ip = AttemptIpAddressRetrieval();
+            // Offload IP retrieval to a background thread
+            IPAddress? ip = await Task.Run(AttemptIpAddressRetrieval);
             if (ip == null) throw new Exception("Manager class: Server IP Address could not be found");
 
+            // Retrieve previous IP address from environment variables
             string? ipAddressPreviousLaunch = Environment.GetEnvironmentVariable("previousIpAddress", EnvironmentVariableTarget.User);
-            if (ipAddressPreviousLaunch != null && (long)Convert.ToDouble(ipAddressPreviousLaunch) != ip.Address) 
+            if (ipAddressPreviousLaunch != null && ipAddressPreviousLaunch != ip.Address.ToString()) 
             {
-                SentrySdk.CaptureMessage($"Detected IP Address change at: {Helper.GetLabLocationWithStationId()}", SentryLevel.Fatal);
+                // Log IP address change in the background
+                await Task.Run(() =>
+                {
+                    SentrySdk.CaptureMessage($"Detected IP Address change at: {Helper.GetLabLocationWithStationId()}", SentryLevel.Fatal);
+                });
             }
-            Environment.SetEnvironmentVariable("previousIpAddress", ip.Address.ToString(), EnvironmentVariableTarget.User);
 
-            macAddress = SystemInformation.GetMACAddress();
-            versionNumber = Updater.GetVersionNumber(); 
-            localEndPoint = new IPEndPoint(ip.Address, LocalPort);
-            
-            //Update the home panel UI
-            UiController.UpdateSoftwareDetails("ipAddress", localEndPoint.Address.ToString());
-            UiController.UpdateSoftwareDetails("macAddress", macAddress);
+            // Set the new IP address asynchronously
+            await Task.Run(() => Environment.SetEnvironmentVariable("previousIpAddress", ip.Address.ToString(), EnvironmentVariableTarget.User));
 
-            Logger.WriteLog("Server IP Address is: " + localEndPoint.Address, Enums.LogLevel.Normal);
-            Logger.WriteLog("MAC Address is: " + macAddress, Enums.LogLevel.Normal);
-            Logger.WriteLog("Version is: " + versionNumber, Enums.LogLevel.Normal);
+            // Run the following independent tasks in parallel
+            var macAddressTask = Task.Run(SystemInformation.GetMACAddress);
+            var versionNumberTask = Task.Run(Updater.GetVersionNumber);
+            var localEndPointTask = Task.Run(() => new IPEndPoint(ip.Address, LocalPort));
+
+            // Await all parallel tasks
+            await Task.WhenAll(macAddressTask, versionNumberTask, localEndPointTask);
+            macAddress = await macAddressTask;
+            versionNumber = await versionNumberTask;
+            localEndPoint = await localEndPointTask;
+
+            // Fire-and-forget for UI updates and logging with exception handling
+            Helper.FireAndForget(Task.Run(() => UiController.UpdateSoftwareDetails("ipAddress", localEndPoint.Address.ToString())));
+            Helper.FireAndForget(Task.Run(() => UiController.UpdateSoftwareDetails("macAddress", macAddress)));
+            Helper.FireAndForget(Task.Run(() => Logger.WriteLog("Server IP Address is: " + localEndPoint.Address, Enums.LogLevel.Normal)));
+            Helper.FireAndForget(Task.Run(() => Logger.WriteLog("MAC Address is: " + macAddress, Enums.LogLevel.Normal)));
+            Helper.FireAndForget(Task.Run(() => Logger.WriteLog("Version is: " + versionNumber, Enums.LogLevel.Normal)));
+
             return true;
         }
         catch (Exception e)
         {
-            Logger.WriteLog($"SetupServerDetails - Sentry Exception: {e}", Enums.LogLevel.Error);
-            SentrySdk.CaptureException(e);
+            await Task.WhenAll(
+                Task.Run(() => Logger.WriteLog($"SetupServerDetails - Sentry Exception: {e}", Enums.LogLevel.Error)),
+                Task.Run(() => SentrySdk.CaptureException(e))
+            );
             return false;
         }
     }

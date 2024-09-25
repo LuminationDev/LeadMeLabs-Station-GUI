@@ -1,4 +1,5 @@
-﻿using System.Windows;
+﻿using System;
+using System.Windows;
 using Station.Core;
 using Station.MVC.Controller;
 
@@ -83,7 +84,7 @@ public class MainViewModel : ObservableObject
         ViewModelManager.MainViewModel = this;
     }
 
-    private Core.NotifyIconWrapper.NotifyRequestRecord? _notifyRequest;
+    private NotifyIconWrapper.NotifyRequestRecord? _notifyRequest;
     private bool _showInTaskbar;
     private WindowState _windowState;
     
@@ -98,6 +99,17 @@ public class MainViewModel : ObservableObject
             ShowInTaskbar = value != WindowState.Minimized;
         }
     }
+    
+    private string _programTitle = "The Pod";
+    public string ProgramTitle
+    {
+        get => _programTitle;
+        set
+        {
+            _programTitle = value;
+            OnPropertyChanged();
+        }
+    }
 
     public bool ShowInTaskbar
     {
@@ -109,7 +121,7 @@ public class MainViewModel : ObservableObject
         }
     }
 
-    public Core.NotifyIconWrapper.NotifyRequestRecord? NotifyRequest
+    public NotifyIconWrapper.NotifyRequestRecord? NotifyRequest
     {
         get => _notifyRequest;
         set
@@ -118,16 +130,6 @@ public class MainViewModel : ObservableObject
             OnPropertyChanged();
         }
     }
-
-    // private void Notify(string message)
-    // {
-    //     NotifyRequest = new NotifyIconWrapper.NotifyRequestRecord
-    //     {
-    //         Title = "Notify",
-    //         Text = message,
-    //         Duration = 1000
-    //     };
-    // }
     
     private void PowerFunction()
     {
@@ -143,7 +145,8 @@ public class MainViewModel : ObservableObject
 
     private void Loaded()
     {
-        WindowState = WindowState.Normal;
+        // WindowState = WindowState.Normal;
+        Maximise();
     }
     
     private int _windowRadius = 10;
@@ -190,9 +193,14 @@ public class MainViewModel : ObservableObject
         }
         else
         {
-            WindowState = WindowState.Maximized;
-            WindowRadius = 0;
+            Maximise();
         }
+    }
+
+    private void Maximise()
+    {
+        WindowState = WindowState.Maximized;
+        WindowRadius = 0;
     }
     
     private void Closing()

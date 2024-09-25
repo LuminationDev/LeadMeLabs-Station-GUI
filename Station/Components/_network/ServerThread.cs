@@ -17,7 +17,7 @@ namespace Station.Components._network;
 /// <summary>
 /// A server Thread acting as a TCP server, listening for the incoming
 /// messages on the specified port and protocol. A TCP socket will connect,
-/// deliver it's message and then close, there are no long lived sockets.
+/// deliver its message and then close, there are no long-lived sockets.
 /// </summary>
 public class ServerThread
 {
@@ -30,11 +30,6 @@ public class ServerThread
     /// A default buffer size for File Transfer (much larger than regular buffers).
     /// </summary>
     private const int FileBufferSize = 32768;
-
-    /// <summary>
-    /// Track whether an initial connection message has been sent to the NUC.
-    /// </summary>
-    private static bool connectionMessage;
 
     public ServerThread()
     {
@@ -132,20 +127,8 @@ public class ServerThread
             // Read the header message type
             byte[] headerMessageTypeBytes = new byte[headerLength];
             await memoryStream.ReadAsync(headerMessageTypeBytes, 0, headerLength);
-            
-            //TODO This can be removed in subsequent updates
-            // DetermineConnectionType(headerMessageTypeBytes);
-            
-            string headerMessageType;
-            // if (MainController.isNucUtf8)
-            // {
-            //     headerMessageType = Encoding.UTF8.GetString(headerMessageTypeBytes);
-            // }
-            // else
-            // {
-                headerMessageType = Encoding.Unicode.GetString(headerMessageTypeBytes);
-            // }
-            
+
+            var headerMessageType = Encoding.Unicode.GetString(headerMessageTypeBytes);
             switch (headerMessageType)
             {
                 case "text":
@@ -164,41 +147,6 @@ public class ServerThread
             Logger.WriteLog($"Unknown connection event: {e}", Enums.LogLevel.Error);
         }
     }
-
-    // /// <summary>
-    // /// Determine if the incoming message is encoded in UTF8 or Unicode.
-    // /// </summary>
-    // /// <param name="headerMessageTypeBytes"></param>
-    // private void DetermineConnectionType(byte[] headerMessageTypeBytes)
-    // {
-    //     if (!connectionMessage)
-    //     {
-    //         connectionMessage = true;
-    //         //TODO these can be removed in the next update
-    //         MessageController.SendResponse("NUC", "MessageType", "Station:Unicode");
-    //         MessageController.SendResponse("NUC", "MessageType", "Station:Json");
-    //         //TODO
-    //     }
-    //     
-    //     try
-    //     {
-    //         string test = Encoding.Unicode.GetString(headerMessageTypeBytes);
-    //         if (test.Equals("text") || test.Equals("image") || test.Equals("file"))
-    //         {
-    //             MainController.isNucUtf8 = false;
-    //         }
-    //         else
-    //         {
-    //             //The NUC has been restarted and assumes the Station can't handle Unicode
-    //             connectionMessage = false;
-    //             MainController.isNucUtf8 = true;
-    //         }
-    //     }
-    //     catch (Exception e)
-    //     {
-    //         MockConsole.WriteLine($"Cannot Get string: {e}", Enums.LogLevel.Normal);
-    //     }
-    // }
 
     /// <summary>
     /// The server has determined that the incoming message is a string based message.
@@ -231,18 +179,11 @@ public class ServerThread
             Logger.WriteLog($"Encryption key is not set in: ServerThread, StringMessageReceivedAsync()", Enums.LogLevel.Normal);
             return;
         };
-
-        // if (MainController.isNucUtf8)
-        // {
-        //     data = EncryptionHelper.Decrypt(data, key);
-        // }
-        // else
-        // {
-            data = EncryptionHelper.UnicodeDecrypt(data, key);
-        // }
+        
+        data = EncryptionHelper.UnicodeDecrypt(data, key);
         
         //Data should never be null at this point
-        Logger.WriteLog($"From {endPoint}, Decrypted Text received: {data}", Enums.LogLevel.Debug, !data.Contains(":Ping:"));
+        Helper.FireAndForget(Task.Run(() => Logger.WriteLog($"From {endPoint}, Decrypted Text received: {data}", Enums.LogLevel.Debug, !data.Contains(":Ping:"))));
 
         //If the data is not a ping run the additional tasks
         if (data.Contains(":Ping:")) return;
