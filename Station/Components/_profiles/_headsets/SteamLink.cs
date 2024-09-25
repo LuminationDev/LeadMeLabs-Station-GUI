@@ -15,6 +15,7 @@ namespace Station.Components._profiles._headsets;
 
 public class SteamLink : Profile, IVrHeadset
 {
+    public static bool HeadsetConnected = false;
     private bool _restartingSteamVr;
     private Statuses Statuses { get; } = new();
 
@@ -77,18 +78,22 @@ public class SteamLink : Profile, IVrHeadset
             switch (Statuses.SoftwareStatus)
             {
                 case DeviceStatus.Connected when current.Contains("Connection inactive"):
+                    HeadsetConnected = false;
                     Statuses.UpdateHeadset(VrManager.Software, DeviceStatus.Lost);
 
+                    //Manual restart as Steam VR needs to be reset
                     _restartingSteamVr = true;
                     await OpenVrManager.RestartSteamVr();
                     _restartingSteamVr = false;
                     break;
 
                 case DeviceStatus.Off when current.Contains("Connection inactive"):
+                    HeadsetConnected = false;
                     Statuses.UpdateHeadset(VrManager.Software, DeviceStatus.Lost);
                     break;
 
                 case DeviceStatus.Lost or DeviceStatus.Off when current.Contains("New Session detected"):
+                    HeadsetConnected = true;
                     Statuses.UpdateHeadset(VrManager.Software, DeviceStatus.Connected);
                     break;
             }

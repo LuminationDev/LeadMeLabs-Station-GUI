@@ -8,6 +8,7 @@ using Station.Components._commandLine;
 using Station.Components._interfaces;
 using Station.Components._notification;
 using Station.Components._profiles;
+using Station.Components._profiles._headsets;
 using Station.Components._utils;
 using Station.Components._wrapper.steam;
 using Station.MVC.Controller;
@@ -93,6 +94,14 @@ public static class StationMonitoringThread
         //An early exit if the vrmonitor (SteamVR) process is not currently running
         if (ProcessManager.GetProcessesByName("vrmonitor").Length == 0) return;
 
+        //If using SteamLink do not attempt to connect to OpenVR until a headset is detected
+        string? headsetType = Environment.GetEnvironmentVariable("HeadsetType", EnvironmentVariableTarget.Process);
+        if (string.Equals(headsetType, "SteamLink", StringComparison.OrdinalIgnoreCase) && SteamLink.HeadsetConnected == false)
+        {
+            SteamScripts.CheckForSteamLogError();
+            return;
+        }
+        
         //Attempt to contact OpenVR, if this fails check the logs for errors
         if (MainController.openVrManager?.InitialiseOpenVr() ?? false)
         {
