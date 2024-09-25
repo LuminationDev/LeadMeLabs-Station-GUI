@@ -3,12 +3,14 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Linq;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Data;
 using System.Windows.Threading;
 using LeadMeLabsLibrary;
 using Station.Components._models;
 using Station.Components._notification;
+using Station.Components._utils;
 using Station.Core;
 using Station.MVC.Controller;
 
@@ -144,9 +146,9 @@ public class ExperiencesViewModel : ObservableObject
     }
     
     /// <summary>
-    /// 
+    /// An experience tile has been selected, scrap the id and status before passing it on to be managed.
     /// </summary>
-    /// <param name="parameters"></param>
+    /// <param name="parameters">An object containing the bound parameters of the experience card</param>
     private void ExperienceClick(object parameters)
     {
         if (parameters is not Tuple<string, string> tuple) return;
@@ -154,7 +156,16 @@ public class ExperiencesViewModel : ObservableObject
         // Access the parameters
         string experienceId = tuple.Item1;
         string status = tuple.Item2;
+        Helper.FireAndForget(Task.Run(() => ManageExperience(status, experienceId)));
+    }
 
+    /// <summary>
+    /// Based on the status stop or start an experience.
+    /// </summary>
+    /// <param name="status">The current status of the experience</param>
+    /// <param name="experienceId">The Id of an individual experience</param>
+    private void ManageExperience(string status, string experienceId)
+    {
         //NOTE: The following will be stopped by the vive check etc..
         switch (status)
         {

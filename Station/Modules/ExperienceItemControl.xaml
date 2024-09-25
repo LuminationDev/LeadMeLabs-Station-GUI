@@ -11,6 +11,19 @@
     <UserControl.Resources>
         <converters:ExperienceFilterConverter x:Key="StationFilterConverter" />
         <converters:ImageUrlConverter x:Key="ImageUrlConverter"/>
+        
+        <Style x:Key="NoStyleButton" TargetType="Button">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderBrush" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <ContentPresenter />
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
     </UserControl.Resources>
     
     <Border Width="300" Height="200" Margin="0, 0, 0, 25">
@@ -25,11 +38,11 @@
                         </LinearGradientBrush>
                     </Setter.Value>
                 </Setter>
+                <Setter Property="Cursor" Value="Hand" />
                 <Style.Triggers>
                     <DataTrigger Binding="{Binding Status}" Value="Running">
                         <Setter Property="Background">
                             <Setter.Value>
-                                <!-- Set the background color for status "On" -->
                                 <LinearGradientBrush StartPoint="0,0" EndPoint="1,2">
                                     <GradientStop Color="#A3CB38" Offset="0.0"/>
                                     <GradientStop Color="#009432" Offset="1"/>
@@ -40,7 +53,6 @@
                     <DataTrigger Binding="{Binding Status}" Value="Stopped">
                         <Setter Property="Background">
                             <Setter.Value>
-                                <!-- Set the background color for status "Off" -->
                                 <LinearGradientBrush StartPoint="0,0" EndPoint="1,2">
                                     <GradientStop Color="White" Offset="0.0"/>
                                     <GradientStop Color="DimGray" Offset="1"/>
@@ -48,6 +60,17 @@
                             </Setter.Value>
                         </Setter>
                     </DataTrigger>
+                    <!-- Trigger for Mouse Over -->
+                    <Trigger Property="IsMouseOver" Value="True">
+                        <Setter Property="Background">
+                            <Setter.Value>
+                                <LinearGradientBrush StartPoint="0,0" EndPoint="1,2">
+                                    <GradientStop Color="#D0E7F9" Offset="0.0"/> <!-- Lighter blue -->
+                                    <GradientStop Color="#007BFF" Offset="1"/> <!-- Darker blue -->
+                                </LinearGradientBrush>
+                            </Setter.Value>
+                        </Setter>
+                    </Trigger>
                 </Style.Triggers>
             </Style>
         </Border.Style>
@@ -56,101 +79,105 @@
             <RectangleGeometry RadiusX="10" RadiusY="10" Rect="0,0,300,200"/>
         </Border.Clip>
         
-        <DockPanel>
-            <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" VerticalAlignment="Top" Height="40">
-                <TextBlock Text="{Binding Name, FallbackValue=Experience Name}"
-                           VerticalAlignment="Center"
-                           Margin="10,10,0,0"
-                           Foreground="Black"
-                           FontSize="18"
-                           FontFamily="../Fonts/#Poppins"
-                           TextTrimming="CharacterEllipsis"
-                           Width="250">
-                    <TextBlock.ToolTip>
-                        <ToolTip Content="{Binding Name, FallbackValue=Experience Name}" />
-                    </TextBlock.ToolTip>
-                </TextBlock>
-                
-                <!-- Control buttons to launch/stop the experience -->
-                <WrapPanel>
+        <Button Command="{Binding DataContext.ExperienceClickCommand, RelativeSource={RelativeSource AncestorType={x:Type ItemsControl}}}"
+                Cursor="Hand"
+                Style="{StaticResource NoStyleButton}">
+            
+            <Button.CommandParameter>
+                <MultiBinding Converter="{StaticResource StationFilterConverter}">
+                    <MultiBinding.Bindings>
+                        <Binding Path="ID" />
+                        <Binding Path="Status" />
+                    </MultiBinding.Bindings>
+                </MultiBinding>
+            </Button.CommandParameter>
+            
+            <DockPanel>
+                <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" VerticalAlignment="Top" Height="40">
+                    <TextBlock Text="{Binding Name, FallbackValue=Experience Name}"
+                               VerticalAlignment="Center"
+                               Margin="10,10,0,0"
+                               Foreground="Black"
+                               FontSize="18"
+                               FontFamily="../Fonts/#Poppins"
+                               TextTrimming="CharacterEllipsis"
+                               Width="250">
+                        <TextBlock.ToolTip>
+                            <ToolTip Content="{Binding Name, FallbackValue=Experience Name}" />
+                        </TextBlock.ToolTip>
+                    </TextBlock>
                     
-                    <Button Command="{Binding Path=DataContext.ExperienceClickCommand, RelativeSource={RelativeSource AncestorType={x:Type ItemsControl}}}"
-                            Cursor="Hand"
-                            Margin="0,10,0,0">
+                    <!-- Control buttons to launch/stop the experience -->
+                    <WrapPanel>
                         
-                        <Button.CommandParameter>
-                            <MultiBinding Converter="{StaticResource StationFilterConverter}">
-                                <MultiBinding.Bindings>
-                                    <Binding Path="ID" />
-                                    <Binding Path="Status" />
-                                </MultiBinding.Bindings>
-                            </MultiBinding>
-                        </Button.CommandParameter>
-                        
-                        <Button.Template>
-                            <ControlTemplate TargetType="Button">
-                                <Border Width="30" Height="30">
-                                    <Border.Style>
-                                        <Style TargetType="Border">
-                                            <Style.Setters>
-                                                <Setter Property="CornerRadius" Value="40"/>
-                                                <Setter Property="BorderThickness" Value="0"/>
-                                            </Style.Setters>
-                                            
-                                            <Style.Triggers>
-                                                <!--Handle the case where an experience is launching-->
-                                                <DataTrigger Binding="{Binding Status}" Value="Launching">
-                                                    <Setter Property="Background" Value="Transparent" />
-                                                </DataTrigger>
+                        <Button Margin="0,10,0,0"
+                                IsHitTestVisible="False">
+                            
+                            <Button.Template>
+                                <ControlTemplate TargetType="Button">
+                                    <Border Width="30" Height="30">
+                                        <Border.Style>
+                                            <Style TargetType="Border">
+                                                <Style.Setters>
+                                                    <Setter Property="CornerRadius" Value="40"/>
+                                                    <Setter Property="BorderThickness" Value="0"/>
+                                                </Style.Setters>
                                                 
-                                                <MultiDataTrigger>
-                                                    <MultiDataTrigger.Conditions>
-                                                        <Condition Binding="{Binding IsMouseOver, RelativeSource={RelativeSource Self}}" Value="True"/>
-                                                    </MultiDataTrigger.Conditions>
-                                                    <Setter Property="Background" Value="LightGray"/>
-                                                </MultiDataTrigger>
-                                            </Style.Triggers>
-                                        </Style>
-                                    </Border.Style>
-                                    
-                                    <Image Width="30" Height="30">
-                                        <Image.Style>
-                                            <Style TargetType="Image">
                                                 <Style.Triggers>
-                                                    <DataTrigger Binding="{Binding Status}" Value="Stopped">
-                                                        <Setter Property="Margin" Value="2,0,0,0"/>
-                                                        <Setter Property="Source" Value="../Assets/Icons/experience_play.png"/>
-                                                    </DataTrigger>
+                                                    <!--Handle the case where an experience is launching-->
                                                     <DataTrigger Binding="{Binding Status}" Value="Launching">
-                                                        <Setter Property="gif:ImageBehavior.AnimatedSource" Value="../Assets/Gifs/loadingSpinnerTransparent.gif"/>
+                                                        <Setter Property="Background" Value="Transparent" />
                                                     </DataTrigger>
-                                                    <DataTrigger Binding="{Binding Status}" Value="Closing">
-                                                        <Setter Property="gif:ImageBehavior.AnimatedSource" Value="../Assets/Gifs/loadingSpinnerTransparent.gif"/>
-                                                    </DataTrigger>
-                                                    <DataTrigger Binding="{Binding Status}" Value="Running">
-                                                        <Setter Property="Source" Value="../Assets/Icons/experience_stop.png"/>
-                                                    </DataTrigger>
+                                                    
+                                                    <MultiDataTrigger>
+                                                        <MultiDataTrigger.Conditions>
+                                                            <Condition Binding="{Binding IsMouseOver, RelativeSource={RelativeSource Self}}" Value="True"/>
+                                                        </MultiDataTrigger.Conditions>
+                                                        <Setter Property="Background" Value="LightGray"/>
+                                                    </MultiDataTrigger>
                                                 </Style.Triggers>
                                             </Style>
-                                        </Image.Style>
-                                    </Image>
-                                </Border>
-                            </ControlTemplate>
-                        </Button.Template>
-                    </Button>
-                    
-                </WrapPanel>
-            </StackPanel>
-            
-            <Image Margin="10, 10, 10, 10">
-                <Image.Source>
-                    <MultiBinding Converter="{StaticResource ImageUrlConverter}">
-                        <Binding Path="Type"/>
-                        <Binding Path="ID"/>
-                        <Binding Path="Name"/>
-                    </MultiBinding>
-                </Image.Source>
-            </Image>
-        </DockPanel>
+                                        </Border.Style>
+                                        
+                                        <Image Width="30" Height="30">
+                                            <Image.Style>
+                                                <Style TargetType="Image">
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding Status}" Value="Stopped">
+                                                            <Setter Property="Margin" Value="2,0,0,0"/>
+                                                            <Setter Property="Source" Value="../Assets/Icons/experience_play.png"/>
+                                                        </DataTrigger>
+                                                        <DataTrigger Binding="{Binding Status}" Value="Launching">
+                                                            <Setter Property="gif:ImageBehavior.AnimatedSource" Value="../Assets/Gifs/loadingSpinnerTransparent.gif"/>
+                                                        </DataTrigger>
+                                                        <DataTrigger Binding="{Binding Status}" Value="Closing">
+                                                            <Setter Property="gif:ImageBehavior.AnimatedSource" Value="../Assets/Gifs/loadingSpinnerTransparent.gif"/>
+                                                        </DataTrigger>
+                                                        <DataTrigger Binding="{Binding Status}" Value="Running">
+                                                            <Setter Property="Source" Value="../Assets/Icons/experience_stop.png"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Image.Style>
+                                        </Image>
+                                    </Border>
+                                </ControlTemplate>
+                            </Button.Template>
+                        </Button>
+                        
+                    </WrapPanel>
+                </StackPanel>
+                
+                <Image Margin="10, 10, 10, 10">
+                    <Image.Source>
+                        <MultiBinding Converter="{StaticResource ImageUrlConverter}">
+                            <Binding Path="Type"/>
+                            <Binding Path="ID"/>
+                            <Binding Path="Name"/>
+                        </MultiBinding>
+                    </Image.Source>
+                </Image>
+            </DockPanel>
+        </Button>
     </Border>
 </UserControl>
