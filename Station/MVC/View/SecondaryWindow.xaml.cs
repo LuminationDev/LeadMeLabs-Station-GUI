@@ -1,6 +1,7 @@
 using System;
 using System.Windows;
 using System.Windows.Forms;
+using Station.Components._windows;
 using Station.MVC.ViewModel;
 using MessageBox = System.Windows.Forms.MessageBox;
 
@@ -11,8 +12,9 @@ public partial class SecondaryWindow
     public SecondaryWindow()
     {
         InitializeComponent();
-
-        Screen s = Screen.AllScreens[0];
+        
+        int index = WindowTracker.PrimaryScreenIndex;
+        Screen s = Screen.AllScreens[index];
         System.Drawing.Rectangle r  = s.WorkingArea;
         this.Top = r.Top;
         this.Left = r.Left;
