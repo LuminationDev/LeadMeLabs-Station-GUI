@@ -1,5 +1,7 @@
 ﻿using System.Windows;
 using System.Windows.Forms;
+using Station.Components._windows;
+
 
 namespace Station.MVC.View;
 
@@ -12,7 +14,8 @@ public partial class MainWindow
     {
         InitializeComponent();
         
-        Screen s = Screen.AllScreens[2];
+        int index = WindowTracker.TouchScreenIndex;
+        Screen s = Screen.AllScreens[index];
         System.Drawing.Rectangle r  = s.WorkingArea;
         this.Top = r.Top;
         this.Left = r.Left;

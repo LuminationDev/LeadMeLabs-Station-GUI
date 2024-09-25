@@ -38,6 +38,8 @@ namespace Station
             currentDomain.ProcessExit += ProcessExitHandler;
             
             // Initialize the window tracking system
+            _windowTracker = new WindowTracker();
+            _windowTracker.StartTracking();
             windowEventTracker = new WindowEventTracker();
             
             // Parallelize secondary tasks
@@ -63,7 +65,10 @@ namespace Station
 
             MainController.StartProgram();
         }
-
+        
+        /// <summary>
+        /// Lazy load the secondary window.
+        /// </summary>
         private void LoadSecondaryWindow()
         {
             Dispatcher.Invoke(() =>
