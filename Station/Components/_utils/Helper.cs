@@ -1,40 +1,68 @@
 using System;
-using System.Linq;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using LeadMeLabsLibrary;
+using Station.Components._enums;
 
 namespace Station.Components._utils;
 
 public static class Helper
 {
-    public const string STATION_MODE_VR = "VR";
-    public const string STATION_MODE_APPLIANCE = "Appliance";
-    public const string STATION_MODE_CONTENT = "Content";
-    private static readonly string[] STATION_MODES = { STATION_MODE_VR, STATION_MODE_APPLIANCE, STATION_MODE_CONTENT };
+    /// <summary>
+    /// Hold a reference to the Station mode that has been set for this session.
+    /// </summary>
+    public static StationMode Mode { get; private set; }
 
-    public static string GetStationMode()
+    /// <summary>
+    /// Collect and set the Mode for the session.
+    /// </summary>
+    public static void SetStationMode()
     {
-        string? mode = Environment.GetEnvironmentVariable("StationMode", EnvironmentVariableTarget.Process);
-        if (mode == null)
-        {
-            Environment.SetEnvironmentVariable("StationMode", STATION_MODE_VR);
-            mode = STATION_MODE_VR;
-        }
-        if (mode.Equals("vr"))
-        {
-            Environment.SetEnvironmentVariable("StationMode", STATION_MODE_VR);
-            mode = STATION_MODE_VR;
-        }
+        string? suppliedMode = Environment.GetEnvironmentVariable("StationMode", EnvironmentVariableTarget.Process);
 
-        if (!STATION_MODES.Contains(mode))
+        // Map station mode strings to their respective Mode enum values
+        var modeMap = new Dictionary<string, StationMode>(StringComparer.OrdinalIgnoreCase)
         {
-            Logger.WriteLog($"Station Mode is not set or supported: {mode}.", Enums.LogLevel.Error);
+            { "vr", StationMode.VirtualReality },
+            { "content", StationMode.Content },
+            { "appliance", StationMode.Appliance },
+            { "pod", StationMode.Pod }
+        };
+
+        if (suppliedMode == null || !modeMap.TryGetValue(suppliedMode, out var selectedMode))
+        {
+            Logger.WriteLog($"Station Mode is not set or unsupported: {suppliedMode ?? "null"}.", Enums.LogLevel.Error);
             throw new Exception("Station in unsupported mode");
         }
 
-        return mode;
+        // Set environment variable and update _mode
+        Environment.SetEnvironmentVariable("StationMode", Attributes.GetEnumValue(selectedMode));
+        Mode = selectedMode;
+    }
+
+    /// <summary>
+    /// Check if the Station is VR compatible; this can be if the Mode is set to VR or Pod
+    /// </summary>
+    /// <returns>A bool if the Mode is VR or Pod</returns>
+    public static bool IsStationVrCompatible()
+    {
+        return Mode is StationMode.VirtualReality or StationMode.Pod;
+    }
+
+    /// <summary>
+    /// Check what the Mode of the Station is set to.
+    /// </summary>
+    /// <param name="modeToCheck"></param>
+    /// <returns></returns>
+    public static bool IsMode(StationMode modeToCheck)
+    {
+        return Mode == modeToCheck;
     }
     
+    /// <summary>
+    /// Get the lab location and station id of the Station. If they are null or undefined returns Unknown
+    /// </summary>
+    /// <returns>A string containing the lab location and station id.</returns>
     public static string GetLabLocationWithStationId()
     {
         return (Environment.GetEnvironmentVariable("LabLocation", EnvironmentVariableTarget.Process) ?? "Unknown") +

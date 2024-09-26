@@ -11,10 +11,24 @@ public class SecondaryViewModel : ObservableObject
     // Commands
     public RelayCommand LoadedCommand { get; }
     public event Action<MediaElement>? MediaElementLoaded;
+    public static event Action<bool>? ToggleTopmostRequested;
 
     public SecondaryViewModel()
     {
         LoadedCommand = new RelayCommand(_ => Loaded());
+    }
+    
+    private bool _isTopmost = true;
+    public bool IsTopmost
+    {
+        get => _isTopmost;
+        set
+        {
+            if (_isTopmost == value) return;
+            _isTopmost = value;
+            OnPropertyChanged();
+            ToggleTopmostRequested?.Invoke(_isTopmost);
+        }
     }
     
     private WindowState _windowState;

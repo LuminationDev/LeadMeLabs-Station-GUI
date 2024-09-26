@@ -62,7 +62,7 @@ public class WrapperManager
     {
         ValidateManifestFiles();
         StartPipeServer();
-        SessionController.SetupStationProfile(Helper.GetStationMode());
+        SessionController.SetupStationProfile(Helper.Mode);
         ScheduledTaskQueue.EnqueueTask(() => SessionController.UpdateState(State.Experiences), TimeSpan.FromSeconds(2));
         Task.Factory.StartNew(CollectAllApplications);
     }
@@ -291,7 +291,7 @@ public class WrapperManager
 
         // Check if there are steam details as the Station may be non-VR without a Steam account
         ContentProfile? contentProfile = Profile.CastToType<ContentProfile>(SessionController.StationProfile);
-        if (Helper.GetStationMode().Equals(Helper.STATION_MODE_VR) ||
+        if (Helper.IsStationVrCompatible() ||
             (contentProfile != null && contentProfile.DoesProfileHaveAccount("Steam")))
         {
             List<T>? steamApplications = silently ? SteamScripts.FilterAvailableExperiences<T>(SteamScripts.InstalledApplications, true) : SteamWrapper.CollectApplications<T>();
@@ -355,7 +355,7 @@ public class WrapperManager
     /// </summary>
     private static async Task StartVrProcesses()
     {
-        if (Helper.GetStationMode().Equals(Helper.STATION_MODE_VR))
+        if (Helper.IsStationVrCompatible())
         {
             //Exit Steam only if it is on the login window
             bool signIn = ProcessManager.GetProcessMainWindowTitle("steamwebhelper")
@@ -644,7 +644,7 @@ public class WrapperManager
     /// <param name="headerPath">A different path to the header image (optional).</param>
     public static void StoreApplication(string wrapperType, string id, string name, bool isVr = true, string? launchParameters = null, string? altPath = null, JObject? subtype = null, string? headerPath = null)
     {
-        if (!Helper.GetStationMode().Equals(Helper.STATION_MODE_VR) && isVr)
+        if (!Helper.IsStationVrCompatible() && isVr)
         {
             return;
         }

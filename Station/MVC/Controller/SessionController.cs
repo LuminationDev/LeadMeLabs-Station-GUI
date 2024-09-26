@@ -60,14 +60,15 @@ public static class SessionController
     /// Setup the Station profiles using the supplied .config information. The profile determines what processes are
     /// started and monitored.
     /// </summary>
-    public static void SetupStationProfile(string profile)
+    public static void SetupStationProfile(StationMode profile)
     {
-        switch (profile.ToLower())
+        switch (profile)
         {
-            case "vr":
+            case StationMode.VirtualReality:
+            case StationMode.Pod:
                 StationProfile = new VrProfile();
                 break;
-            case "content":
+            case StationMode.Content:
                 StationProfile = new ContentProfile();
                 break;
             default:

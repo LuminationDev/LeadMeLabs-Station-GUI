@@ -165,7 +165,7 @@ public static class QualityManager
                 JObject response = new JObject { { "response", "ExperienceLaunchAttempt" } };
                 JObject responseData = new JObject();
                 
-                if (!Helper.GetStationMode().Equals(Helper.STATION_MODE_VR) && experience.IsVr)
+                if (!Helper.IsStationVrCompatible() && experience.IsVr)
                 {
                     responseData.Add("result", "warning");
                     responseData.Add("message", "Experience is a VR experience and Station is a non-vr Station");

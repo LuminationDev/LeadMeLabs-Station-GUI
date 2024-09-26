@@ -550,7 +550,7 @@ public class SteamConfigChecks
             return qaChecks;
         }
         
-        if (!Helper.GetStationMode().Equals(Helper.STATION_MODE_VR))
+        if (!Helper.IsStationVrCompatible())
         {
             homeAppDisabled.SetPassed("Station is a non-vr station");
             controllerTimeoutSetToZero.SetPassed("Station is a non-vr station");
