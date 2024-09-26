@@ -130,7 +130,7 @@ public class ConfigurationChecks
         list.Add(CheckEnvironmentVariable("NucAddress", "environment_nuc_address"));
         list.Add(CheckEnvironmentVariable("StationId", "environment_station_id"));
         list.Add(CheckEnvironmentVariable("AppKey", "environment_encryption_key"));
-        if (Helper.GetStationMode().Equals(Helper.STATION_MODE_VR))
+        if (Helper.IsStationVrCompatible())
         {
             list.Add(CheckEnvironmentVariable("HeadsetType", "environment_headset_type"));
         }

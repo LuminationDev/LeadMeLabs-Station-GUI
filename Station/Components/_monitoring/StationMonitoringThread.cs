@@ -12,6 +12,7 @@ using Station.Components._profiles._headsets;
 using Station.Components._utils;
 using Station.Components._wrapper.steam;
 using Station.MVC.Controller;
+using Station.MVC.ViewModel;
 
 namespace Station.Components._monitoring;
 
@@ -62,7 +63,7 @@ public static class StationMonitoringThread
             return;
         }
 
-        if (Helper.GetStationMode().Equals(Helper.STATION_MODE_VR))
+        if (Helper.IsStationVrCompatible())
         {
             new Task(OpenVrCheck).Start(); //Perform as separate task in case SteamVR is restarting.
         }
@@ -72,7 +73,7 @@ public static class StationMonitoringThread
         // Safe cast for potential content profile
         ContentProfile? contentProfile = Profile.CastToType<ContentProfile>(SessionController.StationProfile);
 
-        if (Helper.GetStationMode().Equals(Helper.STATION_MODE_VR) || (contentProfile != null && contentProfile.DoesProfileHaveAccount("Steam")))
+        if (Helper.IsStationVrCompatible() || (contentProfile != null && contentProfile.DoesProfileHaveAccount("Steam")))
         {
             NewSteamProcessesCheck();
         }
@@ -93,6 +94,10 @@ public static class StationMonitoringThread
         
         //An early exit if the vrmonitor (SteamVR) process is not currently running
         if (ProcessManager.GetProcessesByName("vrmonitor").Length == 0) return;
+        
+        //Allow other programs to appear above the screen saver
+        if (MainViewModel.ViewModelManager.SecondaryViewModel != null)
+            MainViewModel.ViewModelManager.SecondaryViewModel.IsTopmost = false;
 
         //If using SteamLink do not attempt to connect to OpenVR until a headset is detected
         string? headsetType = Environment.GetEnvironmentVariable("HeadsetType", EnvironmentVariableTarget.Process);

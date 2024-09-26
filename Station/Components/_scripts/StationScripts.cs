@@ -3,6 +3,7 @@ using System.Threading;
 using System.Timers;
 using LeadMeLabsLibrary;
 using Station.Components._commandLine;
+using Station.Components._enums;
 using Station.Components._overlay;
 using Station.Components._utils;
 using Station.MVC.Controller;
@@ -88,7 +89,7 @@ public static class StationScripts
     {
         int cancelTime = 10000; // give the user 10 seconds to cancel the shutdown
         int actualCancelTime = 15; // time before the computer actually shuts down
-        if (Helper.GetStationMode().Equals(Helper.STATION_MODE_APPLIANCE))
+        if (Helper.IsMode(StationMode.Appliance))
         {
             cancelTime = 0;
             actualCancelTime = 0;

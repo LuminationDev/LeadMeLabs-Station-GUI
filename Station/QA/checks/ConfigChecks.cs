@@ -1,6 +1,8 @@
 ﻿using System;
 using LeadMeLabsLibrary;
 using Newtonsoft.Json.Linq;
+using Station.Components._enums;
+using Station.Components._utils;
 
 namespace Station.QA.checks;
 
@@ -11,15 +13,17 @@ public class ConfigChecks
      */
     public JObject GetLocalStationDetails()
     {
-        JObject responseData = new JObject();
-        responseData.Add("ipAddress", SystemInformation.GetIPAddress()?.ToString());
-        responseData.Add("nucIpAddress", GetExpectedNucAddress());
-        responseData.Add("id", GetStationId());
-        responseData.Add("labLocation", GetLabLocation());
-        responseData.Add("stationMode", GetStationMode());
-        responseData.Add("room", GetStationRoom());
-        responseData.Add("macAddress", SystemInformation.GetMACAddress());
-        
+        JObject responseData = new JObject
+        {
+            { "ipAddress", SystemInformation.GetIPAddress()?.ToString() },
+            { "nucIpAddress", GetExpectedNucAddress() },
+            { "id", GetStationId() },
+            { "labLocation", GetLabLocation() },
+            { "stationMode", Attributes.GetEnumValue(Helper.Mode) },
+            { "room", GetStationRoom() },
+            { "macAddress", SystemInformation.GetMACAddress() }
+        };
+
         return responseData;
     }
     

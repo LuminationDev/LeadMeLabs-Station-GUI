@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using LeadMeLabsLibrary;
 using Station.Components._commandLine;
 using Station.Components._notification;
+using Station.Components._utils;
 
 namespace Station._config;
 
@@ -15,10 +16,28 @@ public static class DotEnv
     private static readonly string FilePath = $"{StationCommandLine.StationLocation}\\_config\\config.env";
 
     /// <summary>
+    /// Loads environment variables asynchronously and handles any exceptions that may occur.
+    /// </summary>
+    /// <returns>True if the environment variables are loaded successfully, false otherwise.</returns>
+    public static async Task<bool> LoadEnvironmentVariablesAsync()
+    {
+        try
+        {
+            return await Load();
+        }
+        catch (Exception ex)
+        {
+            Logger.WriteLog("Failed loading ENV variables", Enums.LogLevel.Error);
+            Logger.WriteLog(ex, Enums.LogLevel.Error);
+            return false;
+        }
+    }
+    
+    /// <summary>
     /// Load the variables within the config.env into the local environment for the running
     /// process.
     /// </summary>
-    public static Task<bool> Load()
+    private static Task<bool> Load()
     {
         try
         {
@@ -57,7 +76,9 @@ public static class DotEnv
             }
 #if DEBUG
             IPAddress? ip = SystemInformation.GetIPAddress();
-            Environment.SetEnvironmentVariable("nucAddress", ip?.ToString());   
+            Environment.SetEnvironmentVariable("nucAddress", ip?.ToString());
+            Environment.SetEnvironmentVariable("HeadsetType", "SteamLink");
+            Environment.SetEnvironmentVariable("StationMode", "Pod");
 #endif
         } 
         catch (Exception ex)

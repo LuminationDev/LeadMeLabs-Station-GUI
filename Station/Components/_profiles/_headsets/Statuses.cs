@@ -541,7 +541,7 @@ public class Statuses
         QaCheck baseStationsConnected = new QaCheck("base_stations_connected");
         QaCheck baseStationsFirmware = new QaCheck("base_stations_firmware");
 
-        if (!Helper.GetStationMode().Equals(Helper.STATION_MODE_VR))
+        if (!Helper.IsStationVrCompatible())
         {
             headsetConnected.SetPassed("Station is a non-vr station");
             headsetFirmwareUpToDate.SetPassed("Station is a non-vr station");

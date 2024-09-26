@@ -4,7 +4,9 @@ using System.Threading.Tasks;
 using System.Windows;
 using LeadMeLabsLibrary;
 using Sentry;
+using Station._config;
 using Station.Components._commandLine;
+using Station.Components._enums;
 using Station.Components._managers;
 using Station.Components._utils;
 using Station.Components._utils._steamConfig;
@@ -19,6 +21,7 @@ namespace Station
     /// </summary>
     public partial class App
     {
+        public static bool EnvVariablesLoaded = false;
         public static int steamProcessId = 0;
         public static WindowEventTracker? windowEventTracker;
         private WindowTracker? _windowTracker;
@@ -37,9 +40,21 @@ namespace Station
             currentDomain.UnhandledException += UnhandledExceptionHandler;
             currentDomain.ProcessExit += ProcessExitHandler;
             
+            // Load the environment variables and set the Station mode
+            EnvVariablesLoaded = await DotEnv.LoadEnvironmentVariablesAsync();
+            if (!EnvVariablesLoaded)
+            {
+                MessageBox.Show("No config found. Please enter the configuration details and then restart the program.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                return;
+            }
+            Helper.SetStationMode();
+            
             // Initialize the window tracking system
-            _windowTracker = new WindowTracker();
-            _windowTracker.StartTracking();
+            if (Helper.IsMode(StationMode.Pod))
+            {
+                _windowTracker = new WindowTracker();
+                _windowTracker.StartTracking();
+            }
             windowEventTracker = new WindowEventTracker();
             
             // Parallelize secondary tasks
@@ -54,15 +69,15 @@ namespace Station
             MainWindow mainWindow = new();
             mainWindow.Show();
 
-            // Load the secondary window asynchronously
-            var secondaryWindowTask = Task.Run(LoadSecondaryWindow);
+            // Load the secondary window task if in Pod mode
+            Task secondaryWindowTask = Helper.IsMode(StationMode.Pod) ? Task.Run(LoadSecondaryWindow) : Task.CompletedTask;
 
             // Wait for secondary tasks in parallel
             await Task.WhenAll(secondaryTasks);
 
-            // Start secondary window after everything else
+            // Await the secondary window task (will complete instantly if not in Pod mode)
             await secondaryWindowTask;
-
+            
             MainController.StartProgram();
         }
         

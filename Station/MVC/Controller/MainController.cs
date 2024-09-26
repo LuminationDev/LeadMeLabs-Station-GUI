@@ -87,20 +87,11 @@ public static class MainController
         SetVersionInformation();
         Environment.SetEnvironmentVariable("POWERSHELL_TELEMETRY_OPTOUT", "1");
         
-        // Load environment variables
-        bool envVariablesLoaded = await LoadEnvironmentVariablesAsync();
-        
         // Setup server details
         bool serverSetupSuccessful = await SetupServerDetailsAsync();
         if (!serverSetupSuccessful)
         {
             Logger.WriteLog("Server details were not collected.", Enums.LogLevel.Error);
-            return;
-        }
-
-        if (!envVariablesLoaded)
-        {
-            UiController.UpdateCurrentState("No config...");
             return;
         }
         
@@ -116,7 +107,7 @@ public static class MainController
         }
 
         // Update the Station mode (this controls the VR status view on the home page)
-        Helper.FireAndForget(Task.Run(() => UiController.UpdateStationMode(Helper.GetStationMode().Equals(Helper.STATION_MODE_VR))));
+        Helper.FireAndForget(Task.Run(() => UiController.UpdateStationMode(Helper.IsStationVrCompatible())));
 
         // Set the id of the Station for UI binding
         Helper.FireAndForget(Task.Run(() => UiController.UpdateStationId(Environment.GetEnvironmentVariable("stationId", EnvironmentVariableTarget.Process) ?? "")));
@@ -169,24 +160,6 @@ public static class MainController
         Helper.FireAndForget(Task.Run(() => Logger.WriteLog($"Version number: {currentVersion}, name: {currentName}", Enums.LogLevel.Error)));
         Helper.FireAndForget(Task.Run(() => MockConsole.WriteLine("Loading ENV variables", Enums.LogLevel.Error)));
     }
-    
-    /// <summary>
-    /// Loads environment variables asynchronously and handles any exceptions that may occur.
-    /// </summary>
-    /// <returns>True if the environment variables are loaded successfully, false otherwise.</returns>
-    private static async Task<bool> LoadEnvironmentVariablesAsync()
-    {
-        try
-        {
-            return await DotEnv.Load();
-        }
-        catch (Exception ex)
-        {
-            Logger.WriteLog("Failed loading ENV variables", Enums.LogLevel.Error);
-            Logger.WriteLog(ex, Enums.LogLevel.Error);
-            return false;
-        }
-    }
 
     /// <summary>
     /// Initialise the necessary classes for the software to run.
@@ -213,9 +186,9 @@ public static class MainController
         // Schedule the function to run after a 5-minute delay (300,000 milliseconds)
         variableCheck = new Timer(OnTimerCallback, null, 300000, Timeout.Infinite);
 
-        if (!Helper.GetStationMode().Equals(Helper.STATION_MODE_APPLIANCE))
+        if (!Helper.IsMode(StationMode.Appliance))
         {
-            if (Helper.GetStationMode().Equals(Helper.STATION_MODE_VR))
+            if (Helper.IsStationVrCompatible())
             {
                 // Check SteamVRs background image
                 SteamScripts.CheckSteamVrHomeImage();
@@ -238,12 +211,12 @@ public static class MainController
         }
         
         Logger.WriteLog($"Expected NUC address: {Environment.GetEnvironmentVariable("NucAddress", EnvironmentVariableTarget.Process)}", Enums.LogLevel.Normal);
-        if (Helper.GetStationMode().Equals(Helper.STATION_MODE_APPLIANCE)) return;
+        if (Helper.IsMode(StationMode.Appliance)) return;
         StateController.InitialStartUp();
         
         // Safe cast for potential content profile
         ContentProfile? contentProfile = Profile.CastToType<ContentProfile>(SessionController.StationProfile);
-        if (Helper.GetStationMode().Equals(Helper.STATION_MODE_VR) ||
+        if (Helper.IsStationVrCompatible() ||
             (contentProfile != null && contentProfile.DoesProfileHaveAccount("Steam")))
         {
             new Thread(() => SteamConfig.VerifySteamConfig(true)).Start();

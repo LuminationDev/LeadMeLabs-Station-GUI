@@ -54,7 +54,7 @@ public static class ModeTracker
     public static void Initialise()
     {
         // Do not engage Idle mode if the Station mode is anything other than VR
-        if (!Helper.GetStationMode().Equals(Helper.STATION_MODE_VR))
+        if (!Helper.IsStationVrCompatible())
         {
             MockConsole.WriteLine("Station is not in VR mode, Idle mode is not applicable.", Enums.LogLevel.Normal);
             return;
@@ -136,7 +136,7 @@ public static class ModeTracker
         SessionController.CurrentState = State.ExitIdle;
         StateController.UpdateStateValue("status", "On");
 
-        if (Helper.GetStationMode().Equals(Helper.STATION_MODE_VR))
+        if (Helper.IsStationVrCompatible())
         {
             return await WaitForVr();
         }

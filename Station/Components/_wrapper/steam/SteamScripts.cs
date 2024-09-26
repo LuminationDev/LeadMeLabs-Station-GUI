@@ -268,7 +268,7 @@ public static class SteamScripts
             bool isVr =
                 steamManifestApplicationList.IsApplicationInstalledAndVrCompatible("steam.app." + acfReader.appId);
             WrapperManager.StoreApplication(SteamWrapper.WrapperType, acfReader.appId, acfReader.gameName, isVr); // todo, I don't like this line here as it's a side-effect to the function
-            if (!Helper.GetStationMode().Equals(Helper.STATION_MODE_VR) && isVr) continue;
+            if (!Helper.IsStationVrCompatible() && isVr) continue;
                         
             ExperienceDetails experience = new ExperienceDetails(SteamWrapper.WrapperType, acfReader.gameName, acfReader.appId, isVr);
             list.Add(experience);
@@ -340,7 +340,7 @@ public static class SteamScripts
 
             //Determine if it is a VR experience
             bool isVr = steamManifestApplicationList.IsApplicationInstalledAndVrCompatible("steam.app." + id);
-            if (!Helper.GetStationMode().Equals(Helper.STATION_MODE_VR) && isVr) continue;
+            if (!Helper.IsStationVrCompatible() && isVr) continue;
             
             Logger.WriteLog($"SteamScripts - FilterAvailableExperiences: Storing new experience: {SteamWrapper.WrapperType}|{id}|{name}|{isVr}", Enums.LogLevel.Info);
             //item.parameters may be null here

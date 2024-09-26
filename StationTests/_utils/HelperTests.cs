@@ -1,4 +1,5 @@
 ﻿using System;
+using Station.Components._enums;
 using Station.Components._utils;
 using Xunit;
 
@@ -18,7 +19,7 @@ public class HelperTests
         Environment.SetEnvironmentVariable("StationMode", null);
 
         // Act
-        var actualMode = Helper.GetStationMode();
+        var actualMode = Attributes.GetEnumValue(Helper.Mode);
 
         // Assert
         Assert.Equal(expectedMode, actualMode);
@@ -35,7 +36,7 @@ public class HelperTests
         Environment.SetEnvironmentVariable("StationMode", "invalid_mode");
 
         // Act and Assert
-        Assert.Throws<Exception>(() => Helper.GetStationMode());
+        Assert.Throws<Exception>(() => Attributes.GetEnumValue(Helper.Mode));
     }
 
     /// <summary>
@@ -50,7 +51,7 @@ public class HelperTests
         Environment.SetEnvironmentVariable("StationMode", expectedMode);
 
         // Act
-        var actualMode = Helper.GetStationMode();
+        var actualMode = Attributes.GetEnumValue(Helper.Mode);
 
         // Assert
         Assert.Equal(expectedMode, actualMode);

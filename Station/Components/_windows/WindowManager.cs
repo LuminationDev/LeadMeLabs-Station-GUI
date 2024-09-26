@@ -41,6 +41,11 @@ public static class WindowManager
         }
     }
 
+    public static void MinimizeWindow(IntPtr hWnd)
+    {
+        ShowWindow(hWnd, SW_SHOWMINIMIZED);
+    }
+
     public static void MinimizeProcessNoActivate(Process process)
     {
         if (process != null)

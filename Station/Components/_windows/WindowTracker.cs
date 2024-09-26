@@ -5,6 +5,7 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using System.Windows.Forms;
 using Station.Components._models;
+using Station.Components._utils;
 
 namespace Station.Components._windows;
 
@@ -24,6 +25,18 @@ public class WindowTracker
     
     // List to store the visible windows
     private static readonly HashSet<WindowInformation> VisibleWindows = new();
+
+    // A list of all Windows associated with VR programs (i.e. Steam, Vive) to automatically minimise
+    private static readonly HashSet<string> VrProgramWindows = new()
+    {
+        "Steam",
+        "Sing in to Steam",
+        "Launching...",
+        "SteamVR Status",
+        "SteamVR",
+        
+        "VIVE Business Streaming"
+    };
 
     // Primary screen index of Screens.AllScreens - used for coordinating Window movement and restrictions
     public static int PrimaryScreenIndex;
@@ -159,6 +172,7 @@ public class WindowTracker
         windowInfo.Monitor = screenIndex;
         
         MoveWindowOffRestrictedMonitor(windowInfo);
+        MinimiseSteamWindow(windowInfo);
     }
     
     /// <summary>
@@ -182,6 +196,7 @@ public class WindowTracker
         existingWindow.Rect = newRect; 
         
         MoveWindowOffRestrictedMonitor(existingWindow);
+        MinimiseSteamWindow(existingWindow);
     }
 
     /// <summary>
@@ -199,6 +214,7 @@ public class WindowTracker
         if (existingWindow == null) return;
         
         existingWindow.Minimised = isMinimised;
+        MinimiseSteamWindow(existingWindow);
     }
     
     /// <summary>
@@ -212,6 +228,22 @@ public class WindowTracker
     private void HandleWindowClosed(WindowInformation windowInfo)
     {
         VisibleWindows.Remove(windowInfo);
+    }
+
+    /// <summary>
+    /// Minimise a Window if its Window Title exists in the SteamWindows hashset.
+    /// </summary>
+    /// <param name="windowInfo">An object containing information about the window.</param>
+    /// <remarks>
+    /// This can be turned off through the Debug during runtime
+    /// </remarks>
+    private void MinimiseSteamWindow(WindowInformation windowInfo)
+    {
+        if (!InternalDebugger.GetMinimisePrograms() ||  windowInfo.Title == null) return;
+        if (!VrProgramWindows.Contains(windowInfo.Title)) return;
+        
+        //Must be a Steam Window, minimise it
+        WindowManager.MinimizeWindow(windowInfo.Handle);
     }
 
     /// <summary>

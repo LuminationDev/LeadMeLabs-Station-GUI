@@ -172,6 +172,24 @@
                                 <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
                             
+                            
+                            <!--TODO can use this to switch the images instead of the colour, (can represent connection value and headset/controller types)-->
+                            <!-- <Image Grid.Column="0" Width="30" Height="30"> -->
+                            <!--     <Image.Style> -->
+                            <!--         <Style TargetType="Image"> -->
+                            <!--             <Style.Triggers> -->
+                            <!--                 <DataTrigger Binding="{Binding HeadsetColor}" Value="#C3C8D8"> -->
+                            <!--                     <Setter Property="Margin" Value="2,0,0,0"/> -->
+                            <!--                     <Setter Property="Source" Value="../../Assets/Icons/experience_play.png"/> -->
+                            <!--                 </DataTrigger> -->
+                            <!--                 <DataTrigger Binding="{Binding HeadsetColor}" Value="#c42d2d"> -->
+                            <!--                     <Setter Property="Source" Value="../../Assets/Icons/experience_stop.png"/> -->
+                            <!--                 </DataTrigger> -->
+                            <!--             </Style.Triggers> -->
+                            <!--         </Style> -->
+                            <!--     </Image.Style> -->
+                            <!-- </Image> -->
+                            
                             <!--Headset Icon-->
                             <Viewbox Grid.Column="0" Width="78" Height="60" Margin="0,0,10,0">
                                 <Path Data="M2.23828 6.09775V22.6831C2.23828 23.9769 2.75222 25.2176 3.66703 26.1324C4.58184 27.0472 5.82259 27.5612 7.11633 27.5612H9.18462C10.0623 27.5594

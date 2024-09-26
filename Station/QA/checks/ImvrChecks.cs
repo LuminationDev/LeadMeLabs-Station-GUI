@@ -17,7 +17,7 @@ public class ImvrChecks
         QaCheck correctHeadset = new QaCheck("correct_headset");
         string headset = Environment.GetEnvironmentVariable("HeadsetType", EnvironmentVariableTarget.Process) ?? "Not found";
 
-        if (!Helper.GetStationMode().Equals(Helper.STATION_MODE_VR))
+        if (!Helper.IsStationVrCompatible())
         {
             correctHeadset.SetPassed("Station is a non-vr station");
         } 
