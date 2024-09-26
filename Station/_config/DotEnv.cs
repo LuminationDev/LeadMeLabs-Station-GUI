@@ -77,8 +77,6 @@ public static class DotEnv
 #if DEBUG
             IPAddress? ip = SystemInformation.GetIPAddress();
             Environment.SetEnvironmentVariable("nucAddress", ip?.ToString());
-            Environment.SetEnvironmentVariable("HeadsetType", "SteamLink");
-            Environment.SetEnvironmentVariable("StationMode", "Pod");
 #endif
         } 
         catch (Exception ex)
