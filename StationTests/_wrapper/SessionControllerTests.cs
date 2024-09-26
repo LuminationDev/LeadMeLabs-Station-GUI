@@ -2,10 +2,10 @@
 using System;
 using System.Threading.Tasks;
 using System.Diagnostics;
+using Station.Components._enums;
 using Station.Components._profiles;
 using Station.Components._profiles._headsets;
 using Station.MVC.Controller;
-using Xunit.Sdk;
 
 namespace StationTests._wrapper;
 
@@ -22,7 +22,7 @@ public class SessionControllerTests: FactAttribute
         Environment.SetEnvironmentVariable("HeadsetType", "VivePro1");
 
         // Act
-        SessionController.SetupStationProfile("Vr");
+        SessionController.SetupStationProfile(StationMode.VirtualReality);
 
         // Assert
         // Safe cast for potential vr profile
@@ -41,7 +41,7 @@ public class SessionControllerTests: FactAttribute
         Environment.SetEnvironmentVariable("HeadsetType", "VivePro2");
 
         // Act
-        SessionController.SetupStationProfile("Vr");
+        SessionController.SetupStationProfile(StationMode.VirtualReality);
 
         // Assert
         // Safe cast for potential vr profile
@@ -61,7 +61,7 @@ public class SessionControllerTests: FactAttribute
     public void StartVRSession_Should_Start_Session(string experienceType)
     {
         // Arrange
-        SessionController.SetupStationProfile("Vr");
+        SessionController.SetupStationProfile(StationMode.VirtualReality);
         // Safe cast for potential vr profile
         VrProfile? vrProfile = Profile.CastToType<VrProfile>(SessionController.StationProfile);
         if (vrProfile == null) return;
