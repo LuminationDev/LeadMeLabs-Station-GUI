@@ -221,6 +221,8 @@ public static class MainController
         {
             new Thread(() => SteamConfig.VerifySteamConfig(true)).Start();
         }
+        
+        //TODO update State if StationMode is appliance???
     }
     
     /// <summary>

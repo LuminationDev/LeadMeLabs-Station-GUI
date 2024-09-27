@@ -185,6 +185,7 @@
                                      Style="{StaticResource MenuButtonTheme}"
                                      Command="{Binding ExperiencesViewCommand}"/>
                         
+                        <!--TODO hide the following from 'normal' use-->
                         <RadioButton Content="Debug"
                                      Height="50"
                                      Foreground="White"
@@ -198,6 +199,13 @@
                                      FontSize="14"
                                      Style="{StaticResource MenuButtonTheme}"
                                      Command="{Binding LogsViewCommand}"/>
+                        
+                        <RadioButton Content="Configuration"
+                                     Height="50"
+                                     Foreground="White"
+                                     FontSize="14"
+                                     Style="{StaticResource MenuButtonTheme}"
+                                     Command="{Binding ConfigurationViewCommand}"/>
                         
                         <RadioButton Content="QA"
                                      Height="50"

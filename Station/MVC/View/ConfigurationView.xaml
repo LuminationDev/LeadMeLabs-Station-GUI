@@ -1,0 +1,267 @@
+<UserControl x:Class="Station.MVC.View.ConfigurationView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:converters="clr-namespace:Station.Converters"
+             mc:Ignorable="d"
+             Background="Transparent"
+             d:DesignHeight="560" d:DesignWidth="700">
+    
+    <UserControl.Resources>
+        <converters:EnumValueConverter x:Key="EnumValueConverter"/>
+        <converters:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
+    </UserControl.Resources>
+    
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="50"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        
+        <StackPanel Grid.Row="0">
+            <TextBlock Foreground="White" TextWrapping="Wrap" Margin="10, 0">
+                This page enables you to modify the configuration settings for the Station. Once you have made your changes, 
+                click the 'Set Config' button to save the new settings. Please note any changes will not take affect until
+                the program is restarted.
+            </TextBlock>
+        </StackPanel>
+        
+        <ScrollViewer Grid.Row="1"  
+                      Template="{StaticResource CustomScrollViewerTemplate}" 
+                      Padding="5"
+                      Background="Transparent"
+                      VerticalAlignment="Stretch">
+        
+            <Grid MaxHeight="600" MaxWidth="800">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" /> <!-- First column, 50% width -->
+                    <ColumnDefinition Width="*" /> <!-- Second column, 50% width -->
+                </Grid.ColumnDefinitions>
+        
+                <Grid.RowDefinitions>
+                    <RowDefinition/>
+                    <RowDefinition/>
+                    <RowDefinition/>
+                    <RowDefinition/>
+                    <RowDefinition/>
+                </Grid.RowDefinitions>
+                
+                <!-- Row 0 -->
+                <!-- Encryption Key -->
+                <StackPanel Grid.Column="0" Grid.Row="0">
+                    <Label Foreground="White" Content="Encryption Key" Target="{Binding ElementName=EncryptionKeyTextbox}" />
+                    <Border x:Name="EncryptionKeyTextbox"
+                            CornerRadius="10" 
+                            Background="White"
+                            Margin="5, 0, 10, 0"
+                            Height="40">
+                        <Grid>
+                            <Rectangle StrokeThickness="1"/>
+                            <TextBox Margin="10,0,0,0"
+                                     Text="{Binding EncryptionKey, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                     BorderThickness="0"
+                                     Background="Transparent"
+                                     VerticalAlignment="Center"/>
+                        </Grid>
+                    </Border>
+                </StackPanel>
+                
+                <!-- Lab Location -->
+                <StackPanel Grid.Column="1" Grid.Row="0">
+                    <Label Foreground="White" Content="Lab Location" Target="{Binding ElementName=LabLocationTextbox}" />
+                    <Border x:Name="LabLocationTextbox"
+                            CornerRadius="10" 
+                            Background="White"
+                            Margin="5, 0, 10, 0"
+                            Height="40">
+                        <Grid>
+                            <Rectangle StrokeThickness="1"/>
+                            <TextBox Margin="10,0,0,0"
+                                     Text="{Binding LabLocation, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                     BorderThickness="0"
+                                     Background="Transparent"
+                                     VerticalAlignment="Center"/>
+                        </Grid>
+                    </Border>
+                </StackPanel>
+                
+                <!-- Row 1 -->
+                <!-- Station id -->
+                <StackPanel Grid.Column="0" Grid.Row="1">
+                    <Label Foreground="White" Content="Station Id" Target="{Binding ElementName=StationIdTextbox}" />
+                    <Border x:Name="StationIdTextbox"
+                            CornerRadius="10" 
+                            Background="White"
+                            Margin="5, 0, 10, 0"
+                            Height="40">
+                        <Grid>
+                            <Rectangle StrokeThickness="1"/>
+                            <TextBox Margin="10,0,0,0"
+                                     Text="{Binding StationId, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                     BorderThickness="0"
+                                     Background="Transparent"
+                                     VerticalAlignment="Center"/>
+                        </Grid>
+                    </Border>
+                </StackPanel>
+                
+                <!-- Room -->
+                <StackPanel Grid.Column="1" Grid.Row="1">
+                    <Label Foreground="White" Content="Room" Target="{Binding ElementName=RoomTextbox}" />
+                    <Border x:Name="RoomTextbox"
+                            CornerRadius="10" 
+                            Background="White"
+                            Margin="5, 0, 10, 0"
+                            Height="40">
+                        <Grid>
+                            <Rectangle StrokeThickness="1"/>
+                            <TextBox Margin="10,0,0,0"
+                                     Text="{Binding Room, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                     BorderThickness="0"
+                                     Background="Transparent"
+                                     VerticalAlignment="Center"/>
+                        </Grid>
+                    </Border>
+                </StackPanel>
+                
+                <!-- Row 2 -->
+                <!-- NUC Ip Address -->
+                <StackPanel Grid.Column="0" Grid.Row="2">
+                    <Label Foreground="White" Content="Nuc Ip Address" Target="{Binding ElementName=NucIpAddressTextbox}" />
+                    <Border x:Name="NucIpAddressTextbox"
+                            CornerRadius="10" 
+                            Background="White"
+                            Margin="5, 0, 10, 0"
+                            Height="40">
+                        <Grid>
+                            <Rectangle StrokeThickness="1"/>
+                            <TextBox Margin="10,0,0,0"
+                                     Text="{Binding NucAddress, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                     BorderThickness="0"
+                                     Background="Transparent"
+                                     VerticalAlignment="Center"/>
+                        </Grid>
+                    </Border>
+                </StackPanel>
+                
+                <!-- Station Mode -->
+                <StackPanel Grid.Column="1" Grid.Row="2">
+                    <Label Foreground="White" Content="Station Mode" Target="{Binding ElementName=StationModeCombobox}" />
+                    <ComboBox x:Name="StationModeCombobox"
+                              Height="40"
+                              Margin="5, 0, 10, 0"
+                              VerticalAlignment="Center"
+                              HorizontalAlignment="Stretch"
+                              ItemsSource="{Binding StationModes}"
+                              SelectedItem="{Binding SelectedMode}"
+                              Style="{StaticResource CustomComboBox}">
+                        <ComboBox.ItemTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding Converter={StaticResource EnumValueConverter}}"/>
+                            </DataTemplate>
+                        </ComboBox.ItemTemplate>
+                    </ComboBox>
+                </StackPanel>
+                
+                <!-- Row 3 -->
+                <!-- Headset Type (If Mode is not Appliance or Content) -->
+                <StackPanel Grid.Column="0" Grid.Row="3" Visibility="{Binding IncludeHeadset, Converter={StaticResource BooleanToVisibilityConverter}}">
+                    <Label Foreground="White" Content="Headset Type" Target="{Binding ElementName=HeadsetTypeCombobox}" />
+                    <ComboBox x:Name="HeadsetTypeCombobox"
+                              Height="40"
+                              Margin="5, 0, 10, 0"
+                              VerticalAlignment="Center"
+                              HorizontalAlignment="Stretch"
+                              ItemsSource="{Binding HeadsetTypes}"
+                              SelectedItem="{Binding SelectedHeadset}"
+                              Style="{StaticResource CustomComboBox}">
+                        <ComboBox.ItemTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding Converter={StaticResource EnumValueConverter}}"/>
+                            </DataTemplate>
+                        </ComboBox.ItemTemplate>
+                    </ComboBox>
+                </StackPanel>
+                
+                <!-- Checkbox for Steam details -->
+                <StackPanel Grid.Column="1" Grid.Row="3">
+                    <Label Foreground="White" Content="Steam Account Details" Target="{Binding ElementName=IncludeSteamCheckbox}" />
+                    <CheckBox x:Name="IncludeSteamCheckbox"
+                              HorizontalAlignment="Stretch"
+                              Height="40"
+                              Content="Include Steam Details"
+                              Margin="5,0,10,0"
+                              Style="{StaticResource CustomCheckBox}"
+                              IsChecked="{Binding IncludeSteamDetails, Mode=TwoWay}">
+                    </CheckBox>
+                </StackPanel>
+                
+                <!-- Row 4 - Steam Account Details (Optional) -->
+                <!-- Steam Username -->
+                <StackPanel Grid.Column="0" Grid.Row="4" Visibility="{Binding IncludeSteamDetails, Converter={StaticResource BooleanToVisibilityConverter}}">
+                    <Label Foreground="White" Content="Steam Username" Target="{Binding ElementName=SteamUsernameTextbox}" />
+                    <Border x:Name="SteamUsernameTextbox"
+                            CornerRadius="10" 
+                            Background="White"
+                            Margin="5, 0, 10, 0"
+                            Height="40">
+                        <Grid>
+                            <Rectangle StrokeThickness="1"/>
+                            <TextBox Margin="10,0,0,0"
+                                     Text="{Binding SteamUserName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                     BorderThickness="0"
+                                     Background="Transparent"
+                                     VerticalAlignment="Center"/>
+                        </Grid>
+                    </Border>
+                </StackPanel>
+                
+                <!-- Steam Password -->
+                <StackPanel Grid.Column="1" Grid.Row="4" Visibility="{Binding IncludeSteamDetails, Converter={StaticResource BooleanToVisibilityConverter}}">
+                    <Label Foreground="White" Content="Steam Password" Target="{Binding ElementName=SteamPasswordTextbox}" />
+                    <Border x:Name="SteamPasswordTextbox"
+                            CornerRadius="10" 
+                            Background="White"
+                            Margin="5, 0, 10, 0"
+                            Height="40">
+                        <Grid>
+                            <Rectangle StrokeThickness="1"/>
+                            <TextBox Margin="10,0,0,0"
+                                     Text="{Binding SteamPassword, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                     BorderThickness="0"
+                                     Background="Transparent"
+                                     VerticalAlignment="Center"/>
+                        </Grid>
+                    </Border>
+                </StackPanel>
+            </Grid>
+        </ScrollViewer>
+        
+        <!-- Row 6 - Action buttons -->
+        <Grid Grid.Row="2">
+            <Button
+                Style="{StaticResource MainButton}"
+                Content="Configure SteamCMD" 
+                Command="{Binding ConfigureSteamCmdCommand}"
+                Margin="10"
+                Width="150" 
+                Height="35" 
+                VerticalAlignment="Bottom"
+                ToolTip="Configure SteamCMD with the entered username and password."
+                Visibility="{Binding IncludeSteamDetails, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+            
+            <Button
+                Style="{StaticResource MainButton}"
+                Content="Set Config" 
+                Command="{Binding SetConfigCommand}"
+                Margin="10"
+                Width="110" 
+                Height="35" 
+                HorizontalAlignment="Right" 
+                VerticalAlignment="Bottom"
+                ToolTip="Save the new config details."/>
+        </Grid>
+    </Grid>
+</UserControl>

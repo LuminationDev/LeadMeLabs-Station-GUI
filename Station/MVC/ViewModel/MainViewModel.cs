@@ -1,5 +1,6 @@
-﻿using System;
-using System.Windows;
+﻿using System.Windows;
+using Station.Components._enums;
+using Station.Components._utils;
 using Station.Core;
 using Station.MVC.Controller;
 
@@ -20,6 +21,7 @@ public class MainViewModel : ObservableObject
     public RelayCommand DebugViewCommand { get; }
     public RelayCommand LogsViewCommand { get; }
     public RelayCommand QaViewCommand { get; }
+    public RelayCommand ConfigurationViewCommand { get; }
     
     private object _currentView = null!;
     public object CurrentView
@@ -80,6 +82,7 @@ public class MainViewModel : ObservableObject
         DebugViewCommand = new RelayCommand(_ => CurrentView = ViewModelManager.DebugViewModel);
         LogsViewCommand = new RelayCommand(_ => CurrentView = ViewModelManager.LogsViewModel);
         QaViewCommand = new RelayCommand(_ => CurrentView = ViewModelManager.QaViewModel);
+        ConfigurationViewCommand = new RelayCommand(_ => CurrentView = ViewModelManager.ConfigurationViewModel);
 
         ViewModelManager.MainViewModel = this;
     }
@@ -100,6 +103,7 @@ public class MainViewModel : ObservableObject
         }
     }
     
+    //TODO dynamically set this
     private string _programTitle = "The Pod";
     public string ProgramTitle
     {
@@ -145,8 +149,14 @@ public class MainViewModel : ObservableObject
 
     private void Loaded()
     {
-        // WindowState = WindowState.Normal;
-        Maximise();
+        if (Helper.IsMode(StationMode.Pod))
+        {
+            Maximise();
+        }
+        else
+        {
+            WindowState = WindowState.Normal;
+        }
     }
     
     private int _windowRadius = 10;

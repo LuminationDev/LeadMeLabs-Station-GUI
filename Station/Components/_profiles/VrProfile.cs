@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using LeadMeLabsLibrary;
 using Station.Components._enums;
 using Station.Components._interfaces;
@@ -12,7 +13,7 @@ namespace Station.Components._profiles;
 
 public class VrProfile: Profile, IProfile
 {
-    private string? _headsetType;
+    private Headset? _headsetType;
 
     /// <summary>
     /// Get the Profiles variant type
@@ -41,6 +42,19 @@ public class VrProfile: Profile, IProfile
     {
         SetupHeadsetType();
     }
+    
+    /// <summary>
+    /// Transform a string into the Headset enum.
+    /// </summary>
+    /// <param name="value">A headset value as a string to be turned into an enum value</param>
+    /// <returns>The associated Headset enum or null</returns>
+    public static Headset? GetHeadsetFromValue(string value)
+    {
+        return Enum.GetValues(typeof(Headset))
+            .Cast<Headset>()
+            .FirstOrDefault(headset => 
+                Attributes.GetEnumValue(headset).Equals(value, StringComparison.OrdinalIgnoreCase));
+    }
 
     /// <summary>
     /// Read the store headset type from the config.env file and create an instance that 
@@ -48,22 +62,20 @@ public class VrProfile: Profile, IProfile
     /// </summary>
     private void SetupHeadsetType()
     {
-        _headsetType = Environment.GetEnvironmentVariable("HeadsetType", EnvironmentVariableTarget.Process);
-
-        //Read from env file
+        _headsetType = GetHeadsetFromValue(Environment.GetEnvironmentVariable("HeadsetType", EnvironmentVariableTarget.Process) ?? string.Empty);
         switch (_headsetType)
         {
-            case "VivePro1":
+            case Headset.VivePro1:
                 VrHeadset = new VivePro1();
                 break;
-            case "VivePro2":
+            case Headset.VivePro2:
                 VrHeadset = new VivePro2();
                 break;
-            case "ViveFocus3": //Backwards compatability
-            case "ViveBusinessStreaming":
+            case Headset.ViveFocus: //Backwards compatability
+            case Headset.ViveBusinessStreaming:
                 VrHeadset = new ViveBusinessStreaming();
                 break;
-            case "SteamLink":
+            case Headset.SteamLink:
                 VrHeadset = new SteamLink();
                 break;
             default:
@@ -124,12 +136,12 @@ public class VrProfile: Profile, IProfile
     {
         switch (_headsetType)
         {
-            case "VivePro1":
-            case "VivePro2":
-            case "ViveFocus3": //Backwards compatability
-            case "ViveBusinessStreaming":
+            case Headset.VivePro1:
+            case Headset.VivePro2:
+            case Headset.ViveFocus: //Backwards compatability
+            case Headset.ViveBusinessStreaming:
                 return ViveScripts.WaitForVive(wrapperType).Result;
-            case "SteamLink":
+            case Headset.SteamLink:
                 return true; //No external software required
             default:
                 Logger.WriteLog("WaitForConnection - No headset type specified.", Enums.LogLevel.Error);

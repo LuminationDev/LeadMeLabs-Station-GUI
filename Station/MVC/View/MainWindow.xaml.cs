@@ -1,5 +1,7 @@
 ﻿using System.Windows;
 using System.Windows.Forms;
+using Station.Components._enums;
+using Station.Components._utils;
 using Station.Components._windows;
 
 
@@ -13,6 +15,9 @@ public partial class MainWindow
     public MainWindow()
     {
         InitializeComponent();
+        
+        // Do not manipulate the screen if the Station mode is not set to Pod
+        if (!Helper.IsMode(StationMode.Pod)) return;
         
         int index = WindowTracker.TouchScreenIndex;
         Screen s = Screen.AllScreens[index];

@@ -21,7 +21,7 @@ namespace Station
     /// </summary>
     public partial class App
     {
-        public static bool EnvVariablesLoaded = false;
+        private static bool envVariablesLoaded;
         public static int steamProcessId = 0;
         public static WindowEventTracker? windowEventTracker;
         private WindowTracker? _windowTracker;
@@ -41,10 +41,12 @@ namespace Station
             currentDomain.ProcessExit += ProcessExitHandler;
             
             // Load the environment variables and set the Station mode
-            EnvVariablesLoaded = await DotEnv.LoadEnvironmentVariablesAsync();
-            if (!EnvVariablesLoaded)
+            envVariablesLoaded = await DotEnv.LoadEnvironmentVariablesAsync();
+            MainWindow mainWindow = new(); // load this after the environment variables
+            if (!envVariablesLoaded)
             {
-                MessageBox.Show("No config found. Please enter the configuration details and then restart the program.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                mainWindow.Show(); //Show here so a user can input config details but not other functions run
+                MessageBox.Show("Configuration incomplete or not found. Please enter the configuration details and then restart the program.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                 return;
             }
             Helper.SetStationMode();
@@ -66,7 +68,6 @@ namespace Station
             };
             
             // Display the main window
-            MainWindow mainWindow = new();
             mainWindow.Show();
 
             // Load the secondary window task if in Pod mode

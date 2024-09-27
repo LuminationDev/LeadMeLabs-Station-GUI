@@ -178,6 +178,10 @@
     <Content Include="Assets\Videos\Wallpaper.mp4">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+    <None Remove="Assets\Icons\chevron_down.png" />
+    <Content Include="Assets\Icons\chevron_down.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
 
   <ItemGroup>

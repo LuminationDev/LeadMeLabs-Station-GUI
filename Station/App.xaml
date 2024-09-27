@@ -10,6 +10,7 @@
                 <ResourceDictionary Source="Themes/MenuButtonTheme.xaml"/>
                 <ResourceDictionary Source="Themes/ActionButtonTheme.xaml"/>
                 <ResourceDictionary Source="Themes/CheckboxTheme.xaml"/>
+                <ResourceDictionary Source="Themes/CustomComboBox.xaml"/>
                 <ResourceDictionary Source="Themes/CustomListbox.xaml"/>
                 <ResourceDictionary Source="Themes/CustomScrollBar.xaml"/>
                 <ResourceDictionary Source="Themes/CustomToggleButton.xaml"/>
@@ -43,6 +44,10 @@
             
             <DataTemplate DataType="{x:Type viewModel:QaViewModel}">
                 <view:QaView/>
+            </DataTemplate>
+            
+            <DataTemplate DataType="{x:Type viewModel:ConfigurationViewModel}">
+                <view:ConfigurationView/>
             </DataTemplate>
         </ResourceDictionary>
     </Application.Resources>
