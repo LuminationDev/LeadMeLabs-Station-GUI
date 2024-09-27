@@ -11,4 +11,5 @@ public class ViewModelLocator
     public DebugViewModel DebugViewModel { get; } = new ();
     public LogsViewModel LogsViewModel { get; } = new ();
     public QaViewModel QaViewModel { get; } = new ();
+    public ConfigurationViewModel ConfigurationViewModel { get; } = new ();
 }

@@ -5,14 +5,13 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:gif="http://wpfanimatedgif.codeplex.com"
              xmlns:converters="clr-namespace:Station.Converters"
-             xmlns:converters1="clr-namespace:NUC.Converters"
              mc:Ignorable="d"
              Background="Transparent"
              d:DesignHeight="560" d:DesignWidth="700">
     
     <UserControl.Resources>
         <converters:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
-        <converters1:BooleanNegationConverter x:Key="BooleanNegationConverter" />
+        <converters:BooleanNegationConverter x:Key="BooleanNegationConverter" />
     </UserControl.Resources>
     
     <Grid Margin="10, 0, 0, 0">

@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
+using System.Windows;
 using LeadMeLabsLibrary;
 using Station.Components._commandLine;
 using Station.Components._notification;
@@ -13,7 +15,8 @@ namespace Station._config;
 
 public static class DotEnv
 {
-    private static readonly string FilePath = $"{StationCommandLine.StationLocation}\\_config\\config.env";
+    private static readonly string PrimaryFilePath = $"{StationCommandLine.StationLocation}\\_config\\config.env";
+    private static readonly string BackupFilePath = $"{StationCommandLine.StationLocation}\\_config\\config_backup.env";
 
     /// <summary>
     /// Loads environment variables asynchronously and handles any exceptions that may occur.
@@ -23,7 +26,13 @@ public static class DotEnv
     {
         try
         {
-            return await Load();
+            bool success = await Load(PrimaryFilePath);
+            if (!success)
+            {
+                success = await Load(BackupFilePath);
+            }
+
+            return success;
         }
         catch (Exception ex)
         {
@@ -37,21 +46,23 @@ public static class DotEnv
     /// Load the variables within the config.env into the local environment for the running
     /// process.
     /// </summary>
-    private static Task<bool> Load()
+    /// <param name="filePath">The path to the config file.</param>
+    /// <param name="isBackUp">If the filePath leads to the config_backup.env.</param>
+    private static Task<bool> Load(string filePath, bool isBackUp = false)
     {
         try
         {
-            if (!File.Exists(FilePath))
+            if (!File.Exists(filePath))
             {
-                MockConsole.WriteLine($"StationError, Config file not found:{FilePath}", Enums.LogLevel.Error);
+                MockConsole.WriteLine($"StationError, Config file not found:{filePath}", Enums.LogLevel.Error);
                 return Task.FromResult(false);
             }
 
             //Decrypt the data in the file
-            string decryptedText = EncryptionHelper.DetectFileEncryption(FilePath);
+            string decryptedText = EncryptionHelper.DetectFileEncryption(filePath);
             if (string.IsNullOrEmpty(decryptedText))
             {
-                MockConsole.WriteLine($"StationError, Config file empty:{FilePath}", Enums.LogLevel.Error);
+                MockConsole.WriteLine($"StationError, Config file empty:{filePath}", Enums.LogLevel.Error);
                 return Task.FromResult(false);
             }
 
@@ -74,11 +85,16 @@ public static class DotEnv
                         break;
                 }
             }
+            
+            //If we are reading the backup, replace the main config.env as it must of been corrupt or missing
+            if (isBackUp)
+            {
+                ReplaceConfig();
+            }
+            
 #if DEBUG
             IPAddress? ip = SystemInformation.GetIPAddress();
             Environment.SetEnvironmentVariable("nucAddress", ip?.ToString());
-            Environment.SetEnvironmentVariable("HeadsetType", "SteamLink");
-            Environment.SetEnvironmentVariable("StationMode", "Pod");
 #endif
         } 
         catch (Exception ex)
@@ -88,39 +104,87 @@ public static class DotEnv
 
         return Task.FromResult(true);
     }
-    
+
     /// <summary>
-    /// Update part of the config.env, automatically detect if a variable already exists or if
+    /// Replace the config.env with the config_backup.env in the case the config.env is corrupt or missing.
+    /// </summary>
+    private static void ReplaceConfig()
+    {
+        try
+        {
+            File.Copy(BackupFilePath, PrimaryFilePath, true);
+            Logger.WriteLog("File replaced successfully.", Enums.LogLevel.Error);
+        }
+        catch (IOException ex)
+        {
+            Logger.WriteLog($"An error occurred: {ex.Message}", Enums.LogLevel.Error);
+        }
+    }
+
+    /// <summary>
+    /// Iterate through a supplied dictionary of key value pairs and update the config.env and config_backup.env with
+    /// the new values.
+    /// </summary>
+    /// <param name="values">A dictionary of key value string pairs.</param>
+    public static void Update(Dictionary<string, string> values)
+    {
+        foreach (KeyValuePair<string, string> kvp in values)
+        {
+            Update(PrimaryFilePath, kvp.Key, kvp.Value);
+            Update(BackupFilePath, kvp.Key, kvp.Value);
+        }
+    }
+
+    /// <summary>
+    /// Update part of the primary config file, automatically detect if a variable already exists or if
     /// it should be added.
     /// </summary>
     /// <param name="key">The key of the environment variable to set.</param>
     /// <param name="value">The value of the provided key.</param>
     public static void Update(string key, string value)
     {
-        if (!File.Exists(FilePath))
+        Update(PrimaryFilePath, key, value);
+    }
+    
+    /// <summary>
+    /// Update part of a config file, automatically detect if a variable already exists or if
+    /// it should be added.
+    /// </summary>
+    /// <param name="filePath">The path to the file that will be edited.</param>
+    /// <param name="key">The key of the environment variable to set.</param>
+    /// <param name="value">The value of the provided key.</param>
+    private static void Update(string filePath, string key, string value)
+    {
+        if (!File.Exists(filePath))
         {
-            MockConsole.WriteLine($"Station Error,Config file not found:{FilePath}", Enums.LogLevel.Error);
-            return;
+            MockConsole.WriteLine($"Station Error,Config file not found:{filePath}. Creating now.", Enums.LogLevel.Error);
+            File.Create(filePath);
         }
 
         Environment.SetEnvironmentVariable(key, value);
 
         bool exists = false;
-
+        
         // Read the current config file
-        string text = File.ReadAllText(FilePath);
+        string text = File.ReadAllText(filePath);
         if (text.Length == 0)
         {
-            MockConsole.WriteLine($"Station Error,Config file empty:{FilePath}", Enums.LogLevel.Error);
+            MockConsole.WriteLine($"Station Error,Config file empty:{filePath}", Enums.LogLevel.Error);
             return;
         }
 
-        text = EncryptionHelper.DetectFileEncryption(FilePath);
-
-        if (string.IsNullOrEmpty(text))
+        try
         {
-            MockConsole.WriteLine($"Station Error,Config file returned null:{FilePath}", Enums.LogLevel.Error);
-            return;
+            text = EncryptionHelper.DetectFileEncryption(filePath);
+            if (string.IsNullOrEmpty(text))
+            {
+                MockConsole.WriteLine($"Station Error,Config file returned null:{filePath}", Enums.LogLevel.Error);
+                return;
+            }
+        }
+        catch (Exception ex)
+        {
+            MockConsole.WriteLine($"Station Error,Config file cannot be read:{filePath}. {ex.Message}", Enums.LogLevel.Error);
         }
 
         string[] arrLine = text.Split("\n");
@@ -140,13 +204,28 @@ public static class DotEnv
         {
             listLine.Add($"{key}={value}");
         }
-
+        
         //Rewrite the file with the new variables
-        bool success = EncryptionHelper.EncryptFile(string.Join("\n", listLine), FilePath);
-
+        bool success = EncryptionHelper.EncryptFile(string.Join("\n", listLine), filePath);
         MockConsole.WriteLine(
             success
-                ? $"Encrypted file: {FilePath} has been updated."
-                : $"Encrypted file: {FilePath} has failed updating.", Enums.LogLevel.Normal);
+                ? $"Encrypted file: {filePath} has been updated."
+                : $"Encrypted file: {filePath} has failed updating.", Enums.LogLevel.Normal);
+    }
+    
+    /// <summary>
+    /// Get the path to the currently running executable and start a new instance of the application before exiting
+    /// the current one.
+    /// </summary>
+    public static void RestartApplication()
+    {
+        var executablePath = Process.GetCurrentProcess().MainModule?.FileName;
+        if (executablePath == null)
+        {
+            MessageBox.Show("An error has occurred please restart manually.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            return;
+        }
+        Process.Start(executablePath);
+        Application.Current.Shutdown();
     }
 }

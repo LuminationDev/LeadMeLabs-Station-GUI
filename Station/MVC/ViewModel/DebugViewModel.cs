@@ -72,7 +72,7 @@ public class DebugViewModel : ObservableObject
         }
     }
     
-    public void Reset()
+    private void Reset()
     {
         AutoMinimise = true;
         AutoStartPrograms = true;
