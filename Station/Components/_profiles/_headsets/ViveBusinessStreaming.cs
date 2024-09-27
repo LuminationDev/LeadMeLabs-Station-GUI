@@ -122,29 +122,26 @@ public class ViveBusinessStreaming : Profile, IVrHeadset
                     }
                     enumerator.Dispose();
                 } while (enumerator.MoveNext());
-
+                
+                if (containsOnHmdReady) return;
                 //The software is running but no headset has connected yet.
-                if (!containsOnHmdReady)
-                {
-                    Logger.WriteLog($"Attempted reading: {file.FullName}, {file.Length}", Enums.LogLevel.Debug);
-                    Statuses.UpdateHeadset(VrManager.Software, DeviceStatus.Lost);
-                } 
+                Logger.WriteLog($"Attempted reading: {file.FullName}, {file.Length}", Enums.LogLevel.Debug);
+                Statuses.UpdateHeadset(VrManager.Software, DeviceStatus.Lost);
             }
             catch (InvalidDataException e)
             {
                 Logger.WriteLog($"Device lost - InvalidDataException", Enums.LogLevel.Debug);
                 Statuses.UpdateHeadset(VrManager.Software, DeviceStatus.Lost);
-                return;
             }
         }
         else
         {
-            if (registryVal.Equals(0))
+            if (registryVal.Equals(0) && Statuses.SoftwareStatus is DeviceStatus.Lost or DeviceStatus.Off)
             {
                 Logger.WriteLog($"Device connected", Enums.LogLevel.Debug);
                 Statuses.UpdateHeadset(VrManager.Software, DeviceStatus.Connected);
             }
-            else
+            else if (Statuses.SoftwareStatus is DeviceStatus.Connected or DeviceStatus.Off)
             {
                 Logger.WriteLog($"Device lost", Enums.LogLevel.Debug);
                 Statuses.UpdateHeadset(VrManager.Software, DeviceStatus.Lost);
