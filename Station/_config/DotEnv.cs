@@ -185,6 +185,7 @@ public static class DotEnv
         catch (Exception ex)
         {
             MockConsole.WriteLine($"Station Error,Config file cannot be read:{filePath}. {ex.Message}", Enums.LogLevel.Error);
+            return;
         }
 
         string[] arrLine = text.Split("\n");
