@@ -1,0 +1,231 @@
+version: 2.1
+
+orbs:
+  windows: circleci/windows@5.0.0
+
+commands:
+  clone_hosting:
+    steps:
+      - run:
+          name: Install Git LFS
+          command: |
+            curl -s https://packagecloud.io/install/repositories/github/git-lfs/script.deb.sh | sudo bash
+            sudo apt-get update
+            sudo apt-get install git-lfs
+            git lfs install
+      - run:
+          name: Initialize Git LFS
+          command: git lfs install
+      - add_ssh_keys:
+          fingerprints:
+            - "bd:dc:58:24:df:b4:3f:8e:66:69:b9:9c:3b:73:2e:3e"
+      - run: mkdir -p ~/circleci-working/<<pipeline.id>>
+      - run:
+          name: Setup git config
+          command: | 
+            git config --global user.name "CircleCI" 
+            git config --global user.email "CircleCI@lumination.com.au"
+      - run:
+          name: Add github to known hosts
+          command: ssh-keyscan github.com >> ~/.ssh/known_hosts
+      - run:
+          name: Write ssh config file
+          command: echo "Host github.com" > ~/.ssh/config; echo "  IdentitiesOnly yes" >> ~/.ssh/config && echo "  IdentityFile ~/.ssh/id_rsa_bddc5824dfb43f8e6669b99c3b732e3e" >> ~/.ssh/config
+      - run:
+          name: Clone hosting server
+          command: | 
+            cd ~/circleci-working/<<pipeline.id>> 
+            git clone git@github.com:LuminationDev/LeadMeLabs---HostingServer.git
+
+  copy_and_push:
+    parameters:
+      branch:
+        type: string
+    steps:
+      - run:
+          name: Checkout <<parameters.branch>>
+          command: |
+            cd ~/circleci-working/<<pipeline.id>>/LeadMeLabs---HostingServer
+            git checkout <<parameters.branch>>
+      - run:
+          name: Copy Station.zip to git repository
+          command: cp ~/circleci-working/<<pipeline.id>>/Station/Station.zip ~/circleci-working/<<pipeline.id>>/LeadMeLabs---HostingServer/applications
+      - run:
+          name: Add Station.zip with git
+          command: | 
+            cd ~/circleci-working/<<pipeline.id>>/LeadMeLabs---HostingServer 
+            git add applications/Station.zip
+      - run:
+          name: Commit
+          command: | 
+            cd ~/circleci-working/<<pipeline.id>>/LeadMeLabs---HostingServer 
+            git commit -m "Updating <<parameters.branch>> Station"
+      - run:
+          name: Push
+          command: | 
+            cd ~/circleci-working/<<pipeline.id>>/LeadMeLabs---HostingServer 
+            git push
+
+  build:
+    parameters:
+      buildType:
+        type: string
+    steps:
+      - run: mkdir -p ~/circleci-working/<<pipeline.id>>
+      - checkout:
+          path: ~/circleci-working/<<pipeline.id>>
+      - run:
+          name: "load nuget config"
+          command: | 
+            cd ~/circleci-working/<<pipeline.id>> 
+            dotnet new nugetconfig 
+            dotnet nuget add source --username $env:PACKAGE_ACCESS_USERNAME --password $env:PACKAGE_ACCESS_TOKEN --store-password-in-clear-text --name github "https://nuget.pkg.github.com/LuminationDev/index.json"
+      - run:
+          name: "dotnet restore"
+          command: cd ~/circleci-working/<<pipeline.id>>; dotnet.exe restore
+      - run:
+          name: "dotnet test"
+          command: cd ~/circleci-working/<<pipeline.id>>; dotnet.exe test
+      - run:
+          name: "Build dotnet <<parameters.buildType>>"
+          command: cd ~/circleci-working/<<pipeline.id>>; msbuild.exe -v:normal .\Station\Station.csproj -p:Configuration=<<parameters.buildType>>
+      - run:
+          name: "Generate version file"
+          command: cd ~/circleci-working/<<pipeline.id>>; ([xml](Get-Content -Path .\Station\Station.csproj)).Project.PropertyGroup.Version | Out-File -Encoding utf8 version
+      - store_artifacts:
+          path: ~/circleci-working/<<pipeline.id>>/Station/Station.zip
+      - store_artifacts:
+          path: ~/circleci-working/<<pipeline.id>>/version
+      - persist_to_workspace:
+          root: ~/circleci-working/<<pipeline.id>>
+          paths:
+            - Station/bin/<<parameters.buildType>>/net6.0-windows/win-x64/
+            - version
+
+  
+  sign:
+    parameters:
+      buildType:
+        type: string
+    steps:
+      - run:
+          name: "Sign Station.exe"
+          command: |
+            cd ~/circleci-working/<<pipeline.id>>/Station/bin/<<parameters.buildType>>/net6.0-windows/win-x64/
+            signtool.exe sign /fd sha256 /tr http://ts.ssl.com /td sha256 /n "Technology for Education Solutions Pty. Ltd." ".\Station.exe"
+          shell: powershell.exe
+      - run:
+          name: Compress built files to Station.zip
+          command: cd <<pipeline.id>>; Compress-Archive -Path ~/circleci-working/<<pipeline.id>>/Station/bin/<<parameters.buildType>>/net6.0-windows/win-x64/* -DestinationPath ~/circleci-working/<<pipeline.id>>/Station/Station.zip
+          shell: powershell.exe
+      - store_artifacts:
+          path: ~/circleci-working/<<pipeline.id>>/Station/Station.zip
+      - persist_to_workspace:
+          root: ~/circleci-working/<<pipeline.id>>
+          paths:
+            - Station/Station.zip
+            - version
+
+jobs:
+  build:
+    parameters:
+      buildType:
+        type: string
+    executor:
+      name: windows/default
+    steps:
+      - build:
+          buildType: <<parameters.buildType>>
+  
+  sign:
+    machine: true
+    resource_class: luminationdev/darragh-comp
+    parameters:
+      buildType:
+        type: string
+    executor:
+      name: windows/default
+    steps:
+      - attach_workspace:
+          at: ~/circleci-working/<<pipeline.id>>
+      - sign:
+          buildType: <<parameters.buildType>>
+
+  commit-and-push:
+    docker:
+      - image: cimg/base:stable
+    parameters:
+      branch:
+        type: string
+    steps:
+      - clone_hosting
+      - attach_workspace:
+          at: ~/circleci-working/<<pipeline.id>>
+      - copy_and_push:
+          branch: <<parameters.branch>>
+  
+  vultr-upload:
+    docker:
+      - image: homebrew/brew
+    parameters:
+      bucket:
+        type: string
+    steps:
+      - attach_workspace:
+          at: ~/circleci-working/<<pipeline.id>>
+      - run:
+          name: "install s3cmd and upload"
+          command: brew install s3cmd &&
+             cd ~/circleci-working/<<pipeline.id>>/ &&
+             ls ~/circleci-working/<<pipeline.id>>/Station &&
+             s3cmd --access_key=$VULTR_ACCESS --secret_key=$VULTR_SECRET --region=us-east-1 --host=sgp1.vultrobjects.com --host-bucket=<<parameters.bucket>>.sgp1.vultrobjects.com -s del s3://<<parameters.bucket>>/Station/Station.zip &&
+             s3cmd --access_key=$VULTR_ACCESS --secret_key=$VULTR_SECRET --region=us-east-1 --host=sgp1.vultrobjects.com --host-bucket=<<parameters.bucket>>.sgp1.vultrobjects.com -s put -P ./Station/Station.zip s3://<<parameters.bucket>>/Station/Station.zip &&
+             s3cmd --access_key=$VULTR_ACCESS --secret_key=$VULTR_SECRET --region=us-east-1 --host=sgp1.vultrobjects.com --host-bucket=<<parameters.bucket>>.sgp1.vultrobjects.com -s put -P ./version s3://<<parameters.bucket>>/Station/version
+
+workflows:
+  build_debug:
+    jobs:
+      - hold:
+          context: LeadMeDeployers
+          type: approval
+      - build:
+          buildType: "Debug"
+          requires:
+            - hold
+      - sign:
+          buildType: "Debug"
+          requires:
+            - build
+      - commit-and-push:
+          branch: "development"
+          requires:
+            - sign
+      - vultr-upload:
+          bucket: "leadme-internal-debug"
+          requires:
+            - sign
+  build_release:
+    jobs:
+      - hold:
+          context: LeadMeDeployers
+          type: approval
+          filters:
+            branches:
+              only:
+                - main
+      - build:
+          buildType: "Release"
+          requires:
+            - hold
+      - sign:
+          buildType: "Release"
+          requires:
+            - build
+      - commit-and-push:
+          branch: "main"
+          requires:
+            - sign
+      - vultr-upload:
+          bucket: "leadme-internal"
+          requires:
+            - sign

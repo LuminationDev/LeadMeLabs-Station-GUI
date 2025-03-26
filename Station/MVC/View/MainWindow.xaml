@@ -1,0 +1,554 @@
+﻿<Window x:Class="Station.MVC.View.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:bh="http://schemas.microsoft.com/xaml/behaviors"
+        xmlns:local="clr-namespace:Station"
+        xmlns:system="clr-namespace:System;assembly=System.Runtime"
+        xmlns:core="clr-namespace:Station.Core"
+        xmlns:viewModel="clr-namespace:Station.MVC.ViewModel"
+        mc:Ignorable="d"
+        ShowInTaskbar="{Binding ShowInTaskbar}"
+        WindowState="{Binding WindowState}"
+        Title="Station" Height="380" Width="900"
+        ResizeMode="NoResize">
+    <Window.DataContext>
+        <viewModel:MainWindowViewModel/>
+    </Window.DataContext>
+
+    <Window.Resources>
+        <Style x:Key="CommonButtonStyle" TargetType="{x:Type ButtonBase}">
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Height" Value="30"/>
+            <Setter Property="Width" Value="100"/>
+            <Setter Property="HorizontalAlignment" Value="Left"/>
+            <Setter Property="VerticalAlignment" Value="Top"/>
+
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Foreground">
+                <Setter.Value>
+                    <LinearGradientBrush StartPoint="0.5,0" EndPoint="0.5,1">
+                        <LinearGradientBrush.GradientStops>
+                            <GradientStop Offset="0.0" Color="White" />
+                            <GradientStop Offset="1.0" Color="White" />
+                        </LinearGradientBrush.GradientStops>
+                    </LinearGradientBrush>
+                </Setter.Value>
+            </Setter>
+
+            <Setter Property="Background" Value="#5c5c5b"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ButtonBase">
+                        <Border Name="border" CornerRadius="10" Background="{TemplateBinding Background}" BorderThickness="1" BorderBrush="{TemplateBinding Background}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="border" Property="BorderBrush" Value="Transparent" />
+                            </Trigger>
+
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="#a8a8a8"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Button Style -->
+        <Style x:Key="MainButton" BasedOn="{StaticResource CommonButtonStyle}" TargetType="{x:Type Button}"/>
+
+        <!-- ToggleButton Style -->
+        <Style x:Key="MainToggleButton" BasedOn="{StaticResource CommonButtonStyle}" TargetType="{x:Type ToggleButton}"/>
+    </Window.Resources>
+
+    <Grid>
+        <Grid.Resources>
+            <system:Double x:Key="SlideOffSet">200</system:Double>
+
+            <Storyboard x:Key="SlideRight">
+                <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(TranslateTransform.X)"
+                                 From="0" To="{StaticResource SlideOffSet}"
+                                 Duration="0:0:0.3" />
+            </Storyboard>
+
+            <Storyboard x:Key="SlideLeft">
+                <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(TranslateTransform.X)"
+                                 From="{StaticResource SlideOffSet}" To="0" 
+                                 Duration="0:0:0.3" />
+            </Storyboard>
+        </Grid.Resources>
+        
+        <Grid.ColumnDefinitions>
+        <ColumnDefinition Width="130"/>
+        <ColumnDefinition Width="635"/>
+        <ColumnDefinition Width="125"/>
+        </Grid.ColumnDefinitions>
+        
+        <core:NotifyIconWrapper NotifyRequest="{Binding NotifyRequest}">
+            <bh:Interaction.Triggers>
+                <bh:EventTrigger EventName="OpenSelected">
+                    <bh:InvokeCommandAction Command="{Binding NotifyIconOpenCommand}"/>
+                </bh:EventTrigger>
+                <bh:EventTrigger EventName="ExitSelected">
+                    <bh:InvokeCommandAction Command="{Binding NotifyIconExitCommand}"/>
+                </bh:EventTrigger>
+            </bh:Interaction.Triggers>
+        </core:NotifyIconWrapper>
+
+        <!-- Debug Panel -->
+        <StackPanel
+            Grid.Column="0"
+            ZIndex="2"
+            HorizontalAlignment="Left"
+            Orientation="Horizontal" 
+            Background="White"
+            Margin="-70, 0, 0, 0"
+            Width="200">
+            
+            <StackPanel.Style>
+                <Style TargetType="StackPanel">
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding IsChecked, ElementName=SlideState}" Value="True">
+                            <DataTrigger.EnterActions>
+                                <BeginStoryboard Storyboard="{StaticResource SlideRight}" />
+                            </DataTrigger.EnterActions>
+                            <DataTrigger.ExitActions>
+                                <BeginStoryboard Storyboard="{StaticResource SlideLeft}" />
+                            </DataTrigger.ExitActions>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </StackPanel.Style>
+
+            <StackPanel.RenderTransform>
+                <TranslateTransform />
+            </StackPanel.RenderTransform>
+
+            <StackPanel
+                Width="200"
+                Background="White">
+                
+                <WrapPanel Margin="10">
+                    <Label Height="Auto" Width="140">Console Window</Label>
+                    <Button
+                        Width="40"
+                        HorizontalAlignment="Right"
+                        Style="{StaticResource MainButton}"
+                        Content="{Binding ViewConsoleText}"
+                        Command="{Binding ChangeViewConsoleValue}"
+                        ToolTip="Toggle the console window."/>
+                </WrapPanel>
+                <Separator HorizontalAlignment="Stretch" Margin="0,0,0,0" BorderBrush="Black" BorderThickness="0.5"/>
+                
+                <WrapPanel Margin="10">
+                    <Label Height="Auto" Width="140">Auto Minimise</Label>
+                    <Button
+                        Width="40"
+                        HorizontalAlignment="Right"
+                        Style="{StaticResource MainButton}"
+                        Content="{Binding MinimisingText}"
+                        Command="{Binding ChangeMinimisingValue}"
+                        ToolTip="Toggle if the program should attempt to minimise the various VR software."/>
+                </WrapPanel>
+                <Separator HorizontalAlignment="Stretch" Margin="0,0,0,0" BorderBrush="Black" BorderThickness="0.5"/>
+                
+                <WrapPanel Margin="10">
+                    <Label Height="Auto" Width="140">Auto start VR Software</Label>
+                    <Button
+                        Width="40"
+                        HorizontalAlignment="Right"
+                        Style="{StaticResource MainButton}"
+                        Content="{Binding AutoStartSteamText}"
+                        Command="{Binding AutoStartVrValue}"
+                        ToolTip="Toggle if the program should attempt to auto start the different VR software if it detects it has closed."/>
+                </WrapPanel>
+                <Separator HorizontalAlignment="Stretch" Margin="0,0,0,0" BorderBrush="Black" BorderThickness="0.5"/>
+                
+                <WrapPanel Margin="10">
+                    <Label Height="Auto" Width="140">Headset Required</Label>
+                    <Button
+                        Width="40"
+                        HorizontalAlignment="Right"
+                        Style="{StaticResource MainButton}"
+                        Content="{Binding AHeadsetRequiredText}"
+                        Command="{Binding HeadsetRequiredValue}"
+                        ToolTip="Toggle if the program should launch experiences regardless of if a headset is connected."/>
+                </WrapPanel>
+                <Separator HorizontalAlignment="Stretch" Margin="0,0,0,0" BorderBrush="Black" BorderThickness="0.5"/>
+                
+                <WrapPanel Margin="10">
+                    <Label Height="Auto" Width="140">Idle Mode Active</Label>
+                    <Button
+                        Width="40"
+                        HorizontalAlignment="Right"
+                        Style="{StaticResource MainButton}"
+                        Content="{Binding IdleModeActiveText}"
+                        Command="{Binding IdleModeActiveValue}"
+                        ToolTip="Toggle if the program should launch experiences regardless of if a headset is connected."/>
+                </WrapPanel>
+                <Separator HorizontalAlignment="Stretch" Margin="0,0,0,0" BorderBrush="Black" BorderThickness="0.5"/>
+                
+                <WrapPanel Margin="10">
+                    <Label Height="Auto" Width="140">Reboot to BIOS</Label>
+                    <Button
+                        Width="40"
+                        HorizontalAlignment="Right"
+                        Style="{StaticResource MainButton}"
+                        Content="Click"
+                        Command="{Binding RebootToBios}"
+                        ToolTip="Reboot to computer to BIOS"/>
+                </WrapPanel>
+                <Separator HorizontalAlignment="Stretch" Margin="0,0,0,0" BorderBrush="Black" BorderThickness="0.5"/>
+            </StackPanel>
+        </StackPanel>
+        
+        <!-- Side Panel -->
+        <Grid Grid.Column="0" ZIndex="3">
+            <DockPanel
+                Background="White"
+                Width="130"
+                HorizontalAlignment="Left">
+        
+                <StackPanel
+                    DockPanel.Dock="Top"
+                    Width="125"
+                    Height="Auto">
+        
+                    <Button
+                        Style="{StaticResource MainButton}"
+                        Content="Start"
+                        Margin="10,10,0,0"
+                        Command="{Binding StartStationCommand}"
+                        ToolTip="Start the Station application."/>
+        
+                    <Button
+                        Style="{StaticResource MainButton}"
+                        Content="Restart"
+                        Margin="10,5,0,0"
+                        Command="{Binding RestartStationCommand}"
+                        ToolTip="Stop and then start the Station application."/>
+        
+                    <Button
+                        Style="{StaticResource MainButton}"
+                        Content="Stop"
+                        Margin="10,5,0,0"
+                        Command="{Binding StopStationCommand}"
+                        ToolTip="Stop the entire Station application, including server etc.."/>
+        
+                    <Button
+                        Style="{StaticResource MainButton}"
+                        x:Name="LoggingLevel"
+                        Content="Logging: Normal"
+                        Margin="10,20,0,0"
+                        Command="{Binding ChangeLogLevelCommand}"
+                        ToolTip="Display different amounts of information in the console window."/>
+        
+                    <ToggleButton
+                        Style="{StaticResource MainToggleButton}"
+                        x:Name="SlideState"
+                        Content="Debug Panel"
+                        Margin="10,5,0,10" />
+                </StackPanel>
+        
+                <StackPanel
+                    DockPanel.Dock="Bottom"
+                    Width="130"
+                    Background="#424242"
+                    HorizontalAlignment="Left">
+        
+                    <Label
+                        FontFamily="Fonts/#Poppins-Medium"
+                        Content="Process:"
+                        Foreground="#828282"
+                        Height="25"
+                        Margin="5,5,10,0"/>
+        
+                    <Label
+                        x:Name="ProcessConsole"
+                        FontFamily="Fonts/#Poppins-Medium"
+                        Content="No active process..."
+                        Foreground="#a8a8a8"
+                        Height="25"
+                        Margin="5,0,10,0"/>
+        
+                    <Label
+                        FontFamily="Fonts/#Poppins-Medium"
+                        Content="Status:"
+                        Foreground="#828282"
+                        Height="25"
+                        Margin="5,0,10,0"/>
+        
+                    <Label
+                        x:Name="StatusConsole"
+                        FontFamily="Fonts/#Poppins-Medium"
+                        Content="Waiting..."
+                        Foreground="#a8a8a8"
+                        Height="25"
+                        Margin="5,0,10,0"/>
+        
+                    <Button
+                        Style="{StaticResource MainButton}"
+                        Command="{Binding StopCurrentProcess}"
+                        Content="Stop"
+                        Margin="10,5,10,10"
+                        Width="50"
+                        Height="20"
+                        HorizontalAlignment="Right"
+                        VerticalAlignment="Bottom"
+                        ToolTip="Stop the current application the Station has opened."/>
+                </StackPanel>
+            </DockPanel>
+        </Grid>
+
+        <!-- Console Window -->
+        <Grid Grid.Column="1">
+            <ScrollViewer 
+                x:Name="ConsoleScroll" 
+                Cursor="Hand" 
+                Margin="0" 
+                Background="Black" 
+                HorizontalAlignment="Stretch" 
+                VerticalAlignment="Stretch">
+            
+                <TextBox
+                    x:Name="ConsoleWindow"
+                    Margin="5"
+                    IsReadOnly="true"
+                    Foreground="LightGreen"
+                    Background="Black"
+                    BorderThickness="0"
+                    HorizontalAlignment="Stretch"
+                    VerticalAlignment="Stretch"
+                    TextWrapping="Wrap"
+                    Text="{Binding ConsoleText}">
+                    <bh:Interaction.Triggers>
+                        <bh:EventTrigger EventName="TextChanged">
+                            <bh:CallMethodAction MethodName="ScrollToEnd" TargetObject="{Binding ElementName=ConsoleScroll}"/>
+                        </bh:EventTrigger>
+                    </bh:Interaction.Triggers>
+                </TextBox>
+            </ScrollViewer>
+        </Grid>
+
+        <!-- VR Status -->
+        <Grid Grid.Column="2">
+            <StackPanel
+                Width="125"
+                Background="#424242" 
+                HorizontalAlignment="Right"
+                VerticalAlignment="Stretch">
+                
+                <WrapPanel 
+                    Height="25" 
+                    Margin="5,5,0,0">
+                    
+                    <Label
+                        Width="100"
+                        FontFamily="Fonts/#Poppins-Medium"
+                        Content="Headset:" 
+                        Foreground="#828282"/>
+
+                    <Image 
+                        x:Name="HeadsetConnection" 
+                        ToolTip="OpenVR Offline" 
+                        Margin="0,0,0,3" 
+                        Source="../Assets/Icons/openvr_offline.ico" 
+                        Width="20"/>
+                </WrapPanel>
+
+                <Label 
+                    x:Name="HeadsetDescription"
+                    FontFamily="Fonts/#Poppins-Medium"
+                    Content="Unknown"
+                    Foreground="#a8a8a8"
+                    Height="25" 
+                    Margin="5,0,10,0"/>
+                
+                <WrapPanel 
+                    Height="25" 
+                    Margin="5,10,0,0">
+                    
+                    <Label
+                        Width="100"
+                        FontFamily="Fonts/#Poppins-Medium"
+                        Content="Left Controller:" 
+                        Foreground="#828282"/>
+
+                    <Image 
+                        x:Name="LeftControllerConnection" 
+                        ToolTip="Left Controller Lost" 
+                        Margin="0,0,0,3" 
+                        Source="../Assets/Icons/openvr_offline.ico" 
+                        Width="20"/>
+                </WrapPanel>
+
+                <WrapPanel>
+                    <Label
+                        FontFamily="Fonts/#Poppins-Medium"
+                        Content="Battery   -"
+                        Foreground="#a8a8a8"
+                        Height="25" 
+                        Margin="5,0,0,0"/>
+
+                    <Label 
+                        x:Name="LeftControllerBattery"
+                        FontFamily="Fonts/#Poppins-Medium"
+                        Content="0%"
+                        Foreground="#a8a8a8"
+                        Height="25" 
+                        Margin="0,0,10,0"/>
+                </WrapPanel>
+                
+                <WrapPanel 
+                    Height="25" 
+                    Margin="5,10,0,0">
+                    
+                    <Label
+                        Width="100"
+                        FontFamily="Fonts/#Poppins-Medium"
+                        Content="Right Controller:" 
+                        Foreground="#828282"/>
+
+                    <Image 
+                        x:Name="RightControllerConnection" 
+                        ToolTip="Right Controller Lost" 
+                        Margin="0,0,0,3" 
+                        Source="../Assets/Icons/openvr_offline.ico" 
+                        Width="20"/>
+                </WrapPanel>
+
+                <WrapPanel>
+                    <Label
+                        FontFamily="Fonts/#Poppins-Medium"
+                        Content="Battery   -"
+                        Foreground="#a8a8a8"
+                        Height="25" 
+                        Margin="5,0,0,0"/>
+
+                    <Label 
+                        x:Name="RightControllerBattery"
+                        FontFamily="Fonts/#Poppins-Medium"
+                        Content="0%"
+                        Foreground="#a8a8a8"
+                        Height="25" 
+                        Margin="0,0,10,0"/>
+                </WrapPanel>
+
+                <Label
+                    FontFamily="Fonts/#Poppins-Medium"
+                    Content="Base Stations:" 
+                    Foreground="#828282" 
+                    Height="25" 
+                    Margin="5,10,10,0"/>
+
+                <WrapPanel 
+                    Height="25" 
+                    Margin="5,0,10,0">
+                    <Label 
+                        x:Name="BaseStationActive"
+                        FontFamily="Fonts/#Poppins-Medium"
+                        Content="0"
+                        Foreground="#a8a8a8"/>
+                    
+                    <Label
+                        FontFamily="Fonts/#Poppins-Medium"
+                        Content="/"
+                        Foreground="#a8a8a8"/>
+                    
+                    <Label 
+                        x:Name="BaseStationAmount"
+                        FontFamily="Fonts/#Poppins-Medium"
+                        Content="0"
+                        Foreground="#a8a8a8"/>
+                </WrapPanel>
+                
+                <WrapPanel 
+                    x:Name="TrackerSection"
+                    Height="25" 
+                    Margin="5,0,10,0">
+                    <Label 
+                        x:Name="TrackerActive"
+                        FontFamily="Fonts/#Poppins-Medium"
+                        Content="0"
+                        Foreground="#a8a8a8"/>
+                    
+                    <Label
+                        FontFamily="Fonts/#Poppins-Medium"
+                        Content="/"
+                        Foreground="#a8a8a8"/>
+                    
+                    <Label 
+                        x:Name="TrackerAmount"
+                        FontFamily="Fonts/#Poppins-Medium"
+                        Content="0"
+                        Foreground="#a8a8a8"/>
+                </WrapPanel>
+                
+                <Border BorderBrush="Gray" 
+                        BorderThickness="0,1,0,0" 
+                        Margin="0,7,0,3">
+                    
+                    <WrapPanel 
+                        Height="30"
+                        Margin="5,7,0,0">
+                        
+                        <Label 
+                            Width="100"
+                            FontFamily="Fonts/#Poppins-Medium"
+                            Content="Headset VR" 
+                            ToolTip="Third party headset software"
+                            Foreground="#828282"/>
+
+                        <Image 
+                            x:Name="HeadsetVrConnection" 
+                            ToolTip="HeadsetVR Offline" 
+                            Margin="0,0,0,3" 
+                            Source="../Assets/Icons/openvr_offline.ico"
+                            Width="20"/>
+                    </WrapPanel>
+                </Border>
+
+                <WrapPanel 
+                    Height="30"
+                    Margin="5,0,0,0">
+                    
+                    <Label 
+                        Width="100"
+                        FontFamily="Fonts/#Poppins-Medium"
+                        Content="OpenVR" 
+                        Foreground="#828282"/>
+
+                    <Image 
+                        x:Name="OpenVrConnection" 
+                        ToolTip="OpenVR Offline" 
+                        Margin="0,0,0,3" 
+                        Source="../Assets/Icons/openvr_offline.ico"
+                        Width="20"/>
+                </WrapPanel>
+                
+                <Button
+                    Style="{StaticResource MainButton}"
+                    Command="{Binding ResetSteamVrProcess}"
+                    Content="Reset"
+                    Margin="70,0,0,0"
+                    Width="50"
+                    Height="20"
+                    ToolTip="Reset SteamVR."/>
+            </StackPanel>
+        </Grid>
+    </Grid>
+    
+    <bh:Interaction.Triggers>
+        <bh:EventTrigger EventName="Loaded">
+            <bh:InvokeCommandAction Command="{Binding LoadedCommand}"/>
+        </bh:EventTrigger>
+        <bh:EventTrigger EventName="Closing">
+            <bh:InvokeCommandAction Command="{Binding ClosingCommand}" PassEventArgsToCommand="True"/>
+        </bh:EventTrigger>
+    </bh:Interaction.Triggers>
+</Window>

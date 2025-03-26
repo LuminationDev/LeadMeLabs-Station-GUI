@@ -1,0 +1,7 @@
+On a installation for a Development environment:
+	1. Create a copy of the base_config.env and name it config.env.
+	2. Fill out the required information in config.env.
+	3. The program will now run will the new local environment.
+		3a. The IDE may cache other environment variables so program a restart might be necessary.
+
+NOTE: Directory is only used for development environments and does not have to be assigned for production.

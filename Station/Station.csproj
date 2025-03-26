@@ -1,0 +1,138 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+	<PropertyGroup>
+		<OutputType>WinExe</OutputType>
+		<UseWPF>true</UseWPF>
+		<UseWindowsForms>true</UseWindowsForms>
+		<Nullable>enable</Nullable>
+		<ApplicationIcon>./Assets/Icons/icon.ico</ApplicationIcon>
+		<Configurations>Debug;Release;DevDebug;DevRelease</Configurations>
+		<Version>1.2.18</Version>
+    <SelfContained>false</SelfContained>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
+    <TargetFrameworks>net6.0-windows;net8.0-windows</TargetFrameworks>
+	</PropertyGroup>
+
+	<ItemGroup>
+    <None Remove="Assets\Icons\offline.ico" />
+    <None Remove="Assets\Icons\online.ico" />
+    <None Remove="Assets\Icons\refresh.ico" />
+    <None Remove="_batch\LeadMeLabs-SoftwareChecker.deps.json" />
+    <None Remove="_batch\LeadMeLabs-SoftwareChecker.dll" />
+    <None Remove="_batch\LeadMeLabs-SoftwareChecker.exe" />
+    <None Remove="_batch\LeadMeLabs-SoftwareChecker.pdb" />
+    <None Remove="_batch\LeadMeLabs-SoftwareChecker.runtimeconfig.json" />
+    <None Remove="_config\base_config.env" />
+    <None Remove="_config\config.txt" />
+    <None Remove="_logs\.gitkeep" />
+    <None Remove="_logs\placeholder.txt" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="Assets\Icons\offline.ico">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Assets\Icons\online.ico">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Assets\Icons\refresh.ico">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="openvr_api.dll">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="_config\base_config.env">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="_config\config.txt">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="_embedded\LeadMePython.exe">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="_logs\.gitkeep">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+      
+    <None Remove="Assets\openvr_offline.ico" />
+    <None Remove="Assets\openvr_online.ico" />
+    <None Remove="AudioDeviceCmdlets.dll" />
+    <Content Include="AudioDeviceCmdlets.dll">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Update="Assets\Images\LuminationLogo.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Update="Assets\Gifs\loadingspinner.gif">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Update="Assets\Icons\icon.ico">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Update="Assets\Icons\openvr_offline.ico">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Update="Assets\Icons\openvr_online.ico">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <None Remove="Assets\Icons\icon.ico" />
+    <Content Include="Assets\Icons\icon.ico">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <None Remove="Assets\Gifs\loadingspinner.gif" />
+    <Content Include="Assets\Gifs\loadingspinner.gif">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <None Remove="Assets\Images\LuminationLogo.png" />
+    <Content Include="Assets\Images\LuminationLogo.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <None Remove="Assets\Icons\openvr_online.ico" />
+    <Content Include="Assets\Icons\openvr_online.ico">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <None Remove="Assets\Icons\openvr_offline.ico" />
+    <Content Include="Assets\Icons\openvr_offline.ico">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <None Remove="_embedded\LeadMePython.exe" />
+  </ItemGroup>
+
+  <ItemGroup>
+	<PackageReference Include="Analytics" Version="3.8.1" />
+	<PackageReference Include="CommunityToolkit.Mvvm" Version="8.2.0" />
+	<PackageReference Include="LeadMeLabsLibrary" Version="1.0.31" />
+	<PackageReference Include="leadme_api" Version="1.0.2" />
+	<PackageReference Include="MediaInfo.Wrapper.Core" Version="21.9.3" />
+	<PackageReference Include="Microsoft.Build.Framework" Version="17.6.3" />
+	<PackageReference Include="Microsoft.Extensions.Logging" Version="9.0.0-preview.1.24080.9" />
+	<PackageReference Include="Microsoft.Extensions.Logging.Console" Version="9.0.0-preview.1.24080.9" />
+	<PackageReference Include="Microsoft.Management.Infrastructure.Runtime.Win" Version="3.0.0" />
+	<PackageReference Include="Microsoft.PowerShell.SDK" Version="7.2.18" />
+	<PackageReference Include="Microsoft.WindowsAPICodePack.Shell" Version="1.1.0" />
+	<PackageReference Include="Microsoft.Xaml.Behaviors.Wpf" Version="1.1.39" />
+	<PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+	<PackageReference Include="Sentry" Version="3.33.1" />
+	<PackageReference Include="LibreHardwareMonitorLib" Version="0.9.2" />
+	<PackageReference Include="System.Data.Common" Version="4.3.0" />
+	<PackageReference Include="System.Management" Version="7.0.2" />
+	<PackageReference Include="System.Net.Http" Version="4.3.4" />
+	<PackageReference Include="System.Text.RegularExpressions" Version="4.3.1" />
+	<PackageReference Include="WpfAnimatedGif" Version="2.0.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Service Include="{508349b6-6b84-4df5-91f0-309beebad82d}" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Page Update="Components\_overlay\Overlay.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Update="MVC\View\MainWindow.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <XamlRuntime>Wpf</XamlRuntime>
+      <SubType>Designer</SubType>
+    </Page>
+  </ItemGroup>
+</Project>
